@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  GITHUB TEXTURES DEVELOPMENT EDITION
+  GITHUB TEXTURES DEVELOPMENT EDITION — KOURINDOU ART FIX 2
   Images load from khooruizhe-rgb/TBG on GitHub.
   Gameplay, layout, and card data follow the textureless development edition.
 -->
@@ -1908,6 +1908,57 @@
   background-image:linear-gradient(rgba(24,7,34,.12),rgba(31,9,43,.5)),var(--sage-matara-bg);
 }
 .card-detail-portrait.dual-dancers img{width:50%;height:100%;object-fit:contain;object-position:center bottom}
+/* The Kourindou art is resolved by CSS so it renders without JS image-variable setup. */
+.card-art-shop.card-art-kutaka{
+  background-image:linear-gradient(rgba(6,4,9,.04),rgba(10,5,12,.24) 64%,rgba(14,6,19,.82)),
+    url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/hell/niwatari_kutaka.png?art=2"),linear-gradient(rgba(18,9,24,.08),rgba(18,9,24,.46)),url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/backgrounds/hell_higan.png?art=2");
+  background-size:100% 100%,contain,cover,cover;
+  background-position:center,bottom center,center,center;
+  background-repeat:no-repeat;
+}
+.card-art-shop.card-art-yuugi{
+  background-image:linear-gradient(rgba(6,4,9,.04),rgba(10,5,12,.24) 64%,rgba(14,6,19,.82)),
+    url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/palace_of_earth_spirits/yuugi_hoshiguma.png?art=2"),linear-gradient(rgba(18,9,24,.08),rgba(18,9,24,.46)),url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/backgrounds/palace_of_earth_spirits_hall.jpg?art=2");
+  background-size:100% 100%,contain,cover,cover;
+  background-position:center,bottom center,center,center;
+  background-repeat:no-repeat;
+}
+.card-art-shop.card-art-nitori{
+  background-image:linear-gradient(rgba(6,4,9,.04),rgba(10,5,12,.24) 64%,rgba(14,6,19,.82)),
+    url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/youkai_mountain/nitori_kawashiro.png?art=2"),linear-gradient(rgba(18,9,24,.08),rgba(18,9,24,.46)),url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/backgrounds/youkai_mountain_autumn.jpg?art=2");
+  background-size:100% 100%,contain,cover,cover;
+  background-position:center,bottom center,center,center;
+  background-repeat:no-repeat;
+}
+.card-art-shop.card-art-tewi{
+  background-image:linear-gradient(rgba(6,4,9,.04),rgba(10,5,12,.24) 64%,rgba(14,6,19,.82)),
+    url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/eientei/tewi_inaba.webp?art=2"),linear-gradient(rgba(18,9,24,.08),rgba(18,9,24,.46)),url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/backgrounds/eientei_moonlit_bamboo.jpg?art=2");
+  background-size:100% 100%,contain,cover,cover;
+  background-position:center,bottom center,center,center;
+  background-repeat:no-repeat;
+}
+.card-art-shop.card-art-meiling{
+  background-image:linear-gradient(rgba(6,4,9,.04),rgba(10,5,12,.24) 64%,rgba(14,6,19,.82)),
+    url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/scarlet_devil_mansion/hong_meiling.png?art=2"),linear-gradient(rgba(18,9,24,.08),rgba(18,9,24,.46)),url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/backgrounds/scarlet_devil_mansion_plaid.jpg?art=2");
+  background-size:100% 100%,contain,cover,cover;
+  background-position:center,bottom center,center,center;
+  background-repeat:no-repeat;
+}
+.card-art-shop.card-art-dancers{
+  background-image:linear-gradient(rgba(18,7,28,.03),rgba(18,7,28,.16) 64%,rgba(18,7,28,.77)),
+    url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/sage/satono_nishida.png?art=2"),
+    url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/sage/mai_teireida.png?art=2"),
+    linear-gradient(rgba(20,7,29,.08),rgba(20,7,29,.44)),url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/backgrounds/sage_matara.png?art=2");
+  background-size:100% 100%,52% auto,52% auto,cover,cover;
+  background-position:center,left bottom,right bottom,center,center;
+  background-repeat:no-repeat;
+}
+#card-detail.hell.detail-card-hell_kutaka{
+  background-image:linear-gradient(rgba(34,10,8,.08),rgba(43,12,8,.5)),url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/backgrounds/hell_higan.png?art=2");
+}
+#card-detail.sage.detail-card-sage_mai_satono{
+  background-image:linear-gradient(rgba(24,7,34,.12),rgba(31,9,43,.5)),url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/backgrounds/sage_matara.png?art=2");
+}
 </style>
 </head>
 <body>
@@ -4606,13 +4657,13 @@ Object.assign(CARD_DETAIL_PORTRAITS, {
   heaven_iku: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/heaven/iku_nagae.png",
 });
 const KOURINDOU_PORTRAITS = {
-  hell_kutaka: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/hell/niwatari_kutaka.png",
-  sage_satono: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/sage/satono_nishida.png",
-  sage_mai: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/sage/mai_teireida.png",
-  palace_yuugi: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/palace_of_earth_spirits/yuugi_hoshiguma.png",
-  mtn_nitori: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/youkai_mountain/nitori_kawashiro.png",
-  hourai_tewi: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/eientei/tewi_inaba.webp",
-  sdm_meiling: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/scarlet_devil_mansion/hong_meiling.png",
+  hell_kutaka: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/hell/niwatari_kutaka.png?art=2",
+  sage_satono: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/sage/satono_nishida.png?art=2",
+  sage_mai: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/sage/mai_teireida.png?art=2",
+  palace_yuugi: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/palace_of_earth_spirits/yuugi_hoshiguma.png?art=2",
+  mtn_nitori: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/youkai_mountain/nitori_kawashiro.png?art=2",
+  hourai_tewi: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/eientei/tewi_inaba.webp?art=2",
+  sdm_meiling: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/scarlet_devil_mansion/hong_meiling.png?art=2",
 };
 Object.entries(KOURINDOU_PORTRAITS).forEach(([key,url])=>{
   if(url) document.documentElement.style.setProperty('--shop-art-'+key,`url("${url}")`);
