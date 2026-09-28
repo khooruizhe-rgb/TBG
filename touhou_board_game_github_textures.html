@@ -302,7 +302,9 @@
   @keyframes pileLift{ 50%{ transform:translateY(4px) scale(.95); } }
 
   @media (max-width: 640px){
-    #table-wrap{ padding:92px 20px 56px; margin-bottom:96px; }
+    #table-wrap{ padding:92px 8px 56px; margin-bottom:96px; }
+    #table-surface{ padding:8px; border-width:6px; }
+    #board{ width:100%; max-width:420px; gap:clamp(4px,1.5vw,8px); }
     #draw-pile{ top:10px; }
     .seat{ width:80px; }
     .seat .avatar{ width:40px; height:40px; font-size:1.2rem; }
@@ -590,6 +592,14 @@
   #hand-choice-actions button:disabled{ opacity:.45; cursor:default; }
   #hand-choice-actions #hand-choice-cancel{ border-color:var(--muted); color:var(--ink); }
   .hand-card.dragging{ opacity:0.35; transform:scale(0.94) rotate(-4deg); cursor:grabbing; }
+  @media(pointer:coarse){
+    #hand .hand-card.touch-drag-ready{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+  }
+  .touch-drag-ghost{
+    position:fixed;z-index:230;pointer-events:none;opacity:.9;transition:none !important;
+    transform:translate(-50%,-50%) rotate(-5deg) scale(1.07);
+    box-shadow:0 18px 38px rgba(0,0,0,.6),0 0 18px rgba(232,200,116,.6);
+  }
   .hand-card .icon-row{ display:flex; justify-content:space-between; font-size:0.85rem; }
   .hand-card .cname{ font-weight:700; margin-top:2px; }
   .hand-card .cdesc{ font-size:0.6rem; color:#544a63; margin-top:2px; }
@@ -1737,6 +1747,10 @@
     border-radius:10px; padding:8px 12px; margin-bottom:8px; color:var(--gold); font-size:0.88rem;
   }
   #instruction-bar.show{ display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap; }
+  #mobile-play-hint{display:none}
+  @media (max-width:640px){
+    #mobile-play-hint{display:block;margin:2px 0 6px;color:var(--muted);font-size:.78rem;text-align:center}
+  }
   #cancel-placement-btn{
     background:transparent; border:1px solid var(--danger); color:var(--danger); border-radius:8px;
     padding:4px 12px; font-size:0.78rem; cursor:pointer; font-family:inherit;
@@ -2065,6 +2079,7 @@
           <span>🔍 Playtest: reveal hands &amp; discards</span>
         </label>
         <div id="instruction-bar"></div>
+        <div id="mobile-play-hint">Tap a card in Your Hand below, then tap a highlighted tile. You can also drag the card.</div>
         <div id="board-wrap">
           <div id="table-wrap">
             <div id="seats"></div>
@@ -5550,15 +5565,19 @@ function renderHand(){
       });
     } else if(isPlayable){
       // Selection updates the existing elements, so the second click reaches the same card.
+      div.classList.add('touch-drag-ready');
       div.addEventListener('click', e => {
         if(e.detail > 1) return;
         previousSelection = selectedHandCard;
         firstClickSelected = true;
         onHandCardClick(cardId);
       });
-      div.draggable = true;
+      // Native HTML drag/drop does not provide a dependable gesture on phones.
+      // Pointer events below handle touch; keep native dragging for mouse users.
+      div.draggable = !window.matchMedia('(pointer: coarse)').matches;
       div.addEventListener('dragstart', (e) => onHandCardDragStart(e, cardId));
       div.addEventListener('dragend', onHandCardDragEnd);
+      div.addEventListener('pointerdown', e=>onHandCardPointerDown(e,cardId));
     }
     handEl.appendChild(div);
   });
@@ -6541,26 +6560,30 @@ function onHandCardClick(cardId){
    including the one currently being dragged, which kills the native drag gesture mid-flight) —
    only the board gets re-rendered to light up legal drop spaces. Any stale hand styling this
    leaves behind (e.g. if a card had been click-selected first) is cleaned up on dragend/drop. */
-function onHandCardDragStart(e, cardId){
-  if(game.currentPlayerIdx!==0 || !window.__resolveHumanTurn || humanActionResolving){ e.preventDefault(); return; }
+function prepareHandCardDrag(cardId){
+  if(game.currentPlayerIdx!==0 || !window.__resolveHumanTurn || humanActionResolving) return false;
   const forced = game.forcedPlay[0];
-  if(forced && cardId !== forced){ e.preventDefault(); return; }
-  if(pendingCellChoice && !pendingCellChoice.cancellable){ e.preventDefault(); return; }
+  if(forced && cardId !== forced) return false;
+  if(pendingCellChoice && !pendingCellChoice.cancellable) return false;
   const cardObj = CARD[cardId];
   const cells = humanActionCells(cardId),shopSlots=humanShopSlots(cardId);
   if(!cells.length && !shopSlots.length){
-    e.preventDefault();
     el('status-line').textContent = `No legal space for ${cardObj.name} right now — choose another card or draw.`;
-    return;
+    return false;
   }
   pendingCellChoice = {cells,shopSlots,yukariShop:cardId==='sage_yukari',cancellable:true,dragOnly:true,resolve:makePlacementResolver(cardId),resolveShop:makeShopActionResolver(cardId)};
   draggingCardId = cardId;
-  e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text/plain', cardId);
-  e.currentTarget.classList.add('dragging');
   el('instruction-bar').innerHTML = `<span>Drop ${cardObj.name} on a highlighted space${shopActionHint(cardId)}.</span>`;
   el('instruction-bar').classList.add('show');
   renderBoard();
+  return true;
+}
+
+function onHandCardDragStart(e, cardId){
+  if(!prepareHandCardDrag(cardId)){ e.preventDefault(); return; }
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', cardId);
+  e.currentTarget.classList.add('dragging');
 }
 
 function onHandCardDragEnd(e){
@@ -6573,6 +6596,91 @@ function onHandCardDragEnd(e){
     cancelHandSelection();
   }
 }
+
+let touchHandDrag=null;
+let suppressTouchDropClick=null;
+function onHandCardPointerDown(e,cardId){
+  if((e.pointerType!=='touch' && e.pointerType!=='pen') || e.isPrimary===false || touchHandDrag || e.button!==0) return;
+  touchHandDrag={id:e.pointerId,cardId,source:e.currentTarget,x:e.clientX,y:e.clientY,started:false,ghost:null,target:null};
+}
+function handDragTarget(x,y){
+  const tile=document.elementFromPoint(x,y)?.closest('#board .cell,#kourindou .cell');
+  if(!tile || !pendingCellChoice) return null;
+  const r=Number(tile.dataset.r),c=Number(tile.dataset.c);
+  if(tile.closest('#kourindou')){
+    const slot=Number(tile.dataset.slot);
+    return isShopSelectable(slot) ? tile : null;
+  }
+  return pendingCellChoice.cells.some(cell=>cell.r===r && cell.c===c) ? tile : null;
+}
+function moveHandDrag(x,y){
+  const drag=touchHandDrag;
+  if(!drag?.started) return;
+  drag.ghost.style.left=`${x}px`;
+  drag.ghost.style.top=`${y}px`;
+  const target=handDragTarget(x,y);
+  if(drag.target!==target){
+    drag.target?.classList.remove('drag-hover');
+    drag.target=target;
+    target?.classList.add('drag-hover');
+  }
+}
+function finishHandDrag(cancelled=false,x=0,y=0){
+  const drag=touchHandDrag;
+  if(!drag) return;
+  touchHandDrag=null;
+  drag.target?.classList.remove('drag-hover');
+  drag.source.classList.remove('dragging');
+  drag.ghost?.remove();
+  if(!drag.started) return;
+  draggingCardId=null;
+  if(!cancelled){
+    // A phone may dispatch a click after pointerup; that click belongs to this drag.
+    suppressTouchDropClick={x,y,until:Date.now()+350};
+    const tile=handDragTarget(x,y);
+    if(tile){
+      if(tile.closest('#kourindou')) commitShopChoice(Number(tile.dataset.slot));
+      else commitCellChoice(Number(tile.dataset.r),Number(tile.dataset.c));
+      return;
+    }
+  }
+  if(pendingCellChoice?.dragOnly) cancelHandSelection();
+}
+document.addEventListener('pointermove',e=>{
+  const drag=touchHandDrag;
+  if(!drag || drag.id!==e.pointerId) return;
+  if(!drag.started){
+    if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)<12) return;
+    if(!prepareHandCardDrag(drag.cardId)){touchHandDrag=null;return;}
+    drag.started=true;
+    drag.source.classList.add('dragging');
+    drag.ghost=drag.source.cloneNode(true);
+    drag.ghost.classList.remove('dragging');
+    drag.ghost.classList.add('touch-drag-ghost');
+    drag.ghost.style.width=`${drag.source.getBoundingClientRect().width}px`;
+    drag.ghost.style.height=`${drag.source.getBoundingClientRect().height}px`;
+    document.body.appendChild(drag.ghost);
+  }
+  if(e.cancelable) e.preventDefault();
+  moveHandDrag(e.clientX,e.clientY);
+},{passive:false});
+document.addEventListener('pointerup',e=>{
+  if(!touchHandDrag || touchHandDrag.id!==e.pointerId) return;
+  if(touchHandDrag.started && e.cancelable) e.preventDefault();
+  finishHandDrag(false,e.clientX,e.clientY);
+});
+document.addEventListener('pointercancel',e=>{
+  if(touchHandDrag?.id===e.pointerId) finishHandDrag(true);
+});
+document.addEventListener('click',e=>{
+  const drop=suppressTouchDropClick;
+  if(!drop || Date.now()>drop.until){suppressTouchDropClick=null;return;}
+  if(Math.hypot(e.clientX-drop.x,e.clientY-drop.y)<28){
+    suppressTouchDropClick=null;
+    e.preventDefault();e.stopImmediatePropagation();
+  }
+},true);
+window.addEventListener('blur',()=>finishHandDrag(true));
 
 function cancelHandSelection(){
   selectedHandCard = null;
@@ -6693,6 +6801,9 @@ el('customize-toggle').addEventListener('click', () => {
 function resetGameView(){
   // Retire the old match before clearing its controls, animations, or pending input.
   if(game) game.cancelled=true;
+  touchHandDrag?.ghost?.remove();
+  touchHandDrag=null;
+  suppressTouchDropClick=null;
   clearRinnosukeBubble();
   clearCrownBackdrop();
   game=null;
