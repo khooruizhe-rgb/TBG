@@ -321,6 +321,21 @@
     border:1px solid var(--line); display:flex; align-items:center; justify-content:center;
     cursor:default; overflow:hidden; min-height:0; perspective:340px;
   }
+  #table-surface, #board, #board .cell{transition:background .65s ease,border-color .65s ease,box-shadow .65s ease}
+  body.crown-scene-active #table-surface{
+    background:radial-gradient(ellipse at 50% 40%,rgba(var(--scene-rgb),.46) 0%,rgba(var(--scene-rgb),.23) 57%,#140f26 100%);
+    border-color:var(--scene-color);
+    box-shadow:0 14px 34px rgba(0,0,0,.55),inset 0 0 50px rgba(0,0,0,.48),inset 0 0 0 2px rgba(var(--scene-rgb),.36);
+  }
+  body.crown-scene-active #board{
+    border-radius:12px;
+    background:linear-gradient(145deg,rgba(var(--scene-rgb),.23),rgba(var(--scene-rgb),.06));
+    box-shadow:0 0 26px rgba(var(--scene-rgb),.31);
+  }
+  body.crown-scene-active #board .cell:not(.wasteland){
+    background:rgba(var(--scene-rgb),.16);
+    border-color:rgba(var(--scene-rgb),.45);
+  }
   .cell.sunflower-afterglow > .board-card{position:relative;z-index:8}
   .cell.just-placed{ overflow:visible; z-index:2; } /* let the stand-up animation pop out past the tile bounds without clipping */
   .cell.wasteland{ background: repeating-linear-gradient(45deg, #3a1f22, #3a1f22 6px, #2c1518 6px, #2c1518 12px); border-color:#5a2c30; }
@@ -3177,7 +3192,7 @@ class Game {
           if(!self.hasTile(move.toR,move.toC) || self.cardAt(move.toR,move.toC) || (self.wastelandAt(move.toR,move.toC) && !CARD[id].wasteOK)){
             self.log(`${meS} Meiling cannot push ${CARD[id].name} — there is no legal tile one step farther away.`);break;
           }
-          if(self.ui && self.ui.onBoardPush){try{self.ui.onBoardPush({cardId:id,from:move,to:{r:move.toR,c:move.toC}});}catch(_error){}}
+          if(self.ui && self.ui.onBoardPush){try{self.ui.onBoardPush({cardId:id,source:{r,c},from:move,to:{r:move.toR,c:move.toC}});}catch(_error){}}
           self.setCardAt(move.r,move.c,null);
           self.setCardAt(move.toR,move.toC,id);
           self.log(`${meS} Meiling pushes ${CARD[id].name} one tile farther away.`);
@@ -3520,16 +3535,10 @@ class Game {
             if(self.isProtected(target.r,target.c)){self.reportBlocked(target.r,target.c);break;}
             if(depth<5){
               const targetCardId = self.cardAt(target.r,target.c);
-              // Abilities that act "on cards adjacent to this card" (Yuyuko, Clownpiece) are cast
-              // from Matara's own position instead of the target's. Abilities that need to know
-              // their own physical board slot to function correctly (e.g. Komachi's position swap)
-              // keep using the target's real location, or the bug you'd get is a corrupted board:
-              // a phantom duplicate card plus Matara's own space silently overwritten.
-              const selfCastAbilities = new Set(['haku_yuyuko','hell_clownpiece','sdm_meiling','palace_yuugi','hell_kutaka']);
-              const useR = selfCastAbilities.has(targetCardId) ? r : target.r;
-              const useC = selfCastAbilities.has(targetCardId) ? c : target.c;
-              self.log(`${meS} Matara Okina channels ${CARD[targetCardId].name}'s ability again${selfCastAbilities.has(targetCardId) ? ", cast from Matara's own position" : ''}.`);
-              const repeatedFlags=await self.resolveAbility(targetCardId, useR, useC, playerIdx, depth+2);
+              // The selected card supplies the ability; Matara remains its caster.
+              // Target exclusions, nearby areas, and effect origins use Matara's tile.
+              self.log(`${meS} Matara Okina channels ${CARD[targetCardId].name}'s ability from her own position.`);
+              const repeatedFlags=await self.resolveAbility(targetCardId, r, c, playerIdx, depth+2);
               self.checkClaims(playerIdx);
               return repeatedFlags || {};
             } else {
@@ -3674,6 +3683,7 @@ class Game {
         break;
       }
       case 'hell_komachi': {
+        const casterId=self.cardAt(r,c);
         const cells = self.selectableBoardCells(playerIdx,cell=>!(cell.r===r && cell.c===c));
         if(cells.length){
           const pick = await self.chooseBoardCell(playerIdx, cells, 'Komachi: swap positions with this card');
@@ -3681,9 +3691,9 @@ class Game {
             if(!self.canMoveBoardCard(pick.r,pick.c)){self.reportBlocked(pick.r,pick.c);break;}
             const otherId = self.cardAt(pick.r,pick.c);
             if(self.ui && self.ui.onSwap){
-              try{ self.ui.onSwap({first:{r,c,id:cardId},second:{r:pick.r,c:pick.c,id:otherId}}); }catch(_error){}
+              try{ self.ui.onSwap({first:{r,c,id:casterId},second:{r:pick.r,c:pick.c,id:otherId}}); }catch(_error){}
             }
-            self.setCardAt(pick.r,pick.c,cardId);
+            self.setCardAt(pick.r,pick.c,casterId);
             self.setCardAt(r,c,otherId);
             self.log(`${meS} Komachi swaps places with ${CARD[otherId].name}.`);
           }
@@ -3983,6 +3993,10 @@ let activeCrownBackdrop=-1;
 function showCrownBackdrop(cardId){
   const scene=CROWN_SCENE_BACKGROUND[cardId];
   if(!scene) return;
+  const light=crownLightFor(cardId);
+  const view=el('game');
+  view.style.setProperty('--scene-rgb',light.rgb);
+  view.style.setProperty('--scene-color',light.main);
   const layers=[el('crown-backdrop-a'),el('crown-backdrop-b')];
   const nextIndex=activeCrownBackdrop===0 ? 1 : 0;
   const next=layers[nextIndex];
@@ -4002,6 +4016,9 @@ function clearCrownBackdrop(){
   }
   activeCrownBackdrop=-1;
   document.body.classList.remove('crown-scene-active');
+  const view=el('game');
+  view.style.removeProperty('--scene-rgb');
+  view.style.removeProperty('--scene-color');
 }
 
 function triggerPlacementPresentation(cardId, r, c, crownEffectId=null){
@@ -5707,9 +5724,9 @@ const ui = {
     animateAbilityCard(boughtId,shop,hand,'trade');
     speakRinnosuke('exchange',{force:playerIdx===0});
   },
-  onBoardPush({cardId,from,to}){
+  onBoardPush({cardId,source,from,to}){
     const start=boardCardRect(from.r,from.c),end=boardCardRect(to.r,to.c);
-    showExpansionBurst('meiling',start,end);
+    showExpansionBurst('meiling',source ? boardCardRect(source.r,source.c) : start,start);
     animateAbilityCard(cardId,start,end,'meiling');
   },
   onExpansionEffect:showExpansionEffect,
