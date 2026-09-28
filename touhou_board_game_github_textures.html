@@ -113,6 +113,16 @@
     font-family: 'Zen Maru Gothic', 'Noto Serif JP', sans-serif;
     padding: 18px;
   }
+  .crown-backdrop{
+    position:fixed; inset:-22px; z-index:0; pointer-events:none; opacity:0;
+    background-size:cover; background-position:center; background-repeat:no-repeat;
+    filter:blur(14px) brightness(.7) saturate(.93);
+    transition:opacity .75s ease;
+  }
+  .crown-backdrop.active{opacity:1}
+  body.crown-scene-active .stars{opacity:.18}
+  body.crown-scene-active #game .panel{background:rgba(27,21,48,.73)}
+  @media(prefers-reduced-motion:reduce){.crown-backdrop{transition:none}}
   h1,h2,h3, .display{ font-family:'Cinzel', serif; letter-spacing:0.02em; }
   .stars{
     position:fixed; inset:0; pointer-events:none; z-index:0; opacity:0.5;
@@ -1856,7 +1866,7 @@
   @media(prefers-reduced-motion:reduce){.hell-gate-leaf,.hell-fire{animation:none}}
 
   #rinnosuke-bubble{
-    position:relative; z-index:1; box-sizing:border-box; width:100%; margin:8px 0;
+    position:relative; z-index:1; flex:none; box-sizing:border-box; width:100%; margin:0 0 12px;
     padding:10px 12px 11px; border:1px solid #cfaf77; border-radius:10px;
     background:linear-gradient(150deg,#332638,#201c2b); color:#fbf3e8;
     box-shadow:0 9px 24px #09060c99,0 0 15px #edbc7644;
@@ -1864,6 +1874,11 @@
     overflow-wrap:break-word;
   }
   #rinnosuke-bubble[hidden]{display:none}
+  #rinnosuke-bubble::after{
+    content:''; position:absolute; left:50%; bottom:-7px; width:12px; height:12px;
+    transform:translateX(-50%) rotate(45deg); background:#201c2b;
+    border-right:1px solid #cfaf77; border-bottom:1px solid #cfaf77;
+  }
   .rinnosuke-bubble-name{display:block;margin-bottom:3px;color:#f4d799;font-size:.67rem;font-weight:700;letter-spacing:.04em}
   @media(prefers-reduced-motion:no-preference){
     #rinnosuke-bubble:not([hidden]){animation:rinnosukeAppear .18s ease-out both}
@@ -1887,6 +1902,29 @@
 .card-art-nitori{--shop-art-single:var(--shop-art-mtn_nitori,linear-gradient(transparent,transparent));--shop-bg:var(--mountain-bg)}
 .card-art-tewi{--shop-art-single:var(--shop-art-hourai_tewi,linear-gradient(transparent,transparent));--shop-bg:var(--eientei-bg)}
 .card-art-meiling{--shop-art-single:var(--shop-art-sdm_meiling,linear-gradient(transparent,transparent));--shop-bg:var(--sdm-plaid)}
+.card-art-rinnosuke{
+  background-image:linear-gradient(rgba(17,8,20,.06),rgba(17,8,20,.25) 63%,rgba(17,8,20,.82)),
+    url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/kourindou/morichika_rinnosuke_normal.webp"),
+    linear-gradient(rgba(22,8,14,.13),rgba(22,8,14,.46)),
+    url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/backgrounds/kourindou_shop.webp");
+  background-size:100% 100%,auto 106%,cover,cover;
+  background-position:center,bottom center,center,center;
+  background-repeat:no-repeat;
+  color:#fff6e5;
+}
+.hand-card.card-art-rinnosuke,.look-into-card.card-art-rinnosuke,.custom-card-tile.card-art-rinnosuke{
+  background-image:linear-gradient(rgba(17,8,20,.06),rgba(17,8,20,.25) 63%,rgba(17,8,20,.82)),
+    url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/kourindou/morichika_rinnosuke_hand.webp"),
+    linear-gradient(rgba(22,8,14,.13),rgba(22,8,14,.46)),
+    url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/backgrounds/kourindou_shop.webp");
+}
+.card-art-rinnosuke .cname{color:#fff9e7;text-shadow:0 1px 5px #10080b}
+#card-detail.other-faction.detail-card-shop_rinnosuke{
+  --detail-accent:#ffdda0; --detail-ink:#fff8e8;
+  background-image:linear-gradient(rgba(26,9,14,.13),rgba(26,9,14,.57)),
+    url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/backgrounds/kourindou_shop.webp");
+  background-size:cover; background-position:center;
+}
 .card-art-shop.card-art-dancers{
   background-image:linear-gradient(rgba(18,7,28,.05),rgba(18,7,28,.24) 64%,rgba(18,7,28,.82)),
     var(--shop-art-sage_satono,linear-gradient(transparent,transparent)),
@@ -1956,6 +1994,8 @@
 </style>
 </head>
 <body>
+<div class="crown-backdrop" id="crown-backdrop-a" aria-hidden="true"></div>
+<div class="crown-backdrop" id="crown-backdrop-b" aria-hidden="true"></div>
 <div class="stars"></div>
 <div id="app">
   <header class="top">
@@ -2040,15 +2080,15 @@
       </div>
 
       <div class="panel" id="log-panel">
+        <div id="rinnosuke-bubble" role="status" aria-live="polite" aria-label="Rinnosuke says" hidden>
+          <span class="rinnosuke-bubble-name">Rinnosuke</span>
+          <span id="rinnosuke-bubble-text"></span>
+        </div>
         <section id="shop-panel" aria-label="Kourindou shop, outside the main board" hidden>
           <h3>🏮 Kourindou</h3>
           <div id="kourindou"></div>
           <p id="shop-status"></p>
         </section>
-        <div id="rinnosuke-bubble" role="status" aria-live="polite" aria-label="Rinnosuke says" hidden>
-          <span class="rinnosuke-bubble-name">Rinnosuke</span>
-          <span id="rinnosuke-bubble-text"></span>
-        </div>
         <h3>Draw Pile &amp; Log</h3>
         <div id="draw-pile-info"></div>
         <div id="log"></div>
@@ -3933,9 +3973,41 @@ function playPointGainSound({points}){
   pointBellStep += points;
 }
 
+const CROWN_SCENE_BACKGROUND = Object.freeze({
+  sdm_remilia:'--sdm-plaid',haku_yuyuko:'--haku-bg',hourai_kaguya:'--eientei-bg',
+  mtn_kanako:'--mountain-bg',palace_satori:'--palace-bg',
+  sage_yukari:'--sage-yukari-bg',sage_matara:'--sage-matara-bg',sage_kasen:'--sage-kasen-bg',
+  yuuka:'--sunflower-bg',hell_hecatia:'--hell-makai-bg',heaven_tenshi:'--heaven-bg'
+});
+let activeCrownBackdrop=-1;
+function showCrownBackdrop(cardId){
+  const scene=CROWN_SCENE_BACKGROUND[cardId];
+  if(!scene) return;
+  const layers=[el('crown-backdrop-a'),el('crown-backdrop-b')];
+  const nextIndex=activeCrownBackdrop===0 ? 1 : 0;
+  const next=layers[nextIndex];
+  next.classList.remove('active');
+  next.style.backgroundImage=`linear-gradient(rgba(9,6,20,.12),rgba(9,6,20,.12)),var(${scene})`;
+  void next.offsetWidth;
+  next.classList.add('active');
+  if(activeCrownBackdrop>=0) layers[activeCrownBackdrop].classList.remove('active');
+  activeCrownBackdrop=nextIndex;
+  document.body.classList.add('crown-scene-active');
+}
+function clearCrownBackdrop(){
+  for(const id of ['crown-backdrop-a','crown-backdrop-b']){
+    const layer=el(id);
+    layer.classList.remove('active');
+    layer.style.backgroundImage='';
+  }
+  activeCrownBackdrop=-1;
+  document.body.classList.remove('crown-scene-active');
+}
+
 function triggerPlacementPresentation(cardId, r, c, crownEffectId=null){
   const presentationId=crownEffectId || cardId;
   playPlacementSound(presentationId);
+  if(CARD[cardId]?.crown) showCrownBackdrop(cardId);
   if(!(CARD[presentationId] && CARD[presentationId].crown)) return;
   const board = el('board');
   if(!board) return;
@@ -4571,6 +4643,7 @@ function factionTag(faction){
 
 const FACTION_BG_CLASS = { sdm: 'faction-bg-sdm', hakugyokurou: 'faction-bg-haku', hourai: 'faction-bg-eientei', mountain: 'faction-bg-mountain', palace: 'faction-bg-palace', sage: 'faction-bg-sage', hakurei: 'faction-bg-hakurei', sunflower: 'faction-bg-sunflower', hell: 'faction-bg-hell', heaven: 'faction-bg-heaven' }; // fallback for faction cards with no dedicated art
 const CARD_ART_CLASS = {
+  shop_rinnosuke: 'card-art-rinnosuke',
   sdm_remilia: 'card-art-remilia',
   sdm_sakuya: 'card-art-sakuya',
   sdm_patchouli: 'card-art-patchouli',
@@ -4675,6 +4748,8 @@ Object.assign(CARD_DETAIL_PORTRAITS, {
   heaven_iku: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/heaven/iku_nagae.png",
 });
 const KOURINDOU_PORTRAITS = {
+  shop_rinnosuke: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/kourindou/morichika_rinnosuke_normal.webp",
+  shop_rinnosuke_hand: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/kourindou/morichika_rinnosuke_hand.webp",
   hell_kutaka: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/hell/niwatari_kutaka.png?art=2",
   sage_satono: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/sage/satono_nishida.png?art=2",
   sage_mai: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/sage/mai_teireida.png?art=2",
@@ -4687,6 +4762,7 @@ Object.entries(KOURINDOU_PORTRAITS).forEach(([key,url])=>{
   if(url) document.documentElement.style.setProperty('--shop-art-'+key,`url("${url}")`);
 });
 Object.assign(CARD_DETAIL_PORTRAITS,{
+  shop_rinnosuke:KOURINDOU_PORTRAITS.shop_rinnosuke,
   hell_kutaka:KOURINDOU_PORTRAITS.hell_kutaka,
   palace_yuugi:KOURINDOU_PORTRAITS.palace_yuugi,
   mtn_nitori:KOURINDOU_PORTRAITS.mtn_nitori,
@@ -4750,7 +4826,7 @@ function openCardDetails(cardId){
   const detail = el('card-detail');
   detail.className = ['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower','hell','heaven'].includes(c.faction)
     ? `${c.faction} detail-card-${cardId}`
-    : 'other-faction';
+    : `other-faction detail-card-${cardId}`;
   if(c.crown && game && game.isActiveOnBoard('hourai_eirin')) detail.classList.add('eirin-muted');
   const factionIcon = CARD_DETAIL_FACTION_ICONS[c.faction];
   const iconHost = el('card-detail-icon');
@@ -4771,6 +4847,7 @@ function openCardDetails(cardId){
   const portrait = el('card-detail-portrait');
   portrait.className = 'card-detail-portrait';
   portrait.replaceChildren();
+  const inHand=game && game.players.some(p=>p.hand.includes(cardId));
   if(cardId==='sage_mai_satono' && KOURINDOU_PORTRAITS.sage_satono && KOURINDOU_PORTRAITS.sage_mai){
     portrait.classList.add('dual-dancers');
     for(const [name,url] of [['Satono',KOURINDOU_PORTRAITS.sage_satono],['Mai',KOURINDOU_PORTRAITS.sage_mai]]){
@@ -4782,7 +4859,8 @@ function openCardDetails(cardId){
   } else if(CARD_DETAIL_PORTRAITS[cardId]){
     const artwork = document.createElement('img');
     artwork.className = `detail-art-${cardId}`;
-    artwork.src = CARD_DETAIL_PORTRAITS[cardId];
+    artwork.src = cardId==='shop_rinnosuke' && inHand
+      ? KOURINDOU_PORTRAITS.shop_rinnosuke_hand : CARD_DETAIL_PORTRAITS[cardId];
     artwork.alt = c.name;
     portrait.appendChild(artwork);
   } else {
@@ -4792,7 +4870,6 @@ function openCardDetails(cardId){
     portrait.appendChild(fallback);
   }
   el('card-detail-ability').textContent = CARD_ABILITY_NAMES[c.token ? 'trap_token' : cardId] || 'Card Ability';
-  const inHand=game && game.players.some(p=>p.hand.includes(cardId));
   el('card-detail-description').textContent=inHand && c.handDesc ? c.handDesc : c.desc;
   detailReturnFocus = document.activeElement;
   el('card-detail-overlay').classList.add('show');
@@ -6600,6 +6677,7 @@ function resetGameView(){
   // Retire the old match before clearing its controls, animations, or pending input.
   if(game) game.cancelled=true;
   clearRinnosukeBubble();
+  clearCrownBackdrop();
   game=null;
   if(pendingPlayerChoice){document.removeEventListener('keydown',pendingPlayerChoice.onEscape);pendingPlayerChoice=null;}
   if(pendingHandChoice?.onEscape) document.removeEventListener('keydown',pendingHandChoice.onEscape);
