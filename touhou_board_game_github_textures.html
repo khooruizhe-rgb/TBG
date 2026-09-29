@@ -177,6 +177,7 @@
   }
   .big-btn:hover{ filter:brightness(1.08); }
   .big-btn:disabled{ opacity:0.4; cursor:not-allowed; }
+  #sound-toggle{ padding:9px 13px; font-size:.84rem; }
 
   /* ---------- Game layout ---------- */
   #game{ display:none; }
@@ -2110,6 +2111,7 @@
           <div id="status-line"></div>
           <div id="controls">
             <button class="big-btn" id="draw-btn">Draw for Everyone</button>
+            <button class="pill-btn" id="sound-toggle" type="button" aria-pressed="true" aria-label="Mute game sounds">Sound On</button>
           </div>
         </div>
         <div id="hand-area">
@@ -3061,6 +3063,7 @@ class Game {
     const hand=this.players[playerIdx].hand;
     if(!Array.isArray(chosen) || chosen.length<minCount || chosen.length>maxCount
       || new Set(chosen).size!==chosen.length || chosen.some(id=>!hand.includes(id) || !this.canHandEnterPile(id))) return 0;
+    if(this.ui?.onCostPaid){try{this.ui.onCostPaid({playerIdx,count:chosen.length});}catch(_error){}}
     for(const id of chosen){
       this.removeFromHand(playerIdx, id);
       this.returnToDrawPile(id, {handOwner:playerIdx});
@@ -3124,6 +3127,7 @@ class Game {
           }
         }
         this.log(`${this.players[placerIdx].name} claims the ${fac.name} faction! (${cells.length} cards)`);
+        if(this.ui?.onFactionClaim){try{this.ui.onFactionClaim({faction:fk,count:cells.length,playerIdx:placerIdx});}catch(_error){}}
         this.checkWin();
       }
     }
@@ -3832,6 +3836,101 @@ const CROWN_PLACEMENT_SOUND_2 = 'data:audio/mpeg;base64,SUQzBAAAAAAAf1RYWFgAAAAS
 const DRAW_CARD_SOUND = NORMAL_PLACEMENT_SOUND; // Audio 3 matches the existing normal placement clip.
 
 const CROWN_PLACEMENT_SOUNDS = Object.freeze([CROWN_PLACEMENT_SOUND,CROWN_PLACEMENT_SOUND_1,CROWN_PLACEMENT_SOUND_2]);
+// Short procedural cues keep this standalone file usable without additional audio files.
+let sfxEnabled=true, gameAudioContext=null, gameAudioBus=null, nextExitCueAt=0;
+function getGameAudio(){
+  if(!sfxEnabled) return null;
+  try{
+    if(!gameAudioContext){
+      const AudioContextClass=window.AudioContext || window.webkitAudioContext;
+      if(!AudioContextClass) return null;
+      gameAudioContext=new AudioContextClass();
+      gameAudioBus=gameAudioContext.createGain();
+      gameAudioBus.gain.value=.32;
+      gameAudioBus.connect(gameAudioContext.destination);
+    }
+    if(gameAudioContext.state==='suspended') gameAudioContext.resume().catch(()=>{});
+    return gameAudioContext;
+  }catch(_error){ return null; }
+}
+function gameTone(ctx,hz,duration,{delay=0,to=hz,volume=.12,type='sine'}={}){
+  const at=ctx.currentTime+delay,osc=ctx.createOscillator(),gain=ctx.createGain();
+  osc.type=type;osc.frequency.setValueAtTime(Math.max(30,hz),at);
+  osc.frequency.exponentialRampToValueAtTime(Math.max(30,to),at+duration);
+  gain.gain.setValueAtTime(.0001,at);
+  gain.gain.exponentialRampToValueAtTime(Math.max(.0002,volume),at+.015);
+  gain.gain.exponentialRampToValueAtTime(.0001,at+duration);
+  osc.connect(gain);gain.connect(gameAudioBus);osc.start(at);osc.stop(at+duration+.012);
+}
+function gameNoise(ctx,duration,{delay=0,volume=.07,cutoff=1600}={}){
+  const at=ctx.currentTime+delay,buffer=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*duration),ctx.sampleRate);
+  const samples=buffer.getChannelData(0);
+  for(let i=0;i<samples.length;i++) samples[i]=Math.random()*2-1;
+  const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();
+  source.buffer=buffer;filter.type='lowpass';filter.frequency.value=cutoff;
+  gain.gain.setValueAtTime(.0001,at);
+  gain.gain.linearRampToValueAtTime(volume,at+.02);
+  gain.gain.exponentialRampToValueAtTime(.0001,at+duration);
+  source.connect(filter);filter.connect(gain);gain.connect(gameAudioBus);
+  source.start(at);source.stop(at+duration+.01);
+}
+function playGameCue(kind,{faction}={}){
+  const ctx=getGameAudio();if(!ctx) return;
+  try{
+    switch(kind){
+      case 'select': gameTone(ctx,650,.085,{to:780,volume:.055});break;
+      case 'invalid': gameTone(ctx,210,.15,{to:155,volume:.07,type:'triangle'});break;
+      case 'cost':
+        gameTone(ctx,480,.16,{to:320,volume:.09,type:'triangle'});
+        gameTone(ctx,620,.12,{delay:.09,to:410,volume:.065});break;
+      case 'trade':
+        [523,659,784].forEach((hz,i)=>gameTone(ctx,hz,.21,{delay:i*.09,to:hz*1.02,volume:.09}));break;
+      case 'claim': {
+        const root={sdm:220,hakugyokurou:294,hourai:330,mountain:196,palace:262,
+          sage:247,sunflower:349,hell:185,heaven:392}[faction]||262;
+        [1,1.25,1.5,2].forEach((scale,i)=>gameTone(ctx,root*scale,.35,{delay:i*.115,to:root*scale*1.02,volume:.11,type:'triangle'}));
+        break;
+      }
+      case 'discard':case 'return': {
+        // Limit large claims to a quick stream without delaying any card movement.
+        const delay=Math.min(.45,Math.max(0,nextExitCueAt-ctx.currentTime));
+        nextExitCueAt=ctx.currentTime+delay+.07;
+        gameNoise(ctx,kind==='return'?.19:.13,{delay,volume:.045,cutoff:kind==='return'?2400:1100});
+        gameTone(ctx,kind==='return'?310:680,kind==='return'?.25:.15,
+          {delay,to:kind==='return'?850:180,volume:.055,type:'triangle'});
+        break;
+      }
+      case 'sakuya-start':
+        gameTone(ctx,940,.33,{to:80,volume:.10,type:'triangle'});
+        gameNoise(ctx,.22,{volume:.055,cutoff:950});break;
+      case 'sakuya-end':
+        gameTone(ctx,230,.2,{to:760,volume:.085,type:'triangle'});break;
+      case 'yukari':
+        gameNoise(ctx,.4,{volume:.075,cutoff:580});
+        gameTone(ctx,130,.5,{to:72,volume:.12,type:'sawtooth'});
+        gameTone(ctx,415,.3,{delay:.16,to:365,volume:.045});break;
+      case 'marisa':
+        gameTone(ctx,130,.65,{to:890,volume:.13,type:'sawtooth'});
+        gameNoise(ctx,.55,{delay:.15,volume:.10,cutoff:4000});break;
+      case 'victory':
+        [392,494,587,784].forEach((hz,i)=>gameTone(ctx,hz,.47,{delay:i*.14,to:hz*1.01,volume:.13,type:'triangle'}));break;
+      case 'stalemate':
+        [392,330,262].forEach((hz,i)=>gameTone(ctx,hz,.35,{delay:i*.17,to:hz*.96,volume:.095,type:'triangle'}));break;
+    }
+  }catch(_error){ /* Audio must never interrupt the game. */ }
+}
+function updateSoundToggle(){
+  const button=document.getElementById('sound-toggle');if(!button)return;
+  button.textContent=sfxEnabled?'Sound On':'Sound Off';
+  button.setAttribute('aria-pressed',String(sfxEnabled));
+  button.setAttribute('aria-label',sfxEnabled?'Mute game sounds':'Enable game sounds');
+}
+document.getElementById('sound-toggle').addEventListener('click',()=>{
+  sfxEnabled=!sfxEnabled;
+  if(gameAudioBus) gameAudioBus.gain.value=sfxEnabled?.32:0;
+  if(sfxEnabled) getGameAudio();
+  updateSoundToggle();
+});
 const DEFAULT_CROWN_LIGHT = Object.freeze({main:'#e8c874', soft:'#fff2bd', rgb:'232,200,116'});
 const CROWN_LIGHT_PALETTES = Object.freeze({
   sdm_remilia:   Object.freeze({main:'#ff365f', soft:'#ffd5df', rgb:'255,54,95'}),
@@ -3881,6 +3980,7 @@ function chooseCrownPlacementSound(){
   return choice.source;
 }
 function playPlacementSound(cardId){
+  if(!sfxEnabled) return;
   const isCrown = !!(CARD[cardId] && CARD[cardId].crown);
   const source = isCrown ? chooseCrownPlacementSound() : NORMAL_PLACEMENT_SOUND;
   if(!source) return;
@@ -3896,11 +3996,12 @@ function playPlacementSound(cardId){
 const DRAW_SOUND_INTERVAL_MS = 110;
 let nextDrawSoundAt = 0;
 function playDrawSound(){
-  if(!DRAW_CARD_SOUND) return;
+  if(!sfxEnabled || !DRAW_CARD_SOUND) return;
   const now = performance.now();
   const delay = Math.max(0,nextDrawSoundAt-now);
   nextDrawSoundAt = now+delay+DRAW_SOUND_INTERVAL_MS;
   setTimeout(() => {
+    if(!sfxEnabled) return;
     try{
       const sound = new Audio(DRAW_CARD_SOUND);
       sound.preload = 'auto';
@@ -3980,7 +4081,7 @@ const POINT_BELL_INTERVAL_MS = 200;
 let nextPointBellAt = 0;
 let pointBellStep = 0;
 function playPointGainSound({points}){
-  if(!POINT_GAIN_SOUND || points<=0) return;
+  if(!sfxEnabled || !POINT_GAIN_SOUND || points<=0) return;
   const now = performance.now();
   if(now > nextPointBellAt + 350) pointBellStep = 0;
   const startAt = Math.max(now, nextPointBellAt);
@@ -3988,6 +4089,7 @@ function playPointGainSound({points}){
     const pitch = Math.pow(1.08, pointBellStep+i);
     const delay = Math.max(0, startAt-now) + i*POINT_BELL_INTERVAL_MS;
     setTimeout(() => {
+      if(!sfxEnabled) return;
       try{
         const bell = new Audio(POINT_GAIN_SOUND);
         bell.preload = 'auto';
@@ -4096,6 +4198,7 @@ function showYuyukoBloom({r,c}){
   showSakuraBurst(boardCardRect(r,c),22);
 }
 function showMasterSpark({from,to}){
+  playGameCue('marisa');
   const start=boardCardRect(from.r,from.c);
   const end=boardCardRect(to.r,to.c);
   if(!start || !end || !start.width || !end.width || !document.body) return;
@@ -4282,8 +4385,8 @@ function showCardExit({cardId, playerIdx, source}, destination){
   });
   setTimeout(()=>ghost.remove(),delay+(flightDuration ? flightDuration+140 : destination==='discard' ? 1150 : 1300));
 }
-function showDiscardVanish(details){ showCardExit(details, 'discard'); }
-function showDrawPileReturn(details){ showCardExit(details, 'draw'); }
+function showDiscardVanish(details){ playGameCue('discard');showCardExit(details, 'discard'); }
+function showDrawPileReturn(details){ playGameCue('return');showCardExit(details, 'draw'); }
 
 function tileElement(r,c){
   if(inBounds(r,c)) return el('board').children[r*SIZE+c]||null;
@@ -4485,11 +4588,14 @@ function syncNitoriCamouflage(){
 let timeStopDepth=0;
 function showTimeStop(active){
   if(!game || game.cancelled) return;
+  if(active && timeStopDepth===0) playGameCue('sakuya-start');
+  if(!active && timeStopDepth===1) playGameCue('sakuya-end');
   timeStopDepth=Math.max(0,timeStopDepth+(active?1:-1));
   document.documentElement.classList.toggle('time-stopped',timeStopDepth>0);
 }
 const yukariArrivalUntil=new Map();
 function showYukariGap({cardId,playerIdx,source}){
+  playGameCue('yukari');
   const start=source.rect || boardCardRect(source.r,source.c);
   if(!start || !start.width || !document.body) return;
   if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -5293,6 +5399,7 @@ function commitShopChoice(slot){
   const choice=pendingCellChoice,cell=game?.shopTiles[slot];
   if(!cell || !isShopSelectable(slot)) return;
   if(choice.shopSlots?.includes(slot)){
+    playGameCue('select');
     pendingCellChoice=null;
     el('instruction-bar').classList.remove('show');el('instruction-bar').textContent='';
     choice.resolveShop(slot);
@@ -5301,6 +5408,7 @@ function commitShopChoice(slot){
 
 function commitCellChoice(r, c){
   if(!pendingCellChoice) return;
+  playGameCue('select');
   const resolve = pendingCellChoice.resolve;
   pendingCellChoice = null;
   el('instruction-bar').classList.remove('show');
@@ -5595,6 +5703,7 @@ const AI_AVATARS = ['👻','🎭','🌙'];
 
 function finishPlayerChoice(choice,playerIdx){
   if(pendingPlayerChoice!==choice) return;
+  if(playerIdx!==null) playGameCue('select');
   pendingPlayerChoice=null;
   document.removeEventListener('keydown',choice.onEscape);
   el('instruction-bar').classList.remove('show');
@@ -5697,6 +5806,7 @@ function renderStatus(){
   el('draw-btn').disabled = !humanReady || !game.canDrawNormally(0) || !!pendingCellChoice;
 }
 
+let announcedGameResult=null;
 function renderAll(){
   if(!game || game.cancelled) return;
   renderBoard();
@@ -5705,9 +5815,11 @@ function renderAll(){
   renderLog();
   renderStatus();
   if(game.winner){
+    if(announcedGameResult!==game){announcedGameResult=game;playGameCue('victory');}
     el('winner-text').textContent = `${game.winner.name} wins with ${game.winCount(game.winner)} discard points!`;
     el('winner-banner').classList.add('show');
   } else if(game.stalemateMessage){
+    if(announcedGameResult!==game){announcedGameResult=game;playGameCue('stalemate');}
     el('winner-text').textContent = game.stalemateMessage;
     el('winner-banner').classList.add('show');
   } else {
@@ -5719,6 +5831,8 @@ function renderAll(){
 const ui = {
   onLog(){ renderLog(); },
   onDiscard:showDiscardVanish,
+  onCostPaid(){playGameCue('cost');},
+  onFactionClaim({faction}){playGameCue('claim',{faction});},
   onSakuraBloom:showYuyukoBloom,
   onMasterSpark:showMasterSpark,
   onTenshiUpdraft:showTenshiUpdraft,
@@ -5739,6 +5853,7 @@ const ui = {
     animateAbilityCard('sage_yukari',handOrSeatRect(playerIdx),start,'trade');
   },
   onShopTrade({playerIdx,offeredId,boughtId,r,c}){
+    playGameCue('trade');
     const tile=tileElement(r,c);
     const shop=(tile?.querySelector('.board-card') || tile)?.getBoundingClientRect();
     const hand=tradeHandCardRect(playerIdx,offeredId);
@@ -5788,6 +5903,7 @@ const ui = {
         btn.className = 'modal-opt';
         btn.textContent = opt.label;
         btn.addEventListener('click', () => {
+          playGameCue('select');
           el('modal-overlay').classList.remove('show');
           resolve(opt.value);
         });
@@ -5806,6 +5922,7 @@ const ui = {
       const choice = { allowed, selected:null };
       const finish = value => {
         if(pendingHandChoice!==choice) return;
+        if(value!==null) playGameCue('select');
         pendingHandChoice = null;
         document.removeEventListener('keydown', onEscape);
         bar.classList.remove('show');
@@ -5846,6 +5963,7 @@ const ui = {
       const choice={multi:true, allowed, selectedCards:new Set(), minCount, maxCount, title};
       const finish=value=>{
         if(pendingHandChoice!==choice) return;
+        if(value!==null) playGameCue('select');
         pendingHandChoice=null;
         document.removeEventListener('keydown',onEscape);
         bar.classList.remove('show');
@@ -5893,6 +6011,7 @@ const ui = {
       cardsEl.replaceChildren();
       const finish = value => {
         if(settled) return;
+        if(value!==null) playGameCue('select');
         settled = true;
         overlay.classList.remove('show');
         overlay.removeEventListener('click', onBackdrop);
@@ -5967,11 +6086,13 @@ const ui = {
         previewCells: [],
         resolve: (cells) => {
           if(isValid && !isValid(cells)){
+            playGameCue('invalid');
             clearRectPreview();
             el('instruction-bar').textContent = `${title} — choose a ${dim}×${dim} area over the tiles.`;
             return;
           }
           pendingRectChoice = null;
+          playGameCue('select');
           document.querySelectorAll('#board .cell.rect-preview,#kourindou .cell.rect-preview').forEach(c=>c.classList.remove('rect-preview','rect-invalid'));
           el('instruction-bar').classList.remove('show');
           el('instruction-bar').textContent = '';
@@ -6547,6 +6668,7 @@ function onHandCardClick(cardId){
   const cardObj = CARD[cardId];
   const cells = humanActionCells(cardId),shopSlots=humanShopSlots(cardId);
   if(!cells.length && !shopSlots.length){
+    playGameCue('invalid');
     el('status-line').textContent = `No legal space for ${cardObj.name} right now — choose another card or draw.`;
     selectedHandCard = null;
     syncHandSelection();
@@ -6573,6 +6695,7 @@ function prepareHandCardDrag(cardId){
   const cardObj = CARD[cardId];
   const cells = humanActionCells(cardId),shopSlots=humanShopSlots(cardId);
   if(!cells.length && !shopSlots.length){
+    playGameCue('invalid');
     el('status-line').textContent = `No legal space for ${cardObj.name} right now — choose another card or draw.`;
     return false;
   }
@@ -6812,6 +6935,7 @@ function resetGameView(){
   clearRinnosukeBubble();
   clearCrownBackdrop();
   game=null;
+  announcedGameResult=null;
   if(pendingPlayerChoice){document.removeEventListener('keydown',pendingPlayerChoice.onEscape);pendingPlayerChoice=null;}
   if(pendingHandChoice?.onEscape) document.removeEventListener('keydown',pendingHandChoice.onEscape);
   if(cancelLookIntoView) cancelLookIntoView();
