@@ -121,7 +121,10 @@
   }
   .crown-backdrop.active{opacity:1}
   body.crown-scene-active .stars{opacity:.18}
-  body.crown-scene-active #game .panel{background:rgba(27,21,48,.73)}
+  body.crown-scene-active #game .panel{
+    background:linear-gradient(135deg,rgba(var(--scene-rgb),.25),rgba(var(--scene-rgb),.09) 62%,rgba(27,21,48,.82));
+    border-color:rgba(var(--scene-rgb),.48);
+  }
   @media(prefers-reduced-motion:reduce){.crown-backdrop{transition:none}}
   h1,h2,h3, .display{ font-family:'Cinzel', serif; letter-spacing:0.02em; }
   .stars{
@@ -312,6 +315,17 @@
 
   /* board */
   #board-wrap{ display:flex; flex-direction:column; align-items:center; gap:10px; }
+  #board-wrap,#hand-area,#game .panel{transition:background .65s ease,border-color .65s ease,box-shadow .65s ease}
+  body.crown-scene-active #board-wrap{
+    border-radius:12px;
+    background:linear-gradient(150deg,rgba(var(--scene-rgb),.27),rgba(var(--scene-rgb),.08) 68%);
+    box-shadow:inset 0 0 25px rgba(var(--scene-rgb),.16);
+  }
+  body.crown-scene-active #hand-area{
+    border-radius:10px;
+    background:linear-gradient(115deg,rgba(var(--scene-rgb),.32),rgba(var(--scene-rgb),.12) 74%);
+    box-shadow:inset 0 0 18px rgba(var(--scene-rgb),.15);
+  }
   #board{
     display:grid; grid-template-columns:repeat(4, 1fr); grid-template-rows:repeat(4, 1fr);
     gap:8px; width:min(85vw, 420px); aspect-ratio:4/5; position:relative;
@@ -322,21 +336,6 @@
     position:relative; border-radius:10px; background:#14102358;
     border:1px solid var(--line); display:flex; align-items:center; justify-content:center;
     cursor:default; overflow:hidden; min-height:0; perspective:340px;
-  }
-  #table-surface, #board, #board .cell{transition:background .65s ease,border-color .65s ease,box-shadow .65s ease}
-  body.crown-scene-active #table-surface{
-    background:radial-gradient(ellipse at 50% 40%,rgba(var(--scene-rgb),.46) 0%,rgba(var(--scene-rgb),.23) 57%,#140f26 100%);
-    border-color:var(--scene-color);
-    box-shadow:0 14px 34px rgba(0,0,0,.55),inset 0 0 50px rgba(0,0,0,.48),inset 0 0 0 2px rgba(var(--scene-rgb),.36);
-  }
-  body.crown-scene-active #board{
-    border-radius:12px;
-    background:linear-gradient(145deg,rgba(var(--scene-rgb),.23),rgba(var(--scene-rgb),.06));
-    box-shadow:0 0 26px rgba(var(--scene-rgb),.31);
-  }
-  body.crown-scene-active #board .cell:not(.wasteland){
-    background:rgba(var(--scene-rgb),.16);
-    border-color:rgba(var(--scene-rgb),.45);
   }
   .cell.sunflower-afterglow > .board-card{position:relative;z-index:8}
   .cell.just-placed{ overflow:visible; z-index:2; } /* let the stand-up animation pop out past the tile bounds without clipping */
@@ -964,6 +963,7 @@
     background-repeat:no-repeat,no-repeat,no-repeat,no-repeat;
     color:#fff2fa;
   }
+  .card-art-hecatia{background-size:100% 100%,auto 125%,cover,cover;}
   .faction-bg-hell .cname,.card-art-hecatia .cname,.card-art-clownpiece .cname,.card-art-eiki .cname,.card-art-komachi .cname{
     color:#fff9f2; text-shadow:0 1px 4px rgba(0,0,0,.98);
   }
@@ -1641,6 +1641,10 @@
     display:flex; align-items:center; justify-content:center; overflow:visible; pointer-events:none;
   }
   .card-detail-portrait img{ display:block; width:100%; height:100%; object-fit:contain; object-position:center bottom; }
+  #card-detail.detail-card-hell_hecatia .card-detail-portrait{top:13%;height:70%;align-items:flex-start;}
+  #card-detail.detail-card-hell_hecatia .card-detail-portrait img{
+    width:100%;height:auto;max-width:none;object-fit:contain;object-position:center top;
+  }
   .card-detail-portrait img.detail-art-hourai_mokou{ object-position:38% bottom; }
   .card-detail-portrait.no-art span{ font-size:clamp(4rem,20vw,8rem); filter:drop-shadow(0 6px 14px #100b1c); }
   .card-detail-effect{
@@ -1903,10 +1907,22 @@
     overflow-wrap:break-word;
   }
   #rinnosuke-bubble[hidden]{display:none}
+  #rinnosuke-bubble.rinnosuke-floating{
+    position:fixed;z-index:80;width:min(250px,calc(100vw - 20px));margin:0;
+    max-height:min(34vh,150px);
+  }
   #rinnosuke-bubble::after{
     content:''; position:absolute; left:50%; bottom:-7px; width:12px; height:12px;
     transform:translateX(-50%) rotate(45deg); background:#201c2b;
     border-right:1px solid #cfaf77; border-bottom:1px solid #cfaf77;
+  }
+  #rinnosuke-bubble.rinnosuke-floating::after{left:var(--bubble-tail-x,50%)}
+  #rinnosuke-bubble.rinnosuke-floating.bubble-below::after{top:-7px;bottom:auto;transform:translateX(-50%) rotate(225deg)}
+  #rinnosuke-bubble.rinnosuke-floating.bubble-left::after{
+    left:auto;right:-7px;top:var(--bubble-tail-y,50%);bottom:auto;transform:translateY(-50%) rotate(-45deg);
+  }
+  #rinnosuke-bubble.rinnosuke-floating.bubble-right::after{
+    left:-7px;top:var(--bubble-tail-y,50%);bottom:auto;transform:translateY(-50%) rotate(135deg);
   }
   .rinnosuke-bubble-name{display:block;margin-bottom:3px;color:#f4d799;font-size:.67rem;font-weight:700;letter-spacing:.04em}
   @media(prefers-reduced-motion:no-preference){
@@ -3161,6 +3177,7 @@ class Game {
     this.log(`${this.players[playerIdx].name} places ${CARD[cardId].name}.`);
     lastPlacedCell = {r, c, crownEffectId};
     this.render();
+    if(cardId==='shop_rinnosuke') speakRinnosuke('welcome',{force:true});
     triggerPlacementPresentation(cardId, r, c, crownEffectId);
     // Guarantee the stand-up placement animation (0.65s) actually gets to play before anything
     // else touches the board. Without this, a card whose ability resolves with no real async
@@ -3999,7 +4016,6 @@ function showCrownBackdrop(cardId){
   const light=crownLightFor(cardId);
   const view=el('game');
   view.style.setProperty('--scene-rgb',light.rgb);
-  view.style.setProperty('--scene-color',light.main);
   const layers=[el('crown-backdrop-a'),el('crown-backdrop-b')];
   const nextIndex=activeCrownBackdrop===0 ? 1 : 0;
   const next=layers[nextIndex];
@@ -4021,7 +4037,6 @@ function clearCrownBackdrop(){
   document.body.classList.remove('crown-scene-active');
   const view=el('game');
   view.style.removeProperty('--scene-rgb');
-  view.style.removeProperty('--scene-color');
 }
 
 function triggerPlacementPresentation(cardId, r, c, crownEffectId=null){
@@ -6905,19 +6920,51 @@ const RINNOSUKE_LINES={
 let rinnosukeBubbleTimer=null,rinnosukeOpeningTimer=null;
 let rinnosukeLastSpoke=0;
 const rinnosukeLastLineByKind=new Map();
+function dockRinnosukeBubble(){
+  const bubble=el('rinnosuke-bubble'),panel=el('log-panel');
+  if(bubble.parentElement!==panel) panel.insertBefore(bubble,panel.firstChild);
+  bubble.classList.remove('rinnosuke-floating','bubble-above','bubble-below','bubble-left','bubble-right');
+  bubble.style.left='';bubble.style.top='';
+  bubble.style.removeProperty('--bubble-tail-x');
+  bubble.style.removeProperty('--bubble-tail-y');
+}
 function clearRinnosukeBubble(){
   if(rinnosukeBubbleTimer) clearTimeout(rinnosukeBubbleTimer);
   if(rinnosukeOpeningTimer) clearTimeout(rinnosukeOpeningTimer);
   rinnosukeBubbleTimer=null;rinnosukeOpeningTimer=null;
   rinnosukeLastSpoke=0;rinnosukeLastLineByKind.clear();
   el('rinnosuke-bubble').hidden=true;
+  dockRinnosukeBubble();
 }
 function positionRinnosukeBubble(){
   const bubble=el('rinnosuke-bubble');
   if(bubble.hidden) return;
   const keeper=game && !game.cancelled && game.boardCells(cell=>cell.id==='shop_rinnosuke')[0];
   const tile=keeper && tileElement(keeper.r,keeper.c);
-  if(!tile || !tile.isConnected || !tile.getBoundingClientRect().width) bubble.hidden=true;
+  if(!tile || !tile.isConnected || !tile.getBoundingClientRect().width){bubble.hidden=true;dockRinnosukeBubble();return;}
+  if(!inBounds(keeper.r,keeper.c)){dockRinnosukeBubble();return;}
+  if(bubble.parentElement!==document.body) document.body.appendChild(bubble);
+  bubble.classList.add('rinnosuke-floating');
+  const board=el('board').getBoundingClientRect(),card=tile.getBoundingClientRect();
+  const size=bubble.getBoundingClientRect(),w=size.width,h=size.height;
+  const x=card.left+card.width/2,y=card.top+card.height/2;
+  const margin=10,gap=14,screenW=window.innerWidth,screenH=window.innerHeight;
+  const clamp=(n,lo,hi)=>Math.min(Math.max(n,lo),Math.max(lo,hi));
+  const options=[
+    {side:'above',left:clamp(x-w/2,margin,screenW-w-margin),top:board.top-h-gap,score:y-board.top},
+    {side:'below',left:clamp(x-w/2,margin,screenW-w-margin),top:board.bottom+gap,score:board.bottom-y+80},
+    {side:'left',left:board.left-w-gap,top:clamp(y-h/2,margin,screenH-h-margin),score:x-board.left},
+    {side:'right',left:board.right+gap,top:clamp(y-h/2,margin,screenH-h-margin),score:board.right-x}
+  ];
+  const visible=options.filter(p=>p.left>=margin && p.top>=margin && p.left+w<=screenW-margin && p.top+h<=screenH-margin);
+  const best=(visible.length ? visible : options).sort((a,b)=>a.score-b.score)[0];
+  const left=clamp(best.left,margin,screenW-w-margin),top=clamp(best.top,margin,screenH-h-margin);
+  bubble.classList.remove('bubble-above','bubble-below','bubble-left','bubble-right');
+  bubble.classList.add(`bubble-${best.side}`);
+  bubble.style.left=`${left}px`;
+  bubble.style.top=`${top}px`;
+  bubble.style.setProperty('--bubble-tail-x',`${clamp(x-left,18,w-18)}px`);
+  bubble.style.setProperty('--bubble-tail-y',`${clamp(y-top,18,h-18)}px`);
 }
 function speakRinnosuke(kind,{force=false}={}){
   if(!game || game.cancelled || !game.shopkeeperAvailable()) return false;
