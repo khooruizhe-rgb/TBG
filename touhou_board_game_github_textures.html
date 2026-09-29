@@ -54,10 +54,10 @@
     --texture-slot-038: url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/hakurei/marisa_kirisame.png");
     --texture-slot-039: url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/sunflower_field/yuuka_kazami.png");
     --texture-slot-040: url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/sunflower_field/medicine_melancholy.png");
-    --texture-slot-041: url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/hell/hecatia_lapislazuli.png");
-    --texture-slot-042: url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/hell/clownpiece.png");
-    --texture-slot-043: url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/hell/eiki_shiki.png");
-    --texture-slot-044: url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/hell/komachi_onozuka.png");
+    --texture-slot-041: url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/hell/hecatia_lapislazuli.png?v=20260929");
+    --texture-slot-042: url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/hell/clownpiece.png?v=20260929");
+    --texture-slot-043: url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/hell/eiki_shiki.png?v=20260929");
+    --texture-slot-044: url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/hell/komachi_onozuka.png?v=20260929");
     --texture-slot-084: url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/backgrounds/heaven_floating_stones.png");
     --texture-slot-085: url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/heaven/tenshi_hinanawi.png");
     --texture-slot-086: url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/heaven/iku_nagae.png");
@@ -2272,7 +2272,7 @@ const CARDS = [
   { id:'hell_eiki',      faction:'hell', name:'Eiki Shiki', cost1:true,
     desc:'[Cost I] Placed: Return every card of the largest faction on the board (your choice if tied) to the draw pile.' },
   { id:'hell_komachi',   faction:'hell', name:'Komachi Onozuka',
-    desc:'Placed: Swap this card\'s position with another board card. If Eiki Shiki is on the board, draw and immediately place the top card.' },
+    desc:'Placed: Swap this card\'s position with another board card. If Eiki Shiki is on the board, the placement does not cost a turn.' },
 
   { id:'heaven_tenshi', faction:'heaven', name:'Tenshi Hinanawi', crown:true, cost2:true,
     desc:'[Cost II] Placed: Return every card on the board that is not in the Heaven faction to the draw pile and shuffle it.' },
@@ -3715,21 +3715,9 @@ class Game {
         } else {
           self.log(`${meS} Komachi finds no other card on the board to swap with.`);
         }
-        if(self.isActiveOnBoard('hell_eiki') && self.drawPile.length){
-          const newCard = self.takeFromDrawPile(playerIdx);
-          const spaces = self.emptyCells();
-          const empties = self.players[playerIdx].isAI ? aiPlacementCells(self, newCard, spaces) : spaces;
-          if(empties.length){
-            const cell = await self.chooseCell(playerIdx, empties, `Place drawn card: ${CARD[newCard].name}`);
-            if(cell){
-              self.log(`${meS} Komachi (with Eiki on the board) draws and places ${CARD[newCard].name}.`);
-              await self.internalPlace(newCard, cell.r, cell.c, playerIdx, depth+1);
-            } else {
-              self.addToHand(playerIdx, newCard);
-            }
-          } else {
-            self.addToHand(playerIdx, newCard);
-          }
+        if(self.isActiveOnBoard('hell_eiki')){
+          self.log(`${meS} Komachi's placement costs no turn while Eiki Shiki is on the board.`);
+          return {skipAdvance:true};
         }
         break;
       }
@@ -4770,10 +4758,10 @@ Object.assign(CARD_DETAIL_PORTRAITS, {
   medicine: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/sunflower_field/medicine_melancholy.png",
 });
 Object.assign(CARD_DETAIL_PORTRAITS, {
-  hell_hecatia: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/hell/hecatia_lapislazuli.png",
-  hell_clownpiece: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/hell/clownpiece.png",
-  hell_eiki: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/hell/eiki_shiki.png",
-  hell_komachi: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/hell/komachi_onozuka.png",
+  hell_hecatia: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/hell/hecatia_lapislazuli.png?v=20260929",
+  hell_clownpiece: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/hell/clownpiece.png?v=20260929",
+  hell_eiki: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/hell/eiki_shiki.png?v=20260929",
+  hell_komachi: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/hell/komachi_onozuka.png?v=20260929",
 });
 Object.assign(CARD_DETAIL_PORTRAITS, {
   heaven_tenshi: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/heaven/tenshi_hinanawi.png",
@@ -6086,7 +6074,7 @@ function endStalemate(){
    by definition, so the AI should only ever do so when the placement itself banks discard points
    (goal 1/3 below), never as a bare tiebreaker over an equally-scored card that DOES have one. */
 const NO_PLACED_ABILITY = new Set(['sage_yukari', 'sage_kasen', 'hourai_eirin','mtn_nitori','hell_hecatia']);
-const DRAW_ABILITY_CARDS = new Set(['hourai_mokou','mtn_sanae','sage_ran','yuuka','hell_komachi','hell_kutaka']);
+const DRAW_ABILITY_CARDS = new Set(['hourai_mokou','mtn_sanae','sage_ran','yuuka','hell_kutaka']);
 
 function aiPlacementCells(currentGame, cardId, spaces){
   if(cardId==='sage_yukari') return spaces.filter(cell=>currentGame.cardAt(cell.r,cell.c)!=='shop_rinnosuke');
@@ -6217,8 +6205,10 @@ async function aiDecideAction(playerIdx,allowTrade=true){
       ? game.knownHandCards(playerIdx,'hourai').filter(c=>c.id!==cardId).length : 0;
     // Kaguya turns known Eientei cards into immediate extra placements, rather than hand draws.
     const suppressedCrown=!!cardObj.crown && game.isActiveOnBoard('hourai_eirin') && !bestClaims;
+    const freeKomachi=cardId==='hell_komachi' && game.isActiveOnBoard('hell_eiki');
     const handGain = suppressedCrown ? 0 : Math.max(game.estimateHandGain(playerIdx, cardId),
-      kaguyaExtraPlacements ? Math.min(3,kaguyaExtraPlacements+1) : 0);
+      kaguyaExtraPlacements ? Math.min(3,kaguyaExtraPlacements+1) : 0,
+      freeKomachi ? 1.1 : 0);
     const noAbility = NO_PLACED_ABILITY.has(cardId);
     const lowPriority = !bestClaims && (
       (cardObj.crown && game.isActiveOnBoard('hourai_eirin'))
