@@ -118,6 +118,8 @@
     background-size:cover; background-position:center; background-repeat:no-repeat;
     filter:blur(14px) brightness(.7) saturate(.93);
     transition:opacity .75s ease;
+    transform:scale(1.14);will-change:transform;
+    animation:crownSceneDrift 52s ease-in-out infinite alternate;
   }
   .crown-backdrop.active{opacity:1}
   body.crown-scene-active .stars{opacity:.18}
@@ -125,7 +127,11 @@
     background:linear-gradient(135deg,rgba(var(--scene-rgb),.25),rgba(var(--scene-rgb),.09) 62%,rgba(27,21,48,.82));
     border-color:rgba(var(--scene-rgb),.48);
   }
-  @media(prefers-reduced-motion:reduce){.crown-backdrop{transition:none}}
+  @keyframes crownSceneDrift{
+    from{transform:translate3d(-1.4%,-.9%,0) scale(1.14)}
+    to{transform:translate3d(1.4%,.9%,0) scale(1.2)}
+  }
+  @media(prefers-reduced-motion:reduce){.crown-backdrop{transition:none;animation:none;transform:scale(1.14)}}
   h1,h2,h3, .display{ font-family:'Cinzel', serif; letter-spacing:0.02em; }
   .stars{
     position:fixed; inset:0; pointer-events:none; z-index:0; opacity:0.5;
@@ -1480,7 +1486,9 @@
   .mind-wires{fill:none;stroke:currentColor;stroke-width:1.5;opacity:.8}
   .mind-ring{fill:none;stroke:currentColor;stroke-width:1.5;transform-origin:50px 50px;animation:lunaticWave .85s ease-out both;animation-delay:var(--wave-delay,0s)}
   .mind-fx.reisen{color:#ff4d70}
-  .mind-fx.satori{color:#f991cc}
+  .mind-fx.satori{color:#ee3a58}
+  .mind-fx.satori .eye-white{fill:#c91d3d;stroke:#ff8c9f}
+  .mind-fx.satori .eye-iris{fill:#fff0f3;stroke:#f58b9c}
   .mind-fx.kaguya{color:#f5f2ff}
   .mind-moon{fill:#fbf7ff;stroke:#c3c3ec;stroke-width:1;transform-origin:50px 50px;animation:moonReveal .85s both}
   .mind-fx.miss .mind-moon{animation:moonMiss .85s both}
@@ -1493,11 +1501,10 @@
   .ability-flight.ability-patchouli::after{content:'✧  ☽  ✧';position:absolute;inset:-20%;color:#ead6ff;font-size:22px;text-align:center;border:1px dashed #c997ff;border-radius:50%;animation:mindOrbit .9s both}
   .hand-card.mind-arriving{animation:mindHandArrive 1s var(--mind-age,0ms) both}
   #look-into-emblem{display:none;width:72px;height:42px;float:right;color:var(--reading-color,#f991cc);pointer-events:none}
-  #look-into-overlay[data-reading="satori"]{--reading-color:#f991cc}
+  #look-into-overlay[data-reading="satori"]{--reading-color:#ee3a58}
   #look-into-overlay[data-reading="reisen"]{--reading-color:#ff4d70}
   #look-into-overlay[data-reading] #look-into-emblem{display:block}
   #look-into-overlay[data-reading] #look-into-panel{border-color:var(--reading-color);box-shadow:0 0 32px color-mix(in srgb,var(--reading-color) 25%,transparent),0 24px 70px #000a}
-  #look-into-overlay[data-reading] .look-into-card::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,transparent 38%,var(--reading-color) 50%,transparent 62%);opacity:0;animation:mindReadScan .8s var(--read-delay,0ms) both}
   .reisen-forced-marker{position:absolute;z-index:8;top:28%;right:5%;width:30px;height:22px;pointer-events:none;color:#ff4d70;filter:drop-shadow(0 0 5px #9c0029);animation:decreePulse 1.4s var(--reisen-phase,0ms) infinite}
   .reisen-forced-marker svg{width:100%;height:100%}
   .hand-card.reisen-bound{box-shadow:inset 0 0 0 2px #ed3968,0 0 13px #ef305b66}
@@ -1505,8 +1512,8 @@
   .reisen-decree svg{width:24px;height:16px;color:#ff4d70;flex:none}
   .clown-flame-tile{position:fixed;z-index:81;pointer-events:none;overflow:visible;animation:fairyFireFade 1.05s both}
   .clown-flame-tile::before{content:'';position:absolute;inset:3%;border-radius:7px;background:radial-gradient(ellipse,#543b35a8,transparent 75%);animation:fairyAsh .9s both}
-  .clown-flame-tile .fairy-flame{position:absolute;bottom:2%;width:30%;height:100%;transform-origin:50% 100%;animation:fairyFlame .85s var(--flame-delay,0ms) both;filter:drop-shadow(0 0 5px #ff6122)}
-  .clown-flame-tile .fairy-star{position:absolute;bottom:35%;color:#ffdf90;font-size:13px;animation:fairyStar .85s var(--flame-delay,0ms) both}
+  .clown-flame-tile .fairy-flame{position:absolute;bottom:2%;width:30%;height:100%;transform-origin:50% 100%;animation:fairyFlame .85s var(--flame-delay,0ms) both;filter:drop-shadow(0 0 5px #b673ea)}
+  .clown-flame-tile .fairy-star{position:absolute;bottom:35%;color:#eed5ff;font-size:13px;animation:fairyStar .85s var(--flame-delay,0ms) both}
   @keyframes mindEnvelope{0%{opacity:0;scale:.7}15%,68%{opacity:1;scale:1}100%{opacity:0;scale:1.12}}
   @keyframes mindOrbit{from{rotate:-30deg;scale:.7}to{rotate:70deg;scale:1.1}}
   @keyframes spellbookOpen{0%{transform:scaleX(.1) translateY(10px)}28%,75%{transform:scaleX(1) translateY(0)}100%{transform:scaleX(.8) translateY(-8px)}}
@@ -4852,8 +4859,19 @@ function showKomachiSwap({first,second}){
 }
 
 const mindEffectTimers=new Set(),mindArrivals=new Map();
-function mindEyeSvg(){
-  return '<svg viewBox="0 0 100 60" aria-hidden="true"><path d="M5 30Q50-13 95 30Q50 73 5 30Z" fill="#fff0f5" stroke="currentColor" stroke-width="5"/><circle cx="50" cy="30" r="19" fill="currentColor"/><circle cx="50" cy="30" r="9" fill="#271328"/><circle cx="56" cy="23" r="4" fill="white"/></svg>';
+let mindEffectsUntil=0;
+function kaguyaMoonPath(progress){
+  const terminator=27*(1-2*progress),control=terminator*.552285;
+  return `M50 23A27 27 0 0 1 50 77C${50+control} 77 ${50+terminator} 64.912 ${50+terminator} 50C${50+terminator} 35.088 ${50+control} 23 50 23Z`;
+}
+function kaguyaMoonSvg(streak,growing){
+  // Three correct guesses wax the crescent through quarter and gibbous to full.
+  const phases=[.12,.35,.7,1],index=Math.min(3,Math.max(0,streak));
+  const current=kaguyaMoonPath(phases[index]),previous=kaguyaMoonPath(phases[Math.max(0,index-1)]);
+  return `<circle cx="50" cy="50" r="27" fill="#2a253e" stroke="#b8aecb"/><path d="${current}" fill="#fff9ed" stroke="none">${growing?`<animate attributeName="d" from="${previous}" to="${current}" dur=".58s" begin=".12s" fill="freeze"/>`:''}</path>`;
+}
+function mindEyeSvg(kind='reisen'){
+  return `<svg viewBox="0 0 100 60" aria-hidden="true"><path d="M5 30Q50-13 95 30Q50 73 5 30Z" fill="${kind==='satori'?'#c91d3d':'#fff0f5'}" stroke="currentColor" stroke-width="5"/><circle cx="50" cy="30" r="19" fill="${kind==='satori'?'#fff0f3':'currentColor'}"/><circle cx="50" cy="30" r="9" fill="#271328"/><circle cx="56" cy="23" r="4" fill="white"/></svg>`;
 }
 function finishMindEffect(callback,delay){
   const timer=setTimeout(()=>{mindEffectTimers.delete(timer);callback();},delay);
@@ -4862,11 +4880,13 @@ function finishMindEffect(callback,delay){
 function clearMindEffects(){
   for(const timer of mindEffectTimers) clearTimeout(timer);
   mindEffectTimers.clear();mindArrivals.clear();
+  mindEffectsUntil=0;
   document.querySelectorAll('.mind-fx,.mind-link,.clown-flame-tile').forEach(node=>node.remove());
   delete el('look-into-overlay').dataset.reading;
   el('look-into-emblem').replaceChildren();
 }
 function addMindNode(node,key,duration=1150){
+  mindEffectsUntil=Math.max(mindEffectsUntil,Date.now()+duration);
   node.dataset.abilityKey=key;node.setAttribute('aria-hidden','true');
   document.body.appendChild(node);finishMindEffect(()=>node.remove(),duration);
 }
@@ -4878,11 +4898,11 @@ function mindSeal(effect,rect,stage,key,streak=0){
   const eye='<g class="mind-eye"><path class="eye-white" d="M15 50Q50 15 85 50Q50 85 15 50Z"/><circle class="eye-iris" cx="50" cy="50" r="15"/><circle cx="50" cy="50" r="6" fill="#21132c"/><circle cx="55" cy="45" r="3" fill="#fff"/></g>';
   const stars=Array.from({length:Math.min(9,3+streak)},(_,i)=>{const a=i*Math.PI*2/Math.min(9,3+streak);return `<path d="M0-4 1-1 4 0 1 1 0 4-1 1-4 0-1-1Z" transform="translate(${50+Math.cos(a)*39} ${50+Math.sin(a)*39})"/>`;}).join('');
   const art={
-    patchouli:'<circle class="mind-orbit" cx="50" cy="50" r="39"/><g class="book-page"><path d="M50 39Q31 25 14 32V67Q31 60 50 74Q68 60 86 67V32Q68 25 50 39Z"/><path class="book-ink" d="M50 39V74M21 40Q35 35 43 42M21 49Q35 44 43 51M21 58Q35 53 43 60M57 42Q70 35 79 40M57 51Q70 44 79 49M57 60Q70 53 79 58"/></g><g class="mind-stars"><text x="12" y="22" font-size="12" fill="#bdf1ff">水</text><text x="77" y="23" font-size="12" fill="#ffd7a5">火</text><text x="43" y="8" font-size="12">月</text></g>',
+    patchouli:'<circle class="mind-orbit" cx="50" cy="50" r="39"/><g class="book-page"><path d="M50 39Q31 25 14 32V67Q31 60 50 74Q68 60 86 67V32Q68 25 50 39Z"/><path class="book-ink" d="M50 39V74M21 40Q35 35 43 42M21 49Q35 44 43 51M21 58Q35 53 43 60M57 42Q70 35 79 40M57 51Q70 44 79 49M57 60Q70 53 79 58"/></g><g class="mind-stars" font-size="12" text-anchor="middle"><text x="50" y="10" fill="#fff0ae">金</text><text x="88" y="39" fill="#a8edb5">木</text><text x="74" y="87" fill="#9ce3ff">水</text><text x="26" y="87" fill="#ffb297">火</text><text x="12" y="39" fill="#ddb18b">土</text></g>',
     satori:`<path class="mind-wires" d="M28 52C-10 90 96 104 88 48S4-4 12 40 96 18 85 63"/>${eye}`,
     reisen:`${[0,.1,.2].map(delay=>`<circle class="mind-ring" style="--wave-delay:${delay}s" cx="50" cy="50" r="32"/>`).join('')}${eye}`,
-    kaguya:`<circle class="mind-orbit" cx="50" cy="50" r="40"/><g class="mind-moon">${stage==='miss' ? '<path d="M47 24A27 27 0 0 0 40 77L47 60 40 48 50 38Z"/><path d="M56 23A27 27 0 0 1 53 77L60 61 53 48 62 35Z"/>' : stage==='hit' ? '<circle cx="50" cy="50" r="27"/><path d="m36 50 10 10 20-23" fill="none" stroke="#9678b0" stroke-width="3"/>' : '<path d="M63 24A29 29 0 1 0 72 68A29 29 0 0 1 63 24Z"/>'}</g><g class="mind-stars">${stars}</g>`,
-    clownpiece:'<path d="M42 81H58L63 49H37Z" fill="#8d4f34" stroke="#ffd088" stroke-width="2"/><path d="M50 56C20 53 34 34 39 26Q43 39 47 29Q54 18 51 8C81 29 73 50 50 56Z" fill="#ff8541"/><path d="M50 52Q39 46 50 33Q60 46 50 52" fill="#fff1a6"/>'
+    kaguya:`<circle class="mind-orbit" cx="50" cy="50" r="40"/><g class="mind-moon">${stage==='miss' ? '<path d="M47 24A27 27 0 0 0 40 77L47 60 40 48 50 38Z"/><path d="M56 23A27 27 0 0 1 53 77L60 61 53 48 62 35Z"/>' : kaguyaMoonSvg(streak,stage==='hit')}</g><g class="mind-stars">${stars}</g>`,
+    clownpiece:'<path d="M42 81H58L63 49H37Z" fill="#8d4f34" stroke="#ffd088" stroke-width="2"/><path d="M50 56C20 53 34 34 39 26Q43 39 47 29Q54 18 51 8C81 29 73 50 50 56Z" fill="#c681dc"/><path d="M50 52Q39 46 50 33Q60 46 50 52" fill="#ffe5ed"/>'
   };
   fx.innerHTML=`<svg viewBox="0 0 100 100">${art[effect]||''}</svg>`;
   if(stage==='miss' || (effect==='kaguya' && stage==='hit')){
@@ -4908,7 +4928,7 @@ function showClownpieceClear(details,key){
       const flame=document.createElementNS('http://www.w3.org/2000/svg','svg');
       flame.setAttribute('viewBox','0 0 36 90');flame.classList.add('fairy-flame');
       flame.style.left=`${i*23-1}%`;flame.style.setProperty('--flame-delay',`${i*35}ms`);
-      flame.innerHTML='<path d="M18 88C-9 72 9 53 3 38Q19 48 17 29Q15 18 25 2Q16 31 31 42Q46 68 18 88" fill="#ff793dcc"/><path d="M18 83Q4 67 19 47Q17 62 26 65Q30 76 18 83" fill="#ffefae"/>';
+      flame.innerHTML='<path d="M18 88C-9 72 9 53 3 38Q19 48 17 29Q15 18 25 2Q16 31 31 42Q46 68 18 88" fill="#c67bd9cc"/><path d="M18 83Q4 67 19 47Q17 62 26 65Q30 76 18 83" fill="#ffe3eb"/>';
       fx.appendChild(flame);
       const star=document.createElement('span');star.className='fairy-star';star.textContent='✦';star.style.left=`${i*23+5}%`;star.style.setProperty('--flame-delay',`${i*45}ms`);fx.appendChild(star);
     }
@@ -4926,7 +4946,7 @@ function showMindAbility(details){
   const origin=boardCardRect(r,c),target=stage==='bind'?tradeHandCardRect(targetIdx,cardId):seatRect(targetIdx);
   mindSeal(effect,origin,stage,key,streak);
   if(stage==='focus' || stage==='bind' || stage==='take'){
-    mindLink(origin,target,effect==='reisen'?'#ff4d70':effect==='satori'?'#f991cc':'#c6a1ff',key);
+    mindLink(origin,target,effect==='reisen'?'#ff4d70':effect==='satori'?'#ee3a58':'#c6a1ff',key);
     if(effect==='reisen' && stage==='bind') mindSeal('reisen',target,stage,key);
   }
   if(stage==='take' && cardId){
@@ -6185,7 +6205,7 @@ const ui = {
       const overlay = el('look-into-overlay');
       const reading=['satori','reisen'].includes(opts.presentation)?opts.presentation:null;
       if(reading) overlay.dataset.reading=reading;else delete overlay.dataset.reading;
-      el('look-into-emblem').innerHTML=reading?mindEyeSvg():'';
+      el('look-into-emblem').innerHTML=reading?mindEyeSvg(reading):'';
       const cardsEl = el('look-into-cards');
       const confirm = el('look-into-confirm');
       const inspect = el('look-into-inspect');
@@ -6342,6 +6362,42 @@ const ui = {
   }
 };
 
+// Every choice waits for transient effects. Infinite ambience and passive markers keep running.
+const presentationWaiters=new Set();
+function waitForVisualEffects(owner){
+  return new Promise(resolve=>{
+    let timer=null,settled=false;
+    const deadline=Date.now()+10000;
+    const finish=ready=>{
+      if(settled)return;settled=true;clearTimeout(timer);presentationWaiters.delete(cancel);resolve(ready);
+    };
+    const cancel=()=>finish(false);
+    presentationWaiters.add(cancel);
+    const check=()=>{
+      if(!owner || owner.cancelled || game!==owner){finish(false);return;}
+      let running=false;
+      try{
+        running=(document.getAnimations?.()||[]).some(animation=>{
+          if(animation.playState==='finished' || animation.playState==='idle' || animation.playState==='paused')return false;
+          const timing=animation.effect?.getComputedTiming();
+          return timing && Number.isFinite(timing.endTime) && timing.endTime>0;
+        });
+      }catch(_error){ /* Older browsers use the registered effect deadline. */ }
+      if((!running && Date.now()>=mindEffectsUntil) || Date.now()>=deadline){finish(true);return;}
+      timer=setTimeout(check,40);
+    };
+    check();
+  });
+}
+for(const name of ['pickPlayer','pickFromList','pickOwnHandCard','pickOwnHandCards','pickHandCard','pickRectByDrag','pickCell','promptText']){
+  const openChoice=ui[name];
+  ui[name]=async function(...args){
+    const owner=game;
+    if(!await waitForVisualEffects(owner))return name==='pickRectByDrag'?[]:null;
+    return openChoice.apply(this,args);
+  };
+}
+
 /* populate the card-name datalist once, for the guess-a-card text prompt */
 (function populateCardNames(){
   const dl = document.getElementById('card-name-list');
@@ -6475,6 +6531,29 @@ function aiBestTrade(playerIdx){
   return best;
 }
 
+function aiKanakoTrade(playerIdx,placement){
+  const player=game.players[playerIdx];
+  if(!player.hand.includes('mtn_kanako') || !game.kourindouEnabled) return null;
+  const stock=game.tradeCells().filter(cell=>{
+    const id=game.cardAt(cell.r,cell.c);
+    return id && id!=='mtn_kanako' && CARD[id].faction==='mountain';
+  });
+  let best=null;
+  for(const offeredId of player.hand){
+    if(offeredId==='mtn_kanako' || !game.canTrade(playerIdx,offeredId))continue;
+    const offered=CARD[offeredId],faction=FACTIONS[offered.faction];
+    const progress=game.factionCells(offered.faction).length+player.hand.filter(id=>CARD[id].faction===offered.faction).length;
+    const keepValue=(offered.crown?3:0)+(game.isWildActive(offeredId)?4:0)
+      +(offered.faction==='mountain'?8:0)+(faction?.size && progress>=faction.size?5:progress*.4);
+    for(const target of stock){
+      const boughtId=game.cardAt(target.r,target.c);
+      const gain=(boughtId==='mtn_sanae' && game.drawPile.length?3:1)-keepValue;
+      if(!best || gain>best.gain)best={type:'trade',cardId:offeredId,target,gain,thenPlace:placement};
+    }
+  }
+  return best;
+}
+
 /* AI turn decision, following three goals in priority order:
    1) Get cards into MY OWN discard pile (highest priority).
    3) When several paths serve goal 1, prefer whichever yields the best
@@ -6556,6 +6635,12 @@ async function aiDecideAction(playerIdx,allowTrade=true){
   const drawHandGain = 1; // goal 2: drawing hands every player (including yourself) one card
   const canDraw = game.canDrawNormally(playerIdx);
 
+  const willPlace=best && ((best.rate>0 && !best.lowPriority)
+    || !(canDraw && (best.lowPriority || drawHandGain>=best.handGain)));
+  if(allowTrade && willPlace && best.cardId==='mtn_kanako'){
+    const setupTrade=aiKanakoTrade(playerIdx,{type:'place',cardId:best.cardId,r:best.cell.r,c:best.cell.c});
+    if(setupTrade)return setupTrade;
+  }
   const trade=allowTrade ? aiBestTrade(playerIdx) : null;
   if(trade && (!best || best.lowPriority || trade.rate>best.rate || (best.rate===0 && trade.gain>=.8))) return trade;
   if(best && best.rate > 0 && !best.lowPriority) return {type:'place', cardId: best.cardId, r: best.cell.r, c: best.cell.c};
@@ -6624,6 +6709,12 @@ async function doPlayerAction(playerIdx){
       if(game.winner || game.stalemateMessage) return {};
       await sleep(420);
       if(game!==activeGame || activeGame.cancelled) return {};
+      if(action.thenPlace && player.hand.includes('mtn_kanako')){
+        const cells=aiPlacementCells(game,'mtn_kanako',game.emptyOrWastelandForCard(CARD.mtn_kanako));
+        const nextCell=cells.find(cell=>cell.r===action.thenPlace.r && cell.c===action.thenPlace.c)
+          || cells.find(cell=>game.wouldCompleteFaction('mtn_kanako',cell.r,cell.c)) || cells[0];
+        if(nextCell){action={...action.thenPlace,r:nextCell.r,c:nextCell.c};break;}
+      }
     }
     let flags = {};
     if(action.type==='draw'){
@@ -7121,6 +7212,7 @@ el('customize-toggle').addEventListener('click', () => {
 function resetGameView(){
   // Retire the old match before clearing its controls, animations, or pending input.
   if(game) game.cancelled=true;
+  for(const cancel of [...presentationWaiters])cancel();
   touchHandDrag?.ghost?.remove();
   touchHandDrag=null;
   suppressTouchDropClick=null;
