@@ -10,6 +10,7 @@ class Element {
     const classes=new Set();this.classList={add:(...names)=>names.forEach(n=>classes.add(n)),remove:(...names)=>names.forEach(n=>classes.delete(n)),contains:n=>classes.has(n),toggle(n,on){if(on)classes.add(n);else classes.delete(n);}};
   }
   getBoundingClientRect(){return this.rect;}
+  querySelector(selector){return selector==='.board-card'?this.face:null;}
   cloneNode(){return new Element(this.kind,{...this.rect},{...this.dataset});}
   closest(selector){if(selector==='#kourindou')return this.kind==='shop'?this:null;if(selector.includes('.cell') && ['board','shop'].includes(this.kind))return this;return null;}
   setAttribute(){} removeAttribute(){} addEventListener(){}
@@ -27,15 +28,17 @@ const document={body:{appendChild:e=>elements.push(e)},
 const window={__resolveHumanTurn:()=>{},matchMedia:()=>({matches:reduced}),addEventListener:(type,fn)=>document.addEventListener(type,fn)};
 const context={console,Math,Date,Promise,Set,Map,document,window,el,performance:{now:()=>now},
   requestAnimationFrame:fn=>{frames.set(++nextFrame,fn);return nextFrame;},cancelAnimationFrame:id=>frames.delete(id),
-  renderBoard(){},renderStatus(){},syncHandSelection(){},renderAll(){},playGameCue(){},speakRinnosuke(){},
+  renderBoard(){},renderStatus(){},syncHandSelection(){},renderAll(){},playGameCue(){},speakRinnosuke(){},queueMobileViewport(){},
+  tileElement:(r,c)=>elements.find(e=>['board','shop'].includes(e.kind) && Number(e.dataset.r)===r && Number(e.dataset.c)===c),
   CARD:{plain:{name:'Plain',id:'plain'}},canAct:()=>true};
 vm.createContext(context);
 const choice=js.slice(js.indexOf('function isShopSelectable'),js.indexOf('function onCellDragOver'));
-const hand=js.slice(js.indexOf('function humanActionCells'),js.indexOf('/* Clicking anywhere outside the board/hand/cancel-button'));
+const hand=js.slice(js.indexOf('/* Keep a hand card visible'),js.indexOf('/* Clicking anywhere outside the board/hand/cancel-button'));
 vm.runInContext('let game=null,pendingCellChoice=null,selectedHandCard=null,draggingCardId=null,humanActionResolving=false;'+choice+hand+`
   this.api={onHandCardPointerDown,onHandCardClick,clearHandDragPhysics,commitShopChoice,
     setGame:g=>game=g,get:()=>({game,pendingCellChoice,touchHandDrag,handDragSettling,draggingCardId}),
-    reset:()=>{clearHandDragPhysics();pendingCellChoice=selectedHandCard=draggingCardId=suppressTouchDropClick=null;humanActionResolving=false;window.__resolveHumanTurn=()=>{};}};`,context);
+    arrivals:()=>[...handPlacementArrivals],
+    reset:()=>{clearHandDragPhysics();clearHandPlacementArrivals();pendingCellChoice=selectedHandCard=draggingCardId=suppressTouchDropClick=null;humanActionResolving=false;window.__resolveHumanTurn=()=>{};}};`,context);
 const A=context.api;
 function fixture(shop=false){
   A.reset();elements=[];animations=[];frames.clear();now=0;reduced=false;
@@ -44,9 +47,15 @@ function fixture(shop=false){
     emptyOrWastelandForCard:()=>[{r:0,c:0}],canTrade:()=>shop,boardCells:()=>shop?[{r:6,c:1,id:'shop_rinnosuke'}]:[],
     cardAt:(r,c)=>r===6?'shop_rinnosuke':cards.get(`${r},${c}`),
     removeFromHand(p,id){this.players[p].hand=this.players[p].hand.filter(x=>x!==id);},
-    async internalPlace(id,r,c){cards.set(`${r},${c}`,id);return {};},tradeCells:()=>[{r:6,c:0}],resolveKoishiCascade:async()=>{}};
+    async internalPlace(id,r,c){
+      cards.set(`${r},${c}`,id);
+      const arrival=context.prepareHandPlacementArrival({cardId:id,r,c,playerIdx:0});
+      const tile=context.tileElement(r,c);tile.face=new Element('face',{left:tile.rect.left+1,top:tile.rect.top+1,width:tile.rect.width-2,height:tile.rect.height-2});
+      if(arrival){tile.classList.add('hand-landed','hand-arriving');await arrival();}
+      return {};
+    },tradeCells:()=>[{r:6,c:0}],resolveKoishiCascade:async()=>{}};
   A.setGame(g);
-  const source=new Element('hand',{left:20,top:400,width:100,height:150});
+  const source=new Element('hand',{left:20,top:400,width:100,height:150},{cardId:'plain'});el('hand').children=[source];
   const tile=new Element('board',{left:250,top:100,width:80,height:120},{r:'0',c:'0'});elements.push(tile);
   const keeper=new Element('shop',{left:500,top:100,width:80,height:120},{r:'6',c:'1',slot:'0'});if(shop)elements.push(keeper);
   return {g,source,tile,keeper};
@@ -58,7 +67,7 @@ function event(type,x=70,y=475,pointerType='mouse',extra={}){
 }
 function down(f,type='mouse',x=70,y=475,extra={}){A.onHandCardPointerDown({currentTarget:f.source,pointerId:1,isPrimary:true,button:0,clientX:x,clientY:y,pointerType:type,...extra},'plain');}
 function frame(dt=16){now+=dt;const callbacks=[...frames.values()];frames.clear();callbacks.forEach(fn=>fn(now));}
-async function finishAnimations(){animations.forEach(a=>a.done());for(let i=0;i<6;i++)await Promise.resolve();}
+async function finishAnimations(){for(let i=0;i<30;i++){animations.forEach(a=>a.done());await Promise.resolve();}}
 const tests=[];function test(name,fn){tests.push([name,fn]);}
 for(const type of ['mouse','touch','pen'])test(`${type} drag follows spring, then commits the pointer's tile after settling`,async()=>{
   const f=fixture();down(f,type);event('pointermove',72,473,type);assert.equal(A.get().touchHandDrag.started,false);
@@ -76,6 +85,24 @@ test('An invalid drop returns the card and clears its selection',async()=>{
   const f=fixture();down(f);event('pointermove',110,440);frame();event('pointerup',900,50);
   assert.equal(A.get().pendingCellChoice,null);await finishAnimations();assert.deepEqual(f.g.players[0].hand,['plain']);
   assert.equal(A.get().handDragSettling,false);assert.equal(animations[0].options.duration,260);
+});
+test('A settled drag stays visible until the matching board face crossfades in',async()=>{
+  const f=fixture();down(f);event('pointermove',290,160);frame();const ghost=A.get().touchHandDrag.ghost;
+  event('pointerup',290,160);animations[0].done();for(let i=0;i<5;i++)await Promise.resolve();
+  assert(ghost.isConnected);assert.equal(A.arrivals().length,1);assert(f.tile.classList.contains('hand-landed'));
+  assert.equal(animations[0].keyframes[1].opacity,1);assert.equal(animations[0].keyframes[1].width,'78px');
+  assert.equal(animations.filter(a=>a.options.duration===110).length,2);
+  await finishAnimations();assert.equal(ghost.isConnected,false);assert.equal(A.arrivals().length,0);assert.equal(f.g.cardAt(0,0),'plain');
+});
+test('Click placement flies from the original hand card, then reveals the board face',async()=>{
+  const f=fixture();A.onHandCardClick('plain');context.onCellClick({currentTarget:f.tile});
+  assert(f.tile.classList.contains('hand-arriving'));assert.equal(A.arrivals().length,1);
+  assert.equal(animations[0].options.duration,320);assert.equal(animations[0].keyframes[0].width,'100px');
+  await finishAnimations();assert.equal(f.tile.classList.contains('hand-arriving'),false);assert.equal(A.arrivals().length,0);
+});
+test('Reset during a click flight clears its ghost and cancels the handoff',async()=>{
+  const f=fixture();A.onHandCardClick('plain');context.onCellClick({currentTarget:f.tile});const ghost=A.arrivals()[0].ghost;
+  A.reset();await finishAnimations();assert.equal(ghost.isConnected,false);assert.equal(A.arrivals().length,0);
 });
 for(const type of ['pointercancel','blur','Escape'])test(`${type} cancels without placing a card`,async()=>{
   const f=fixture();down(f);event('pointermove',290,160);frame();
