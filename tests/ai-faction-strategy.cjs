@@ -10,7 +10,7 @@ const context={console,Math:seededMath,Set,Map,Promise,setTimeout:fn=>{fn();retu
   triggerPlacementPresentation(){},speakRinnosuke(){},logOverride(){},lastPlacedCell:null,renderAll(){},humanActionResolving:false};
 vm.createContext(context);
 vm.runInContext(core+'\nvar game=null;\n'+ai+`\nthis.api={Game,CARD,CARDS,FACTIONS,aiEvaluateCard,aiDecideAction,aiDrawValue,aiChooseCostCards,
-aiRetentionValue,aiFactionPlacement,aiCurrentClaims,aiCostCanResolve,aiPlacementCells,
+aiRetentionValue,aiFactionPlacement,aiCurrentClaims,aiCostCanResolve,aiPlacementCells,aiDecideHardAction,AI_DIFFICULTIES,
 setGame:g=>game=g,setSize:n=>SIZE=n};`,context);
 vm.runInContext(js.slice(js.indexOf('async function doPlayerAction'),js.indexOf('async function afterAction'))+
   '\nthis.api.doPlayerAction=doPlayerAction;this.api.resolveFollowups=resolveFollowups;'+
@@ -129,9 +129,57 @@ test('Tenshi counts wasteland plus cards without double-counting and excludes sh
   g.removeFromHand(1,'heaven_tenshi');g.setCardAt(1,3,'heaven_tenshi');await g.resolveAbility('heaven_tenshi',1,3,1,0);
   assert.equal(g.cardAt(0,0),null);assert.equal(g.cardAt(1,3),'heaven_tenshi');
 });
-test('Reisen forced card still blocks trading and Marisa no-target remains a zero-score fallback',()=>{
+test('Reisen forced card still blocks trading and Marisa no-target is low priority',()=>{
   const g=setup({hand:['marisa','mtn_aya'],shop:true});g.forcedPlay[1]='mtn_aya';assert.equal(g.canTrade(1,'marisa'),false);
-  const c=A.aiEvaluateCard(1,'marisa');assert.equal(c.lowPriority,false);assert.equal(c.rate,0);
+  const c=A.aiEvaluateCard(1,'marisa');assert.equal(c.lowPriority,true);assert.equal(c.rate,0);
+});
+test('Marisa target penalty lifts for a faction claim and when a valid blast exists',()=>{
+  setup({hand:['marisa'],board:[[0,0,'sdm_patchouli']]});assert.equal(A.aiEvaluateCard(1,'marisa').lowPriority,false);
+  setup({hand:['marisa'],board:[[0,0,'sage_kasen']]});assert.equal(A.aiEvaluateCard(1,'marisa').claimsNow,true);
+  assert.equal(A.aiEvaluateCard(1,'marisa').lowPriority,false);
+});
+test('Patchouli selects revealed opponent cards and transfers the correctly named card',async()=>{
+  const g=setup({hand:['sdm_patchouli'],opponents:[['sage_yukari','mtn_aya']]});
+  g.revealHand(0,['sage_yukari'],[1]);const guess=g.patchouliGuess(1);assert.equal(guess.id,'sage_yukari');assert.equal(guess.playerIdx,0);
+  await g.resolveAbility('sdm_patchouli',1,1,1,0);assert(g.players[1].hand.includes('sage_yukari'));assert(!g.players[0].hand.includes('sage_yukari'));
+});
+test('Patchouli blind selection does not read opponent card identities',()=>{
+  const g=setup({hand:['sdm_patchouli'],opponents:[['mtn_aya','hourai_mokou']]});
+  g.players[0].hand=new Proxy(g.players[0].hand,{get(target,key){if(key==='length')return target.length;throw new Error('Hidden hand read: '+String(key));}});
+  const guess=g.patchouliGuess(1);assert(guess);assert.equal(guess.playerIdx,0);
+  assert(!g.knownHandCards(1).some(card=>card.playerIdx===0));
+});
+test('Patchouli can genuinely miss without altering either hand',async()=>{
+  const g=setup({hand:['sdm_patchouli'],opponents:[['mtn_aya']]});
+  g.patchouliGuess=()=>({id:'hourai_mokou',playerIdx:0});await g.resolveAbility('sdm_patchouli',1,1,1,0);
+  assert.deepEqual(Array.from(g.players[0].hand),['mtn_aya']);assert.deepEqual(Array.from(g.players[1].hand),['sdm_patchouli']);
+  assert(g.logLines.some(line=>line.includes('guess was wrong')));
+});
+test('Difficulty defaults to Hard and Easy/Normal take progressively more legal weaker actions',async()=>{
+  const counts={};
+  for(const difficulty of ['hard','normal','easy']){
+    const g=setup({hand:['mtn_aya','mtn_suwako'],deck:['hourai_mokou','hourai_reisen','reimu']});
+    assert.equal(g.aiDifficulty,'hard');g.aiDifficulty=difficulty;let mistakes=0;
+    for(let i=0;i<160;i++){
+      const action=await A.aiDecideAction(1,false);
+      if(action.type==='place'){
+        mistakes++;assert(g.players[1].hand.includes(action.cardId));
+        assert(A.aiPlacementCells(g,action.cardId,g.emptyOrWastelandForCard(A.CARD[action.cardId])).some(t=>t.r===action.r && t.c===action.c));
+      }else assert.equal(action.type,'draw');
+    }
+    counts[difficulty]=mistakes;
+  }
+  assert.equal(counts.hard,0);assert(counts.normal>0);assert(counts.easy>counts.normal);
+  console.log('  Weaker action samples: '+JSON.stringify(counts));
+});
+test('Spring physics has bounded lag, settles, and respects reduced motion',()=>{
+  const start=js.indexOf('function stepHandDragPhysics('),end=js.indexOf('function onHandCardPointerDown(',start);
+  vm.runInContext(js.slice(start,end)+'\nthis.api.stepPhysics=stepHandDragPhysics;',context);
+  const body={x:0,y:0,vx:0,vy:0,angle:0,tilt:0,scale:1},target={x:400,y:200};
+  A.stepPhysics(body,target,1/60);assert(Math.hypot(body.x-target.x,body.y-target.y)<=65.001);assert(body.angle!==0);
+  for(let i=0;i<240;i++)A.stepPhysics(body,target,1/60);
+  assert(Math.hypot(body.x-target.x,body.y-target.y)<.01);assert(Math.abs(body.angle)<.01);
+  A.stepPhysics(body,{x:100,y:50},.1,true);assert.equal(body.x,100);assert.equal(body.angle,0);assert.equal(body.scale,1);
 });
 test('Both board sizes complete a decision without mutating the game',async()=>{
   for(const size of [4,5]){
