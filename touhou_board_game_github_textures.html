@@ -598,13 +598,12 @@
   #hand-choice-actions button:disabled{ opacity:.45; cursor:default; }
   #hand-choice-actions #hand-choice-cancel{ border-color:var(--muted); color:var(--ink); }
   .hand-card.dragging{ opacity:0.35; transform:scale(0.94) rotate(-4deg); cursor:grabbing; }
-  @media(pointer:coarse){
-    #hand .hand-card.touch-drag-ready{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
-  }
+  #hand .hand-card.touch-drag-ready{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:grab;}
   .touch-drag-ghost{
-    position:fixed;z-index:230;pointer-events:none;opacity:.9;transition:none !important;
-    transform:translate(-50%,-50%) rotate(-5deg) scale(1.07);
-    box-shadow:0 18px 38px rgba(0,0,0,.6),0 0 18px rgba(232,200,116,.6);
+    position:fixed;left:0;top:0;z-index:230;pointer-events:none;opacity:1;
+    margin:0 !important;transition:none !important;animation:none !important;
+    transform-origin:center;will-change:transform;box-sizing:border-box;
+    box-shadow:0 22px 34px rgba(0,0,0,.52);backface-visibility:hidden;
   }
   .hand-card .icon-row{ display:flex; justify-content:space-between; font-size:0.85rem; }
   .hand-card .cname{ font-weight:700; margin-top:2px; }
@@ -2133,6 +2132,12 @@
       <button class="pill-btn" data-size="5">5×5 (more room)</button>
     </div>
 
+    <p style="color:var(--muted); font-size:0.88rem;">AI difficulty:</p>
+    <div class="opts" id="ai-difficulty-opts" role="group" aria-label="AI difficulty">
+      <button class="pill-btn" data-difficulty="easy" aria-pressed="false">Easy</button>
+      <button class="pill-btn" data-difficulty="normal" aria-pressed="false">Normal</button>
+      <button class="pill-btn selected" data-difficulty="hard" aria-pressed="true">Hard</button>
+    </div>
     <div class="shop-option">
       <label><input type="checkbox" id="kourindou-toggle">🏮 Kourindou</label>
       <p>Select a hand card, then click Rinnosuke to trade for free.</p>
@@ -2275,6 +2280,11 @@ window.addEventListener('pageshow', () => requestAnimationFrame(() => window.scr
 
 const DIRS4 = [[-1,0],[1,0],[0,-1],[0,1]];
 const DIRS8 = [...DIRS4,[-1,-1],[-1,1],[1,-1],[1,1]];
+const AI_DIFFICULTIES=Object.freeze({
+  easy:Object.freeze({name:'Easy',action:.45,target:.5,cost:.45,guess:.45}),
+  normal:Object.freeze({name:'Normal',action:.18,target:.22,cost:.18,guess:.18}),
+  hard:Object.freeze({name:'Hard',action:0,target:0,cost:0,guess:0})
+});
 let SIZE = 4; // board is SIZE x SIZE; changeable at setup time before a game starts
 
 const FACTIONS = {
@@ -2428,6 +2438,7 @@ class Game {
       typeof callback==='function' && (name.startsWith('on') || name==='render')
         ? (...args)=>{if(!this.cancelled) return callback(...args);} : callback]));
     this.numPlayers = numPlayers;
+    this.aiDifficulty=AI_DIFFICULTIES[options.aiDifficulty] ? options.aiDifficulty : 'hard';
     this.board = Array.from({length:SIZE},()=>Array(SIZE).fill(null));
     this.wasteland = Array.from({length:SIZE},()=>Array(SIZE).fill(false));
     this.kourindouEnabled=!!options.kourindou;
@@ -2479,6 +2490,10 @@ class Game {
     }
   }
 
+  aiMakesMistake(kind='action'){
+    const chance=(AI_DIFFICULTIES[this.aiDifficulty]||AI_DIFFICULTIES.hard)[kind]||0;
+    return chance>0 && Math.random()<chance;
+  }
   log(msg){
     this.logLines.push(msg);
     if(this.logLines.length>200) this.logLines.shift();
@@ -2634,6 +2649,7 @@ class Game {
   makeTrap(){
     const id=`trap_token_${++nextTrapToken}`;
     CARD[id]={...CARD.trap_token,id};
+    this.startingCardIds.add(id);
     return id;
   }
   isWildActive(id){return !!CARD[id]?.wild && !this.isActiveOnBoard('hourai_eirin');}
@@ -2811,7 +2827,12 @@ class Game {
       case 'mtn_sanae': return this.isActiveOnBoard('mtn_kanako') ? 4 : 1;
       case 'hourai_mokou': return player.discard.length;
       case 'sage_ran': return this.isActiveOnBoard('sage_yukari') ? 0 : 1;
-      case 'sdm_patchouli': return this.players.some(pl=>pl.idx!==playerIdx && pl.hand.length>0) ? 1 : 0;
+      case 'sdm_patchouli': {
+        if(this.knownHandCards(playerIdx).some(card=>card.playerIdx!==playerIdx))return 1;
+        const {candidates,targets}=this.handGuessOptions(playerIdx);
+        const slots=targets.reduce((n,target)=>n+target.slots,0);
+        return slots && candidates.length ? Math.min(1,targets.reduce((n,target)=>n+target.slots**2,0)/slots/candidates.length) : 0;
+      }
       default: return 0;
     }
   }
@@ -2882,18 +2903,32 @@ class Game {
     return [...known].filter(([id])=>!faction || CARD[id]?.faction===faction)
       .map(([id,playerIdx])=>({id,playerIdx}));
   }
-  kaguyaBlindGuess(observerIdx){
-    // Use public locations and hand sizes only; never read an opponent's card identities.
+  handGuessOptions(observerIdx,faction=null,targetIdx=null){
+    // Candidate identities come from public starting stock and public locations, never hidden hands.
     const visible=new Set([...this.boardCells().map(t=>this.cardAt(t.r,t.c)),
-      ...this.players.flatMap(p=>p.discard),...this.knownHandCards(observerIdx).map(c=>c.id)]);
-    const candidates=CARDS.filter(c=>c.faction==='hourai' && !c.shopExpansion && !visible.has(c.id));
-    const targets=this.players.filter(p=>p.idx!==observerIdx).map(p=>({playerIdx:p.idx,
-      slots:Math.max(0,p.hand.length-this.knownHandCards(observerIdx).filter(c=>c.playerIdx===p.idx).length)})).filter(p=>p.slots>0);
-    if(!candidates.length || !targets.length) return null;
+      ...this.players.flatMap(p=>p.discard),...this.knownHandCards(observerIdx).map(card=>card.id)]);
+    const candidates=[...this.startingCardIds].filter(id=>CARD[id] && !visible.has(id)
+      && (!faction || (CARD[id].faction===faction && !CARD[id].shopExpansion)));
+    const targets=this.players.filter(p=>p.idx!==observerIdx && (targetIdx===null || p.idx===targetIdx)).map(p=>({playerIdx:p.idx,
+      slots:Math.max(0,p.hand.length-this.knownHandCards(observerIdx).filter(card=>card.playerIdx===p.idx).length)})).filter(p=>p.slots>0);
+    return {candidates,targets};
+  }
+  blindHandGuess(observerIdx,faction=null,targetIdx=null){
+    const {candidates,targets}=this.handGuessOptions(observerIdx,faction,targetIdx);
+    if(!candidates.length || !targets.length)return null;
     let roll=Math.random()*targets.reduce((n,p)=>n+p.slots,0),target=targets[0];
     for(const p of targets){roll-=p.slots;if(roll<0){target=p;break;}}
-    return {id:candidates[Math.floor(Math.random()*candidates.length)].id,playerIdx:target.playerIdx};
+    return {id:candidates[Math.floor(Math.random()*candidates.length)],playerIdx:target.playerIdx};
   }
+  patchouliGuess(observerIdx){
+    const known=this.knownHandCards(observerIdx).filter(card=>card.playerIdx!==observerIdx);
+    if(known.length && !this.aiMakesMistake('guess')){
+      const preferred=this.preferSageIds(observerIdx,known.map(card=>card.id));
+      const id=preferred[Math.floor(Math.random()*preferred.length)];return known.find(card=>card.id===id);
+    }
+    return this.blindHandGuess(observerIdx) || known[0] || null;
+  }
+  kaguyaBlindGuess(observerIdx){return this.blindHandGuess(observerIdx,'hourai');}
   removeFromHand(p, cardId){
     const pl = this.players[p];
     const i = pl.hand.indexOf(cardId);
@@ -3024,17 +3059,16 @@ class Game {
       zoneKeys.has(cells.map(cell=>`${cell.r},${cell.c}`).sort().join('|')));
   }
 
-  /* "Guess a card" interface: the player types a card name instead of picking from a revealing
-     list. AI always guesses correctly (it has full knowledge internally already). A human who
-     types a real card name that isn't actually in the eligible pool simply guesses wrong. */
+  /* Human guesses are typed; AI choices use clues and public possibilities before verification. */
   async guessCardName(playerIdx, poolIds, title, opts){
     opts = opts || {};
     const player = this.players[playerIdx];
     if(player.isAI){
       await sleep(500);
-      if(!poolIds.length) return null;
-      const pool = opts.preferSage ? this.preferSageIds(playerIdx, poolIds) : poolIds;
-      return pool[Math.floor(Math.random()*pool.length)];
+      const known=this.knownHandCards(playerIdx,opts.faction||null).filter(card=>opts.targetIdx==null || card.playerIdx===opts.targetIdx);
+      const guess=known.length && !this.aiMakesMistake('guess') ? known[0]
+        : this.blindHandGuess(playerIdx,opts.faction||null,opts.targetIdx??null) || known[0];
+      return guess ? poolIds.find(id=>CARD[id].name===CARD[guess.id].name) || null : null;
     }
     const typed = await this.ui.promptText(title);
     if(!typed) return null;
@@ -3083,6 +3117,7 @@ class Game {
     const player = this.players[playerIdx];
     if(player.isAI){
       await sleep(500);
+      if(this.aiMakesMistake('target'))return candidates.length?candidates[Math.floor(Math.random()*candidates.length)]:null;
       if(opts.preferSelf && candidates.includes(playerIdx)) return playerIdx;
       if(opts.preferOpponent){
         const opponents = candidates.filter(i=>i!==playerIdx);
@@ -3104,12 +3139,12 @@ class Game {
      pool of options, it narrows to Sage cards first if any are present. Human players always see
      the full, unfiltered pool — this only ever changes the AI's own choice. */
   preferSageIds(playerIdx, ids){
-    if(!this.players[playerIdx].isAI) return ids;
+    if(!this.players[playerIdx].isAI || this.aiMakesMistake('target')) return ids;
     const sage = ids.filter(id=>CARD[id].faction==='sage');
     return sage.length ? sage : ids;
   }
   preferSageCells(playerIdx, cells, idAt){
-    if(!this.players[playerIdx].isAI) return cells;
+    if(!this.players[playerIdx].isAI || this.aiMakesMistake('target')) return cells;
     const sageCells = cells.filter(cell=>CARD[idAt(cell)].faction==='sage');
     return sageCells.length ? sageCells : cells;
   }
@@ -3411,21 +3446,23 @@ class Game {
         break;
       }
       case 'sdm_patchouli': {
-        const targetIdx = await self.choosePlayer(playerIdx, 'Patchouli: choose a player whose hand to search (you may choose yourself)', {preferOpponent:true});
-        if(targetIdx==null){ self.log(`${meS} Patchouli finds no target.`); break; }
-        const targetName = self.players[targetIdx].name;
-        const poolIds = self.players[targetIdx].hand.slice();
-        if(!poolIds.length){ self.log(`${meS} Patchouli finds ${possessive(targetName)} hand empty.`); break; }
+        const isAI=self.players[playerIdx].isAI;
+        const guess=isAI ? self.patchouliGuess(playerIdx) : null;
+        const targetIdx=isAI ? guess?.playerIdx : await self.choosePlayer(playerIdx,'Patchouli: choose a player whose hand to search (you may choose yourself)',{preferOpponent:true});
+        if(targetIdx==null){self.log(`${meS} Patchouli finds no plausible guess.`);break;}
+        const targetName=self.players[targetIdx].name;
         self.presentAbility('patchouli',{stage:'focus',r,c,playerIdx,targetIdx});
-        const guessedId = await self.guessCardName(playerIdx, poolIds, `Patchouli: name a card you believe ${targetName} holds`, {preferSage:true});
+        if(isAI)await sleep(500);
+        const poolIds=self.players[targetIdx].hand.slice();
+        const guessedId=isAI ? poolIds.find(id=>CARD[id].name===CARD[guess.id].name)
+          : await self.guessCardName(playerIdx,poolIds,`Patchouli: name a card you believe ${targetName} holds`,{targetIdx});
         if(guessedId){
           self.presentAbility('patchouli',{stage:'take',r,c,playerIdx,targetIdx,cardId:guessedId});
-          self.removeFromHand(targetIdx, guessedId);
-          self.addToHand(playerIdx, guessedId,true);
+          self.removeFromHand(targetIdx,guessedId);self.addToHand(playerIdx,guessedId,true);
           self.log(`${me} correctly names ${CARD[guessedId].name} in ${possessive(targetName)} hand — Patchouli pulls it into their hand!`);
-        } else {
+        }else{
           self.presentAbility('patchouli',{stage:'miss',r,c,playerIdx,targetIdx});
-          self.log(`${meS} guess was wrong — Patchouli's search of ${possessive(targetName)} hand finds nothing.`);
+          self.log(`${meS} guess was wrong${isAI?` (${CARD[guess.id].name})`:''} — Patchouli's search of ${possessive(targetName)} hand finds nothing.`);
         }
         break;
       }
@@ -3497,11 +3534,12 @@ class Game {
           if(!cont){ self.log(`${me} chooses not to ${first?'use':'continue'} Kaguya's ability.`); break; }
           first = false;
           const isAI=self.players[playerIdx].isAI;
-          const claimPlan=isAI ? self.planKaguyaClaim(null,playerIdx) : null;
+          const useClues=!isAI || !self.aiMakesMistake('guess');
+          const claimPlan=isAI && useClues ? self.planKaguyaClaim(null,playerIdx) : null;
           const known=isAI ? self.knownHandCards(playerIdx,'hourai').sort((a,b)=>(a.id==='hourai_eirin')-(b.id==='hourai_eirin')) : [];
-          let guess=claimPlan?.cards[0] || known[0];
+          let guess=useClues ? claimPlan?.cards[0] || known[0] : null;
           if(isAI && !guess){
-            guess=self.kaguyaBlindGuess(playerIdx);
+            guess=self.kaguyaBlindGuess(playerIdx) || known[0];
             if(!guess){self.log(`${meS} Kaguya finds no plausible guess.`);break;}
           }
           const targetIdx=isAI ? guess.playerIdx : await self.choosePlayer(playerIdx,
@@ -3636,7 +3674,7 @@ class Game {
             const sageEntries = pool.filter(d=>CARD[d.id].faction==='sage');
             if(sageEntries.length) pool = sageEntries;
             pool.sort((a,b)=> self.pointValue(b.id) - self.pointValue(a.id));
-            pick = pool[0];
+            pick = self.aiMakesMistake('target') ? all[Math.floor(Math.random()*all.length)] : pool[0];
           } else {
             const listOpts = all.map(d=>({label:`${CARD[d.id].name} (${possessive(self.players[d.idx].name)} discard)`, value:d}));
             pick = await self.chooseFromList(playerIdx, listOpts, 'Rin: take a card from any discard pile');
@@ -5902,9 +5940,9 @@ function renderHand(){
         firstClickSelected = true;
         onHandCardClick(cardId);
       });
-      // Native HTML drag/drop does not provide a dependable gesture on phones.
-      // Pointer events below handle touch; keep native dragging for mouse users.
-      div.draggable = !window.matchMedia('(pointer: coarse)').matches;
+      // Pointer-driven physics is shared by desktop and mobile; disable the static native drag image.
+      div.draggable = false;
+      div.querySelectorAll('img').forEach(image=>image.draggable=false);
       div.addEventListener('dragstart', (e) => onHandCardDragStart(e, cardId));
       div.addEventListener('dragend', onHandCardDragEnd);
       div.addEventListener('pointerdown', e=>onHandCardPointerDown(e,cardId));
@@ -5967,7 +6005,7 @@ function renderPlayers(){
     const avatar = p.idx===0 ? '🧑' : AI_AVATARS[(p.idx-1) % AI_AVATARS.length];
     seat.innerHTML = `
       <div class="avatar">${avatar}</div>
-      <div class="sname">${p.name}<span class="tag">${p.isAI?'AI':'You'}</span></div>
+      <div class="sname">${p.name}<span class="tag">${p.isAI?AI_DIFFICULTIES[game.aiDifficulty].name+' AI':'You'}</span></div>
       <div class="lanterns">${lanternsHtml}</div>
       <div class="sinfo">Hand: ${p.hand.length} · Discard: ${wc}/7</div>
       ${playtestMode ? `<div class="playtest-reveal">
@@ -6714,7 +6752,7 @@ function aiEvaluateCard(playerIdx,cardId){
     // Rin's denial helps our position, but cannot itself deliver our seventh discard point.
     const denial=cardId==='palace_rin' && works && game.players.some(p=>p.idx!==playerIdx && p.discard.length) ? 1 : 0;
     const winsNow=game.winCount(game.players[playerIdx])+direct+evaluated.points>=7;
-    const lowPriority=!claimsNow && !winsNow && (suppressedCrown || !works || evaluated.reserveCombo
+    const lowPriority=!claimsNow && !winsNow && (suppressedCrown || !works || (cardId==='marisa' && !game.marisaTargets(cell.r,cell.c,true).length) || evaluated.reserveCombo
       || (!game.drawPile.length && DRAW_ABILITY_CARDS.has(cardId) && !(cardId==='yuuka' && game.payableCards(playerIdx).some(id=>id!==cardId))));
     const candidate={cardId,cell,rate:Math.max(direct+evaluated.points+denial,evaluated.forecast.rate),handGain,
       noAbility:NO_PLACED_ABILITY.has(cardId),lowPriority,suppressedCrown,winsNow,claimSize:evaluated.claimSize,
@@ -6742,6 +6780,7 @@ function aiRetentionValue(playerIdx,cardId){
 }
 
 function aiChooseCostCards(playerIdx,eligible,count){
+  if(game.aiMakesMistake('cost'))return shuffle(eligible.slice()).slice(0,count);
   const player=game.players[playerIdx],original=player.hand,chosen=[];
   try{
     player.hand=original.slice();
@@ -6760,6 +6799,7 @@ function aiChooseCostCards(playerIdx,eligible,count){
 }
 
 function aiFactionPlacement(playerIdx,cardId,cells,faction=CARD[cardId].faction){
+  if(game.aiMakesMistake('target'))return cells[Math.floor(Math.random()*cells.length)];
   let best=null,bestScore=-Infinity;
   for(const cell of cells){
     const score=aiWithPlacement(cardId,cell,()=>{
@@ -6778,6 +6818,7 @@ function aiFactionPlacement(playerIdx,cardId,cells,faction=CARD[cardId].faction)
 }
 
 function aiKomachiTarget(playerIdx,r,c,cells){
+  if(game.aiMakesMistake('target'))return cells[Math.floor(Math.random()*cells.length)];
   const caster=game.cardAt(r,c);let best=null,bestValue=-Infinity;
   for(const cell of cells){
     const other=game.cardAt(cell.r,cell.c);let value;
@@ -6792,7 +6833,7 @@ function aiKomachiTarget(playerIdx,r,c,cells){
   return best;
 }
 
-async function aiDecideAction(playerIdx,allowTrade=true){
+async function aiDecideHardAction(playerIdx,allowTrade=true){
   const player=game.players[playerIdx];let best=null;
   for(const cardId of player.hand){const candidate=aiEvaluateCard(playerIdx,cardId);if(candidate && aiBetterCandidate(candidate,best))best=candidate;}
   const canDraw=game.canDrawNormally(playerIdx),drawHandGain=aiDrawValue(playerIdx);
@@ -6807,6 +6848,20 @@ async function aiDecideAction(playerIdx,allowTrade=true){
   if(canDraw && (!best || best.lowPriority || drawHandGain>=best.handGain))return {type:'draw'};
   if(best)return {type:'place',cardId:best.cardId,r:best.cell.r,c:best.cell.c};
   return trade || {type:'place-fallback',placeable:[]};
+}
+
+async function aiDecideAction(playerIdx,allowTrade=true){
+  const best=await aiDecideHardAction(playerIdx,allowTrade);
+  if(!game.aiMakesMistake('action'))return best;
+  // Mistakes remain legal: preserve forced-play, protection, and character safety restrictions.
+  const alternatives=[];
+  for(const cardId of game.players[playerIdx].hand){
+    const cells=aiPlacementCells(game,cardId,game.emptyOrWastelandForCard(CARD[cardId]));
+    const other=cells.filter(cell=>best.type!=='place' || best.cardId!==cardId || best.r!==cell.r || best.c!==cell.c);
+    if(other.length){const cell=other[Math.floor(Math.random()*other.length)];alternatives.push({type:'place',cardId,r:cell.r,c:cell.c});}
+  }
+  if(game.canDrawNormally(playerIdx) && best.type!=='draw')alternatives.push({type:'draw'});
+  return alternatives.length ? alternatives[Math.floor(Math.random()*alternatives.length)] : best;
 }
 
 async function doPlayerAction(playerIdx){
@@ -7098,6 +7153,7 @@ function makePlacementResolver(cardId){
 }
 
 function onHandCardClick(cardId){
+  if(handDragSettling)return;
   if(game.currentPlayerIdx!==0 || !window.__resolveHumanTurn || humanActionResolving) return;
   // clicking the already-selected card again cancels the pending placement (undo)
   if(selectedHandCard === cardId){
@@ -7131,7 +7187,7 @@ function onHandCardClick(cardId){
    only the board gets re-rendered to light up legal drop spaces. Any stale hand styling this
    leaves behind (e.g. if a card had been click-selected first) is cleaned up on dragend/drop. */
 function prepareHandCardDrag(cardId){
-  if(game.currentPlayerIdx!==0 || !window.__resolveHumanTurn || humanActionResolving) return false;
+  if(!game || game.cancelled || handDragSettling || game.currentPlayerIdx!==0 || !window.__resolveHumanTurn || humanActionResolving) return false;
   const forced = game.forcedPlay[0];
   if(forced && cardId !== forced) return false;
   if(pendingCellChoice && !pendingCellChoice.cancellable) return false;
@@ -7168,81 +7224,146 @@ function onHandCardDragEnd(e){
   }
 }
 
+/* Mouse, pen, and touch share the same physical card. Pointer coordinates decide the drop. */
 let touchHandDrag=null;
 let suppressTouchDropClick=null;
-function onHandCardPointerDown(e,cardId){
-  if((e.pointerType!=='touch' && e.pointerType!=='pen') || e.isPrimary===false || touchHandDrag || e.button!==0) return;
-  touchHandDrag={id:e.pointerId,cardId,source:e.currentTarget,x:e.clientX,y:e.clientY,started:false,ghost:null,target:null};
+let handDragSettling=false;
+const handDragSettlers=new Set();
+
+function stepHandDragPhysics(body,target,dt,reduced=false){
+  dt=Math.min(.034,Math.max(.001,dt));
+  if(reduced){body.x=target.x;body.y=target.y;body.vx=body.vy=body.angle=body.tilt=0;body.scale=1;return body;}
+  const stiffness=190,damping=23;
+  body.vx+=(stiffness*(target.x-body.x)-damping*body.vx)*dt;
+  body.vy+=(stiffness*(target.y-body.y)-damping*body.vy)*dt;
+  body.x+=body.vx*dt;body.y+=body.vy*dt;
+  // Keep rapid cross-screen gestures close enough to the hand to feel connected.
+  const dx=target.x-body.x,dy=target.y-body.y,distance=Math.hypot(dx,dy);
+  if(distance>65){body.x=target.x-dx/distance*65;body.y=target.y-dy/distance*65;}
+  const ease=1-Math.exp(-14*dt);
+  body.angle+=(Math.max(-12,Math.min(12,body.vx*.012))-body.angle)*ease;
+  body.tilt+=(Math.max(-7,Math.min(7,-body.vy*.008))-body.tilt)*ease;
+  body.scale+=(1.055+Math.min(.02,Math.hypot(body.vx,body.vy)/40000)-body.scale)*ease;
+  return body;
 }
+
+function handDragTransform(body){
+  return `translate3d(${body.x}px,${body.y}px,0) translate(-50%,-50%) perspective(650px) rotateZ(${body.angle}deg) rotateX(${body.tilt}deg) scale(${body.scale})`;
+}
+
+function onHandCardPointerDown(e,cardId){
+  if(e.isPrimary===false || e.button!==0 || touchHandDrag || handDragSettling || !game || game.cancelled) return;
+  const rect=e.currentTarget.getBoundingClientRect();
+  touchHandDrag={id:e.pointerId,cardId,source:e.currentTarget,x:e.clientX,y:e.clientY,
+    grabX:e.clientX-rect.left-rect.width/2,grabY:e.clientY-rect.top-rect.height/2,
+    origin:rect,started:false,ghost:null,target:null,frame:null,owner:game};
+}
+
 function handDragTarget(x,y){
   const tile=document.elementFromPoint(x,y)?.closest('#board .cell,#kourindou .cell');
   if(!tile || !pendingCellChoice) return null;
   const r=Number(tile.dataset.r),c=Number(tile.dataset.c);
-  if(tile.closest('#kourindou')){
-    const slot=Number(tile.dataset.slot);
-    return isShopSelectable(slot) ? tile : null;
-  }
+  if(tile.closest('#kourindou')) return isShopSelectable(Number(tile.dataset.slot)) ? tile : null;
   return pendingCellChoice.cells.some(cell=>cell.r===r && cell.c===c) ? tile : null;
 }
+
+function paintHandDrag(drag){
+  const body=drag.body;
+  drag.ghost.style.transform=handDragTransform(body);
+  const shadowX=Math.max(-12,Math.min(12,-body.vx*.012));
+  drag.ghost.style.boxShadow=`${shadowX}px 22px 34px rgba(0,0,0,.52),0 2px 8px rgba(232,200,116,.22)`;
+}
+
+function startHandDragPhysics(drag){
+  drag.body={x:drag.origin.left+drag.origin.width/2,y:drag.origin.top+drag.origin.height/2,vx:0,vy:0,angle:0,tilt:0,scale:1};
+  drag.goal={x:drag.body.x,y:drag.body.y};
+  drag.reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let previous=performance.now();
+  const tick=now=>{
+    if(touchHandDrag!==drag || !drag.ghost?.isConnected)return;
+    stepHandDragPhysics(drag.body,drag.goal,(now-previous)/1000,drag.reduced);previous=now;
+    paintHandDrag(drag);drag.frame=requestAnimationFrame(tick);
+  };
+  paintHandDrag(drag);drag.frame=requestAnimationFrame(tick);
+}
+
 function moveHandDrag(x,y){
-  const drag=touchHandDrag;
-  if(!drag?.started) return;
-  drag.ghost.style.left=`${x}px`;
-  drag.ghost.style.top=`${y}px`;
+  const drag=touchHandDrag;if(!drag?.started)return;
+  drag.goal.x=x-drag.grabX;drag.goal.y=y-drag.grabY;
   const target=handDragTarget(x,y);
-  if(drag.target!==target){
-    drag.target?.classList.remove('drag-hover');
-    drag.target=target;
-    target?.classList.add('drag-hover');
-  }
+  if(drag.target!==target){drag.target?.classList.remove('drag-hover');drag.target=target;target?.classList.add('drag-hover');}
 }
-function finishHandDrag(cancelled=false,x=0,y=0){
-  const drag=touchHandDrag;
-  if(!drag) return;
+
+async function settleHandDrag(drag,tile){
+  if(!drag.ghost)return false;
+  const rect=tile?.getBoundingClientRect() || (drag.source.isConnected?drag.source.getBoundingClientRect():drag.origin);
+  const end={x:rect.left+rect.width/2,y:rect.top+rect.height/2,angle:0,tilt:0,
+    scale:tile?Math.min(rect.width/drag.origin.width,rect.height/drag.origin.height):1};
+  const entry={ghost:drag.ghost,animation:null};handDragSettlers.add(entry);
+  let completed=true;
+  try{
+    const duration=drag.reduced?70:tile?220:260;
+    entry.animation=drag.ghost.animate([
+      {transform:handDragTransform(drag.body),opacity:1},
+      {transform:handDragTransform(end),opacity:tile?0.8:1}
+    ],{duration,easing:'cubic-bezier(.2,.8,.25,1)',fill:'forwards'});
+    await entry.animation.finished;
+  }catch(_error){completed=false;}
+  finally{drag.ghost.remove();handDragSettlers.delete(entry);}
+  return completed;
+}
+
+async function finishHandDrag(cancelled=false,x=0,y=0){
+  const drag=touchHandDrag;if(!drag)return;
   touchHandDrag=null;
-  drag.target?.classList.remove('drag-hover');
-  drag.source.classList.remove('dragging');
-  drag.ghost?.remove();
-  if(!drag.started) return;
-  draggingCardId=null;
-  if(!cancelled){
-    // A phone may dispatch a click after pointerup; that click belongs to this drag.
-    suppressTouchDropClick={x,y,until:Date.now()+350};
-    const tile=handDragTarget(x,y);
-    if(tile){
-      if(tile.closest('#kourindou')) commitShopChoice(Number(tile.dataset.slot));
-      else commitCellChoice(Number(tile.dataset.r),Number(tile.dataset.c));
-      return;
-    }
+  cancelAnimationFrame(drag.frame);drag.target?.classList.remove('drag-hover');drag.source.classList.remove('dragging');
+  try{if(drag.source.hasPointerCapture(drag.id))drag.source.releasePointerCapture(drag.id);}catch(_error){}
+  if(!drag.started)return;
+  draggingCardId=null;handDragSettling=true;
+  // Suppress the click synthesized after any completed drag, including an invalid release.
+  suppressTouchDropClick={x,y,until:Date.now()+500};
+  const choice=pendingCellChoice,tile=cancelled?null:handDragTarget(x,y);
+  const drop=tile?{shop:!!tile.closest('#kourindou'),slot:Number(tile.dataset.slot),r:Number(tile.dataset.r),c:Number(tile.dataset.c)}:null;
+  if(!tile && pendingCellChoice?.dragOnly)cancelHandSelection();
+  const settled=await settleHandDrag(drag,tile);
+  handDragSettling=false;
+  if(settled && drop && game===drag.owner && !game.cancelled && pendingCellChoice===choice && game.players[0].hand.includes(drag.cardId)){
+    if(drop.shop)commitShopChoice(drop.slot);else commitCellChoice(drop.r,drop.c);
   }
-  if(pendingCellChoice?.dragOnly) cancelHandSelection();
 }
-document.addEventListener('pointermove',e=>{
-  const drag=touchHandDrag;
-  if(!drag || drag.id!==e.pointerId) return;
-  if(!drag.started){
-    if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)<12) return;
-    if(!prepareHandCardDrag(drag.cardId)){touchHandDrag=null;return;}
-    drag.started=true;
-    drag.source.classList.add('dragging');
-    drag.ghost=drag.source.cloneNode(true);
-    drag.ghost.classList.remove('dragging');
-    drag.ghost.classList.add('touch-drag-ghost');
-    drag.ghost.style.width=`${drag.source.getBoundingClientRect().width}px`;
-    drag.ghost.style.height=`${drag.source.getBoundingClientRect().height}px`;
-    document.body.appendChild(drag.ghost);
+
+function clearHandDragPhysics(){
+  if(touchHandDrag){
+    cancelAnimationFrame(touchHandDrag.frame);touchHandDrag.source.classList.remove('dragging');touchHandDrag.ghost?.remove();
+    try{touchHandDrag.source.releasePointerCapture(touchHandDrag.id);}catch(_error){}
   }
-  if(e.cancelable) e.preventDefault();
-  moveHandDrag(e.clientX,e.clientY);
+  touchHandDrag=null;handDragSettling=false;
+  for(const entry of handDragSettlers){entry.animation?.cancel();entry.ghost.remove();}
+  handDragSettlers.clear();
+}
+
+document.addEventListener('pointermove',e=>{
+  const drag=touchHandDrag;if(!drag || drag.id!==e.pointerId)return;
+  if(!drag.started){
+    if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)<(e.pointerType==='mouse'?6:12))return;
+    if(!prepareHandCardDrag(drag.cardId)){touchHandDrag=null;return;}
+    drag.started=true;drag.source.classList.add('dragging');
+    drag.ghost=drag.source.cloneNode(true);drag.ghost.draggable=false;drag.ghost.tabIndex=-1;
+    drag.ghost.classList.remove('dragging','selected','selectable');drag.ghost.classList.add('touch-drag-ghost');
+    drag.ghost.setAttribute('aria-hidden','true');drag.ghost.removeAttribute('id');
+    drag.ghost.style.width=`${drag.origin.width}px`;drag.ghost.style.height=`${drag.origin.height}px`;
+    document.body.appendChild(drag.ghost);
+    try{drag.source.setPointerCapture(drag.id);}catch(_error){}
+    startHandDragPhysics(drag);
+  }
+  if(e.cancelable)e.preventDefault();moveHandDrag(e.clientX,e.clientY);
 },{passive:false});
 document.addEventListener('pointerup',e=>{
-  if(!touchHandDrag || touchHandDrag.id!==e.pointerId) return;
-  if(touchHandDrag.started && e.cancelable) e.preventDefault();
-  finishHandDrag(false,e.clientX,e.clientY);
+  if(!touchHandDrag || touchHandDrag.id!==e.pointerId)return;
+  if(touchHandDrag.started && e.cancelable)e.preventDefault();finishHandDrag(false,e.clientX,e.clientY);
 });
-document.addEventListener('pointercancel',e=>{
-  if(touchHandDrag?.id===e.pointerId) finishHandDrag(true);
-});
+document.addEventListener('pointercancel',e=>{if(touchHandDrag?.id===e.pointerId)finishHandDrag(true);});
+document.addEventListener('keydown',e=>{if(e.key==='Escape' && touchHandDrag?.started){e.preventDefault();finishHandDrag(true);}});
 document.addEventListener('click',e=>{
   const drop=suppressTouchDropClick;
   if(!drop || Date.now()>drop.until){suppressTouchDropClick=null;return;}
@@ -7302,6 +7423,15 @@ document.querySelectorAll('#player-count-opts .pill-btn').forEach(btn => {
   });
 });
 
+let chosenAIDifficulty='hard';
+document.querySelectorAll('#ai-difficulty-opts .pill-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    chosenAIDifficulty=btn.dataset.difficulty;
+    document.querySelectorAll('#ai-difficulty-opts .pill-btn').forEach(option=>{
+      const selected=option===btn;option.classList.toggle('selected',selected);option.setAttribute('aria-pressed',String(selected));
+    });
+  });
+});
 let chosenKourindou=false;
 el('kourindou-toggle').addEventListener('change',event=>{
   chosenKourindou=event.target.checked;
@@ -7373,8 +7503,7 @@ function resetGameView(){
   // Retire the old match before clearing its controls, animations, or pending input.
   if(game) game.cancelled=true;
   for(const cancel of [...presentationWaiters])cancel();
-  touchHandDrag?.ghost?.remove();
-  touchHandDrag=null;
+  clearHandDragPhysics();
   suppressTouchDropClick=null;
   clearRinnosukeBubble();
   clearCrownBackdrop();
@@ -7439,7 +7568,7 @@ function startNewGame(){
   el('game').classList.add('active');
   SIZE = chosenBoardSize;
   const customHand = customizeOn ? Array.from(customSelected) : null;
-  game = new Game(chosenPlayerCount, ui, customHand,{kourindou:chosenKourindou});
+  game = new Game(chosenPlayerCount, ui, customHand,{kourindou:chosenKourindou,aiDifficulty:chosenAIDifficulty});
   renderAll();
   if(chosenKourindou){
     const openingGame=game;
