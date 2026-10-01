@@ -7,7 +7,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>幻想郷 Boundary of Fates — A Touhou Board Game</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://raw.githubusercontent.com">
@@ -2105,6 +2105,92 @@
 #card-detail.sage.detail-card-sage_mai_satono{
   background-image:linear-gradient(rgba(24,7,34,.12),rgba(31,9,43,.5)),url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/backgrounds/sage_matara.png?art=2");
 }
+/* The game gets its own screen on a phone held sideways. */
+.cell.hand-landed .board-card{animation:none !important;transform:none;}
+.cell.hand-arriving .board-card{visibility:hidden;}
+.cell.hand-arriving::before,.cell.hand-arriving::after{visibility:hidden;}
+.touch-drag-ghost{min-height:0 !important;min-width:0 !important;}
+#fullscreen-btn,#journal-btn,#mobile-screen-message,#mobile-landscape-hint{display:none;}
+#mobile-landscape-hint{color:var(--muted);font-size:.78rem;text-align:center;margin:5px 0;}
+body.game-mobile #fullscreen-btn,body.game-mobile #mobile-landscape-hint{display:inline-block;}
+body.game-mobile #game-toolbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;padding-right:100px;}
+html.mobile-landscape,html.mobile-landscape body{height:100%;overflow:hidden;overscroll-behavior:none;}
+body.mobile-landscape{
+  height:var(--mobile-screen-height,100dvh);min-height:0;
+  padding:calc(env(safe-area-inset-top) + 5px) calc(env(safe-area-inset-right) + 6px) calc(env(safe-area-inset-bottom) + 5px) calc(env(safe-area-inset-left) + 6px);
+}
+body.mobile-landscape #app{height:100%;max-width:none;display:flex;flex-direction:column;min-height:0;}
+body.mobile-landscape header.top{display:none;}
+body.mobile-landscape #game.active{display:flex;flex-direction:column;flex:1;min-height:0;}
+body.mobile-landscape #game-toolbar{flex:none;height:32px;margin:0 0 4px;padding:0;flex-wrap:nowrap;}
+body.mobile-landscape #game-toolbar .pill-btn{padding:5px 10px;font-size:11px;min-height:30px;white-space:nowrap;}
+body.mobile-landscape #main-menu-btn{position:static;}
+body.mobile-landscape #fullscreen-btn,body.mobile-landscape #journal-btn{display:inline-block;}
+body.mobile-landscape #mobile-landscape-hint,body.mobile-landscape #mobile-play-hint{display:none;}
+body.mobile-landscape #mobile-screen-message:not(:empty){display:inline;color:var(--muted);font-size:10px;}
+body.mobile-landscape .layout{flex:1;min-height:0;height:100%;display:grid;grid-template-columns:minmax(0,1fr);gap:6px;align-items:stretch;}
+body.mobile-landscape.mobile-has-shop .layout{grid-template-columns:minmax(0,1fr) var(--mobile-shop-width,136px);}
+body.mobile-landscape .panel{min-height:0;min-width:0;padding:5px;border-radius:9px;}
+body.mobile-landscape #board-panel{display:grid;grid-template-columns:var(--mobile-hand-width,190px) minmax(0,1fr);gap:6px;position:relative;}
+body.mobile-landscape #board-wrap{grid-column:2;grid-row:1;min-height:0;min-width:0;gap:3px;}
+body.mobile-landscape #hand-area{grid-column:1;grid-row:1;display:flex;flex-direction:column;min-height:0;min-width:0;margin:0;padding:2px 3px;}
+body.mobile-landscape #hand-area h3{flex:none;margin:0 0 3px !important;padding:0 0 3px;font-size:11px;}
+body.mobile-landscape #hand{flex:1;min-height:0;display:grid;grid-template-columns:repeat(var(--mobile-hand-columns,3),minmax(0,1fr));grid-auto-rows:var(--mobile-card-height,76px);align-content:start;gap:4px;padding:2px 1px 4px;overflow:auto;scrollbar-width:thin;}
+body.mobile-landscape #hand .hand-card{width:100%;height:var(--mobile-card-height,76px);min-height:0;padding:3px 2px;font-size:var(--mobile-card-font,9px);flex:none;}
+body.mobile-landscape #hand .hand-card .icon-row{font-size:11px;}
+body.mobile-landscape #hand .hand-card .cname{font-size:inherit;line-height:1.12;}
+body.mobile-landscape #hand .hand-card:hover{transform:none;}
+body.mobile-landscape #table-wrap{flex:1;min-height:0;width:100%;max-width:none;padding:40px 0 0;margin:0;display:flex;align-items:center;justify-content:center;}
+body.mobile-landscape #table-surface{flex:none;padding:4px;border-width:4px;}
+body.mobile-landscape #board{width:var(--mobile-board-width,180px);max-width:none;gap:3px;}
+body.mobile-landscape #board .cell{border-radius:6px;}
+body.mobile-landscape .board-card{padding:2px 1px;border-radius:5px;font-size:clamp(6px,var(--mobile-board-font,8px),10px);}
+body.mobile-landscape .seat{width:58px;gap:1px;}
+body.mobile-landscape .seat .avatar{width:27px;height:27px;font-size:17px;}
+body.mobile-landscape .seat .sname{font-size:9px;}
+body.mobile-landscape .seat .sname .tag{font-size:7px;}
+body.mobile-landscape .seat .sinfo{font-size:8px;}
+body.mobile-landscape .lanterns{gap:1px;margin-top:1px;}
+body.mobile-landscape .lantern{width:6px;height:7px;}
+body.mobile-landscape .seat-0,body.mobile-landscape .seats-4 .seat-3{bottom:0;}
+body.mobile-landscape #draw-pile{top:0;gap:1px;}
+body.mobile-landscape .pile-card-face{width:22px;height:27px;border-width:1px;font-size:14px;}
+body.mobile-landscape #draw-pile-label{font-size:8px;}
+body.mobile-landscape #status-line{flex:none;width:100%;font-size:11px;line-height:1.2;min-height:26px;max-height:27px;text-align:center;overflow:hidden;}
+body.mobile-landscape #controls{flex:none;margin:0;gap:5px;flex-wrap:nowrap;justify-content:center;}
+body.mobile-landscape #controls .big-btn,body.mobile-landscape #controls .pill-btn{padding:6px 10px;font-size:11px;min-height:30px;white-space:nowrap;}
+body.mobile-landscape #instruction-bar{position:absolute;z-index:30;left:calc(var(--mobile-hand-width,190px) + 12px);right:5px;top:5px;margin:0;padding:4px 6px;font-size:10px;line-height:1.2;gap:5px;max-height:42px;overflow:auto;}
+body.mobile-landscape #instruction-bar button{font-size:10px;padding:4px 7px;}
+body.mobile-landscape #hand-choice-bar{flex:none;margin:0 0 3px;padding:4px;font-size:10px;gap:4px;}
+body.mobile-landscape #hand-choice-actions{gap:4px;}
+body.mobile-landscape #hand-choice-actions button{padding:4px 6px;font-size:10px;min-height:26px;}
+body.mobile-landscape #log-panel{display:none;}
+body.mobile-landscape.mobile-has-shop #log-panel{display:flex;flex-direction:column;overflow:hidden;}
+body.mobile-landscape #log-panel > h3,body.mobile-landscape #draw-pile-info,body.mobile-landscape #log,body.mobile-landscape #playtest-toggle-wrap{display:none;}
+body.mobile-landscape #shop-panel{margin:0;padding:0;border:0;}
+body.mobile-landscape #shop-panel h3{font-size:11px;margin:0 0 4px;}
+body.mobile-landscape #kourindou{grid-template-rows:repeat(2,clamp(44px,18dvh,66px));gap:3px;}
+body.mobile-landscape #shop-status{font-size:9px;margin-top:4px;}
+body.mobile-landscape #rinnosuke-bubble{padding:6px;margin:0 0 5px;font-size:9px;line-height:1.25;max-height:65px;overflow:auto;flex:none;}
+body.mobile-landscape .playtest-reveal{width:125px;padding:5px;font-size:8px;z-index:35;}
+body.mobile-landscape.mobile-log-open #log-panel{position:fixed;z-index:215;display:flex;flex-direction:column;right:calc(env(safe-area-inset-right) + 6px);top:calc(env(safe-area-inset-top) + 42px);bottom:calc(env(safe-area-inset-bottom) + 5px);width:min(380px,82vw);padding:10px;box-shadow:0 0 0 100vmax #080611a6;overflow:hidden;}
+body.mobile-landscape.mobile-log-open #log-panel > h3,body.mobile-landscape.mobile-log-open #draw-pile-info,body.mobile-landscape.mobile-log-open #playtest-toggle-wrap{display:flex;flex:none;}
+body.mobile-landscape.mobile-log-open #log{display:flex;flex:1;min-height:0;max-height:none;}
+body.mobile-landscape.mobile-log-open #shop-panel{display:none;}
+body.mobile-landscape #game-toolbar{position:relative;z-index:220;}
+body.mobile-landscape #card-detail{width:min(340px,48vw);height:calc(100dvh - 20px);max-height:none;}
+body.mobile-landscape .card-detail-header{--detail-icon-size:38px;min-height:44px;grid-template-columns:38px minmax(0,1fr) 22px;}
+body.mobile-landscape .card-detail-name{font-size:16px;}
+body.mobile-landscape .card-detail-ability{font-size:16px;margin-bottom:5px;}
+body.mobile-landscape .card-detail-description{font-size:11px;line-height:1.25;}
+body.mobile-landscape .card-detail-effect{padding:7px;}
+body.mobile-landscape #modal-box{max-height:calc(100dvh - 24px);overflow:auto;padding:12px;}
+body.mobile-landscape #look-into-panel{max-height:calc(100dvh - 20px);padding:10px;overflow:auto;}
+body.mobile-landscape #look-into-cards{padding:10px 5px;}
+body.mobile-landscape .look-into-card.hand-card{min-height:105px;flex-basis:82px;width:82px;}
+body.mobile-landscape #winner-box{max-height:calc(100dvh - 24px);overflow:auto;padding:18px;}
+body.mobile-landscape #winner-box h2{font-size:24px;}
+
 </style>
 </head>
 <body>
@@ -2162,7 +2248,13 @@
   </div>
 
   <div id="game">
-    <button id="main-menu-btn" class="pill-btn" type="button">Main Menu</button>
+    <div id="game-toolbar">
+      <button id="main-menu-btn" class="pill-btn" type="button">Main Menu</button>
+      <button id="fullscreen-btn" class="pill-btn" type="button" aria-pressed="false">Fullscreen</button>
+      <button id="journal-btn" class="pill-btn" type="button" aria-expanded="false" aria-controls="log-panel">Log</button>
+      <span id="mobile-screen-message" role="status"></span>
+    </div>
+    <div id="mobile-landscape-hint">Turn your phone sideways for one-screen play. Tap Fullscreen for more space.</div>
     <div class="layout">
       <div class="panel" id="board-panel">
         <label id="playtest-toggle-wrap">
@@ -3303,9 +3395,12 @@ class Game {
     if(cardId==='sage_yukari' && this.cardAt(r,c)) this.moveBoardToHand(r,c,playerIdx,'yukari');
     this.setCardAt(r,c,cardId);
     this.log(`${this.players[playerIdx].name} places ${CARD[cardId].name}.`);
-    lastPlacedCell = {r, c, crownEffectId};
+    const handArrival=this.ui?.onPlacementArrival?.({cardId,r,c,playerIdx,crownEffectId});
+    lastPlacedCell = {r, c, crownEffectId, handArrival:!!handArrival};
     this.render();
     if(cardId==='shop_rinnosuke') speakRinnosuke('welcome',{force:true});
+    if(handArrival && await handArrival()===false)return {};
+    if(this.cancelled)return {};
     triggerPlacementPresentation(cardId, r, c, crownEffectId);
     // Guarantee the stand-up placement animation (0.65s) actually gets to play before anything
     // else touches the board. Without this, a card whose ability resolves with no real async
@@ -4292,6 +4387,11 @@ function triggerPlacementPresentation(cardId, r, c, crownEffectId=null){
   if(!(CARD[presentationId] && CARD[presentationId].crown)) return;
   const board = el('board');
   if(!board) return;
+  const landed=tileElement(r,c);
+  if(landed?.classList.contains('hand-landed')){
+    applyCrownLight(landed,crownLightFor(presentationId));
+    landed.classList.add('crown-impact');
+  }
   applyCrownLight(board, crownLightFor(presentationId));
   board.style.setProperty('--impact-x', `${((c+.5)/SIZE)*100}%`);
   board.style.setProperty('--impact-y', `${((r+.5)/SIZE)*100}%`);
@@ -5570,8 +5670,10 @@ function renderBoard(){
       cell.classList.toggle('gravity-warp',!!cardId && cardId!=='hell_hecatia' && !!hecatiaCell);
       const isJustPlaced=!!lastPlacedCell && lastPlacedCell.r===r && lastPlacedCell.c===c;
       cell.classList.toggle('just-placed',isJustPlaced);
+      cell.classList.toggle('hand-landed',isJustPlaced && !!lastPlacedCell.handArrival);
+      cell.classList.toggle('hand-arriving',isJustPlaced && !!lastPlacedCell.handArrival);
       const crownEffectId=isJustPlaced && cardId && (lastPlacedCell.crownEffectId || (CARD[cardId].crown ? cardId : null));
-      const crownImpact=!!crownEffectId;
+      const crownImpact=!!crownEffectId && !lastPlacedCell?.handArrival;
       cell.classList.toggle('crown-impact',crownImpact);
       if(crownImpact) applyCrownLight(cell,crownLightFor(crownEffectId));
       const isSelectable = pendingCellChoice && pendingCellChoice.cells.some(x=>x.r===r && x.c===c);
@@ -5590,6 +5692,7 @@ function renderBoard(){
   syncNitoriCamouflage();
   repositionYuukaBlooms();
   lastPlacedCell = null;
+  queueMobileViewport();
 }
 
 function renderShop(){
@@ -5623,8 +5726,10 @@ function renderShop(){
     tile.classList.toggle('rect-invalid',preview && !!pendingRectChoice.isValid && !pendingRectChoice.isValid(pendingRectChoice.previewCells));
     const placed=!!lastPlacedCell && lastPlacedCell.r===r && lastPlacedCell.c===c;
     tile.classList.toggle('just-placed',placed);
+    tile.classList.toggle('hand-landed',placed && !!lastPlacedCell.handArrival);
+    tile.classList.toggle('hand-arriving',placed && !!lastPlacedCell.handArrival);
     const impact=placed && (lastPlacedCell.crownEffectId || (id && CARD[id].crown ? id : null));
-    tile.classList.toggle('crown-impact',!!impact);
+    tile.classList.toggle('crown-impact',!!impact && !lastPlacedCell?.handArrival);
     if(impact) applyCrownLight(tile,crownLightFor(impact));
     tile.classList.toggle('koishi-arriving',id==='palace_koishi' && koishiArrivalUntil.get(`${r},${c}`)>Date.now());
     tile.classList.toggle('selectable',selectable);
@@ -5949,6 +6054,7 @@ function renderHand(){
     }
     handEl.appendChild(div);
   });
+  queueMobileViewport();
 }
 
 function cardNameListHtml(ids){
@@ -6090,6 +6196,7 @@ function renderAll(){
 
 /* generic UI choosers used by the engine */
 const ui = {
+  onPlacementArrival:prepareHandPlacementArrival,
   onLog(){ renderLog(); },
   onAbilityEffect:showMindAbility,
   onDiscard:showDiscardVanish,
@@ -7073,6 +7180,79 @@ async function runNextTurn(){
 
 /* Shared by both the click-to-select and drag-and-drop placement flows: builds the resolver that
    actually commits a placement once a target cell is chosen. */
+/* Keep a hand card visible until its matching board face is ready. */
+let pendingDragLanding=null;
+const handPlacementArrivals=new Set();
+
+function captureHandPlacementArrival(cardId,cell){
+  const drag=pendingDragLanding;pendingDragLanding=null;
+  const source=drag?.cardId===cardId ? drag.ghost
+    : [...el('hand').children].find(node=>node.dataset.cardId===cardId);
+  if(!source?.isConnected)return;
+  const rect=source.getBoundingClientRect();
+  const ghost=drag?.ghost===source ? source : source.cloneNode(true);
+  if(!drag){
+    ghost.classList.remove('selected','selectable','dragging');ghost.classList.add('touch-drag-ghost');
+    ghost.setAttribute('aria-hidden','true');ghost.removeAttribute('id');ghost.tabIndex=-1;
+    ghost.style.width=`${rect.width}px`;ghost.style.height=`${rect.height}px`;
+    ghost.style.transform=handDragTransform({x:rect.left+rect.width/2,y:rect.top+rect.height/2,angle:0,tilt:0,scale:1});
+    document.body.appendChild(ghost);
+  }
+  const arrival={cardId,r:cell.r,c:cell.c,owner:game,ghost,rect,drag:!!drag,animations:[],cancelled:false,face:null,tile:null};
+  handPlacementArrivals.add(arrival);
+}
+
+function prepareHandPlacementArrival({cardId,r,c,playerIdx}){
+  if(playerIdx!==0)return null;
+  const arrival=[...handPlacementArrivals].find(f=>f.owner===game && f.cardId===cardId && f.r===r && f.c===c);
+  return arrival ? ()=>playHandPlacementArrival(arrival) : null;
+}
+
+async function playHandPlacementArrival(arrival){
+  const tile=tileElement(arrival.r,arrival.c),face=tile?.querySelector('.board-card');
+  arrival.tile=tile;arrival.face=face;
+  if(!face){arrival.ghost.remove();handPlacementArrivals.delete(arrival);return true;}
+  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  try{
+    const rect=face.getBoundingClientRect();
+    const end={x:rect.left+rect.width/2,y:rect.top+rect.height/2,angle:0,tilt:0,scale:1};
+    if(!arrival.drag && !reduced && arrival.ghost.animate){
+      const start=arrival.rect;
+      const mid={x:(start.left+start.width/2+end.x)/2,y:(start.top+start.height/2+end.y)/2-22,angle:4,tilt:0,scale:1.03};
+      const flight=arrival.ghost.animate([
+        {transform:arrival.ghost.style.transform,width:`${start.width}px`,height:`${start.height}px`},
+        {transform:handDragTransform(mid),width:`${(start.width+rect.width)/2}px`,height:`${(start.height+rect.height)/2}px`,offset:.5},
+        {transform:handDragTransform(end),width:`${rect.width}px`,height:`${rect.height}px`}
+      ],{duration:320,easing:'cubic-bezier(.2,.75,.25,1)',fill:'forwards'});
+      arrival.animations.push(flight);await flight.finished;
+    }else{
+      // A released drag has already landed here. Correct any last border-size difference.
+      arrival.ghost.style.width=`${rect.width}px`;arrival.ghost.style.height=`${rect.height}px`;
+      arrival.ghost.style.transform=handDragTransform(end);
+    }
+    if(arrival.cancelled || arrival.owner!==game || game.cancelled)return false;
+    tile.classList.remove('hand-arriving');
+    if(!reduced && face.animate && arrival.ghost.animate){
+      const reveal=face.animate([{opacity:0},{opacity:1}],{duration:110,easing:'ease-out'});
+      const fade=arrival.ghost.animate([{opacity:1},{opacity:0}],{duration:110,easing:'ease-out'});
+      arrival.animations.push(reveal,fade);await Promise.all([reveal.finished,fade.finished]);
+    }
+  }catch(_error){if(arrival.cancelled)return false;}
+  finally{
+    tile?.classList.remove('hand-arriving');arrival.ghost.remove();handPlacementArrivals.delete(arrival);
+  }
+  return !arrival.cancelled;
+}
+
+function clearHandPlacementArrivals(){
+  pendingDragLanding?.ghost?.remove();pendingDragLanding=null;
+  for(const arrival of handPlacementArrivals){
+    arrival.cancelled=true;for(const animation of arrival.animations)animation.cancel();
+    arrival.tile?.classList.remove('hand-arriving');arrival.ghost.remove();
+  }
+  handPlacementArrivals.clear();
+}
+
 function humanActionCells(cardId){
   const cells=game.emptyOrWastelandForCard(CARD[cardId]);
   if(cardId!=='sage_yukari' && game.canTrade(0,cardId)){
@@ -7137,6 +7317,7 @@ function makePlacementResolver(cardId){
     humanActionResolving = true;
     selectedHandCard = null;
     pendingCellChoice = null;
+    captureHandPlacementArrival(cardId,cell);
     game.removeFromHand(0, cardId);
     if(cardObj.override && game.cardAt(cell.r,cell.c)){ logOverride(cardObj, cell.r, cell.c, 0); game.moveBoardToHand(cell.r, cell.c, 0, cardId==='sage_yukari' ? 'yukari' : undefined); }
     // No renderAll() here on purpose: internalPlace() sets lastPlacedCell and renders itself as
@@ -7297,19 +7478,24 @@ function moveHandDrag(x,y){
 async function settleHandDrag(drag,tile){
   if(!drag.ghost)return false;
   const rect=tile?.getBoundingClientRect() || (drag.source.isConnected?drag.source.getBoundingClientRect():drag.origin);
-  const end={x:rect.left+rect.width/2,y:rect.top+rect.height/2,angle:0,tilt:0,
-    scale:tile?Math.min(rect.width/drag.origin.width,rect.height/drag.origin.height):1};
+  const end={x:rect.left+rect.width/2,y:rect.top+rect.height/2,angle:0,tilt:0,scale:1};
+  const width=tile?rect.width-2:rect.width,height=tile?rect.height-2:rect.height;
   const entry={ghost:drag.ghost,animation:null};handDragSettlers.add(entry);
   let completed=true;
   try{
     const duration=drag.reduced?70:tile?220:260;
-    entry.animation=drag.ghost.animate([
-      {transform:handDragTransform(drag.body),opacity:1},
-      {transform:handDragTransform(end),opacity:tile?0.8:1}
-    ],{duration,easing:'cubic-bezier(.2,.8,.25,1)',fill:'forwards'});
-    await entry.animation.finished;
+    if(drag.ghost.animate){
+      entry.animation=drag.ghost.animate([
+        {transform:handDragTransform(drag.body),width:`${drag.origin.width}px`,height:`${drag.origin.height}px`,opacity:1},
+        {transform:handDragTransform(end),width:`${width}px`,height:`${height}px`,opacity:1}
+      ],{duration,easing:'cubic-bezier(.2,.8,.25,1)',fill:'forwards'});
+      await entry.animation.finished;
+    }
+    drag.ghost.style.transform=handDragTransform(end);
+    drag.ghost.style.width=`${width}px`;drag.ghost.style.height=`${height}px`;
+    entry.animation?.cancel();
   }catch(_error){completed=false;}
-  finally{drag.ghost.remove();handDragSettlers.delete(entry);}
+  finally{if(!completed || !tile)drag.ghost.remove();handDragSettlers.delete(entry);}
   return completed;
 }
 
@@ -7328,8 +7514,13 @@ async function finishHandDrag(cancelled=false,x=0,y=0){
   const settled=await settleHandDrag(drag,tile);
   handDragSettling=false;
   if(settled && drop && game===drag.owner && !game.cancelled && pendingCellChoice===choice && game.players[0].hand.includes(drag.cardId)){
-    if(drop.shop)commitShopChoice(drop.slot);else commitCellChoice(drop.r,drop.c);
-  }
+    pendingDragLanding=drag;
+    try{if(drop.shop)commitShopChoice(drop.slot);else commitCellChoice(drop.r,drop.c);}
+    finally{
+      // Trading opens another selection, so it has no board face to hand off to.
+      if(pendingDragLanding===drag){pendingDragLanding=null;drag.ghost.remove();}
+    }
+  }else drag.ghost?.remove();
 }
 
 function clearHandDragPhysics(){
@@ -7504,6 +7695,8 @@ function resetGameView(){
   if(game) game.cancelled=true;
   for(const cancel of [...presentationWaiters])cancel();
   clearHandDragPhysics();
+  clearHandPlacementArrivals();
+  closeMobileJournal();
   suppressTouchDropClick=null;
   clearRinnosukeBubble();
   clearCrownBackdrop();
@@ -7559,6 +7752,8 @@ function returnToMainMenu(){
   updateStartButtonState();
   window.scrollTo(0,0);
   el('start-btn').focus();
+  try{screen.orientation?.unlock();}catch(_error){}
+  queueMobileViewport();
 }
 
 function startNewGame(){
@@ -7566,6 +7761,7 @@ function startNewGame(){
   resetGameView();
   el('setup').style.display = 'none';
   el('game').classList.add('active');
+  queueMobileViewport();
   SIZE = chosenBoardSize;
   const customHand = customizeOn ? Array.from(customSelected) : null;
   game = new Game(chosenPlayerCount, ui, customHand,{kourindou:chosenKourindou,aiDifficulty:chosenAIDifficulty});
@@ -7637,6 +7833,7 @@ function clearRinnosukeBubble(){
 function positionRinnosukeBubble(){
   const bubble=el('rinnosuke-bubble');
   if(bubble.hidden) return;
+  if(document.body.classList.contains('mobile-landscape')){dockRinnosukeBubble();return;}
   const keeper=game && !game.cancelled && game.boardCells(cell=>cell.id==='shop_rinnosuke')[0];
   const tile=keeper && tileElement(keeper.r,keeper.c);
   if(!tile || !tile.isConnected || !tile.getBoundingClientRect().width){bubble.hidden=true;dockRinnosukeBubble();return;}
@@ -7779,6 +7976,91 @@ el('tutorial-back').addEventListener('click',()=>tutorialStep(-1));
 el('tutorial-next').addEventListener('click',()=>{if(tutorialState.step===TUTORIALS[tutorialState.mode].length-1)el('tutorial-dialog').close();else tutorialStep(1);});
 el('tutorial-close').addEventListener('click',()=>el('tutorial-dialog').close());
 el('tutorial-dialog').addEventListener('close',()=>{tutorialState=null;tutorialReturnFocus?.focus();});
+
+/* CSS lays out the phone table; actual available rectangles size its cards. */
+let mobileViewportFrame=0;
+function mobileHandMetrics(width,height,count=7){
+  const columns=width>=174 ? 3 : 2,rows=Math.ceil(Math.max(7,Math.min(9,count))/columns);
+  const cardWidth=(width-10-(columns-1)*4)/columns;
+  const cardHeight=Math.max(24,Math.floor(Math.min(cardWidth*1.25,(height-6-(rows-1)*4)/rows)));
+  return {columns,cardHeight,font:Math.max(7,Math.min(10,cardWidth*.15))};
+}
+function syncMobileViewport(){
+  mobileViewportFrame=0;
+  const active=el('game').classList.contains('active');
+  const width=window.innerWidth,height=window.visualViewport?.height || window.innerHeight;
+  const mobile=active && (window.matchMedia('(any-pointer: coarse)').matches || width<=980) && Math.max(width,height)<=1400;
+  const landscape=mobile && width>height;
+  document.body.classList.toggle('game-mobile',mobile);
+  document.body.classList.toggle('mobile-landscape',landscape);
+  document.documentElement.classList.toggle('mobile-landscape',landscape);
+  document.body.classList.toggle('mobile-has-shop',landscape && !!game?.kourindouEnabled);
+  document.body.style.setProperty('--mobile-screen-height',`${height}px`);
+  const debug=el('playtest-toggle-wrap');
+  if(landscape){
+    if(debug.parentElement!==el('log-panel'))el('log-panel').appendChild(debug);
+    const padding=getComputedStyle(document.body);
+    const room=width-parseFloat(padding.paddingLeft)-parseFloat(padding.paddingRight);
+    const shopWidth=Math.max(112,Math.min(158,room*.17));
+    document.body.style.setProperty('--mobile-shop-width',`${shopWidth}px`);
+    const panelWidth=room-(game?.kourindouEnabled ? shopWidth+6 : 0);
+    const handWidth=Math.max(126,Math.min(232,panelWidth*.31));
+    document.body.style.setProperty('--mobile-hand-width',`${handWidth}px`);
+    const table=el('table-wrap').getBoundingClientRect();
+    const boardWidth=Math.max(36,Math.floor(Math.min(360,(table.height-52)*.8,table.width-132)));
+    document.body.style.setProperty('--mobile-board-width',`${boardWidth}px`);
+    document.body.style.setProperty('--mobile-board-font',`${Math.max(6,Math.min(10,boardWidth/SIZE*.18))}px`);
+    const hand=el('hand').getBoundingClientRect(),metrics=mobileHandMetrics(hand.width,hand.height,game?.players[0].hand.length||7);
+    document.body.style.setProperty('--mobile-hand-columns',metrics.columns);
+    document.body.style.setProperty('--mobile-card-height',`${metrics.cardHeight}px`);
+    document.body.style.setProperty('--mobile-card-font',`${metrics.font}px`);
+  }else{
+    if(debug.parentElement!==el('board-panel'))el('board-panel').insertBefore(debug,el('board-panel').firstChild);
+    closeMobileJournal();
+  }
+  if(game && !game.cancelled){positionRinnosukeBubble();repositionYuukaBlooms();}
+}
+function queueMobileViewport(){
+  if(!mobileViewportFrame)mobileViewportFrame=requestAnimationFrame(syncMobileViewport);
+}
+function closeMobileJournal(){document.body.classList.remove('mobile-log-open');el('journal-btn').setAttribute('aria-expanded','false');el('journal-btn').textContent='Log';}
+function fullscreenElement(){return document.fullscreenElement || document.webkitFullscreenElement;}
+async function toggleGameFullscreen(){
+  const message=el('mobile-screen-message');message.textContent='';
+  try{
+    if(fullscreenElement()){
+      const exit=document.exitFullscreen || document.webkitExitFullscreen;if(exit)await exit.call(document);
+      try{screen.orientation?.unlock();}catch(_error){}
+    }else{
+      const root=document.documentElement,request=root.requestFullscreen || root.webkitRequestFullscreen;
+      if(request)await request.call(root);else{message.textContent='Rotate your phone to play sideways.';return;}
+      if(screen.orientation?.lock){try{await screen.orientation.lock('landscape');}catch(_error){message.textContent='Rotate your phone for landscape.';}}
+    }
+  }catch(_error){message.textContent='Rotate your phone to play sideways.';}
+  finally{queueMobileViewport();}
+}
+function onGameFullscreenChange(){
+  const full=!!fullscreenElement();el('fullscreen-btn').textContent=full?'Exit Fullscreen':'Fullscreen';
+  el('fullscreen-btn').setAttribute('aria-pressed',String(full));
+  if(!full){try{screen.orientation?.unlock();}catch(_error){}}
+  queueMobileViewport();
+}
+el('fullscreen-btn').addEventListener('click',toggleGameFullscreen);
+el('journal-btn').addEventListener('click',()=>{
+  const open=document.body.classList.toggle('mobile-log-open');
+  el('journal-btn').setAttribute('aria-expanded',String(open));el('journal-btn').textContent=open?'Close Log':'Log';
+});
+document.addEventListener('keydown',event=>{if(event.key==='Escape')closeMobileJournal();});
+document.addEventListener('fullscreenchange',onGameFullscreenChange);
+document.addEventListener('webkitfullscreenchange',onGameFullscreenChange);
+window.addEventListener('resize',()=>{
+  if(touchHandDrag)finishHandDrag(true);
+  for(const entry of handDragSettlers){try{entry.animation?.finish();}catch(_error){}}
+  // Complete a visual handoff on rotation without cancelling the card's ability.
+  for(const arrival of handPlacementArrivals)for(const animation of arrival.animations){try{animation.finish();}catch(_error){}}
+  queueMobileViewport();
+});
+window.visualViewport?.addEventListener('resize',queueMobileViewport);
 
 el('start-btn').addEventListener('click', () => {
   if(customizeOn && customSelected.size !== 6) return;
