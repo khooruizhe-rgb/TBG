@@ -28,6 +28,24 @@ function setup({size=4,hand=[],opponents=[[],[],[]],board=[],waste=[],deck=[],di
 const six=['mtn_suwako','mtn_aya','palace_utsuho','palace_rin','sage_ran','medicine'];
 const tests=[];function test(name,fn){tests.push([name,fn]);}
 
+test('A hand placement lands before its Placed ability can ask for input',async()=>{
+  const g=setup();let finish,abilityCalls=0;
+  const landing=new Promise(resolve=>finish=resolve);
+  g.ui.onPlacementArrival=()=>()=>landing;
+  g.resolveAbility=async()=>{abilityCalls++;return {};};
+  const placing=g.internalPlace('hourai_eirin',0,0,1,0);
+  assert.equal(g.cardAt(0,0),'hourai_eirin');assert.equal(abilityCalls,0);
+  finish(true);await placing;assert.equal(abilityCalls,1);
+});
+test('A cancelled placement handoff cannot trigger its ability',async()=>{
+  const g=setup();let finish,abilityCalls=0;
+  const landing=new Promise(resolve=>finish=resolve);
+  g.ui.onPlacementArrival=()=>()=>landing;
+  g.resolveAbility=async()=>{abilityCalls++;return {};};
+  const placing=g.internalPlace('hourai_eirin',0,0,1,0);
+  g.cancelled=true;finish(false);await placing;assert.equal(abilityCalls,0);
+});
+
 test('Protected cards have no board faction, including Kasen, and regain it when the keeper leaves',()=>{
   const g=setup({board:[[1,1,'shop_rinnosuke'],[0,0,'sage_kasen'],[1,2,'sdm_remilia']]});
   assert.equal(g.boardFaction(1,2),null);assert.equal(g.factionCells('sdm').length,0);
