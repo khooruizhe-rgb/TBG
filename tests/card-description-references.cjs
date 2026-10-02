@@ -10,13 +10,17 @@ let activeElement=null;
 class Element{
   constructor(id='',tag='DIV'){
     this.id=id;this.tagName=tag;this.nodeType=1;this.dataset={};this.style={};this.children=[];
-    this.events=[];this.isConnected=true;this.scrollTop=0;this.clientWidth=500;this.scrollWidth=0;
+    this.events=[];this.isConnected=true;this.scrollTop=0;this.clientWidth=500;this.scrollWidth=0;this.attributes={};
+    this.offsetWidth=300;this.offsetHeight=120;this.rect={left:25,top:200,bottom:220};
     const classes=new Set();this.classList={add:(...n)=>n.forEach(x=>classes.add(x)),remove:(...n)=>n.forEach(x=>classes.delete(x)),contains:n=>classes.has(n)};
   }
   set innerHTML(value){
     this.markup=value;this.children=[];
-    for(const m of value.matchAll(/<button[^>]*data-inspect-card="([^"]+)"[^>]*>([^<]*)<\/button>/g)){
-      const b=new Element('','BUTTON');b.dataset.inspectCard=m[1];b.textContent=m[2];b.parentElement=this;this.children.push(b);
+    for(const m of value.matchAll(/<button([^>]*)>([^<]*)<\/button>/g)){
+      const b=new Element('','BUTTON');
+      const card=m[1].match(/data-inspect-card="([^"]+)"/),term=m[1].match(/data-rule-term="([^"]+)"/);
+      if(card)b.dataset.inspectCard=card[1];if(term)b.dataset.ruleTerm=term[1];
+      b.textContent=m[2];b.parentElement=this;this.children.push(b);
     }
   }
   get innerHTML(){return this.markup||'';}
@@ -24,7 +28,16 @@ class Element{
   appendChild(child){this.children.push(child);child.parentElement=this;}
   addEventListener(type,fn,options){this.events.push({type,fn,capture:options===true});}
   focus(){activeElement=this;}
-  closest(selector){if(selector==='[data-inspect-card]' && this.dataset.inspectCard)return this;return this.parentElement?.closest(selector)||null;}
+  closest(selector){
+    for(const part of selector.split(',').map(x=>x.trim())){
+      if(part==='[data-inspect-card]' && this.dataset.inspectCard)return this;
+      if(part==='[data-rule-term]' && this.dataset.ruleTerm)return this;
+      if(part===`#${this.id}`)return this;
+    }
+    return this.parentElement?.closest(selector)||null;
+  }
+  setAttribute(name,value){this.attributes[name]=value;}removeAttribute(name){delete this.attributes[name];}
+  getBoundingClientRect(){return this.rect;}
   contains(node){return node===this || this.children.some(c=>c.contains(node));}
   querySelectorAll(){return this.children.flatMap(c=>[...(c.tagName==='BUTTON'&&!c.disabled?[c]:[]),...c.querySelectorAll()]);}
 }
@@ -32,11 +45,12 @@ const el=id=>{if(!controls.has(id))controls.set(id,new Element(id));return contr
 const overlay=el('card-detail-overlay'),detail=el('card-detail'),effect=new Element();
 overlay.appendChild(detail);
 detail.appendChild(effect);effect.appendChild(el('card-detail-description'));
+el('rule-term-popover').hidden=true;
 const document={get activeElement(){return activeElement;},createElement:tag=>new Element('',tag.toUpperCase()),
   addEventListener:(type,fn,options)=>listeners.push({type,fn,capture:options===true})};
 const windowListeners=[];
 const context={console,document,el,requestAnimationFrame:fn=>fn(),getComputedStyle:node=>({fontSize:`${node.baseFontSize||22}px`}),
-  window:{addEventListener:(type,fn)=>windowListeners.push({type,fn})},KOURINDOU_PORTRAITS:{},CARD_DETAIL_PORTRAITS:{},
+  window:{innerWidth:360,innerHeight:640,addEventListener:(type,fn)=>windowListeners.push({type,fn})},KOURINDOU_PORTRAITS:{},CARD_DETAIL_PORTRAITS:{},
   game:{players:[{hand:['shop_rinnosuke']}],isActiveOnBoard:()=>false},
   pendingCellChoice:{cancellable:true},cancelHandSelection(){context.cancelledSelection=true;context.pendingCellChoice=null;}};
 vm.createContext(context);
@@ -94,7 +108,7 @@ test('Descriptions keep Roman costs and leave Yuyuko exclusions to discovery',()
   assert.ok(A.CARDS.every(c=>!c.desc.includes('excluding')&&!c.desc.includes('checked after')));
 });
 test('Every remaining named-card mention resolves to the correct inspect link',()=>{
-  const expected={hourai_eirin:'sage_kasen',sage_ran:'sage_yukari',hell_komachi:'hell_eiki',hourai_tewi:'trap_token',shop_rinnosuke:'shop_rinnosuke'};
+  const expected={mtn_sanae:'mtn_kanako',sage_ran:'sage_yukari',hell_komachi:'hell_eiki',hourai_tewi:'trap_token',shop_rinnosuke:'shop_rinnosuke'};
   for(const [card,target] of Object.entries(expected))assert.ok(A.ruleTextHtml(A.CARD[card].desc).includes(`data-inspect-card="${target}"`));
 });
 test('Selection options can show faction icons without nested inspect buttons',()=>{
@@ -131,7 +145,7 @@ test('Backdrop closing restores original focus and preserves placement selection
 });
 test('Keyboard focus stays in inspection and Escape closes only the inspector',()=>{
   A.openCardDetails('sage_ran');const links=el('card-detail-description').children;links.at(-1).focus();
-  const handler=listeners.find(l=>l.type==='keydown').fn;
+  const handler=listeners.find(l=>l.type==='keydown'&&!l.capture).fn;
   handler(event(links.at(-1),{key:'Tab'}));assert.equal(document.activeElement,links[0]);
   handler(event(document.activeElement,{key:'Tab',shiftKey:true}));assert.equal(document.activeElement,links.at(-1));
   const escapeEvent=event(document.activeElement,{key:'Escape'});handler(escapeEvent);
@@ -139,13 +153,13 @@ test('Keyboard focus stays in inspection and Escape closes only the inspector',(
 });
 test('Escape returns from a referenced card before closing the original',()=>{
   A.openCardDetails('sage_ran');A.openCardDetails('sage_yukari',{followReference:true});
-  const handler=listeners.find(l=>l.type==='keydown').fn;
+  const handler=listeners.find(l=>l.type==='keydown'&&!l.capture).fn;
   handler(event(detail,{key:'Escape'}));assert.equal(A.state().id,'sage_ran');assert.ok(overlay.classList.contains('show'));
   handler(event(detail,{key:'Escape'}));assert.equal(A.state().id,null);assert.equal(document.activeElement,origin);
 });
 test('Double-click closes the original card and an inspection with no links retains keyboard focus',()=>{
   A.openCardDetails('haku_youmu');
-  listeners.find(l=>l.type==='keydown').fn(event(detail,{key:'Tab'}));assert.equal(document.activeElement,detail);
+  listeners.find(l=>l.type==='keydown'&&!l.capture).fn(event(detail,{key:'Tab'}));assert.equal(document.activeElement,detail);
   detail.events.find(e=>e.type==='dblclick').fn(event(detail));assert.equal(A.state().id,null);
 });
 test('Hand-only description and invalid reference handling remain intact',()=>{
@@ -164,10 +178,13 @@ test('Failed faction artwork has an explicit visible fallback',()=>{
 });
 test('Placed is the only colon label and Mountain descriptions do not repeat Kanako',()=>{
   for(const c of A.CARDS)assert.ok(!c.desc.replaceAll('Placed:','').includes(':'),c.id);
-  for(const id of ['mtn_suwako','mtn_sanae','mtn_aya']){
+  for(const id of ['mtn_suwako','mtn_aya']){
     assert.ok(!A.CARD[id].desc.includes('Kanako'));assert.ok(!A.CARD[id].desc.includes('('));
   }
   assert.equal(A.CARD.haku_youmu.desc,'Placed: Placing this card does not use your turn.');
+  assert.equal(A.CARD.mtn_sanae.desc,'Placed: Draw a card. If Kanako Yasaka is on the board, draw another card.');
+  assert.equal(A.CARD.hourai_mokou.desc,'Placed: Draw a card for each card in your discard pile.');
+  assert.equal(A.CARD.hourai_eirin.desc,'While this card is on the board, all Crown abilities are disabled.');
 });
 test('Ability headings fit on open and resize rather than wrapping or truncating',()=>{
   const heading=el('card-detail-ability');heading.baseFontSize=36;
@@ -180,8 +197,48 @@ test('Ability headings fit on open and resize rather than wrapping or truncating
       A.openCardDetails(card.id);assert.ok(heading.scrollWidth<=heading.clientWidth,`${card.id} at ${width}px`);
     }
   }
-  heading.clientWidth=170;windowListeners.find(l=>l.type==='resize').fn();
+  heading.clientWidth=170;windowListeners.filter(l=>l.type==='resize').forEach(l=>l.fn());
   assert.ok(heading.scrollWidth<=heading.clientWidth);
   assert.ok(/\.card-detail-ability\{[^}]*white-space:nowrap/s.test(html));A.closeCardDetails();
+});
+test('Cost and wasteland are clickable without turning partial words into links',()=>{
+  assert.match(A.ruleTextHtml('[Cost III] Placed: Clear wasteland.'),/data-rule-term="cost"/);
+  assert.match(A.ruleTextHtml('Wasteland and wasteland'),/data-rule-term="wasteland"/);
+  assert.equal(A.ruleTextHtml('Costly wastelander'),'Costly wastelander');
+  assert.ok(!A.ruleTextHtml('Cost',{cards:false}).includes('<button'));
+});
+test('Clicking a term opens a short positioned note without disturbing inspection or placement',()=>{
+  A.openCardDetails('mtn_kanako');
+  const term=el('card-detail-description').children.find(c=>c.dataset.ruleTerm==='wasteland');
+  const e=click(term);assert.ok(e.immediate&&e.prevented);assert.ok(!context.cancelledSelection);
+  assert.equal(A.state().id,'mtn_kanako');assert.equal(el('rule-term-title').textContent,'Wasteland');
+  assert.ok(!el('rule-term-popover').hidden);assert.equal(term.attributes['aria-expanded'],'true');
+  assert.ok(parseFloat(el('rule-term-popover').style.left)>=12);
+  detail.events.find(e=>e.type==='dblclick').fn(event(term));assert.equal(A.state().id,'mtn_kanako');
+  click(term);assert.ok(el('rule-term-popover').hidden);assert.equal(term.attributes['aria-expanded'],'false');
+});
+test('Escape closes only the glossary and returns focus to its word',()=>{
+  A.openCardDetails('haku_yuyuko');
+  const term=el('card-detail-description').children.find(c=>c.dataset.ruleTerm==='cost');click(term);
+  assert.equal(el('rule-term-title').textContent,'Cost');assert.match(el('rule-term-copy').textContent,/draw pile/);
+  const e=event(term,{key:'Escape'});listeners.find(l=>l.type==='keydown'&&l.capture).fn(e);
+  assert.ok(e.immediate&&e.prevented);assert.ok(el('rule-term-popover').hidden);
+  assert.equal(document.activeElement,term);assert.equal(A.state().id,'haku_yuyuko');
+});
+test('Reading a note and clicking elsewhere in the card preserve the pending placement',()=>{
+  A.openCardDetails('haku_yuyuko');
+  const term=el('card-detail-description').children.find(c=>c.dataset.ruleTerm==='cost');click(term);
+  click(el('rule-term-popover'));assert.ok(!el('rule-term-popover').hidden);assert.ok(!context.cancelledSelection);
+  click(effect);assert.ok(el('rule-term-popover').hidden);assert.ok(!context.cancelledSelection);
+});
+test('Changing cards dismisses a glossary note and narrow viewports clamp it to the screen',()=>{
+  A.openCardDetails('haku_yuyuko');
+  const term=el('card-detail-description').children.find(c=>c.dataset.ruleTerm==='cost');
+  context.window.innerWidth=210;context.window.innerHeight=200;
+  el('rule-term-popover').offsetWidth=186;term.rect={left:199,top:160,bottom:180};click(term);
+  assert.equal(parseFloat(el('rule-term-popover').style.left),12);
+  assert.ok(parseFloat(el('rule-term-popover').style.top)<=68);
+  A.openCardDetails('mtn_sanae');assert.ok(el('rule-term-popover').hidden);assert.equal(term.attributes['aria-expanded'],'false');
+  A.closeCardDetails();context.window.innerWidth=360;context.window.innerHeight=640;
 });
 console.log(`${passed}/${passed} description and inspection checks passed`);
