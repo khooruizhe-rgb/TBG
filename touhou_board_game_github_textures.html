@@ -1809,8 +1809,7 @@
 
   .shop-option{ margin:16px auto 8px; padding:12px 16px; max-width:530px; text-align:left;
     border:1px solid #9d774f; border-radius:12px; background:rgba(122,78,38,.12); }
-  .shop-option label{ display:flex; align-items:center; gap:10px; cursor:pointer; color:#f1cd91; font-weight:700; }
-  .shop-option input{ width:18px; height:18px; accent-color:#d9ad67; }
+  .shop-option strong{ color:#f1cd91; font-weight:700; }
   .shop-option p{ margin:8px 0 0; color:var(--muted); font-size:.79rem; line-height:1.5; }
   #shop-panel[hidden]{display:none;}
   #shop-panel{flex:none;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--line);}
@@ -2245,8 +2244,8 @@ body.mobile-landscape #winner-box h2{font-size:24px;}
       <button class="pill-btn selected" data-difficulty="hard" aria-pressed="true">Hard</button>
     </div>
     <div class="shop-option">
-      <label><input type="checkbox" id="kourindou-toggle">🏮 Kourindou</label>
-      <p>Select a hand card, then click Rinnosuke to trade for free.</p>
+      <strong>🏮 Kourindou</strong>
+      <p>Select a hand card, then click Rinnosuke to trade without using your turn.</p>
     </div>
     <div class="opts">
       <button class="pill-btn" id="customize-toggle">🛠️ Customize My Starting Hand (playtest)</button>
@@ -2259,9 +2258,8 @@ body.mobile-landscape #winner-box h2{font-size:24px;}
       <div id="custom-hand-grid" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center; max-height:360px; overflow-y:auto; padding:6px;"></div>
     </div>
 
-    <div class="tutorial-options" aria-label="Optional tutorials">
-      <button class="pill-btn" id="tutorial-normal" type="button">Learn normal play</button>
-      <button class="pill-btn" id="tutorial-kourindou" type="button">Learn Kourindou</button>
+    <div class="tutorial-options" aria-label="Optional tutorial">
+      <button class="pill-btn" id="tutorial-start" type="button">Learn to Play</button>
     </div>
     <button class="big-btn" id="start-btn" style="margin-top:18px;">Begin the Incident</button>
 
@@ -2557,18 +2555,16 @@ class Game {
     this.aiDifficulty=AI_DIFFICULTIES[options.aiDifficulty] ? options.aiDifficulty : 'hard';
     this.board = Array.from({length:SIZE},()=>Array(SIZE).fill(null));
     this.wasteland = Array.from({length:SIZE},()=>Array(SIZE).fill(false));
-    this.kourindouEnabled=!!options.kourindou;
+    this.kourindouEnabled=true; // Kourindou is part of every match.
     this.shopCards=[];
-    this.shopTiles=this.kourindouEnabled ? [[0,1],[1,0],[1,1],[1,2]].map(([r,c],slot)=>({r:SIZE+2+r,c,slot,wasteland:true})) : [];
+    this.shopTiles=[[0,1],[1,0],[1,1],[1,2]].map(([r,c],slot)=>({r:SIZE+2+r,c,slot,wasteland:true}));
     this.pendingExtraTurns={};
     this.tradedThisTurn=Array(numPlayers).fill(false);
     this.handKnowledge=Array.from({length:numPlayers},()=>new Map());
     this.cancelled=false;
     this.drawPile=shuffle(CARDS.filter(c=>!c.token && !c.shopkeeper && !c.shopExpansion).map(c=>c.id));
-    if(this.kourindouEnabled){
-      const stock=shuffle(CARDS.filter(card=>card.shopExpansion).map(card=>card.id)).slice(0,3);
-      this.shopCards=['shop_rinnosuke',...stock];
-    }
+    const stock=shuffle(CARDS.filter(card=>card.shopExpansion).map(card=>card.id)).slice(0,3);
+    this.shopCards=['shop_rinnosuke',...stock];
     this.startingCardIds=new Set([...this.drawPile,...this.shopCards]);
     this.players = [];
     for(let i=0;i<numPlayers;i++){
@@ -6363,7 +6359,7 @@ function renderStatus(){
           : p.hand.length>=NORMAL_HAND_LIMIT ? "Your hand is full — place a card." : "Your move — place a card (draw pile empty).")
         : "Resolving action...")
     : `${p.name} is thinking...`;
-  if(humanReady && game.kourindouEnabled && game.shopkeeperAvailable()){
+  if(humanReady && tutorialAllowsTrade() && game.kourindouEnabled && game.shopkeeperAvailable()){
     const tradeAvailable=p.hand.some(id=>game.canTrade(0,id));
     if(tradeAvailable) el('status-line').textContent=pendingCellChoice?.shopTrade
       ? 'Choose merchandise to swap with your selected card.'
@@ -7455,7 +7451,7 @@ function clearHandPlacementArrivals(){
 
 function humanActionCells(cardId){
   const cells=game.emptyOrWastelandForCard(CARD[cardId]);
-  if(cardId!=='sage_yukari' && game.canTrade(0,cardId)){
+  if(cardId!=='sage_yukari' && tutorialAllowsTrade() && game.canTrade(0,cardId)){
     const keeper=game.boardCells(cell=>cell.id==='shop_rinnosuke')[0];
     if(keeper) cells.push(keeper);
   }
@@ -7463,9 +7459,9 @@ function humanActionCells(cardId){
 }
 function humanShopSlots(cardId){
   if(cardId==='sage_yukari') return []; // Normal tile placement handles the override.
-  return game.canTrade(0,cardId) && game.shopCards[0]==='shop_rinnosuke' ? [0] : [];
+  return tutorialAllowsTrade() && game.canTrade(0,cardId) && game.shopCards[0]==='shop_rinnosuke' ? [0] : [];
 }
-function shopActionHint(cardId){return game.canTrade(0,cardId) && cardId!=='sage_yukari' ? ', or Rinnosuke to trade' : '';}
+function shopActionHint(cardId){return tutorialAllowsTrade() && game.canTrade(0,cardId) && cardId!=='sage_yukari' ? ', or Rinnosuke to trade' : '';}
 async function commitHumanShopAction(cardId,slot,override=false){
   const activeGame=game,resolveTurn=window.__resolveHumanTurn;
   if(!activeGame || activeGame.cancelled || !resolveTurn || humanActionResolving) return;
@@ -7492,6 +7488,7 @@ function makeShopActionResolver(cardId){
   return slot=>cardId==='sage_yukari' ? commitHumanShopAction(cardId,slot,true) : beginShopTrade(cardId);
 }
 function beginShopTrade(cardId){
+  if(!tutorialAllowsTrade()) return;
   if(!window.__resolveHumanTurn || humanActionResolving || !game.canTrade(0,cardId)) return;
   selectedHandCard=cardId;syncHandSelection();
   pendingCellChoice={cells:game.tradeCells(),cancellable:true,shopTrade:true,
@@ -7828,14 +7825,6 @@ document.querySelectorAll('#ai-difficulty-opts .pill-btn').forEach(btn=>{
     });
   });
 });
-let chosenKourindou=false;
-el('kourindou-toggle').addEventListener('change',event=>{
-  chosenKourindou=event.target.checked;
-  if(!chosenKourindou) for(const id of customSelected) if(CARD[id].shopExpansion) customSelected.delete(id);
-  if(customizeOn) renderCustomGrid();
-  updateStartButtonState();
-});
-
 let chosenBoardSize = 4;
 document.querySelectorAll('#board-size-opts .pill-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -7970,16 +7959,14 @@ function startNewGame(){
   queueMobileViewport();
   SIZE = chosenBoardSize;
   const customHand = customizeOn ? Array.from(customSelected) : null;
-  game = new Game(chosenPlayerCount, ui, customHand,{kourindou:chosenKourindou,aiDifficulty:chosenAIDifficulty});
+  game = new Game(chosenPlayerCount, ui, customHand,{aiDifficulty:chosenAIDifficulty});
   renderAll();
-  if(chosenKourindou){
-    const openingGame=game;
-    rinnosukeOpeningTimer=setTimeout(()=>{
-      rinnosukeOpeningTimer=null;
-      if(game===openingGame && !openingGame.cancelled && !rinnosukeLastSpoke)
-        speakRinnosuke('welcome');
-    },700);
-  }
+  const openingGame=game;
+  rinnosukeOpeningTimer=setTimeout(()=>{
+    rinnosukeOpeningTimer=null;
+    if(game===openingGame && !openingGame.cancelled && !rinnosukeLastSpoke)
+      speakRinnosuke('welcome');
+  },700);
   window.scrollTo(0,0);
   requestAnimationFrame(()=>window.scrollTo(0,0));
   runNextTurn();
@@ -8106,20 +8093,19 @@ window.addEventListener('resize',positionRinnosukeBubble);
 window.addEventListener('scroll',positionRinnosukeBubble,{passive:true});
 
 /* Guided practice uses the same Game, table, hand, choices, and effects as a match. */
-const TUTORIALS={
-  normal:[
-    {title:'Place a card',body:'Select Sanae Kochiya in your hand, then click an empty board tile. You can also drag her there. Her Placed ability draws a card.',goal:'place',success:'Sanae is on the board, and her ability added a card to your hand.'},
-    {title:'Connect a faction',body:'Place Sanae Kochiya beside the three Youkai Mountain cards. Four connected cards are claimed into your discard pile. Reach 7 discard points to win. Connections use the four orthogonal directions.',goal:'claim',success:'You claimed all four cards and gained 4 discard points.'},
-    {title:'Draw for everyone',body:'Press Draw for Everyone instead of placing a card. Players with fewer than 7 cards draw one each. A full hand skips the draw; abilities can still give you more cards.',goal:'draw',success:'You and AI 2 drew a card. AI 1 already had 7 cards, so their hand stayed full.'},
-    {title:'Pay a cost and choose an area',body:'Place Iku Nagae. Pay Cost III by selecting the three remaining hand cards together and confirming. Then choose a 2×2 area containing both board cards. Double-click any card to inspect it.',goal:'area',success:'Your three cost cards returned to the draw pile, and Iku sent both targets to your discard pile.'}
-  ],
-  kourindou:[
-    {title:'Step inside',body:'Select a card in your hand, then click Morichika Rinnosuke at Kourindou, outside the main board.',goal:'offer'},
-    {title:'Try a trade',body:'Choose one of the three highlighted cards. You can trade once per turn without using your turn. The rest of Kourindou is yours to discover.',goal:'trade',success:'The merchandise is now in your hand. The trade used no turn.'}
-  ]
-};
+const TUTORIALS=[
+  {title:'Place a card',body:'Select Sanae Kochiya in your hand, then click an empty board tile. You can also drag her there. Her Placed ability draws a card.',goal:'place',success:'Sanae is on the board, and her ability added a card to your hand.'},
+  {title:'Connect a faction',body:'Place Sanae Kochiya beside the three Youkai Mountain cards. Four connected cards are claimed into your discard pile. Reach 7 discard points to win. Connections use the four orthogonal directions.',goal:'claim',success:'You claimed all four cards and gained 4 discard points.'},
+  {title:'Draw for everyone',body:'Press Draw for Everyone instead of placing a card. Players with fewer than 7 cards draw one each. A full hand skips the draw; abilities can still give you more cards.',goal:'draw',success:'You and AI 2 drew a card. AI 1 already had 7 cards, so their hand stayed full.'},
+  {title:'Pay a cost and choose an area',body:'Place Iku Nagae. Pay Cost III by selecting the three remaining hand cards together and confirming. Then choose a 2×2 area containing both board cards. Double-click any card to inspect it.',goal:'area',success:'Your three cost cards returned to the draw pile, and Iku sent both targets to your discard pile.'},
+  {title:'Step inside',body:'Select a card in your hand, then click Morichika Rinnosuke at Kourindou, outside the main board.',goal:'offer'},
+  {title:'Try a trade',body:'Choose one of the three highlighted cards. You can trade once per turn without using your turn. The rest of Kourindou is yours to discover.',goal:'trade',success:'The merchandise is now in your hand. The trade used no turn.'}
+];
 let tutorialState=null,tutorialReturnFocus=null;
 function isTutorialPractice(){return !!tutorialState && tutorialState.practice===game;}
+function tutorialAllowsTrade(){
+  return !isTutorialPractice() || ['offer','trade'].includes(TUTORIALS[tutorialState.step].goal);
+}
 
 function clearTutorialPractice(){
   const previous=tutorialState;
@@ -8138,8 +8124,8 @@ function dockTutorialCoach(mobile){
 }
 
 /* Fixtures use unique real cards; no mock cards, scores, or alternative ability rules. */
-function configureTutorialGame(practice,mode,step){
-  const goal=TUTORIALS[mode][step].goal;
+function configureTutorialGame(practice,step){
+  const goal=TUTORIALS[step].goal;
   let board=[],hand=['mtn_sanae'],opponents=[[],[]];
   if(goal==='claim') board=[[1,1,'mtn_kanako'],[1,2,'mtn_suwako'],[2,1,'mtn_aya']];
   if(goal==='draw'){
@@ -8150,10 +8136,8 @@ function configureTutorialGame(practice,mode,step){
     hand=['heaven_iku','hourai_mokou','hell_clownpiece','haku_youmu'];
     board=[[0,0,'mtn_aya'],[0,1,'sage_ran']];
   }
-  if(mode==='kourindou'){
-    hand=['hourai_mokou','haku_youmu'];
-    practice.shopCards=['shop_rinnosuke','sdm_meiling','hourai_tewi','hell_kutaka'];
-  }
+  if(goal==='offer' || goal==='trade') hand=['hourai_mokou','haku_youmu'];
+  practice.shopCards=['shop_rinnosuke','sdm_meiling','hourai_tewi','hell_kutaka'];
   practice.board=Array.from({length:SIZE},()=>Array(SIZE).fill(null));
   practice.wasteland=Array.from({length:SIZE},()=>Array(SIZE).fill(false));
   for(const [r,c,id] of board) practice.setCardAt(r,c,id);
@@ -8167,7 +8151,7 @@ function configureTutorialGame(practice,mode,step){
   practice.log('Guided practice — the other players wait while you try this step.');
 }
 function tutorialObjectiveMet(t){
-  const g=t.practice,goal=TUTORIALS[t.mode][t.step].goal;
+  const g=t.practice,goal=TUTORIALS[t.step].goal;
   if(goal==='place') return g.isActiveOnBoard('mtn_sanae') && g.players[0].hand.length===1;
   if(goal==='claim') return ['mtn_kanako','mtn_suwako','mtn_aya','mtn_sanae'].every(id=>g.players[0].discard.includes(id));
   if(goal==='draw') return g.players.every((p,i)=>p.hand.length===[7,7,4][i]) && g.drawPile.length===t.initialPileSize-2;
@@ -8178,7 +8162,7 @@ function tutorialObjectiveMet(t){
 }
 function tutorialAllowsAction(type,cardId){
   if(!isTutorialPractice()) return true;
-  const t=tutorialState,goal=TUTORIALS[t.mode][t.step].goal;
+  const t=tutorialState,goal=TUTORIALS[t.step].goal;
   if(t.complete || t.finishedAction) return false;
   const allowed=goal==='draw' ? type==='draw'
     : goal==='offer' ? type==='place'
@@ -8196,7 +8180,7 @@ async function finishTutorialAction(t){
   if(!await waitForVisualEffects(t.practice)) return;
   if(tutorialState!==t || game!==t.practice || t.practice.cancelled) return;
   t.complete=tutorialObjectiveMet(t);
-  t.feedback=t.complete ? TUTORIALS[t.mode][t.step].success
+  t.feedback=t.complete ? TUTORIALS[t.step].success
     : 'Try again to complete this step. Retry restores the practice cards.';
   renderTutorial();
 }
@@ -8204,8 +8188,8 @@ async function runTutorialTurn(t){
   await Promise.race([doPlayerAction(0),t.cancelled]);
   if(tutorialState===t && game===t.practice && !t.practice.cancelled) await finishTutorialAction(t);
 }
-function openTutorial(mode,step=0){
-  if(!TUTORIALS[mode] || !TUTORIALS[mode][step]) return;
+function openTutorial(step=0){
+  if(!Number.isInteger(step) || !TUTORIALS[step]) return;
   // Tutorials launch from the menu; never replace a live match.
   if(game && !isTutorialPractice()) return;
   if(!tutorialState) tutorialReturnFocus=document.activeElement;
@@ -8213,38 +8197,38 @@ function openTutorial(mode,step=0){
   SIZE=4;
   let cancel;
   const cancelled=new Promise(resolve=>{cancel=resolve;});
-  const t={mode,step,cancel,cancelled,practice:null,complete:false,finishedAction:false,feedback:''};
+  const t={step,cancel,cancelled,practice:null,complete:false,finishedAction:false,feedback:''};
   tutorialState=t;
   const practiceUI={...ui};
   for(const name of ['pickPlayer','pickFromList','pickOwnHandCard','pickOwnHandCards','pickHandCard','pickRectByDrag','pickCell','promptText']){
     practiceUI[name]=(...args)=>Promise.race([ui[name](...args),cancelled.then(()=>name==='pickRectByDrag'?[]:null)]);
   }
-  game=t.practice=new Game(3,practiceUI,null,{kourindou:mode==='kourindou',aiDifficulty:'hard'});
-  configureTutorialGame(game,mode,step);
+  game=t.practice=new Game(3,practiceUI,null,{aiDifficulty:'hard'});
+  configureTutorialGame(game,step);
   t.initialPileSize=game.drawPile.length;
   el('setup').style.display='none';el('game').classList.add('active');
   document.body.classList.add('tutorial-practice');el('tutorial-coach').hidden=false;
   dockTutorialCoach(document.body.classList.contains('game-mobile'));
   renderTutorial();
   runTutorialTurn(t); // The real human turn installs all normal click and drag controls.
-  if(mode==='kourindou' && step===1) beginShopTrade('hourai_mokou');
+  if(TUTORIALS[step].goal==='trade') beginShopTrade('hourai_mokou');
   window.scrollTo(0,0);queueMobileViewport();
 }
 function tutorialStep(delta){
   if(!tutorialState) return;
   const t=tutorialState,next=t.step+delta;
   if(delta>0 && !t.complete) return;
-  if(next>=TUTORIALS[t.mode].length){returnToMainMenu();tutorialReturnFocus?.focus();return;}
-  if(next>=0) openTutorial(t.mode,next);
+  if(next>=TUTORIALS.length){returnToMainMenu();tutorialReturnFocus?.focus();return;}
+  if(next>=0) openTutorial(next);
 }
 function updateTutorialProgress(){
   if(!isTutorialPractice()) return;
   const t=tutorialState;
   // Opening the real merchandise selection moves straight to the second shop page.
-  if(t.mode==='kourindou' && t.step===0 && pendingCellChoice?.shopTrade){
-    t.step=1;t.feedback='';renderTutorial();
+  if(TUTORIALS[t.step].goal==='offer' && pendingCellChoice?.shopTrade){
+    t.step++;t.feedback='';renderTutorial();
   }
-  if(t.mode==='kourindou' && t.step===1 && !t.complete && !t.finishedAction
+  if(TUTORIALS[t.step].goal==='trade' && !t.complete && !t.finishedAction
     && t.practice.tradedThisTurn[0] && !humanActionResolving){
     finishTutorialAction(t);
   }
@@ -8253,7 +8237,7 @@ function updateTutorialProgress(){
 function highlightTutorialTargets(){
   document.querySelectorAll('.tutorial-focus').forEach(node=>node.classList.remove('tutorial-focus'));
   if(!isTutorialPractice() || tutorialState.complete || tutorialState.finishedAction) return;
-  const t=tutorialState,goal=TUTORIALS[t.mode][t.step].goal;
+  const t=tutorialState,goal=TUTORIALS[t.step].goal;
   const mark=node=>node?.classList.add('tutorial-focus');
   if(goal==='draw'){mark(el('draw-btn'));return;}
   if(goal==='trade'){
@@ -8276,8 +8260,8 @@ function highlightTutorialTargets(){
 function renderTutorial(){
   const t=tutorialState;
   if(!t) return;
-  const steps=TUTORIALS[t.mode],page=steps[t.step];
-  el('tutorial-progress').textContent=`Practice · ${t.mode==='normal'?'Normal play':'Kourindou'} · ${t.step+1} / ${steps.length}`;
+  const steps=TUTORIALS,page=steps[t.step];
+  el('tutorial-progress').textContent=`Learn to Play · ${t.step+1} / ${steps.length}`;
   el('tutorial-title').textContent=page.title;setRuleText(el('tutorial-copy'),page.body);
   el('tutorial-feedback').textContent=t.feedback || 'Try it on the table. Your match settings stay unchanged.';
   el('tutorial-back').disabled=t.step===0;
@@ -8285,10 +8269,9 @@ function renderTutorial(){
   el('tutorial-next').textContent=t.step===steps.length-1?'Finish':'Next';
   highlightTutorialTargets();
 }
-el('tutorial-normal').addEventListener('click',()=>openTutorial('normal'));
-el('tutorial-kourindou').addEventListener('click',()=>openTutorial('kourindou'));
+el('tutorial-start').addEventListener('click',()=>openTutorial());
 el('tutorial-back').addEventListener('click',()=>tutorialStep(-1));
-el('tutorial-retry').addEventListener('click',()=>{if(tutorialState)openTutorial(tutorialState.mode,tutorialState.step);});
+el('tutorial-retry').addEventListener('click',()=>{if(tutorialState)openTutorial(tutorialState.step);});
 el('tutorial-next').addEventListener('click',()=>tutorialStep(1));
 
 /* CSS lays out the phone table; actual available rectangles size its cards. */
