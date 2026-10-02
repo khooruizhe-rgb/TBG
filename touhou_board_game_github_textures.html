@@ -1761,6 +1761,15 @@
   .card-reference:focus-visible{outline:2px solid #ffe5a0;outline-offset:3px;}
   .card-detail-description{white-space:pre-line;}
 
+  .rule-term-reference{display:inline;padding:2px 0;border:0;border-radius:2px;background:transparent;color:inherit;font:inherit;line-height:inherit;text-shadow:inherit;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;}
+  .rule-term-reference:hover{text-decoration-style:solid;color:#ffe5a0;}
+  .rule-term-reference:focus-visible{outline:2px solid #ffe5a0;outline-offset:3px;}
+  #rule-term-popover{position:fixed;z-index:300;box-sizing:border-box;width:min(300px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;padding:12px 14px;border:1px solid #bfa072;border-radius:9px;background:#211929;color:#fff4e0;box-shadow:0 10px 35px #0009;font:14px/1.45 Georgia,serif;}
+  #rule-term-popover[hidden]{display:none;}
+  #rule-term-title{margin:0 0 5px;font-size:15px;color:#ffe1a6;}
+  #rule-term-copy{margin:0;}
+
+
   @media (max-height:540px){
     #card-detail{ aspect-ratio:auto; height:calc(100dvh - 32px); }
     .card-detail-header{ --detail-icon-size:64px; grid-template-columns:var(--detail-icon-size) minmax(0,1fr) 30px; min-height:68px; padding-top:4px; }
@@ -2368,6 +2377,11 @@ body.mobile-landscape #winner-box h2{font-size:24px;}
   </div>
 </div>
 
+<div id="rule-term-popover" role="tooltip" aria-labelledby="rule-term-title" hidden>
+  <h4 id="rule-term-title"></h4>
+  <p id="rule-term-copy"></p>
+</div>
+
 <div id="winner-banner">
   <div id="winner-box">
     <h2 id="winner-text"></h2>
@@ -2424,18 +2438,18 @@ const CARDS = [
   { id:'hourai_kaguya', faction:'hourai', name:'Kaguya Houraisan', crown:true,
     desc:"Placed: Guess an Eientei card in another player’s hand. Each correct guess lets you place that card on the board and guess again." },
   { id:'hourai_eirin',  faction:'hourai', name:'Eirin Yagokoro',
-    desc:"While this card is on the board, Crown cards’ Placed abilities and Kasen Ibara’s ability are disabled." },
+    desc:"While this card is on the board, all Crown abilities are disabled." },
   { id:'hourai_reisen', faction:'hourai', name:'Reisen Udongein Inaba',
     desc:"Placed: Choose a card in another player’s hand. They must place that card on their next turn." },
   { id:'hourai_mokou',  faction:'hourai', name:'Fujiwara no Mokou',
-    desc:"Placed: Draw one card for each card in your discard pile." },
+    desc:"Placed: Draw a card for each card in your discard pile." },
 
   { id:'mtn_kanako', faction:'mountain', name:'Kanako Yasaka', crown:true, wasteOK:true,
     desc:"This card can be placed on wasteland and doubles other Youkai Mountain cards’ Placed abilities while on the board.\nPlaced: Place one Youkai Mountain card from your hand on the board." },
   { id:'mtn_suwako', faction:'mountain', name:'Suwako Moriya',
     desc:"Placed: Turn three board tiles into wasteland." },
   { id:'mtn_sanae',  faction:'mountain', name:'Sanae Kochiya',
-    desc:"Placed: Draw one card." },
+    desc:"Placed: Draw a card. If Kanako Yasaka is on the board, draw another card." },
   { id:'mtn_aya',    faction:'mountain', name:'Aya Shameimaru',
     desc:"Placed: Every other player reveals four cards from their hand." },
 
@@ -2668,6 +2682,7 @@ class Game {
     return !this.cancelled && !this.winner && this.kourindouEnabled && Number.isInteger(slot)
       && !!this.shopCards[slot] && !(this.players[playerIdx].isAI && this.shopCards[slot]==='shop_rinnosuke')
       && this.players[playerIdx].hand.includes('sage_yukari')
+      && this.canOverrideTarget('sage_yukari',this.shopCards[slot])
       && !(forced && forced!=='sage_yukari' && this.players[playerIdx].hand.includes(forced));
   }
   async overrideShop(playerIdx,slot){
@@ -2700,6 +2715,22 @@ class Game {
   }
   isActiveOnBoard(cardId){
     return this.boardCells(cell=>cell.id===cardId && (cardId==='sage_yukari' || !this.isProtected(cell.r,cell.c))).length>0;
+  }
+  isCrownAbilityDisabled(cardId){
+    return !!CARD[cardId]?.crown && this.isActiveOnBoard('hourai_eirin');
+  }
+  hasActiveAbility(cardId){
+    return this.isActiveOnBoard(cardId) && !this.isCrownAbilityDisabled(cardId);
+  }
+  canOverrideTarget(cardId,targetId){
+    return !!CARD[cardId]?.override && (!this.isCrownAbilityDisabled(cardId) || targetId==='hourai_eirin');
+  }
+  canPlaceOnWasteland(card){
+    return !!card.wasteOK && !this.isCrownAbilityDisabled(card.id);
+  }
+  sanaeDrawCount(){
+    const base=this.isActiveOnBoard('mtn_kanako') ? 2 : 1;
+    return base*(this.hasActiveAbility('mtn_kanako') ? 2 : 1);
   }
   canSelectBoardCard(r,c){
     if(!this.cardAt(r,c)) return false;
@@ -2756,7 +2787,7 @@ class Game {
     this.startingCardIds.add(id);
     return id;
   }
-  isWildActive(id){return !!CARD[id]?.wild && !this.isActiveOnBoard('hourai_eirin');}
+  isWildActive(id){return !!CARD[id]?.wild && !this.isCrownAbilityDisabled(id);}
   factionCells(faction){
     return this.boardCells(cell=>this.boardMatchesFaction(cell.r,cell.c,faction));
   }
@@ -2786,7 +2817,7 @@ class Game {
       if(!this.canSelectBoardCard(move.r,move.c)) return false;
       if(includeProtected) return !!this.cardAt(move.r,move.c);
       if(!this.canMoveBoardCard(move.r,move.c) || !this.hasTile(move.toR,move.toC) || this.cardAt(move.toR,move.toC)) return false;
-      return !this.wastelandAt(move.toR,move.toC) || CARD[this.cardAt(move.r,move.c)].wasteOK;
+      return !this.wastelandAt(move.toR,move.toC) || this.canPlaceOnWasteland(CARD[this.cardAt(move.r,move.c)]);
     });
   }
   yuugiTargets(r,c,includeProtected=false,playerIdx=this.currentPlayerIdx){
@@ -2796,10 +2827,10 @@ class Game {
   }
 
   winCount(p){
-    return p.discard.reduce((s,id)=> s + (CARD[id].triple?3:1), 0);
+    return p.discard.reduce((s,id)=>s+this.pointValue(id),0);
   }
 
-  pointValue(cardId){ return CARD[cardId].triple ? 3 : 1; }
+  pointValue(cardId){ return CARD[cardId].triple && !this.isCrownAbilityDisabled(cardId) ? 3 : 1; }
 
   factionTotalPoints(fk){
     return CARDS.filter(c=>c.faction===fk && (this.kourindouEnabled || !c.shopExpansion))
@@ -2928,7 +2959,7 @@ class Game {
         const returned=this.payableCards(playerIdx).filter(id=>id!==cardId).length;
         return Math.min(4,this.drawPile.length+returned)-returned;
       }
-      case 'mtn_sanae': return this.isActiveOnBoard('mtn_kanako') ? 4 : 1;
+      case 'mtn_sanae': return this.sanaeDrawCount();
       case 'hourai_mokou': return player.discard.length;
       case 'sage_ran': return this.isActiveOnBoard('sage_yukari') ? 0 : 1;
       case 'sdm_patchouli': {
@@ -2986,9 +3017,9 @@ class Game {
   emptyCells(){return this.allTiles().filter(({r,c})=>!this.cardAt(r,c) && !this.wastelandAt(r,c));}
   emptyOrWastelandForCard(card){
     return this.allTiles().filter(({r,c})=>{
-      if(this.cardAt(r,c)) return !!card.override && this.canSelectBoardCard(r,c)
+      if(this.cardAt(r,c)) return this.canOverrideTarget(card.id,this.cardAt(r,c)) && this.canSelectBoardCard(r,c)
         && (card.id==='sage_yukari' || this.canMoveBoardCard(r,c));
-      return !this.wastelandAt(r,c) || card.wasteOK;
+      return !this.wastelandAt(r,c) || this.canPlaceOnWasteland(card);
     });
   }
   boardCells(filterFn=()=>true){
@@ -3052,7 +3083,7 @@ class Game {
     return cardId;
   }
   canEnterDiscard(p,cardId,source){
-    if(cardId!=='hell_hecatia') return true;
+    if(cardId!=='hell_hecatia' || this.isCrownAbilityDisabled(cardId)) return true;
     return this.players[p].discard.filter(id=>CARD[id].faction==='hell').length>3
       || !!source?.allowHecatiaFromClaim;
   }
@@ -3294,9 +3325,10 @@ class Game {
     if(this.ui?.onCostPaid){try{this.ui.onCostPaid({playerIdx,count:chosen.length});}catch(_error){}}
     for(const id of chosen){
       this.removeFromHand(playerIdx, id);
-      this.returnToDrawPile(id, {handOwner:playerIdx});
+      this.returnToDrawPile(id, {handOwner:playerIdx,effect:'cost'});
     }
     this.shuffleDrawPile();
+    this.render(); // Remove paid cards now; their detached exit animations continue separately.
     return chosen.length;
   }
   async payCost(playerIdx, count){
@@ -3404,7 +3436,10 @@ class Game {
   async internalPlace(cardId, r, c, playerIdx, depth, crownEffectId=null){
     depth = depth||0;
     if(this.cancelled || !this.hasTile(r,c) || (this.cardAt(r,c) && this.isProtected(r,c) && cardId!=='sage_yukari')) return {};
-    if(cardId==='sage_yukari' && this.cardAt(r,c)) this.moveBoardToHand(r,c,playerIdx,'yukari');
+    const occupied=this.cardAt(r,c);
+    if(cardId==='sage_yukari' && occupied){
+      if(!this.canOverrideTarget(cardId,occupied) || !this.moveBoardToHand(r,c,playerIdx,'yukari')) return {};
+    } else if(!occupied && this.wastelandAt(r,c) && !this.canPlaceOnWasteland(CARD[cardId])) return {};
     this.setCardAt(r,c,cardId);
     this.log(`${this.players[playerIdx].name} places ${CARD[cardId].name}.`);
     const handArrival=this.ui?.onPlacementArrival?.({cardId,r,c,playerIdx,crownEffectId});
@@ -3431,13 +3466,14 @@ class Game {
     let flags = {};
     const card = CARD[cardId];
     if(eirinActive && card.crown){
-      this.log(`Eirin Yagokoro's passive nullifies ${CARD[cardId].name}'s Placed ability — it has no effect while Eirin is on the board.`);
+      this.log(`Eirin Yagokoro's passive disables ${CARD[cardId].name}'s abilities — it has no effect while Eirin is on the board.`);
     } else if(depth<6){
       flags = await this.resolveAbility(cardId, r, c, playerIdx, depth) || {};
     }
     if(this.cancelled) return {};
     if(depth<6) await this.resolveKoishiCascade(depth); // catch Koishi drawn/gained mid-ability (Sanae, Mokou, Ran, Satori, etc.)
     this.checkClaims(playerIdx);
+    this.checkWin();
     this.render();
     return flags;
   }
@@ -3456,7 +3492,7 @@ class Game {
         if(move){
           const id=self.cardAt(move.r,move.c);
           if(!self.canMoveBoardCard(move.r,move.c)){self.reportBlocked(move.r,move.c);break;}
-          if(!self.hasTile(move.toR,move.toC) || self.cardAt(move.toR,move.toC) || (self.wastelandAt(move.toR,move.toC) && !CARD[id].wasteOK)){
+          if(!self.hasTile(move.toR,move.toC) || self.cardAt(move.toR,move.toC) || (self.wastelandAt(move.toR,move.toC) && !self.canPlaceOnWasteland(CARD[id]))){
             self.log(`${meS} Meiling cannot push ${CARD[id].name} — there is no legal tile one step farther away.`);break;
           }
           if(self.ui && self.ui.onBoardPush){try{self.ui.onBoardPush({cardId:id,source:{r,c},from:move,to:{r:move.toR,c:move.toC}});}catch(_error){}}
@@ -3720,7 +3756,7 @@ class Game {
       }
       case 'mtn_suwako': {
         const targets = self.emptyCells();
-        const count = 3 * (self.isActiveOnBoard('mtn_kanako') ? 2 : 1);
+        const count = 3 * (self.hasActiveAbility('mtn_kanako') ? 2 : 1);
         const chosen = await self.chooseCells(playerIdx, Math.min(count, targets.length), targets, 'Suwako: designate wasteland');
         if(chosen.length && self.ui && self.ui.onWastelandCreate){
           try{ self.ui.onWastelandCreate({effect:'mishaguji',origin:{r,c},cells:chosen}); }catch(_error){}
@@ -3731,7 +3767,7 @@ class Game {
       }
       case 'mtn_sanae': {
         let drew=0;
-        const count = self.isActiveOnBoard('mtn_kanako') ? 4 : 1;
+        const count = self.sanaeDrawCount();
         for(let i=0;i<count && self.drawPile.length;i++){ self.addToHand(playerIdx, self.takeFromDrawPile(playerIdx,'sanae')); drew++; }
         self.log(`${meS} Sanae draws ${drew} card${drew===1?'':'s'}${self.isActiveOnBoard('mtn_kanako')?' (Kanako is on the board)':''}.`);
         break;
@@ -3740,12 +3776,12 @@ class Game {
         const reports = [];
         for(const pl of self.players){
           if(pl.idx===playerIdx) continue;
-          const n = Math.min(self.isActiveOnBoard('mtn_kanako') ? 8 : 4, pl.hand.length);
+          const n = Math.min(self.hasActiveAbility('mtn_kanako') ? 8 : 4, pl.hand.length);
           self.revealHand(pl.idx,pl.hand.slice(0,n));
           const shown = pl.hand.slice(0,n).map(id=>CARD[id].name);
           reports.push({player:pl.name,cards:shown});
         }
-        self.log({kind:'aya-report',reporter:me,edition:self.isActiveOnBoard('mtn_kanako') ? 'Extended Edition' : 'Special Edition',reports});
+        self.log({kind:'aya-report',reporter:me,edition:self.hasActiveAbility('mtn_kanako') ? 'Extended Edition' : 'Special Edition',reports});
         break;
       }
       case 'palace_satori': {
@@ -3846,7 +3882,6 @@ class Game {
             if(cell){
               if(cardObj.override && self.cardAt(cell.r,cell.c)){
                 self.log(`${meS} ${cardObj.name} overrides ${CARD[self.cardAt(cell.r,cell.c)].name}, sending it to hand.`);
-                self.moveBoardToHand(cell.r, cell.c, playerIdx, drawnId==='sage_yukari' ? 'yukari' : undefined);
               }
               self.log(`${meS} Ran (via Yukari) immediately places the drawn ${cardObj.name} onto the board.`);
               await self.internalPlace(drawnId, cell.r, cell.c, playerIdx, depth+1);
@@ -4046,7 +4081,7 @@ class Game {
         break;
       }
       case 'hourai_eirin': {
-        self.log(`${meS} Eirin Yagokoro takes the board — every Crown card's Placed ability is nullified while she remains.`);
+        self.log(`${meS} Eirin Yagokoro takes the board — every Crown card's abilities are disabled while she remains.`);
         break;
       }
       case 'sage_yukari': {
@@ -4612,8 +4647,8 @@ function showCardExit({cardId, playerIdx, source}, destination){
     ghost.style.setProperty('--fly-off-y',`${-top-height-window.innerHeight*.25}px`);
     ghost.style.setProperty('--tenshi-flight-duration',`${Math.round(flightDuration)}ms`);
   }
-  // Only cards leaving a hand are staggered; board exits happen together.
-  const delay = source && source.handOwner!=null ? handExitAnimationDelay() : 0;
+  // Cost payments leave immediately; other hand exits can be staggered.
+  const delay = source && source.handOwner!=null && effect!=='cost' ? handExitAnimationDelay() : 0;
   ghost.style.animationDelay = `${delay}ms`;
   ghost.style.setProperty('--exit-delay', `${delay}ms`);
   if(delay) ghost.style.setProperty('--exit-start-opacity', '0');
@@ -5321,11 +5356,18 @@ const CARD_REFERENCE_ALIASES={
   Tewi:'hourai_tewi',Nitori:'mtn_nitori',Yuugi:'palace_yuugi',Kutaka:'hell_kutaka',
   Rinnosuke:'shop_rinnosuke',Trap:'trap_token'
 };
+const RULE_TERMS={
+  wasteland:{title:'Wasteland',text:'Wasteland is a blocked tile. A card can be placed there only if its ability allows it.'},
+  cost:{title:'Cost',text:'Return the shown number of hand cards to the draw pile to use the ability. Cost X lets you choose how many cards to pay. If you do not pay, the ability is skipped.'}
+};
 const RULE_REFERENCES=new Map();
 for(const card of CARDS) RULE_REFERENCES.set(card.name,{cardId:card.id});
 for(const [name,cardId] of Object.entries(CARD_REFERENCE_ALIASES)) RULE_REFERENCES.set(name,{cardId});
 for(const [faction,f] of Object.entries(FACTIONS)) if(f.size>0) RULE_REFERENCES.set(f.name,{faction});
 RULE_REFERENCES.set('SDM',{faction:'sdm'});
+for(const [name,term] of Object.entries(RULE_TERMS)){
+  RULE_REFERENCES.set(name,{term:name});RULE_REFERENCES.set(term.title,{term:name});
+}
 const ruleReferencePattern=names=>new RegExp('(^|[^A-Za-z0-9_])('+names.sort((a,b)=>b.length-a.length)
   .map(name=>name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')(?=$|[^A-Za-z0-9_])','g');
 const RULE_REFERENCE_PATTERN=ruleReferencePattern([...RULE_REFERENCES.keys()]);
@@ -5346,6 +5388,7 @@ function ruleTextHtml(value,{cards=true}={}){
     const start=match.index+match[1].length,name=match[2],ref=RULE_REFERENCES.get(name);
     html+=escapeLogHtml(text.slice(end,start));
     html+=ref.faction ? factionReferenceHtml(ref.faction)
+      : ref.term ? `<button type="button" class="rule-term-reference" data-rule-term="${ref.term}" aria-controls="rule-term-popover" aria-expanded="false">${escapeLogHtml(name)}</button>`
       : `<button type="button" class="card-reference" data-inspect-card="${ref.cardId}" aria-label="Inspect ${escapeLogHtml(CARD[ref.cardId].name)}">${escapeLogHtml(name)}</button>`;
     end=start+name.length;
   }
@@ -5361,7 +5404,41 @@ document.addEventListener('error',event=>{
     event.target.hidden=true;icon.classList.add('icon-missing');
   }
 },true);
+let ruleTermAnchor=null;
+function positionRuleTerm(){
+  const popover=el('rule-term-popover');
+  if(popover.hidden || !ruleTermAnchor) return;
+  if(!ruleTermAnchor.isConnected){closeRuleTerm();return;}
+  const rect=ruleTermAnchor.getBoundingClientRect(),width=popover.offsetWidth,height=popover.offsetHeight;
+  const left=Math.max(12,Math.min(rect.left,window.innerWidth-width-12));
+  const top=rect.top-height-10>=12 ? rect.top-height-10 : Math.max(12,Math.min(rect.bottom+10,window.innerHeight-height-12));
+  popover.style.left=`${left}px`;popover.style.top=`${top}px`;
+}
+function closeRuleTerm(restoreFocus=false){
+  const anchor=ruleTermAnchor;ruleTermAnchor=null;el('rule-term-popover').hidden=true;
+  if(anchor){anchor.setAttribute('aria-expanded','false');anchor.removeAttribute('aria-describedby');}
+  if(restoreFocus && anchor?.isConnected) anchor.focus({preventScroll:true});
+}
+function openRuleTerm(term,anchor){
+  const info=RULE_TERMS[term];if(!info || !anchor) return;
+  if(ruleTermAnchor===anchor && !el('rule-term-popover').hidden){closeRuleTerm(true);return;}
+  closeRuleTerm();ruleTermAnchor=anchor;
+  el('rule-term-title').textContent=info.title;el('rule-term-copy').textContent=info.text;
+  anchor.setAttribute('aria-expanded','true');anchor.setAttribute('aria-describedby','rule-term-popover');
+  anchor.focus({preventScroll:true});el('rule-term-popover').hidden=false;positionRuleTerm();
+}
+window.addEventListener('resize',()=>requestAnimationFrame(positionRuleTerm));
+window.addEventListener('scroll',()=>requestAnimationFrame(positionRuleTerm),true);
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape' && !el('rule-term-popover').hidden){
+    event.preventDefault();event.stopImmediatePropagation();closeRuleTerm(true);
+  }
+},true);
 document.addEventListener('click',event=>{
+  const term=event.target.closest?.('[data-rule-term]');
+  if(term){event.preventDefault();event.stopImmediatePropagation();openRuleTerm(term.dataset.ruleTerm,term);return;}
+  if(event.target.closest?.('#rule-term-popover')){event.stopImmediatePropagation();return;}
+  closeRuleTerm();
   const link=event.target.closest?.('[data-inspect-card]');
   if(!link) return;
   event.preventDefault();event.stopImmediatePropagation();
@@ -5394,6 +5471,7 @@ window.addEventListener('resize',()=>requestAnimationFrame(fitCardDetailHeadings
 function openCardDetails(cardId,{followReference=false}={}){
   const c = CARD[cardId];
   if(!c) return;
+  closeRuleTerm();
   const alreadyOpen=el('card-detail-overlay').classList.contains('show');
   if(!alreadyOpen){
     detailReturnFocus=document.activeElement;
@@ -5464,6 +5542,7 @@ function backCardDetails(){
 }
 
 function closeCardDetails(){
+  closeRuleTerm();
   el('card-detail-overlay').classList.remove('show');
   if(detailReturnFocus && detailReturnFocus.isConnected) detailReturnFocus.focus();
   detailReturnFocus = null;
@@ -5471,7 +5550,7 @@ function closeCardDetails(){
   detailHistory.length=0;
 }
 el('card-detail').addEventListener('dblclick',event=>{
-  if(event.target.closest?.('[data-inspect-card]')) return;
+  if(event.target.closest?.('[data-inspect-card], [data-rule-term]')) return;
   event.preventDefault();event.stopPropagation();
   if(detailHistory.length) backCardDetails(); else closeCardDetails();
 });
@@ -5734,7 +5813,7 @@ function renderBoard(){
   if(boardEl.children.length!==SIZE*SIZE) boardEl.innerHTML = '';
   let hecatiaCell=null;
   for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
-    if(game.cardAt(r,c)==='hell_hecatia' && !game.isProtected(r,c)) hecatiaCell={r,c};
+    if(game.cardAt(r,c)==='hell_hecatia' && !game.isProtected(r,c) && !game.isCrownAbilityDisabled('hell_hecatia')) hecatiaCell={r,c};
   }
   boardEl.classList.toggle('hecatia-active',!!hecatiaCell);
   for(let r=0;r<SIZE;r++){
@@ -6851,7 +6930,7 @@ function aiClaimValue(faction,cells,playerIdx){
     +cells.filter(cell=>game.boardFaction(cell.r,cell.c)==='hell').length;
   return cells.reduce((sum,cell)=>{
     const id=game.cardAt(cell.r,cell.c);
-    return sum+(id==='hell_hecatia' && hellCount<=3 ? 0 : game.pointValue(id));
+    return sum+(id==='hell_hecatia' && !game.isCrownAbilityDisabled(id) && hellCount<=3 ? 0 : game.pointValue(id));
   },0);
 }
 
@@ -7111,7 +7190,7 @@ async function doPlayerAction(playerIdx){
         if(!player.isAI) humanActionResolving = true;
         game.forcedPlay[playerIdx] = null;
         game.removeFromHand(playerIdx, cardId);
-        if(cardObj.override && game.cardAt(cell.r,cell.c)){ logOverride(cardObj, cell.r, cell.c, playerIdx); game.moveBoardToHand(cell.r, cell.c, playerIdx, cardId==='sage_yukari' ? 'yukari' : undefined); }
+        if(cardObj.override && game.cardAt(cell.r,cell.c)) logOverride(cardObj,cell.r,cell.c,playerIdx);
         const flags = await game.internalPlace(cardId, cell.r, cell.c, playerIdx, 0);
         if(player.isAI){ await sleep(1000); }
         // Whoever awaits doPlayerAction (runNextTurn, or an in-progress afterAction loop for
@@ -7170,7 +7249,7 @@ async function doPlayerAction(playerIdx){
     } else if(action.type==='place'){
       const cardObj = CARD[action.cardId];
       game.removeFromHand(playerIdx, action.cardId);
-      if(cardObj.override && game.cardAt(action.r,action.c)){ logOverride(cardObj, action.r, action.c, playerIdx); game.moveBoardToHand(action.r, action.c, playerIdx, action.cardId==='sage_yukari' ? 'yukari' : undefined); }
+      if(cardObj.override && game.cardAt(action.r,action.c)) logOverride(cardObj,action.r,action.c,playerIdx);
       flags = await game.internalPlace(action.cardId, action.r, action.c, playerIdx, 0);
     } else {
       game.log(`${player.name} has no legal action and passes.`);
@@ -7438,7 +7517,7 @@ function makePlacementResolver(cardId){
     pendingCellChoice = null;
     captureHandPlacementArrival(cardId,cell);
     game.removeFromHand(0, cardId);
-    if(cardObj.override && game.cardAt(cell.r,cell.c)){ logOverride(cardObj, cell.r, cell.c, 0); game.moveBoardToHand(cell.r, cell.c, 0, cardId==='sage_yukari' ? 'yukari' : undefined); }
+    if(cardObj.override && game.cardAt(cell.r,cell.c)) logOverride(cardObj,cell.r,cell.c,0);
     // No renderAll() here on purpose: internalPlace() sets lastPlacedCell and renders itself as
     // its very first synchronous step. Rendering here too (as this used to) meant the board was
     // rebuilt once WITHOUT the just-placed cell and then immediately again WITH it, both in the
