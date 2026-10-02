@@ -1742,7 +1742,7 @@
   #card-detail.other-faction .card-detail-effect{ background:linear-gradient(120deg,rgba(61,35,87,.92),rgba(101,64,115,.7)); }
   .card-detail-ability{
     margin:0 0 10px; width:fit-content; max-width:100%; font-size:clamp(1.3rem,3.9vw,2.25rem);
-    line-height:1.1; font-weight:700; color:var(--detail-ink); border-bottom:2px solid var(--detail-accent);
+    line-height:1.1; white-space:nowrap; overflow:hidden; font-weight:700; color:var(--detail-ink); border-bottom:2px solid var(--detail-accent);
     text-shadow:2px 2px 1px #220813;
   }
   .card-detail-description{
@@ -1760,11 +1760,6 @@
   .card-reference:hover{text-decoration-style:solid;color:#ffe5a0;}
   .card-reference:focus-visible{outline:2px solid #ffe5a0;outline-offset:3px;}
   .card-detail-description{white-space:pre-line;}
-  .card-detail-tools{position:relative;z-index:4;display:flex;justify-content:space-between;gap:8px;padding:4px 10px;background:#0c071b9c;}
-  .card-detail-tools button{padding:4px 9px;min-height:28px;border:1px solid #ffffff55;border-radius:5px;background:#170f24;color:#fff5e1;font:inherit;font-size:.8rem;cursor:pointer;}
-  .card-detail-tools button:focus-visible{outline:2px solid #ffe5a0;outline-offset:2px;}
-  .card-detail-tools button:disabled{visibility:hidden;}
-  .card-detail-tools #card-detail-close{margin-left:auto;}
 
   @media (max-height:540px){
     #card-detail{ aspect-ratio:auto; height:calc(100dvh - 32px); }
@@ -2357,11 +2352,7 @@ body.mobile-landscape #winner-box h2{font-size:24px;}
 <datalist id="card-name-list"></datalist>
 
 <div id="card-detail-overlay" role="dialog" aria-modal="true" aria-labelledby="card-detail-name">
-  <div id="card-detail">
-    <nav class="card-detail-tools" aria-label="Card inspection">
-      <button type="button" id="card-detail-back" disabled>← Back</button>
-      <button type="button" id="card-detail-close">Close</button>
-    </nav>
+  <div id="card-detail" tabindex="-1">
     <div class="card-detail-header">
       <span id="card-detail-icon"></span>
       <h2 class="card-detail-name" id="card-detail-name"></h2>
@@ -2417,98 +2408,98 @@ const FACTIONS = {
 
 const CARDS = [
   { id:'sdm_remilia',   faction:'sdm', name:'Remilia Scarlet', crown:true,
-    desc:"Placed: Take all Scarlet Devil Mansion cards from other hands." },
+    desc:"Placed: Take all Scarlet Devil Mansion cards from the other players’ hands into your hand." },
   { id:'sdm_flandre',   faction:'sdm', name:'Flandre Scarlet',
-    desc:"Placed: Choose a card in any player's hand. Send it to their discard pile." },
+    desc:"Placed: Choose a card in any player’s hand and send it to that player’s discard pile." },
   { id:'sdm_patchouli', faction:'sdm', name:'Patchouli Knowledge',
-    desc:"Placed: Guess a card in a player's hand. If correct, take it." },
+    desc:"Placed: Guess a card in another player’s hand. If your guess is correct, take that card into your hand." },
   { id:'sdm_sakuya',    faction:'sdm', name:'Izayoi Sakuya',
     desc:"Placed: Take two extra turns, then shuffle your hand into the draw pile." },
 
   { id:'haku_yuyuko', faction:'hakugyokurou', name:'Yuyuko Saigyouji', crown:true, costX:true,
     desc:"[Cost X] Placed: Send X random orthogonally adjacent cards to your discard pile." },
   { id:'haku_youmu',  faction:'hakugyokurou', name:'Youmu Konpaku', noTurnCost:true,
-    desc:"Placed: Take another action." },
+    desc:"Placed: Placing this card does not use your turn." },
 
   { id:'hourai_kaguya', faction:'hourai', name:'Kaguya Houraisan', crown:true,
-    desc:"Placed: Guess an Eientei card in a player's hand. If correct, place it and guess again. Stop when wrong." },
+    desc:"Placed: Guess an Eientei card in another player’s hand. Each correct guess lets you place that card on the board and guess again." },
   { id:'hourai_eirin',  faction:'hourai', name:'Eirin Yagokoro',
-    desc:"Passive: Crown cards lose their Placed abilities. Kasen Ibara loses her ability." },
+    desc:"While this card is on the board, Crown cards’ Placed abilities and Kasen Ibara’s ability are disabled." },
   { id:'hourai_reisen', faction:'hourai', name:'Reisen Udongein Inaba',
-    desc:"Placed: Choose a card in a player's hand. They must place it next turn." },
+    desc:"Placed: Choose a card in another player’s hand. They must place that card on their next turn." },
   { id:'hourai_mokou',  faction:'hourai', name:'Fujiwara no Mokou',
     desc:"Placed: Draw one card for each card in your discard pile." },
 
   { id:'mtn_kanako', faction:'mountain', name:'Kanako Yasaka', crown:true, wasteOK:true,
-    desc:"Can be placed on wasteland.\nPlaced: Place a Youkai Mountain card from your hand.\nPassive: Double other Youkai Mountain cards’ Placed abilities." },
+    desc:"This card can be placed on wasteland and doubles other Youkai Mountain cards’ Placed abilities while on the board.\nPlaced: Place one Youkai Mountain card from your hand on the board." },
   { id:'mtn_suwako', faction:'mountain', name:'Suwako Moriya',
-    desc:"Placed: Turn three tiles into wasteland (six with Kanako Yasaka on the board)." },
+    desc:"Placed: Turn three board tiles into wasteland." },
   { id:'mtn_sanae',  faction:'mountain', name:'Sanae Kochiya',
-    desc:"Placed: Draw one card (four with Kanako Yasaka on the board)." },
+    desc:"Placed: Draw one card." },
   { id:'mtn_aya',    faction:'mountain', name:'Aya Shameimaru',
-    desc:"Placed: Other players reveal four hand cards (eight with Kanako Yasaka on the board)." },
+    desc:"Placed: Every other player reveals four cards from their hand." },
 
   { id:'palace_satori', faction:'palace', name:'Satori Komeiji', crown:true, cost1:true,
-    desc:"[Cost I] Placed: Look at a player's hand and take one card." },
+    desc:"[Cost I] Placed: Look at another player’s hand and take one card into your hand." },
   { id:'palace_rin',    faction:'palace', name:'Rin Kaenbyou',
-    desc:"Placed: Take one card from any discard pile." },
+    desc:"Placed: Take one card from any discard pile into your hand." },
   { id:'palace_utsuho', faction:'palace', name:'Utsuho Reiuji',
-    desc:"Placed: Turn a 2×2 area into wasteland." },
+    desc:"Placed: Turn a 2×2 area of the board into wasteland." },
   { id:'palace_koishi', faction:'palace', name:'Koishi Komeiji', trigger:true,
-    desc:"Trigger: When three Palace of the Earth Spirits cards are on the board, this card walks from your hand onto the board." },
+    desc:"When three Palace of the Earth Spirits cards are on the board, this card automatically moves from your hand onto the board." },
 
   { id:'sage_yukari', faction:'sage', name:'Yukari Yakumo', crown:true, override:true,
-    desc:"Place this card over another board card to take that card into your hand." },
+    desc:"You can place this card on another board card to take that card into your hand." },
   { id:'sage_kasen',  faction:'sage', name:'Kasen Ibara', crown:true, wild:true,
-    desc:"Passive: Counts as any faction when claiming." },
+    desc:"This card counts as any faction when claiming cards." },
   { id:'sage_matara', faction:'sage', name:'Matara Okina', crown:true,
-    desc:"Placed: Use another board card’s Placed ability as this card." },
+    desc:"Placed: This card uses the Placed ability of another board card you choose." },
   { id:'sage_ran',    faction:'sage', name:'Ran Yakumo',
-    desc:"Placed: Draw one card. If Yukari Yakumo is on the board, place the drawn card." },
+    desc:"Placed: Draw one card. If Yukari Yakumo is on the board, immediately place that card." },
 
   { id:'reimu',   faction:'hakurei', name:'Hakurei Reimu',
-    desc:"Placed: Take a Crown card from the board." },
+    desc:"Placed: Take a Crown card from the board into your hand." },
   { id:'marisa',  faction:'hakurei', name:'Marisa Kirisame',
-    desc:"Placed: Send a non-Crown board card to your discard pile." },
+    desc:"Placed: Send a non-Crown card from the board to your discard pile." },
 
   { id:'yuuka',     faction:'sunflower', name:'Yuuka Kazami', crown:true,
-    desc:"Placed: Clear wasteland in a 3×3 area. Shuffle your hand into the draw pile, then draw four cards." },
+    desc:"Placed: Clear wasteland in a 3×3 area, then shuffle your hand into the draw pile and draw four cards." },
   { id:'medicine',  faction:'sunflower', name:'Medicine Melancholy',
-    desc:"Placed: Return two random cards from a player's hand to the draw pile." },
+    desc:"Placed: Choose a player and return two random cards from their hand to the draw pile." },
 
   { id:'hell_hecatia',   faction:'hell', name:'Hecatia Lapislazuli', crown:true, triple:true,
-    desc:"Worth 3 discard points. Can enter your discard pile only if it has more than three Hell cards." },
+    desc:"This card counts as 3 discard points. It can enter a discard pile only if that pile has more than 3 Hell cards." },
   { id:'hell_clownpiece',faction:'hell', name:'Clownpiece', wasteOK:true,
-    desc:"Can be placed on wasteland.\nPlaced: Clear wasteland around this card." },
+    desc:"This card can be placed on wasteland.\nPlaced: Clear wasteland around this card." },
   { id:'hell_eiki',      faction:'hell', name:'Eiki Shiki', cost1:true,
-    desc:"[Cost I] Placed: Return the largest board faction to the draw pile. Choose if tied." },
+    desc:"[Cost I] Placed: Return all cards from the largest faction on the board to the draw pile." },
   { id:'hell_komachi',   faction:'hell', name:'Komachi Onozuka',
-    desc:"Placed: Swap with another board card. Take another action if Eiki Shiki is on the board." },
+    desc:"Placed: Swap this card with another board card. If Eiki Shiki is on the board, this placement does not use your turn." },
 
   { id:'heaven_tenshi', faction:'heaven', name:'Tenshi Hinanawi', crown:true, cost2:true,
-    desc:"[Cost II] Placed: Return all non-Heaven board cards to the draw pile." },
+    desc:"[Cost II] Placed: Return every non-Heaven card on the board to the draw pile." },
   { id:'heaven_iku', faction:'heaven', name:'Iku Nagae', cost3:true,
-    desc:"[Cost III] Placed: Choose a 2×2 area. Send up to two random non-Heaven cards there to your discard pile." },
+    desc:"[Cost III] Placed: Choose a 2×2 area and send up to two random non-Heaven cards in it to your discard pile." },
 ];
 
 CARDS.push(
   { id:'sdm_meiling', faction:'sdm', name:'Hong Meiling', shopExpansion:true,
-    desc:"Placed: Push an adjacent card one tile farther away." },
+    desc:"Placed: Move an adjacent card one tile farther away from this card." },
   { id:'hourai_tewi', faction:'hourai', name:'Inaba Tewi', shopExpansion:true,
-    desc:"Placed: Give every other player a Trap." },
+    desc:"Placed: Put a Trap into every other player’s hand." },
   { id:'mtn_nitori', faction:'mountain', name:'Kawasiro Nitori', shopExpansion:true,
-    desc:"Passive: Cards in the 3×3 area centred on this card cannot be selected." },
+    desc:"Cards in the 3×3 area centred on this card cannot be selected." },
   { id:'palace_yuugi', faction:'palace', name:'Hoshiguma Yuugi', shopExpansion:true, cost2:true,
-    desc:"[Cost II] Placed: Send an orthogonally adjacent card to your discard pile." },
+    desc:"[Cost II] Placed: Send one orthogonally adjacent card to your discard pile." },
   { id:'sage_mai_satono', faction:'sage', name:'Mai and Satono', shopExpansion:true,
-    desc:"Placed: Gain an extra turn next turn." },
+    desc:"Placed: Gain an extra turn on your next turn." },
   { id:'hell_kutaka', faction:'hell', name:'Niwatari Kutaka', shopExpansion:true, wasteOK:true,
-    desc:"Can be placed on wasteland.\nPlaced on wasteland: Take a Hell card from the draw pile." },
+    desc:"This card can be placed on wasteland.\nPlaced: If this card is on wasteland, take a Hell card from the draw pile into your hand." },
   { id:'shop_rinnosuke', faction:'kourindou', name:'Morichika Rinnosuke', shopkeeper:true, wasteOK:true,
-    desc:"This card and cards around it cannot move or use abilities.\nSelect a hand card, then click Rinnosuke to trade. Once per turn; no action cost.",
+    desc:"This card and the cards around it cannot move or use abilities.\nSelect a hand card, then click Rinnosuke to trade once per turn without using your turn.",
     handDesc:'Wait, place me back! You can’t just put me into your hand!' },
   { id:'trap_token', faction:'token', name:'Trap', token:true,
-    desc:"In hand: Cannot be traded, discarded, or returned to the draw pile.\nPlaced: Return another hand card to the draw pile." }
+    desc:"This card cannot be traded, discarded or returned to the draw pile from your hand.\nPlaced: Return another hand card to the draw pile." }
 );
 const CARD = {};
 CARDS.forEach(c => CARD[c.id] = c);
@@ -5393,6 +5384,13 @@ function fitSingleLineText(node, minPx=7){
   }
 }
 
+function fitCardDetailHeadings(){
+  if(!el('card-detail-overlay').classList.contains('show')) return;
+  fitSingleLineText(el('card-detail-name'),12);
+  fitSingleLineText(el('card-detail-ability'),8);
+}
+window.addEventListener('resize',()=>requestAnimationFrame(fitCardDetailHeadings));
+
 function openCardDetails(cardId,{followReference=false}={}){
   const c = CARD[cardId];
   if(!c) return;
@@ -5453,10 +5451,9 @@ function openCardDetails(cardId,{followReference=false}={}){
   el('card-detail-ability').textContent = CARD_ABILITY_NAMES[c.token ? 'trap_token' : cardId] || 'Card Ability';
   setRuleText(el('card-detail-description'),inHand && c.handDesc ? c.handDesc : c.desc);
   el('card-detail-description').parentElement.scrollTop=0;
-  el('card-detail-back').disabled=detailHistory.length===0;
   el('card-detail-overlay').classList.add('show');
-  requestAnimationFrame(() => fitSingleLineText(el('card-detail-name'), 12));
-  el('card-detail-close').focus();
+  requestAnimationFrame(fitCardDetailHeadings);
+  detail.focus({preventScroll:true});
 }
 
 function backCardDetails(){
@@ -5464,7 +5461,6 @@ function backCardDetails(){
   if(!previous) return;
   openCardDetails(previous.cardId);
   el('card-detail-description').parentElement.scrollTop=previous.scrollTop;
-  if(!el('card-detail-back').disabled) el('card-detail-back').focus();
 }
 
 function closeCardDetails(){
@@ -5474,8 +5470,11 @@ function closeCardDetails(){
   detailCardId=null;
   detailHistory.length=0;
 }
-el('card-detail-back').addEventListener('click',backCardDetails);
-el('card-detail-close').addEventListener('click',closeCardDetails);
+el('card-detail').addEventListener('dblclick',event=>{
+  if(event.target.closest?.('[data-inspect-card]')) return;
+  event.preventDefault();event.stopPropagation();
+  if(detailHistory.length) backCardDetails(); else closeCardDetails();
+});
 el('card-detail-overlay').addEventListener('click', e => {
   e.stopPropagation();
   if(e.target===e.currentTarget) closeCardDetails();
@@ -5484,6 +5483,9 @@ document.addEventListener('keydown', e => {
   if(!el('card-detail-overlay').classList.contains('show')) return;
   if(e.key==='Tab'){
     const controls=[...el('card-detail').querySelectorAll('button:not(:disabled)')];
+    if(!controls.length){
+      e.preventDefault();el('card-detail').focus({preventScroll:true});return;
+    }
     const first=controls[0],last=controls[controls.length-1];
     if(e.shiftKey && (document.activeElement===first || !el('card-detail').contains(document.activeElement))){
       e.preventDefault();last?.focus();
@@ -5491,10 +5493,10 @@ document.addEventListener('keydown', e => {
       e.preventDefault();first?.focus();
     }
   }
-  if(e.key==='Escape'){
+  if(e.key==='Escape' || (e.altKey && e.key==='ArrowLeft' && detailHistory.length)){
     e.preventDefault();
-    e.stopImmediatePropagation(); // Escape closes the inspection first, leaving the hand view open.
-    closeCardDetails();
+    e.stopImmediatePropagation(); // Return from a referenced card before dismissing the original.
+    if(detailHistory.length) backCardDetails(); else closeCardDetails();
   }
 });
 
