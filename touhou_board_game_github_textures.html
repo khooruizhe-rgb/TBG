@@ -1749,6 +1749,23 @@
     margin:0; font-size:clamp(.93rem,2.75vw,1.38rem); line-height:1.4; font-weight:700;
     color:var(--detail-ink); text-shadow:1px 2px 1px rgba(20,6,16,.8);
   }
+
+  /* Compact rule references share the same faction artwork as the cards. */
+  .faction-reference{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;width:1.45em;height:1.45em;margin:0 .12em;line-height:1;}
+  .faction-reference img{display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 1px 2px #0009);}
+  .faction-reference img[hidden]{display:none;}
+  .faction-icon-fallback{display:none;}
+  .faction-reference.icon-missing .faction-icon-fallback{display:inline;}
+  .card-reference{display:inline;padding:2px 0;border:0;border-radius:2px;background:transparent;color:inherit;font:inherit;line-height:inherit;text-shadow:inherit;text-align:left;white-space:normal;max-width:100%;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;}
+  .card-reference:hover{text-decoration-style:solid;color:#ffe5a0;}
+  .card-reference:focus-visible{outline:2px solid #ffe5a0;outline-offset:3px;}
+  .card-detail-description{white-space:pre-line;}
+  .card-detail-tools{position:relative;z-index:4;display:flex;justify-content:space-between;gap:8px;padding:4px 10px;background:#0c071b9c;}
+  .card-detail-tools button{padding:4px 9px;min-height:28px;border:1px solid #ffffff55;border-radius:5px;background:#170f24;color:#fff5e1;font:inherit;font-size:.8rem;cursor:pointer;}
+  .card-detail-tools button:focus-visible{outline:2px solid #ffe5a0;outline-offset:2px;}
+  .card-detail-tools button:disabled{visibility:hidden;}
+  .card-detail-tools #card-detail-close{margin-left:auto;}
+
   @media (max-height:540px){
     #card-detail{ aspect-ratio:auto; height:calc(100dvh - 32px); }
     .card-detail-header{ --detail-icon-size:64px; grid-template-columns:var(--detail-icon-size) minmax(0,1fr) 30px; min-height:68px; padding-top:4px; }
@@ -2341,6 +2358,10 @@ body.mobile-landscape #winner-box h2{font-size:24px;}
 
 <div id="card-detail-overlay" role="dialog" aria-modal="true" aria-labelledby="card-detail-name">
   <div id="card-detail">
+    <nav class="card-detail-tools" aria-label="Card inspection">
+      <button type="button" id="card-detail-back" disabled>← Back</button>
+      <button type="button" id="card-detail-close">Close</button>
+    </nav>
     <div class="card-detail-header">
       <span id="card-detail-icon"></span>
       <h2 class="card-detail-name" id="card-detail-name"></h2>
@@ -2396,98 +2417,98 @@ const FACTIONS = {
 
 const CARDS = [
   { id:'sdm_remilia',   faction:'sdm', name:'Remilia Scarlet', crown:true,
-    desc:'Placed: Take all Scarlet Devil Mansion cards from every hand into your hand.' },
+    desc:"Placed: Take all Scarlet Devil Mansion cards from other hands." },
   { id:'sdm_flandre',   faction:'sdm', name:'Flandre Scarlet',
-    desc:'Placed: Send one chosen card from any player\'s hand straight to that player\'s discard pile.' },
+    desc:"Placed: Choose a card in any player's hand. Send it to their discard pile." },
   { id:'sdm_patchouli', faction:'sdm', name:'Patchouli Knowledge',
-    desc:'Placed: Choose a player, then name a card you believe is in their hand. Guess right and take it into your hand; guess wrong and nothing happens.' },
+    desc:"Placed: Guess a card in a player's hand. If correct, take it." },
   { id:'sdm_sakuya',    faction:'sdm', name:'Izayoi Sakuya',
-    desc:'Placed: Take two extra turns. Afterward, shuffle your whole hand into the draw pile.' },
+    desc:"Placed: Take two extra turns, then shuffle your hand into the draw pile." },
 
   { id:'haku_yuyuko', faction:'hakugyokurou', name:'Yuyuko Saigyouji', crown:true, costX:true,
-    desc:'[Cost X] Placed: Send X random orthogonally adjacent cards to your discard pile, excluding Hakugyokurou cards and Kasen.' },
+    desc:"[Cost X] Placed: Send X random orthogonally adjacent cards to your discard pile." },
   { id:'haku_youmu',  faction:'hakugyokurou', name:'Youmu Konpaku', noTurnCost:true,
-    desc:'Placed: This placement does not cost a turn — act again.' },
+    desc:"Placed: Take another action." },
 
   { id:'hourai_kaguya', faction:'hourai', name:'Kaguya Houraisan', crown:true,
-    desc:'Placed: Choose a player, then name an Eientei card you believe is in their hand. Guess right and place it on the board — keep going until you guess wrong.' },
+    desc:"Placed: Guess an Eientei card in a player's hand. If correct, place it and guess again. Stop when wrong." },
   { id:'hourai_eirin',  faction:'hourai', name:'Eirin Yagokoro',
-    desc:'Passive, while on the board: all Crown cards lose their Placed abilities, and Kasen loses her ability to count as other factions.' },
+    desc:"Passive: Crown cards lose their Placed abilities. Kasen Ibara loses her ability." },
   { id:'hourai_reisen', faction:'hourai', name:'Reisen Udongein Inaba',
-    desc:'Placed: Choose a player and a card in their hand. They must place that card on their next turn.' },
+    desc:"Placed: Choose a card in a player's hand. They must place it next turn." },
   { id:'hourai_mokou',  faction:'hourai', name:'Fujiwara no Mokou',
-    desc:'Placed: Draw cards equal to the number of cards in your discard pile.' },
+    desc:"Placed: Draw one card for each card in your discard pile." },
 
   { id:'mtn_kanako', faction:'mountain', name:'Kanako Yasaka', crown:true, wasteOK:true,
-    desc:'Can be placed on wasteland. Placed: If possible, place one Youkai Mountain card from your hand onto the board. Passive while on the board: double the Placed abilities of other Youkai Mountain cards.' },
+    desc:"Can be placed on wasteland.\nPlaced: Place a Youkai Mountain card from your hand.\nPassive: Double other Youkai Mountain cards’ Placed abilities." },
   { id:'mtn_suwako', faction:'mountain', name:'Suwako Moriya',
-    desc:'Placed: Designate three board spaces as wasteland (six while Kanako Yasaka is on the board).' },
+    desc:"Placed: Turn three tiles into wasteland (six with Kanako Yasaka on the board)." },
   { id:'mtn_sanae',  faction:'mountain', name:'Sanae Kochiya',
-    desc:'Placed: Draw a card (draw four while Kanako Yasaka is on the board).' },
+    desc:"Placed: Draw one card (four with Kanako Yasaka on the board)." },
   { id:'mtn_aya',    faction:'mountain', name:'Aya Shameimaru',
-    desc:'Placed: Every other player reveals four cards from their hand (eight while Kanako Yasaka is on the board).' },
+    desc:"Placed: Other players reveal four hand cards (eight with Kanako Yasaka on the board)." },
 
   { id:'palace_satori', faction:'palace', name:'Satori Komeiji', crown:true, cost1:true,
-    desc:'[Cost I] Placed: Look at a chosen player\'s hand and take one card from it.' },
+    desc:"[Cost I] Placed: Look at a player's hand and take one card." },
   { id:'palace_rin',    faction:'palace', name:'Rin Kaenbyou',
-    desc:'Placed: Take any card from any discard pile into your hand.' },
+    desc:"Placed: Take one card from any discard pile." },
   { id:'palace_utsuho', faction:'palace', name:'Utsuho Reiuji',
-    desc:'Placed: Mark a 2x2 area as wasteland — the zone may hang off the edge of the board to cover fewer spaces.' },
+    desc:"Placed: Turn a 2×2 area into wasteland." },
   { id:'palace_koishi', faction:'palace', name:'Koishi Komeiji', trigger:true,
-    desc:'Trigger: The instant three Palace of the Earth Spirits cards are on the board, this card wanders from your hand onto the board.' },
+    desc:"Trigger: When three Palace of the Earth Spirits cards are on the board, this card walks from your hand onto the board." },
 
   { id:'sage_yukari', faction:'sage', name:'Yukari Yakumo', crown:true, override:true,
-    desc:'Can be placed on top of an occupied space, removing that card to your hand.' },
+    desc:"Place this card over another board card to take that card into your hand." },
   { id:'sage_kasen',  faction:'sage', name:'Kasen Ibara', crown:true, wild:true,
-    desc:'Counts as a member of any faction for claiming, unless Eirin Yagokoro is active on the board.' },
+    desc:"Passive: Counts as any faction when claiming." },
   { id:'sage_matara', faction:'sage', name:'Matara Okina', crown:true,
-    desc:'Placed: Choose any card on the board and trigger its Placed ability again — cast as if from Matara\'s own position.' },
+    desc:"Placed: Use another board card’s Placed ability as this card." },
   { id:'sage_ran',    faction:'sage', name:'Ran Yakumo',
-    desc:'Placed: Draw a card. If Yukari Yakumo is on the board, immediately place that drawn card onto the board.' },
+    desc:"Placed: Draw one card. If Yukari Yakumo is on the board, place the drawn card." },
 
   { id:'reimu',   faction:'hakurei', name:'Hakurei Reimu',
-    desc:'Placed: Take any Crown card on the board into your hand.' },
+    desc:"Placed: Take a Crown card from the board." },
   { id:'marisa',  faction:'hakurei', name:'Marisa Kirisame',
-    desc:'Placed: Send any non-Crown card on the board to your discard pile.' },
+    desc:"Placed: Send a non-Crown board card to your discard pile." },
 
   { id:'yuuka',     faction:'sunflower', name:'Yuuka Kazami', crown:true,
-    desc:'Placed: Clear wasteland in a 3x3 zone (it may hang off the board edge). Shuffle your hand into the draw pile and draw four.' },
+    desc:"Placed: Clear wasteland in a 3×3 area. Shuffle your hand into the draw pile, then draw four cards." },
   { id:'medicine',  faction:'sunflower', name:'Medicine Melancholy',
-    desc:'Placed: Choose a player; two random cards from their hand return to the draw pile.' },
+    desc:"Placed: Return two random cards from a player's hand to the draw pile." },
 
   { id:'hell_hecatia',   faction:'hell', name:'Hecatia Lapislazuli', crown:true, triple:true,
-    desc:'Counts as 3 cards toward your discard-pile win total. This card can only enter a discard pile when that pile has more than 3 Hell cards (checked after a faction claim).' },
+    desc:"Worth 3 discard points. Can enter your discard pile only if it has more than three Hell cards." },
   { id:'hell_clownpiece',faction:'hell', name:'Clownpiece', wasteOK:true,
-    desc:'Can be placed on wasteland. Placed: Clear wasteland around this card.' },
+    desc:"Can be placed on wasteland.\nPlaced: Clear wasteland around this card." },
   { id:'hell_eiki',      faction:'hell', name:'Eiki Shiki', cost1:true,
-    desc:'[Cost I] Placed: Return every card of the largest faction on the board (your choice if tied) to the draw pile.' },
+    desc:"[Cost I] Placed: Return the largest board faction to the draw pile. Choose if tied." },
   { id:'hell_komachi',   faction:'hell', name:'Komachi Onozuka',
-    desc:'Placed: Swap this card\'s position with another board card. If Eiki Shiki is on the board, the placement does not cost a turn.' },
+    desc:"Placed: Swap with another board card. Take another action if Eiki Shiki is on the board." },
 
   { id:'heaven_tenshi', faction:'heaven', name:'Tenshi Hinanawi', crown:true, cost2:true,
-    desc:'[Cost II] Placed: Return every card on the board that is not in the Heaven faction to the draw pile and shuffle it.' },
+    desc:"[Cost II] Placed: Return all non-Heaven board cards to the draw pile." },
   { id:'heaven_iku', faction:'heaven', name:'Iku Nagae', cost3:true,
-    desc:'[Cost III] Placed: Choose a 2×2 area. Send up to two random non-Heaven cards in that area to your discard pile.' },
+    desc:"[Cost III] Placed: Choose a 2×2 area. Send up to two random non-Heaven cards there to your discard pile." },
 ];
 
 CARDS.push(
   { id:'sdm_meiling', faction:'sdm', name:'Hong Meiling', shopExpansion:true,
-    desc:'Placed: If possible, push an adjacent card one tile directly away from this card.' },
+    desc:"Placed: Push an adjacent card one tile farther away." },
   { id:'hourai_tewi', faction:'hourai', name:'Inaba Tewi', shopExpansion:true,
-    desc:'Placed: Add a Trap token to every other player’s hand.' },
+    desc:"Placed: Give every other player a Trap." },
   { id:'mtn_nitori', faction:'mountain', name:'Kawasiro Nitori', shopExpansion:true,
-    desc:'Passive: Cards in the 3×3 area centred on this card cannot be selected.' },
+    desc:"Passive: Cards in the 3×3 area centred on this card cannot be selected." },
   { id:'palace_yuugi', faction:'palace', name:'Hoshiguma Yuugi', shopExpansion:true, cost2:true,
-    desc:'[Cost II] Placed: Send one orthogonally adjacent card to your discard pile.' },
+    desc:"[Cost II] Placed: Send an orthogonally adjacent card to your discard pile." },
   { id:'sage_mai_satono', faction:'sage', name:'Mai and Satono', shopExpansion:true,
-    desc:'Placed: Gain an extra turn on your next turn.' },
+    desc:"Placed: Gain an extra turn next turn." },
   { id:'hell_kutaka', faction:'hell', name:'Niwatari Kutaka', shopExpansion:true, wasteOK:true,
-    desc:'Can be placed on wasteland. Placed: If this card is on wasteland, find a Hell card in the draw pile and take it into your hand.' },
+    desc:"Can be placed on wasteland.\nPlaced on wasteland: Take a Hell card from the draw pile." },
   { id:'shop_rinnosuke', faction:'kourindou', name:'Morichika Rinnosuke', shopkeeper:true, wasteOK:true,
-    desc:'This card and the cards in its surrounding 3×3 area cannot be moved, have no abilities, and count as no faction while protected. Select a hand card, click Rinnosuke, then choose Kourindou merchandise to trade. You may trade once per turn without using your action.',
+    desc:"This card and cards around it cannot move or use abilities.\nSelect a hand card, then click Rinnosuke to trade. Once per turn; no action cost.",
     handDesc:'Wait, place me back! You can’t just put me into your hand!' },
   { id:'trap_token', faction:'token', name:'Trap', token:true,
-    desc:'Cannot be traded or enter the draw pile or discard pile while in hand. Placed: Return one other card from your hand to the draw pile.' }
+    desc:"In hand: Cannot be traded, discarded, or returned to the draw pile.\nPlaced: Return another hand card to the draw pile." }
 );
 const CARD = {};
 CARDS.forEach(c => CARD[c.id] = c);
@@ -5127,7 +5148,7 @@ el('playtest-toggle').addEventListener('change', (e) => {
 
 function factionTag(faction){
   const f = FACTIONS[faction];
-  return `<span class="faction-tag" style="background:${f.color}">${f.icon} ${f.name}</span>`;
+  return `<span class="faction-tag" style="background:${f.color}">${factionReferenceHtml(faction)}</span>`;
 }
 
 const FACTION_BG_CLASS = { sdm: 'faction-bg-sdm', hakugyokurou: 'faction-bg-haku', hourai: 'faction-bg-eientei', mountain: 'faction-bg-mountain', palace: 'faction-bg-palace', sage: 'faction-bg-sage', hakurei: 'faction-bg-hakurei', sunflower: 'faction-bg-sunflower', hell: 'faction-bg-hell', heaven: 'faction-bg-heaven' }; // fallback for faction cards with no dedicated art
@@ -5295,7 +5316,70 @@ const CARD_ABILITY_NAMES = {
   palace_yuugi:'Impossible Strength',sage_mai_satono:'Driving Vitality',hell_kutaka:'Overseeing Gateway',
   shop_rinnosuke:'Kourindou',trap_token:'Well...Its a trap!',
 };
+
+/* Only trusted rule text becomes references; arbitrary text is always escaped. */
+const CARD_REFERENCE_ALIASES={
+  Remilia:'sdm_remilia',Flandre:'sdm_flandre',Patchouli:'sdm_patchouli',Sakuya:'sdm_sakuya',
+  Yuyuko:'haku_yuyuko',Youmu:'haku_youmu',Kaguya:'hourai_kaguya',Eirin:'hourai_eirin',
+  Reisen:'hourai_reisen',Mokou:'hourai_mokou',Kanako:'mtn_kanako',Suwako:'mtn_suwako',
+  Sanae:'mtn_sanae',Aya:'mtn_aya',Satori:'palace_satori',Rin:'palace_rin',Utsuho:'palace_utsuho',
+  Koishi:'palace_koishi',Yukari:'sage_yukari',Kasen:'sage_kasen',Matara:'sage_matara',
+  Okina:'sage_matara',Ran:'sage_ran',Reimu:'reimu',Marisa:'marisa',Yuuka:'yuuka',
+  Medicine:'medicine',Hecatia:'hell_hecatia',Clownpiece:'hell_clownpiece',Eiki:'hell_eiki',
+  Komachi:'hell_komachi',Tenshi:'heaven_tenshi',Iku:'heaven_iku',Meiling:'sdm_meiling',
+  Tewi:'hourai_tewi',Nitori:'mtn_nitori',Yuugi:'palace_yuugi',Kutaka:'hell_kutaka',
+  Rinnosuke:'shop_rinnosuke',Trap:'trap_token'
+};
+const RULE_REFERENCES=new Map();
+for(const card of CARDS) RULE_REFERENCES.set(card.name,{cardId:card.id});
+for(const [name,cardId] of Object.entries(CARD_REFERENCE_ALIASES)) RULE_REFERENCES.set(name,{cardId});
+for(const [faction,f] of Object.entries(FACTIONS)) if(f.size>0) RULE_REFERENCES.set(f.name,{faction});
+RULE_REFERENCES.set('SDM',{faction:'sdm'});
+const ruleReferencePattern=names=>new RegExp('(^|[^A-Za-z0-9_])('+names.sort((a,b)=>b.length-a.length)
+  .map(name=>name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')(?=$|[^A-Za-z0-9_])','g');
+const RULE_REFERENCE_PATTERN=ruleReferencePattern([...RULE_REFERENCES.keys()]);
+const FACTION_REFERENCE_PATTERN=ruleReferencePattern([...RULE_REFERENCES].filter(([,ref])=>ref.faction).map(([name])=>name));
+
+function factionReferenceHtml(faction){
+  const f=FACTIONS[faction],src=CARD_DETAIL_FACTION_ICONS[faction];
+  const label=escapeLogHtml(f.name);
+  return `<span class="faction-reference${src?'':' icon-missing'}" role="img" aria-label="${label}" title="${label}">`
+    +(src?`<img src="${escapeLogHtml(src)}" alt="" loading="lazy">`:'')
+    +`<span class="faction-icon-fallback" aria-hidden="true">${f.icon}</span></span>`;
+}
+function ruleTextHtml(value,{cards=true}={}){
+  const text=String(value),pattern=cards?RULE_REFERENCE_PATTERN:FACTION_REFERENCE_PATTERN;
+  let html='',end=0;
+  pattern.lastIndex=0;
+  for(const match of text.matchAll(pattern)){
+    const start=match.index+match[1].length,name=match[2],ref=RULE_REFERENCES.get(name);
+    html+=escapeLogHtml(text.slice(end,start));
+    html+=ref.faction ? factionReferenceHtml(ref.faction)
+      : `<button type="button" class="card-reference" data-inspect-card="${ref.cardId}" aria-label="Inspect ${escapeLogHtml(CARD[ref.cardId].name)}">${escapeLogHtml(name)}</button>`;
+    end=start+name.length;
+  }
+  return html+escapeLogHtml(text.slice(end));
+}
+function setRuleText(node,value,options){node.innerHTML=ruleTextHtml(value,options);}
+function ruleTooltip(value){
+  return String(value).replace(FACTION_REFERENCE_PATTERN,(_match,prefix,name)=>prefix+FACTIONS[RULE_REFERENCES.get(name).faction].icon);
+}
+document.addEventListener('error',event=>{
+  const icon=event.target.closest?.('.faction-reference');
+  if(icon && event.target.tagName==='IMG'){
+    event.target.hidden=true;icon.classList.add('icon-missing');
+  }
+},true);
+document.addEventListener('click',event=>{
+  const link=event.target.closest?.('[data-inspect-card]');
+  if(!link) return;
+  event.preventDefault();event.stopImmediatePropagation();
+  openCardDetails(link.dataset.inspectCard,{followReference:true});
+},true);
+
 let detailReturnFocus = null;
+let detailCardId=null;
+const detailHistory=[];
 let cancelLookIntoView=null;
 
 function fitSingleLineText(node, minPx=7){
@@ -5309,9 +5393,17 @@ function fitSingleLineText(node, minPx=7){
   }
 }
 
-function openCardDetails(cardId){
+function openCardDetails(cardId,{followReference=false}={}){
   const c = CARD[cardId];
   if(!c) return;
+  const alreadyOpen=el('card-detail-overlay').classList.contains('show');
+  if(!alreadyOpen){
+    detailReturnFocus=document.activeElement;
+    detailHistory.length=0;
+  } else if(followReference && detailCardId && detailCardId!==cardId){
+    detailHistory.push({cardId:detailCardId,scrollTop:el('card-detail-description').parentElement.scrollTop});
+  }
+  detailCardId=cardId;
   const detail = el('card-detail');
   detail.className = ['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower','hell','heaven'].includes(c.faction)
     ? `${c.faction} detail-card-${cardId}`
@@ -5359,22 +5451,47 @@ function openCardDetails(cardId){
     portrait.appendChild(fallback);
   }
   el('card-detail-ability').textContent = CARD_ABILITY_NAMES[c.token ? 'trap_token' : cardId] || 'Card Ability';
-  el('card-detail-description').textContent=inHand && c.handDesc ? c.handDesc : c.desc;
-  detailReturnFocus = document.activeElement;
+  setRuleText(el('card-detail-description'),inHand && c.handDesc ? c.handDesc : c.desc);
+  el('card-detail-description').parentElement.scrollTop=0;
+  el('card-detail-back').disabled=detailHistory.length===0;
   el('card-detail-overlay').classList.add('show');
   requestAnimationFrame(() => fitSingleLineText(el('card-detail-name'), 12));
+  el('card-detail-close').focus();
+}
+
+function backCardDetails(){
+  const previous=detailHistory.pop();
+  if(!previous) return;
+  openCardDetails(previous.cardId);
+  el('card-detail-description').parentElement.scrollTop=previous.scrollTop;
+  if(!el('card-detail-back').disabled) el('card-detail-back').focus();
 }
 
 function closeCardDetails(){
   el('card-detail-overlay').classList.remove('show');
   if(detailReturnFocus && detailReturnFocus.isConnected) detailReturnFocus.focus();
   detailReturnFocus = null;
+  detailCardId=null;
+  detailHistory.length=0;
 }
+el('card-detail-back').addEventListener('click',backCardDetails);
+el('card-detail-close').addEventListener('click',closeCardDetails);
 el('card-detail-overlay').addEventListener('click', e => {
-  if(e.target===e.currentTarget){ e.stopPropagation(); closeCardDetails(); }
+  e.stopPropagation();
+  if(e.target===e.currentTarget) closeCardDetails();
 });
 document.addEventListener('keydown', e => {
-  if(e.key==='Escape' && el('card-detail-overlay').classList.contains('show')){
+  if(!el('card-detail-overlay').classList.contains('show')) return;
+  if(e.key==='Tab'){
+    const controls=[...el('card-detail').querySelectorAll('button:not(:disabled)')];
+    const first=controls[0],last=controls[controls.length-1];
+    if(e.shiftKey && (document.activeElement===first || !el('card-detail').contains(document.activeElement))){
+      e.preventDefault();last?.focus();
+    } else if(!e.shiftKey && (document.activeElement===last || !el('card-detail').contains(document.activeElement))){
+      e.preventDefault();first?.focus();
+    }
+  }
+  if(e.key==='Escape'){
     e.preventDefault();
     e.stopImmediatePropagation(); // Escape closes the inspection first, leaving the hand view open.
     closeCardDetails();
@@ -5664,7 +5781,7 @@ function renderBoard(){
           cell.style.setProperty('--gravity-turn',`${(dx*dy>=0 ? 1 : -1)*Math.min(3.5,pull)}deg`);
           cell.style.setProperty('--gravity-phase',`${-((r*SIZE+c)%5)*.43}s`);
         }
-        cell.title = `${protectedCell ? 'Protected by Rinnosuke; counts as no faction.\n' : ''}${CARD[cardId].desc}\nDouble-click to view card details.`;
+        cell.title = `${protectedCell ? 'Protected by Rinnosuke; counts as no faction.\n' : ''}${ruleTooltip(CARD[cardId].desc)}\nDouble-click to view card details.`;
       } else cell.title='';
       cell.classList.toggle('hecatia-cell',cardId==='hell_hecatia');
       cell.classList.toggle('gravity-warp',!!cardId && cardId!=='hell_hecatia' && !!hecatiaCell);
@@ -5937,7 +6054,7 @@ function updateHandChoiceActions(){
     const count=choice.selectedCards.size;
     el('hand-choice-confirm').disabled=count<choice.minCount || count>choice.maxCount;
     el('hand-choice-confirm').textContent=count ? `Pay ${count} card${count===1?'':'s'}` : 'Choose cost cards';
-    el('hand-choice-title').textContent=`${choice.title} — ${count}/${choice.maxCount} selected. Click cards to toggle; double-click to inspect.`;
+    setRuleText(el('hand-choice-title'),`${choice.title} — ${count}/${choice.maxCount} selected. Click cards to toggle; double-click to inspect.`);
   } else {
     el('hand-choice-confirm').disabled=!choice || !choice.selected;
   }
@@ -6138,7 +6255,7 @@ function renderLog(){
       const stories=entry.reports.map(report=>`<section class="news-story">
         <div class="news-story-heading"><strong>${escapeLogHtml(report.player)}</strong>
           <span class="news-story-count">${report.cards.length} revealed</span></div>
-        <p>${report.cards.length ? report.cards.map(escapeLogHtml).join(' · ') : 'No cards in hand.'}</p>
+        <p>${report.cards.length ? report.cards.map(card=>ruleTextHtml(card)).join(' · ') : 'No cards in hand.'}</p>
       </section>`).join('') || '<section class="news-story">No other hands to report.</section>';
       return `<div class="log-entry aya-newspaper" aria-label="Aya newspaper hand reveal">
         <div class="news-masthead">BUNBUNMARU NEWS</div>
@@ -6148,7 +6265,7 @@ function renderLog(){
         ${stories}<div class="news-footer">EXTRA · EYEWITNESS REPORT</div>
       </div>`;
     }
-    return `<div class="log-entry">${escapeLogHtml(entry)}</div>`;
+    return `<div class="log-entry">${ruleTextHtml(entry)}</div>`;
   }).join('');
   updateDrawPileDisplay();
 }
@@ -6244,7 +6361,7 @@ const ui = {
       const choice={title,candidates:available,resolve,onEscape:null};
       const bar=el('instruction-bar');
       const instruction=document.createElement('span');
-      instruction.textContent=`${title} — click a highlighted player around the board.`;
+      setRuleText(instruction,`${title} — click a highlighted player around the board.`);
       const cancel=document.createElement('button');
       cancel.type='button';
       cancel.className='player-choice-cancel';
@@ -6264,13 +6381,13 @@ const ui = {
   },
   pickFromList(title, options){
     return new Promise(resolve => {
-      el('modal-title').textContent = title;
+      setRuleText(el('modal-title'),title);
       const box = el('modal-options');
       box.innerHTML = '';
       options.forEach(opt => {
         const btn = document.createElement('button');
         btn.className = 'modal-opt';
-        btn.textContent = opt.label;
+        setRuleText(btn,opt.label,{cards:false});
         btn.addEventListener('click', () => {
           playGameCue('select');
           el('modal-overlay').classList.remove('show');
@@ -6308,7 +6425,7 @@ const ui = {
       };
       choice.onEscape=onEscape;
       pendingHandChoice = choice;
-      el('hand-choice-title').textContent = `${title} — select a card below, then confirm. Double-click a card to inspect it.`;
+      setRuleText(el('hand-choice-title'),`${title} — select a card below, then confirm. Double-click a card to inspect it.`);
       confirm.textContent = opts.confirmLabel || 'Choose card';
       cancel.textContent = opts.cancelLabel || 'Cancel';
       confirm.disabled = true;
@@ -6463,7 +6580,7 @@ const ui = {
           if(isValid && !isValid(cells)){
             playGameCue('invalid');
             clearRectPreview();
-            el('instruction-bar').textContent = `${title} — choose a ${dim}×${dim} area over the tiles.`;
+            setRuleText(el('instruction-bar'),`${title} — choose a ${dim}×${dim} area over the tiles.`);
             return;
           }
           pendingRectChoice = null;
@@ -6482,7 +6599,7 @@ const ui = {
   },
   pickCell(title, cells){
     return new Promise(resolve => {
-      el('instruction-bar').textContent = title;
+      setRuleText(el('instruction-bar'),title);
       el('instruction-bar').classList.add('show');
       pendingCellChoice = { cells, resolve: (cell)=>{ resolve(cell); } };
       renderBoard();
@@ -6490,7 +6607,7 @@ const ui = {
   },
   promptText(title){
     return new Promise(resolve => {
-      el('modal-title').textContent = title;
+      setRuleText(el('modal-title'),title);
       const box = el('modal-options');
       box.innerHTML = '';
       const input = document.createElement('input');
@@ -7655,7 +7772,7 @@ function renderCustomGrid(){
     tile.className = 'custom-card-tile' + (cardBgClass(c, c.id) ? ' '+cardBgClass(c, c.id) : '') + (isSelected ? ' selected' : '') + (atCap ? ' locked' : '');
     tile.innerHTML = `<div class="icon-row"><span>${factionIcon(c.faction)}</span>${c.crown?'<span class="crown-mark">👑</span>':''}</div>
       <div class="cname">${c.name}</div>`;
-    tile.title = c.desc;
+    tile.title = ruleTooltip(c.desc);
     tile.addEventListener('click', () => {
       if(customSelected.has(c.id)){
         customSelected.delete(c.id);
@@ -7740,7 +7857,7 @@ function resetGameView(){
   el('hand-area').classList.remove('choosing-card');
   el('modal-overlay').classList.remove('show');
   el('look-into-overlay').classList.remove('show');
-  el('card-detail-overlay').classList.remove('show');
+  closeCardDetails();
   el('winner-banner').classList.remove('show');
   document.querySelectorAll('.draw-flight-card,.draw-return-ghost,.discard-vanish,.ability-flight,.swap-flight,.gap-rift,.yukari-gap-card,.master-spark,.spark-impact,.sakura-burst,.fission-burst').forEach(node=>node.remove());
 }
@@ -7928,13 +8045,13 @@ function tutorialStep(delta){
 function renderTutorial(){
   const t=tutorialState,steps=TUTORIALS[t.mode],page=steps[t.step];
   el('tutorial-progress').textContent=`${t.mode==='normal' ? 'Normal play' : 'Kourindou'} · ${t.step+1} / ${steps.length}`;
-  el('tutorial-title').textContent=page.title;el('tutorial-copy').textContent=page.body;
+  el('tutorial-title').textContent=page.title;setRuleText(el('tutorial-copy'),page.body,{cards:false});
   el('tutorial-back').disabled=t.step===0;
   el('tutorial-next').textContent=t.step===steps.length-1?'Finish':'Next';
   const button=(label,action,extra='')=>`<button type="button" data-tutorial-action="${action}" ${extra}>${label}</button>`;
   let demo='',feedback='Practice only — this does not change your match or settings.';
   if(page.demo==='claim'){
-    demo='<div class="tutorial-grid">'+Array.from({length:16},(_,i)=>`<span class="tutorial-tile ${[5,6,9,10].includes(i)?'tutorial-claimed':''}">${[5,6,9,10].includes(i)?'SDM':''}</span>`).join('')+'</div><p class="tutorial-caption">Four connected SDM cards → four discard points.</p>';
+    demo='<div class="tutorial-grid">'+Array.from({length:16},(_,i)=>`<span class="tutorial-tile ${[5,6,9,10].includes(i)?'tutorial-claimed':''}">${[5,6,9,10].includes(i)?factionReferenceHtml('sdm'):''}</span>`).join('')+'</div><p class="tutorial-caption">Four connected '+factionReferenceHtml('sdm')+' cards → four discard points.</p>';
   }else if(page.demo==='place'){
     demo=button(t.placed!=null?'Card placed':t.selected?'Card selected':'Select your card','hand',`${t.placed!=null?'disabled':''} aria-pressed="${t.selected}"`)
       +'<div class="tutorial-grid">'+Array.from({length:16},(_,i)=>button(t.placed===i?'Your card':'·',`tile-${i}`,`class="tutorial-tile ${t.selected?'tutorial-eligible':''}" aria-label="Practice tile ${i+1}"`)).join('')+'</div>';
