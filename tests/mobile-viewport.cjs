@@ -22,7 +22,7 @@ function dimensions(){
 }
 el('table-wrap').getBoundingClientRect=()=>{const d=dimensions();return {width:d.centreWidth,height:d.contentHeight-10-27-30-6};};
 el('hand').getBoundingClientRect=()=>{const d=dimensions();return {width:d.handWidth-6,height:d.contentHeight-10-20-choiceHeight};};
-const context={console,Math,document,window,el,SIZE:5,game:{kourindouEnabled:false,players:[{hand:Array(7).fill('card')}],cancelled:false},screen:{orientation:{}},
+const context={dockTutorialCoach(){}, console,Math,document,window,el,SIZE:5,game:{kourindouEnabled:false,players:[{hand:Array(7).fill('card')}],cancelled:false},screen:{orientation:{}},
   getComputedStyle:()=>({paddingLeft:String(safe.left+6),paddingRight:String(safe.right+6)}),
   requestAnimationFrame:fn=>{pendingFrame=fn;return 1;},positionRinnosukeBubble(){},repositionYuukaBlooms(){},touchHandDrag:null,
   handPlacementArrivals:new Set(),handDragSettlers:new Set(),finishHandDrag:()=>{context.cancelledDrag=true;}};
