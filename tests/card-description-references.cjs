@@ -1,0 +1,153 @@
+// Rule-reference and inspection events run against the actual game source with
+// a small DOM fixture. Browser layout / physical-device rendering is not simulated.
+const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict');
+const file=process.argv[2] || (fs.existsSync('touhou_board_game_github_textures.html')
+  ? 'touhou_board_game_github_textures.html' : path.join(__dirname,'..','touhou_board_game_github_textures.html'));
+const html=fs.readFileSync(file,'utf8'),js=html.split('<script>')[1].split('</script>')[0];
+new vm.Script(js);
+const listeners=[],controls=new Map();
+let activeElement=null;
+class Element{
+  constructor(id='',tag='DIV'){
+    this.id=id;this.tagName=tag;this.nodeType=1;this.dataset={};this.style={};this.children=[];
+    this.events=[];this.isConnected=true;this.scrollTop=0;this.clientWidth=500;this.scrollWidth=0;
+    const classes=new Set();this.classList={add:(...n)=>n.forEach(x=>classes.add(x)),remove:(...n)=>n.forEach(x=>classes.delete(x)),contains:n=>classes.has(n)};
+  }
+  set innerHTML(value){
+    this.markup=value;this.children=[];
+    for(const m of value.matchAll(/<button[^>]*data-inspect-card="([^"]+)"[^>]*>([^<]*)<\/button>/g)){
+      const b=new Element('','BUTTON');b.dataset.inspectCard=m[1];b.textContent=m[2];b.parentElement=this;this.children.push(b);
+    }
+  }
+  get innerHTML(){return this.markup||'';}
+  replaceChildren(...children){this.children=children;children.forEach(c=>c.parentElement=this);this.markup='';this.textContent='';}
+  appendChild(child){this.children.push(child);child.parentElement=this;}
+  addEventListener(type,fn,options){this.events.push({type,fn,capture:options===true});}
+  focus(){activeElement=this;}
+  closest(selector){if(selector==='[data-inspect-card]' && this.dataset.inspectCard)return this;return this.parentElement?.closest(selector)||null;}
+  contains(node){return node===this || this.children.some(c=>c.contains(node));}
+  querySelectorAll(){return this.children.flatMap(c=>[...(c.tagName==='BUTTON'&&!c.disabled?[c]:[]),...c.querySelectorAll()]);}
+}
+const el=id=>{if(!controls.has(id))controls.set(id,new Element(id));return controls.get(id);};
+const overlay=el('card-detail-overlay'),detail=el('card-detail'),effect=new Element();
+overlay.appendChild(detail);
+detail.appendChild(el('card-detail-back'));el('card-detail-back').tagName='BUTTON';
+detail.appendChild(el('card-detail-close'));el('card-detail-close').tagName='BUTTON';
+detail.appendChild(effect);effect.appendChild(el('card-detail-description'));
+const document={get activeElement(){return activeElement;},createElement:tag=>new Element('',tag.toUpperCase()),
+  addEventListener:(type,fn,options)=>listeners.push({type,fn,capture:options===true})};
+const context={console,document,el,requestAnimationFrame:fn=>fn(),getComputedStyle:()=>({fontSize:'22px'}),
+  KOURINDOU_PORTRAITS:{},CARD_DETAIL_PORTRAITS:{},CARD_ABILITY_NAMES:{},
+  game:{players:[{hand:['shop_rinnosuke']}],isActiveOnBoard:()=>false},
+  pendingCellChoice:{cancellable:true},cancelHandSelection(){context.cancelledSelection=true;context.pendingCellChoice=null;}};
+vm.createContext(context);
+const data=js.slice(js.indexOf('const FACTIONS ='),js.indexOf('const NORMAL_HAND_LIMIT'));
+const icons=js.slice(js.indexOf('const CARD_DETAIL_FACTION_ICONS ='),js.indexOf('const CARD_DETAIL_PORTRAITS ='));
+const escape=js.slice(js.indexOf('function escapeLogHtml('),js.indexOf('function renderLog('));
+const inspection=js.slice(js.indexOf('/* Only trusted rule text'),js.indexOf('function cardBoardHtml('));
+const outside=js.slice(js.indexOf('/* Clicking anywhere outside the board/hand/cancel-button'),js.indexOf("el('draw-btn').addEventListener"));
+vm.runInContext(data+icons+escape+inspection+outside+`
+  this.api={CARDS,CARD,FACTIONS,ruleTextHtml,ruleTooltip,ruleReferencePattern,openCardDetails,closeCardDetails,backCardDetails,
+    state:()=>({id:detailCardId,history:detailHistory.map(x=>({...x})),returnFocus:detailReturnFocus})};`,context);
+const A=context.api;
+const event=(target,extra={})=>({target,currentTarget:target,...extra,preventDefault(){this.prevented=true;},
+  stopPropagation(){this.stopped=true;},stopImmediatePropagation(){this.stopped=this.immediate=true;},
+  composedPath(){const result=[];for(let node=target;node;node=node.parentElement)result.push(node);return result;}});
+function click(target){
+  const e=event(target);
+  for(const l of listeners.filter(l=>l.type==='click'&&l.capture)){l.fn(e);if(e.immediate)return e;}
+  for(let node=target;node;node=node.parentElement){
+    e.currentTarget=node;for(const l of node.events.filter(l=>l.type==='click'))l.fn(e);
+    if(e.stopped)return e;
+  }
+  for(const l of listeners.filter(l=>l.type==='click'&&!l.capture)){l.fn(e);if(e.immediate)break;}
+  return e;
+}
+let passed=0;
+function test(name,fn){fn();console.log('PASS '+name);passed++;}
+test('Faction references use the uploaded icon and retain accessible names',()=>{
+  for(const [id,f] of Object.entries(A.FACTIONS).filter(([,f])=>f.size)){
+    const output=A.ruleTextHtml(f.name,{cards:false});
+    assert.match(output,/class="faction-reference/);assert.match(output,/<img src="https:\/\/raw.githubusercontent.com\//);
+    assert.ok(output.includes(`aria-label="${f.name}"`));assert.ok(!output.includes(`>${f.name}<`));
+  }
+});
+test('Full card names beat overlapping faction names and short aliases',()=>{
+  assert.match(A.ruleTextHtml('Hakurei Reimu and Kanako Yasaka'),/data-inspect-card="reimu"[^>]*>Hakurei Reimu<\/button>/);
+  assert.match(A.ruleTextHtml('Hakurei Reimu and Kanako Yasaka'),/data-inspect-card="mtn_kanako"[^>]*>Kanako Yasaka<\/button>/);
+  assert.equal((A.ruleTextHtml('Hakurei Reimu').match(/data-inspect-card/g)||[]).length,1);
+});
+test('Consecutive references, punctuation, possessives, and non-faction prefixes work',()=>{
+  assert.equal((A.ruleTextHtml('Kasen, Eirin and Yukari’s Trap.').match(/data-inspect-card/g)||[]).length,4);
+  assert.match(A.ruleTextHtml('non-Heaven'),/^non-<span/);
+  assert.equal(A.ruleTextHtml('Heavenly traps Ringtone'),'Heavenly traps Ringtone');
+});
+test('HTML text cannot inject markup and regex metacharacters are literal',()=>{
+  assert.match(A.ruleTextHtml('<img src=x onerror=bad()>'),/^&lt;img/);
+  const pattern=A.ruleReferencePattern(['a+b','a.b','a(b)','a[b]']);
+  assert.equal([...('a+b a.b a(b) a[b]').matchAll(pattern)].length,4);
+  assert.equal([...('axb aaab').matchAll(pattern)].length,0);
+});
+test('Descriptions keep Roman costs and leave Yuyuko exclusions to discovery',()=>{
+  assert.equal(A.CARD.haku_yuyuko.desc,'[Cost X] Placed: Send X random orthogonally adjacent cards to your discard pile.');
+  assert.match(A.CARD.heaven_tenshi.desc,/\[Cost II\]/);assert.match(A.CARD.heaven_iku.desc,/\[Cost III\]/);
+  assert.ok(A.CARDS.every(c=>!c.desc.includes('excluding')&&!c.desc.includes('checked after')));
+});
+test('Every remaining named-card mention resolves to the correct inspect link',()=>{
+  const expected={hourai_eirin:'sage_kasen',mtn_suwako:'mtn_kanako',mtn_sanae:'mtn_kanako',mtn_aya:'mtn_kanako',
+    sage_ran:'sage_yukari',hell_komachi:'hell_eiki',hourai_tewi:'trap_token',shop_rinnosuke:'shop_rinnosuke'};
+  for(const [card,target] of Object.entries(expected))assert.ok(A.ruleTextHtml(A.CARD[card].desc).includes(`data-inspect-card="${target}"`));
+});
+test('Selection options can show faction icons without nested inspect buttons',()=>{
+  assert.match(A.ruleTextHtml('Heaven',{cards:false}),/faction-reference/);
+  assert.ok(!A.ruleTextHtml('Kasen',{cards:false}).includes('<button'));
+  assert.equal(A.ruleTooltip('non-Heaven cards; Youkai Mountain cards'),'non-⛩️ cards; ⛰️ cards');
+});
+const origin=new Element('original-hand-card','BUTTON');origin.focus();
+test('Opening inspection focuses a control and keeps the original caller',()=>{
+  A.openCardDetails('sage_ran');assert.equal(A.state().id,'sage_ran');assert.equal(A.state().returnFocus,origin);
+  assert.equal(document.activeElement,el('card-detail-close'));assert.ok(el('card-detail-back').disabled);
+});
+test('A real linked-card click navigates without cancelling the pending placement',()=>{
+  effect.scrollTop=37;
+  const link=el('card-detail-description').children.find(c=>c.dataset.inspectCard==='sage_yukari');
+  const e=click(link);assert.ok(e.prevented&&e.immediate);assert.ok(!context.cancelledSelection);
+  assert.equal(A.state().id,'sage_yukari');assert.equal(A.state().history[0].scrollTop,37);
+  assert.equal(A.state().returnFocus,origin);assert.ok(!el('card-detail-back').disabled);
+});
+test('Back restores the prior card and scroll without using any game action',()=>{
+  click(el('card-detail-back'));assert.equal(A.state().id,'sage_ran');assert.equal(effect.scrollTop,37);
+  assert.equal(A.state().history.length,0);assert.ok(!context.cancelledSelection);
+});
+test('Cycles are navigable; same-card references do not add duplicate history',()=>{
+  A.openCardDetails('mtn_kanako',{followReference:true});A.openCardDetails('sage_ran',{followReference:true});
+  assert.equal(A.state().history.length,2);A.openCardDetails('sage_ran',{followReference:true});
+  assert.equal(A.state().history.length,2);A.backCardDetails();assert.equal(A.state().id,'mtn_kanako');
+});
+test('Close restores original focus and preserves placement selection',()=>{
+  click(el('card-detail-close'));assert.equal(document.activeElement,origin);assert.equal(A.state().history.length,0);
+  assert.equal(A.state().id,null);assert.ok(!context.cancelledSelection);
+});
+test('Keyboard focus stays in inspection and Escape closes only the inspector',()=>{
+  A.openCardDetails('sage_ran');const links=el('card-detail-description').children;links.at(-1).focus();
+  const handler=listeners.find(l=>l.type==='keydown').fn;
+  handler(event(links.at(-1),{key:'Tab'}));assert.equal(document.activeElement,el('card-detail-close'));
+  handler(event(document.activeElement,{key:'Tab',shiftKey:true}));assert.equal(document.activeElement,links.at(-1));
+  const escapeEvent=event(document.activeElement,{key:'Escape'});handler(escapeEvent);
+  assert.ok(escapeEvent.prevented&&escapeEvent.immediate);assert.equal(document.activeElement,origin);
+});
+test('Hand-only description and invalid reference handling remain intact',()=>{
+  A.openCardDetails('shop_rinnosuke');assert.equal(el('card-detail-description').innerHTML,A.CARD.shop_rinnosuke.handDesc);
+  A.openCardDetails('missing');assert.equal(A.state().id,'shop_rinnosuke');A.closeCardDetails();
+});
+test('Backdrop dismisses inspection without cancelling the placement',()=>{
+  A.openCardDetails('mtn_sanae');click(overlay);assert.ok(!overlay.classList.contains('show'));
+  assert.ok(!context.cancelledSelection);assert.equal(document.activeElement,origin);
+});
+test('Failed faction artwork has an explicit visible fallback',()=>{
+  const icon=new Element();const image=new Element('','IMG');image.closest=()=>icon;
+  listeners.find(l=>l.type==='error').fn(event(image));
+  assert.ok(image.hidden&&icon.classList.contains('icon-missing'));
+  assert.ok(html.includes('.faction-reference img[hidden]{display:none;}'));
+});
+console.log(`${passed}/${passed} description and inspection checks passed`);
