@@ -48,7 +48,8 @@ vm.runInContext(slice('const DIRS4','/* ===================== UI layer')+`
   let humanActionResolving=false,handDragSettling=false,draggingCardId=null,lastPlacedCell=null,stuckStreak=0,timeStopDepth=0;
   let suppressTouchDropClick=null,announcedGameResult=null,cancelLookIntoView=null,cancelKoishiWalk=null,activeTenshiUpdraft=null,cancelRemiliaGather=null;
   const presentationWaiters=new Set(),sanaeArrivalUntil=new Map(),mokouArrivalUntil=new Map(),yukariArrivalUntil=new Map(),yuukaSunflowerUntil=new Map(),yuukaSunflowerBlooms=new Map(),wastelandCreationUntil=new Map(),remiliaArrivals=new Map(),koishiArrivalUntil=new Map();
-  let chosenBoardSize=5,chosenPlayerCount=4,chosenKourindou=false,chosenAIDifficulty='easy',customizeOn=false;
+  let chosenBoardSize=5,chosenPlayerCount=4,chosenAIDifficulty='easy',customizeOn=false;
+  let rinnosukeOpeningTimer=null,rinnosukeLastSpoke=0;
   const customSelected=new Set();
   function cancelHandSelection(){selectedHandCard=null;pendingCellChoice=null;}
 `+
@@ -68,19 +69,21 @@ vm.runInContext(slice('const DIRS4','/* ===================== UI layer')+`
     onHandCardClick,toggleHandChoiceCard,commitCellChoice,beginShopTrade,returnToMainMenu,startNewGame,dockTutorialCoach,
     game:()=>game,state:()=>tutorialState,pending:()=>({cell:pendingCellChoice,hand:pendingHandChoice,rect:pendingRectChoice}),
     setGame:g=>game=g,setSize:n=>SIZE=n,Game,CARDS,CARD,TUTORIALS,
-    settings:()=>({chosenBoardSize,chosenPlayerCount,chosenKourindou,chosenAIDifficulty})};`,context);
+    settings:()=>({chosenBoardSize,chosenPlayerCount,chosenAIDifficulty})};`,context);
 const A=context.api;
 const flush=async()=>{for(let i=0;i<100;i++)await Promise.resolve();};
 const clickHand=id=>{const n=el('hand').children.find(n=>n.dataset.cardId===id);assert(n,`hand contains ${id}`);n.onclick();};
 const place=(id,r,c)=>{clickHand(id);A.commitCellChoice(r,c);};
 const click=id=>{assert(!el(id).disabled,`${id} enabled`);for(const fn of el(id).events.click||[])fn();};
-const newLesson=async(mode,step=0)=>{if(A.game()&&!A.state())A.returnToMainMenu();effects.length=0;A.openTutorial(mode,step);await flush();};
+const newLesson=async(step=0)=>{if(A.game()&&!A.state())A.returnToMainMenu();effects.length=0;A.openTutorial(step);await flush();};
 const assertConserved=g=>{const ids=[...g.board.flat().filter(Boolean),...g.shopCards,...g.drawPile,...g.players.flatMap(p=>[...p.hand,...p.discard])];assert.equal(new Set(ids).size,ids.length);assert.equal(ids.length,g.startingCardIds.size);};
 const tests=[];const test=(name,fn)=>tests.push([name,fn]);
-test('The tutorials open the actual Game and table with a live human turn, not a mock dialog',async()=>{
-  await newLesson('normal');assert(A.game() instanceof A.Game);assert(context.window.__resolveHumanTurn);
+test('The unified tutorial opens the actual Game and table with a live human turn',async()=>{
+  await newLesson();assert(A.game() instanceof A.Game);assert(context.window.__resolveHumanTurn);
   assert(el('game').classList.contains('active'));assert.equal(el('setup').style.display,'none');
-  assert.equal(el('tutorial-coach').hidden,false);assert.equal(A.TUTORIALS.kourindou.length,2);
+  assert.equal(el('tutorial-coach').hidden,false);assert.equal(A.TUTORIALS.length,6);assert.equal(A.TUTORIALS.filter(page=>['offer','trade'].includes(page.goal)).length,2);
+  assert(A.game().kourindouEnabled);assert.equal(A.game().shopTiles.length,4);
+  assert(html.includes('id="tutorial-start"'));assert(!html.includes('tutorial-normal')&&!html.includes('tutorial-kourindou')&&!html.includes('kourindou-toggle'));
   assert(!html.includes('tutorial-dialog')&&!html.includes('tutorial-demo')&&!html.includes('data-tutorial-action'));
   assert.equal(normalStarts,0);assertConserved(A.game());
 });
@@ -96,18 +99,18 @@ test('Next loads a unique real faction-claim scenario and the actual engine gran
   assert(A.state().complete);assert.equal(g.board.flat().filter(Boolean).length,0);assertConserved(g);
 });
 test('An unconnected real placement cannot fake a claim; Retry restores the scenario',async()=>{
-  await newLesson('normal',1);place('mtn_sanae',0,0);await flush();assert.equal(A.game().players[0].discard.length,0);
+  await newLesson(1);place('mtn_sanae',0,0);await flush();assert.equal(A.game().players[0].discard.length,0);
   assert(!A.state().complete);assert(el('tutorial-next').disabled);const old=A.game();click('tutorial-retry');await flush();
   assert(old.cancelled);assert.equal(A.game().players[0].hand[0],'mtn_sanae');assert.equal(A.game().cardAt(0,0),null);
   assert(context.window.__resolveHumanTurn);assertConserved(A.game());
 });
 test('Draw uses the real shared-draw limit and leaves the full opponent at seven',async()=>{
-  await newLesson('normal',2);const g=A.game();clickHand('mtn_sanae');assert.equal(A.pending().cell,null);
+  await newLesson(2);const g=A.game();clickHand('mtn_sanae');assert.equal(A.pending().cell,null);
   click('draw-btn');await flush();assert.deepEqual(Array.from(g.players,p=>p.hand.length),[7,7,4]);
   assert.equal(effects.filter(e=>e[0]==='draw').length,2);assert(A.state().complete);assertConserved(g);
 });
 test('Iku pays three actual cards together and the real area resolver discards both targets',async()=>{
-  await newLesson('normal',3);const g=A.game();place('heaven_iku',3,3);await flush();
+  await newLesson(3);const g=A.game();place('heaven_iku',3,3);await flush();
   assert(A.pending().hand.multi);for(const id of ['hourai_mokou','hell_clownpiece','haku_youmu'])clickHand(id);
   assert.equal(el('hand-choice-confirm').disabled,false);el('hand-choice-confirm').onclick();await flush();
   assert.equal(g.players[0].hand.length,0);assert.equal(effects.filter(e=>e[0]==='return').length,3);
@@ -115,54 +118,78 @@ test('Iku pays three actual cards together and the real area resolver discards b
   assert.equal(g.players[0].discard.length,2);assert(A.state().complete);assertConserved(g);
 });
 test('An area missing one target stays a real partial result and requires Retry',async()=>{
-  await newLesson('normal',3);place('heaven_iku',3,3);await flush();
+  await newLesson(3);place('heaven_iku',3,3);await flush();
   for(const id of ['hourai_mokou','hell_clownpiece','haku_youmu'])clickHand(id);el('hand-choice-confirm').onclick();await flush();
   A.pending().rect.resolve([{r:0,c:1},{r:0,c:2},{r:1,c:1},{r:1,c:2}]);await flush();
   assert.equal(A.game().players[0].discard.length,1);assert(!A.state().complete);assert(el('tutorial-next').disabled);assertConserved(A.game());
 });
-test('The real shop offer opens page two, trades actual merchandise, and retains the human turn',async()=>{
-  await newLesson('kourindou');const g=A.game();clickHand('hourai_mokou');A.pending().cell.resolveShop(0);await flush();
-  assert.equal(A.state().step,1);assert(A.pending().cell.shopTrade);assert.equal(g.currentPlayerIdx,0);
+test('The real shop offer opens the final lesson, trades actual merchandise, and retains the human turn',async()=>{
+  await newLesson(4);const g=A.game();clickHand('hourai_mokou');A.pending().cell.resolveShop(0);await flush();
+  assert.equal(A.state().step,5);assert(A.pending().cell.shopTrade);assert.equal(g.currentPlayerIdx,0);
   const target=g.tradeCells()[0];A.commitCellChoice(target.r,target.c);await flush();
   assert(g.players[0].hand.includes('sdm_meiling'));assert.equal(g.cardAt(target.r,target.c),'hourai_mokou');
   assert(g.tradedThisTurn[0]);assert(context.window.__resolveHumanTurn);assert(A.state().complete);
   assert.equal(normalStarts,0);assertConserved(g);
 });
-test('Shop Retry starts a fresh real trade selection, and Back returns to the first shop page',async()=>{
-  click('tutorial-retry');await flush();assert.equal(A.state().step,1);assert(A.pending().cell.shopTrade);
-  assert.equal(A.game().tradedThisTurn[0],false);click('tutorial-back');await flush();assert.equal(A.state().step,0);
+test('Shop Retry starts a fresh real trade selection, and Back returns to the offer lesson',async()=>{
+  click('tutorial-retry');await flush();assert.equal(A.state().step,5);assert(A.pending().cell.shopTrade);
+  assert.equal(A.game().tradedThisTurn[0],false);click('tutorial-back');await flush();assert.equal(A.state().step,4);
   assert.equal(A.pending().cell,null);assert(context.window.__resolveHumanTurn);assertConserved(A.game());
 });
 test('Finish exits guided practice and returns to the configured main menu',async()=>{
-  await newLesson('kourindou',1);const g=A.game(),target=g.tradeCells()[0];A.commitCellChoice(target.r,target.c);await flush();
+  await newLesson(5);const g=A.game(),target=g.tradeCells()[0];A.commitCellChoice(target.r,target.c);await flush();
   assert(A.state().complete);const settings={...A.settings()};click('tutorial-next');await flush();
   assert(g.cancelled);assert.equal(A.game(),null);assert.equal(A.state(),null);assert.equal(el('setup').style.display,'');
   assert(!el('game').classList.contains('active'));assert.equal(el('tutorial-coach').hidden,true);assert.deepEqual({...A.settings()},settings);
 });
 test('Exit during cost selection cancels the practice without late state writes to the next match',async()=>{
-  await newLesson('normal',3);place('heaven_iku',3,3);await flush();const old=A.game();assert(A.pending().hand);
+  await newLesson(3);place('heaven_iku',3,3);await flush();const old=A.game();assert(A.pending().hand);
   const settings={...A.settings()};A.returnToMainMenu();A.startNewGame();const live=A.game();await flush();
   assert(old.cancelled);assert.equal(A.state(),null);assert.equal(A.pending().hand,null);assert.equal(el('tutorial-coach').hidden,true);
   assert.equal(live.players[0].hand.length,6);assert.equal(live.board.flat().filter(Boolean).length,0);assert.deepEqual({...A.settings()},settings);
-  assert.equal(normalStarts,1);assertConserved(live);
+  assert.equal(normalStarts,1);assert(live.kourindouEnabled);assert.equal(live.shopTiles.length,4);assertConserved(live);
 });
 test('Exit during area selection clears the real pending rectangle',async()=>{
-  await newLesson('normal',3);place('heaven_iku',3,3);await flush();for(const id of ['hourai_mokou','hell_clownpiece','haku_youmu'])clickHand(id);
+  await newLesson(3);place('heaven_iku',3,3);await flush();for(const id of ['hourai_mokou','hell_clownpiece','haku_youmu'])clickHand(id);
   el('hand-choice-confirm').onclick();await flush();assert(A.pending().rect);const old=A.game();A.returnToMainMenu();await flush();
   assert(old.cancelled);assert.equal(A.pending().rect,null);assert.equal(A.game(),null);assert.equal(old.players[0].discard.length,0);
 });
 test('Completion waits for effects; cancelling that wait cannot finish a new practice',async()=>{
-  await newLesson('normal');let done;holdEffects={promise:new Promise(r=>done=r)};place('mtn_sanae',0,0);await flush();assert(!A.state().complete);
+  await newLesson();let done;holdEffects={promise:new Promise(r=>done=r)};place('mtn_sanae',0,0);await flush();assert(!A.state().complete);
   const old=A.state();click('tutorial-retry');await flush();holdEffects=null;done(true);await flush();
   assert.notEqual(A.state(),old);assert(!A.state().complete);assert.equal(A.game().cardAt(0,0),null);assert(el('tutorial-next').disabled);
 });
+test('The area lesson continues into trading rather than ending the unified tutorial',async()=>{
+  await newLesson(3);place('heaven_iku',3,3);await flush();for(const id of ['hourai_mokou','hell_clownpiece','haku_youmu'])clickHand(id);
+  el('hand-choice-confirm').onclick();await flush();A.pending().rect.resolve([{r:0,c:0},{r:0,c:1},{r:1,c:0},{r:1,c:1}]);await flush();
+  assert(A.state().complete);assert.equal(el('tutorial-next').textContent,'Next');click('tutorial-next');await flush();
+  assert.equal(A.state().step,4);assert.equal(el('tutorial-progress').textContent,'Learn to Play · 5 / 6');assert(A.game().kourindouEnabled);
+  clickHand('hourai_mokou');A.pending().cell.resolveShop(0);await flush();assert.equal(A.state().step,5);
+  const target=A.game().tradeCells()[0];A.commitCellChoice(target.r,target.c);await flush();assert(A.state().complete);assert.equal(el('tutorial-next').textContent,'Finish');
+});
+test('Trading is guided only during the shop lesson while Kourindou is visible throughout',async()=>{
+  await newLesson();assert(A.game().kourindouEnabled);clickHand('mtn_sanae');
+  assert.equal(A.pending().cell.shopSlots.length,0);assert(!A.pending().cell.cells.some(cell=>A.game().cardAt(cell.r,cell.c)==='shop_rinnosuke'));
+  const choice=A.pending().cell;A.beginShopTrade('mtn_sanae');assert.equal(A.pending().cell,choice);assert.equal(A.state().step,0);
+});
 test('A live match cannot be replaced by a tutorial',async()=>{
-  A.returnToMainMenu();A.startNewGame();const live=A.game();A.openTutorial('normal');await flush();assert.equal(A.game(),live);assert.equal(A.state(),null);
+  A.returnToMainMenu();A.startNewGame();const live=A.game();A.openTutorial();await flush();assert.equal(A.game(),live);assert.equal(A.state(),null);
 });
 test('The coach moves above the real layout on mobile and returns to the side panel on desktop',async()=>{
   A.dockTutorialCoach(true);assert.equal(el('tutorial-coach').parentElement,el('game'));
   assert(el('game').children.indexOf(el('tutorial-coach'))<el('game').children.indexOf(el('layout')));
   A.dockTutorialCoach(false);assert.equal(el('tutorial-coach').parentElement,el('log-panel'));
   assert.match(html,/#tutorial-coach\[hidden\]\{display:none !important;/);
+});
+test('Every board size and player count includes Kourindou, even with an old disabled option',()=>{
+  for(const size of [4,5]) for(const count of [2,3,4]) for(const options of [{},{kourindou:false},{kourindou:true}]){
+    A.setSize(size);const g=new A.Game(count,{},null,options);
+    assert(g.kourindouEnabled);assert.equal(g.shopTiles.length,4);assert.equal(g.shopCards[0],'shop_rinnosuke');
+    assert.equal(g.shopCards.length,4);assert(g.shopCards.slice(1).every(id=>A.CARD[id].shopExpansion));
+    assert(g.shopTiles.every(tile=>tile.r>=size&&g.wastelandAt(tile.r,tile.c)));
+    assert(g.players.every(p=>p.hand.length===6&&p.hand.every(id=>!A.CARD[id].shopExpansion&&!A.CARD[id].shopkeeper)));
+    assert(g.drawPile.every(id=>!A.CARD[id].shopExpansion&&!A.CARD[id].shopkeeper));assertConserved(g);
+  }
+  A.setSize(4);
 });
 (async()=>{let passed=0;for(const [name,fn]of tests){await fn();console.log('PASS '+name);passed++;}console.log(`${passed}/${tests.length} board tutorial checks passed`);})().catch(e=>{console.error(e);process.exitCode=1;});
