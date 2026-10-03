@@ -1807,10 +1807,6 @@
     -webkit-line-clamp:2; line-clamp:2;
   }
 
-  .shop-option{ margin:16px auto 8px; padding:12px 16px; max-width:530px; text-align:left;
-    border:1px solid #9d774f; border-radius:12px; background:rgba(122,78,38,.12); }
-  .shop-option strong{ color:#f1cd91; font-weight:700; }
-  .shop-option p{ margin:8px 0 0; color:var(--muted); font-size:.79rem; line-height:1.5; }
   #shop-panel[hidden]{display:none;}
   #shop-panel{flex:none;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--line);}
   #shop-panel h3{margin:0 0 7px;color:#f1cd91;font-size:.92rem;}
@@ -2210,6 +2206,62 @@ body.mobile-landscape .look-into-card.hand-card{min-height:105px;flex-basis:82px
 body.mobile-landscape #winner-box{max-height:calc(100dvh - 24px);overflow:auto;padding:18px;}
 body.mobile-landscape #winner-box h2{font-size:24px;}
 
+
+/* Myouren Temple: shared sunset setting and layered portraits. */
+:root{
+--temple-bg:url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/backgrounds/myouren_temple.webp");
+--temple-byakuren:url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/myouren_temple/hijiri_byakuren.webp");
+--temple-shou:url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/myouren_temple/toramaru_shou.webp");
+--temple-nue:url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/myouren_temple/houjuu_nue.webp");
+--temple-murasa:url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/myouren_temple/murasa_minamitu.webp");
+--temple-ichirin:url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/myouren_temple/kumoi_ichirin.webp");
+--temple-unzan:url("https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/myouren_temple/unzan.webp");
+}
+.faction-bg-temple{background-image:var(--temple-bg);background-size:cover;background-position:center}
+.card-art-temple{background-image:var(--temple-art),var(--temple-bg);background-size:auto 99%,cover;background-position:center bottom,center;background-repeat:no-repeat}
+.card-art-byakuren{--temple-art:var(--temple-byakuren)}
+.card-art-shou{--temple-art:var(--temple-shou)}
+.card-art-nue{--temple-art:var(--temple-nue)}
+.card-art-murasa{--temple-art:var(--temple-murasa)}
+.card-art-ichirin{background-image:var(--temple-ichirin),var(--temple-unzan),var(--temple-bg);background-size:auto 92%,auto 107%,cover;background-position:64% bottom,37% 25%,center}
+#card-detail.temple{background-image:var(--temple-bg);background-size:cover;background-position:center}
+#card-detail.temple .card-detail-effect{background:linear-gradient(135deg,rgba(54,23,70,.95),rgba(103,59,38,.96));border-top:2px solid #e1bb6e;color:#fff7e9}
+.card-detail-portrait.ichirin-stand img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.card-detail-portrait.ichirin-stand img:first-child{transform:translate(-5%,-8%) scale(1.12)}
+.card-detail-portrait.ichirin-stand img:last-child{transform:translate(10%,4%) scale(.9)}
+.chimera-options{display:flex;justify-content:center;gap:16px;flex-wrap:wrap}
+.chimera-option{display:grid;gap:8px;justify-items:center;width:clamp(100px,20vw,145px)}
+.chimera-option .board-card{position:relative;width:94px;height:124px;cursor:pointer}
+.chimera-option .modal-opt{width:100%;font-size:.75rem}
+.chimera-option small{font-size:.7rem;color:#edd4fa;text-align:center}
+.murasa-seal-badge{display:inline-block;padding:2px 6px;border-radius:12px;color:#d6f4ff;background:#103956dd;border:1px solid #73d8ee;font-size:.66rem;line-height:1.3}
+.mind-fx.temple-fx{position:fixed;pointer-events:none;z-index:260;display:grid;place-items:center;overflow:visible;animation:templeBloom 1.15s ease-out both;color:var(--temple-fx-color,#c698ff)}
+.temple-fx svg{width:100%;height:100%;overflow:visible;fill:none;stroke:currentColor;stroke-width:2;filter:drop-shadow(0 0 7px currentColor)}
+.temple-fx.byakuren svg{animation:templeMandala 1.15s ease-out both}
+.temple-fx.strength svg{stroke-width:4;animation:templeShock 1.15s ease-out both}
+.temple-fx.shou{--temple-fx-color:#ffd658}
+.temple-fx.shou svg{animation:templeMandala 1.15s ease-out both}
+.temple-fx.nue,.temple-fx.chimera{--temple-fx-color:#ec3658}
+.temple-fx.nue svg,.temple-fx.chimera svg{animation:templeChimera 1.15s steps(8) both}
+.temple-fx.murasa{--temple-fx-color:#65e4ed;animation:templeVortex 1.35s ease-out both}
+.temple-fx.murasa svg{animation:templeMandala 1.35s linear both}
+.temple-fx.ichirin{--temple-fx-color:#f29ac2}
+.temple-fx.ichirin img{position:absolute;width:115%;height:115%;object-fit:contain;opacity:.6;animation:templeFist 1.15s cubic-bezier(.2,.9,.35,1) both}
+.temple-fx.ichirin svg{animation:templeShock 1.15s ease-out both}
+.draw-flight-card.draw-shou{box-shadow:0 0 22px #ffd65b;border-color:#ffe386}
+.discard-vanish.ability-byakuren{animation:templeCrush 1s ease-in both}
+.discard-vanish.ability-byakuren::before{background:radial-gradient(ellipse,#fff3b6,#c489ff99 40%,transparent 70%)}
+.draw-return-ghost.ability-ichirin{animation:templeKnockAway 1s cubic-bezier(.25,.1,.65,1) both}
+@keyframes templeBloom{0%{opacity:0;transform:scale(.35)}20%{opacity:1}70%{opacity:.9}100%{opacity:0;transform:scale(1.3)}}
+@keyframes templeMandala{from{transform:rotate(-55deg) scale(.6)}to{transform:rotate(65deg) scale(1.1)}}
+@keyframes templeShock{0%{transform:scale(.1);opacity:0}18%{opacity:1}100%{transform:scale(1.65);opacity:0}}
+@keyframes templeChimera{0%{transform:rotate(-30deg) scale(.4);stroke:#eb3650}40%{transform:rotate(55deg) scale(1.1);stroke:#8deafa}65%{transform:rotate(-12deg);stroke:#cc95ff}100%{transform:rotate(40deg) scale(1.4)}}
+@keyframes templeVortex{0%{opacity:0;transform:scale(.2) rotate(0)}25%{opacity:1}80%{opacity:.9}100%{opacity:0;transform:scale(1.15) rotate(180deg)}}
+@keyframes templeFist{0%{transform:translateY(-20%) scale(.6);opacity:0}30%{transform:translateY(0) scale(1.2);opacity:.8}100%{transform:translateY(8%) scale(1.35);opacity:0}}
+@keyframes templeCrush{0%{transform:scale(1)}30%{transform:scale(.78) rotate(-5deg);filter:brightness(1.8)}48%{transform:scale(1.08);filter:brightness(3)}100%{transform:scale(.2);opacity:0;filter:brightness(4) blur(9px)}}
+@keyframes templeKnockAway{0%{transform:translate(0,0) rotate(0);opacity:1}20%{transform:translate(0,-15px) scale(.95)}100%{transform:translate(var(--push-off-x,400px),var(--push-off-y,-100px)) rotate(75deg) scale(.2);opacity:0}}
+@media(prefers-reduced-motion:reduce){.temple-fx{display:none!important}.discard-vanish.ability-byakuren,.draw-return-ghost.ability-ichirin{animation:none}}
+
 </style>
 </head>
 <body>
@@ -2242,10 +2294,6 @@ body.mobile-landscape #winner-box h2{font-size:24px;}
       <button class="pill-btn" data-difficulty="easy" aria-pressed="false">Easy</button>
       <button class="pill-btn" data-difficulty="normal" aria-pressed="false">Normal</button>
       <button class="pill-btn selected" data-difficulty="hard" aria-pressed="true">Hard</button>
-    </div>
-    <div class="shop-option">
-      <strong>🏮 Kourindou</strong>
-      <p>Select a hand card, then click Rinnosuke to trade without using your turn.</p>
     </div>
     <div class="opts">
       <button class="pill-btn" id="customize-toggle">🛠️ Customize My Starting Hand (playtest)</button>
@@ -2412,6 +2460,7 @@ const FACTIONS = {
   sunflower:  { name: 'Sunflower Field',               icon: '🌻', size: 2, color: '#f2c14e' },
   hell:       { name: 'Hell',                          icon: '🔥', size: 4, color: '#ff6a3d' },
   heaven:     { name: 'Heaven',                        icon: '⛩️', size: 2, color: '#79ceff' },
+  temple:     { name:'Myouren Temple', icon:'🪷', size:4, color:'#d7a449' },
   kourindou:  { name: 'Kourindou', icon:'🏮', size:0, color:'#c69e64' },
   token:      { name: 'Token', icon:'⚠️', size:0, color:'#aa80c9' },
 };
@@ -2426,8 +2475,8 @@ const CARDS = [
   { id:'sdm_sakuya',    faction:'sdm', name:'Izayoi Sakuya',
     desc:"Placed: Take two extra turns, then shuffle your hand into the draw pile." },
 
-  { id:'haku_yuyuko', faction:'hakugyokurou', name:'Yuyuko Saigyouji', crown:true, costX:true,
-    desc:"[Cost X] Placed: Send X random orthogonally adjacent cards to your discard pile." },
+  { id:'haku_yuyuko', faction:'hakugyokurou', name:'Yuyuko Saigyouji', crown:true, costN:true,
+    desc:"[Cost N] Placed: Send N random orthogonally adjacent cards to your discard pile." },
   { id:'haku_youmu',  faction:'hakugyokurou', name:'Youmu Konpaku', noTurnCost:true,
     desc:"Placed: Placing this card does not use your turn." },
 
@@ -2493,6 +2542,16 @@ const CARDS = [
 ];
 
 CARDS.push(
+  {id:'temple_byakuren',faction:'temple',name:'Hijiri Byakuren',crown:true,cost7:true,
+    desc:'[Cost VII] Placed: Send three board cards to your discard pile, take three extra turns and turn three board spaces into wasteland. Each Myouren Temple card on the board reduces the cost by one.'},
+  {id:'temple_shou',faction:'temple',name:'Toramaru Shou',cost1:true,
+    desc:'[Cost I] Placed: Draw a card for each wasteland on the board, then clear all wasteland.'},
+  {id:'temple_nue',faction:'temple',name:'Houjuu Nue',
+    desc:'Placed: Choose an ability from three random cards and use it as this card’s ability.'},
+  {id:'temple_murasa',faction:'temple',name:'Murasa Minamitu',
+    desc:'Placed: Choose a player. They cannot place cards on their next two turns.'},
+  {id:'temple_ichirin',faction:'temple',name:'Kumoi Ichirin',shopExpansion:true,cost2:true,
+    desc:'[Cost II] Placed: Push every non-Myouren Temple card one tile farther from this card. Return cards pushed off the board to the draw pile.'},
   { id:'sdm_meiling', faction:'sdm', name:'Hong Meiling', shopExpansion:true,
     desc:"Placed: Move an adjacent card one tile farther away from this card." },
   { id:'hourai_tewi', faction:'hourai', name:'Inaba Tewi', shopExpansion:true,
@@ -2543,6 +2602,10 @@ function computeRectCells(anchor, dim, hover, contains=inBounds){
   return cells;
 }
 function sleep(ms){ return new Promise(res=>setTimeout(res,ms)); }
+function romanNumeral(n){
+  if(n===0)return '0';
+  let text='';for(const [value,symbol] of [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']])while(n>=value){text+=symbol;n-=value;}return text;
+}
 function possessive(name){ return name === 'You' ? 'Your' : `${name}'s`; }
 
 /* ===================== Game class ===================== */
@@ -2557,7 +2620,10 @@ class Game {
     this.wasteland = Array.from({length:SIZE},()=>Array(SIZE).fill(false));
     this.kourindouEnabled=true; // Kourindou is part of every match.
     this.shopCards=[];
-    this.shopTiles=[[0,1],[1,0],[1,1],[1,2]].map(([r,c],slot)=>({r:SIZE+2+r,c,slot,wasteland:true}));
+    this.shopTiles=[[0,1],[1,0],[1,1],[1,2]].map(([r,c],slot)=>({r:SIZE+2+r,c,slot,wasteland:false}));
+    this.borrowedAbilities={};
+    this.placementBlockTurns=Array(numPlayers).fill(0);
+    this.placementBlockedForTurn=Array(numPlayers).fill(false);
     this.pendingExtraTurns={};
     this.tradedThisTurn=Array(numPlayers).fill(false);
     this.handKnowledge=Array.from({length:numPlayers},()=>new Map());
@@ -2618,6 +2684,54 @@ class Game {
     try{this.ui.onAbilityEffect({effect,...details});}catch(_error){ /* Visuals cannot interrupt an ability. */ }
   }
 
+  abilityId(id){return this.borrowedAbilities[id] || id;}
+  eirinActive(){return this.boardCells(cell=>this.abilityId(cell.id)==='hourai_eirin' && !this.isProtected(cell.r,cell.c)).length>0;}
+  isPlacementBlocked(p=this.currentPlayerIdx){return !!this.placementBlockedForTurn[p] || (p!==this.currentPlayerIdx && this.placementBlockTurns[p]>0);}
+  beginPlayerTurn(p){
+    this.placementBlockedForTurn[p]=this.placementBlockTurns[p]>0;
+    if(this.placementBlockedForTurn[p]) this.placementBlockTurns[p]--;
+  }
+  endPlayerTurn(p){this.placementBlockedForTurn[p]=false;}
+  byakurenCost(placement=null){
+    const count=this.boardCells(cell=>this.boardFaction(cell.r,cell.c)==='temple').length;
+    const added=placement && this.boardFaction(placement.r,placement.c)!=='temple' ? 1 : 0;
+    return Math.max(0,7-count-added);
+  }
+  abilityCost(id,placement=null){
+    const card=CARD[id];
+    return id==='temple_byakuren' ? this.byakurenCost(placement) : card.cost3?3:card.cost2?2:card.cost1?1:0;
+  }
+  templeDiscardTargets(p){return this.boardCells(cell=>this.canMoveBoardCard(cell.r,cell.c)
+    && this.canSelectBoardCard(cell.r,cell.c) && this.canEnterDiscard(p,cell.id));}
+  templeWasteland(){return this.allTiles().filter(cell=>this.wastelandAt(cell.r,cell.c));}
+  presentTemple(effect,details){
+    if(this.cancelled)return;
+    try{this.ui?.onTempleEffect?.({effect,...details});}catch(_error){}
+  }
+  ichirinPushes(r,c){
+    return this.boardCells(cell=>this.boardFaction(cell.r,cell.c)!=='temple'
+      && !(cell.r===r && cell.c===c) && this.canMoveBoardCard(cell.r,cell.c))
+      .map(cell=>({...cell,toR:cell.r+Math.sign(cell.r-r),toC:cell.c+Math.sign(cell.c-c),distance:Math.max(Math.abs(cell.r-r),Math.abs(cell.c-c))}))
+      .sort((a,b)=>b.distance-a.distance);
+  }
+  async chooseChimeraAbility(p,ids,r,c){
+    if(!this.players[p].isAI) return this.ui?.pickAbilityCards
+      ? await this.ui.pickAbilityCards('Nue — choose an ability',ids)
+      : await this.chooseFromList(p,ids.map(id=>({label:CARD[id].name,value:id})),'Nue — choose an ability');
+    if(this.aiMakesMistake('target'))return ids[Math.floor(Math.random()*ids.length)];
+    const score=id=>{
+      const cost=this.abilityCost(id);
+      if(this.payableCards(p).length<cost || (CARD[id].crown && this.eirinActive()))return -10;
+      if(id==='temple_byakuren')return Math.min(3,this.templeDiscardTargets(p).length)+3;
+      if(id==='temple_shou')return Math.min(this.drawPile.length+cost,this.templeWasteland().length);
+      if(id==='temple_murasa')return 2;
+      if(id==='sage_kasen')return 2;
+      if(id==='sdm_sakuya')return 2;
+      if(id==='mtn_nitori')return 1.5;
+      return this.estimateDirectDiscardPoints(p,id,r,c)+this.estimateHandGain(p,id)+.5;
+    };
+    return ids.slice().sort((a,b)=>score(b)-score(a))[0];
+  }
   allTiles(){
     const cells=[];
     for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++) cells.push({r,c});
@@ -2673,7 +2787,7 @@ class Game {
   }
   canOverrideShop(playerIdx,slot){
     const forced=this.forcedPlay[playerIdx];
-    return !this.cancelled && !this.winner && this.kourindouEnabled && Number.isInteger(slot)
+    return !this.cancelled && !this.winner && !this.isPlacementBlocked(playerIdx) && this.kourindouEnabled && Number.isInteger(slot)
       && !!this.shopCards[slot] && !(this.players[playerIdx].isAI && this.shopCards[slot]==='shop_rinnosuke')
       && this.players[playerIdx].hand.includes('sage_yukari')
       && this.canOverrideTarget('sage_yukari',this.shopCards[slot])
@@ -2711,16 +2825,16 @@ class Game {
     return this.boardCells(cell=>cell.id===cardId && (cardId==='sage_yukari' || !this.isProtected(cell.r,cell.c))).length>0;
   }
   isCrownAbilityDisabled(cardId){
-    return !!CARD[cardId]?.crown && this.isActiveOnBoard('hourai_eirin');
+    return !!(CARD[cardId]?.crown || CARD[this.abilityId(cardId)]?.crown) && this.eirinActive();
   }
   hasActiveAbility(cardId){
-    return this.isActiveOnBoard(cardId) && !this.isCrownAbilityDisabled(cardId);
+    return this.boardCells(cell=>this.abilityId(cell.id)===cardId && !this.isProtected(cell.r,cell.c) && !this.isCrownAbilityDisabled(cell.id)).length>0;
   }
   canOverrideTarget(cardId,targetId){
-    return !!CARD[cardId]?.override && (!this.isCrownAbilityDisabled(cardId) || targetId==='hourai_eirin');
+    return !!CARD[this.abilityId(cardId)]?.override && (!this.isCrownAbilityDisabled(cardId) || this.abilityId(targetId)==='hourai_eirin');
   }
   canPlaceOnWasteland(card){
-    return !!card.wasteOK && !this.isCrownAbilityDisabled(card.id);
+    return !!CARD[this.abilityId(card.id)]?.wasteOK && !this.isCrownAbilityDisabled(card.id);
   }
   sanaeDrawCount(){
     const base=this.isActiveOnBoard('mtn_kanako') ? 2 : 1;
@@ -2728,7 +2842,7 @@ class Game {
   }
   canSelectBoardCard(r,c){
     if(!this.cardAt(r,c)) return false;
-    return !this.boardCells(cell=>cell.id==='mtn_nitori' && !this.isProtected(cell.r,cell.c)
+    return !this.boardCells(cell=>this.abilityId(cell.id)==='mtn_nitori' && !this.isProtected(cell.r,cell.c) && !this.isCrownAbilityDisabled(cell.id)
       && Math.abs(cell.r-r)<=1 && Math.abs(cell.c-c)<=1).length;
   }
   canMoveBoardCard(r,c){ return this.hasTile(r,c) && !!this.cardAt(r,c) && !this.isProtected(r,c); }
@@ -2759,7 +2873,7 @@ class Game {
       && this.tradeCells().length>0
       && !this.winner && !this.tradedThisTurn[playerIdx]
       && this.players[playerIdx].hand.includes(cardId) && !CARD[cardId].shopkeeper && !CARD[cardId].token
-      && !(this.forcedPlay[playerIdx] && this.players[playerIdx].hand.includes(this.forcedPlay[playerIdx]));
+      && !(!this.isPlacementBlocked(playerIdx) && this.forcedPlay[playerIdx] && this.players[playerIdx].hand.includes(this.forcedPlay[playerIdx]));
   }
   tradeCard(playerIdx,offeredId,target){
     const cell=Number.isInteger(target) ? this.shopTiles[target] : target;
@@ -2781,7 +2895,7 @@ class Game {
     this.startingCardIds.add(id);
     return id;
   }
-  isWildActive(id){return !!CARD[id]?.wild && !this.isCrownAbilityDisabled(id);}
+  isWildActive(id){return !!CARD[this.abilityId(id)]?.wild && !this.isCrownAbilityDisabled(id);}
   factionCells(faction){
     return this.boardCells(cell=>this.boardMatchesFaction(cell.r,cell.c,faction));
   }
@@ -2824,7 +2938,7 @@ class Game {
     return p.discard.reduce((s,id)=>s+this.pointValue(id),0);
   }
 
-  pointValue(cardId){ return CARD[cardId].triple && !this.isCrownAbilityDisabled(cardId) ? 3 : 1; }
+  pointValue(cardId){ return CARD[this.abilityId(cardId)].triple && !this.isCrownAbilityDisabled(cardId) ? 3 : 1; }
 
   factionTotalPoints(fk){
     return CARDS.filter(c=>c.faction===fk && (this.kourindouEnabled || !c.shopExpansion))
@@ -2853,7 +2967,7 @@ class Game {
       .map(cell=>({...cell,id:this.cardAt(cell.r,cell.c)}));
     if(placement){
       if(this.cardAt(placement.r,placement.c) || this.wastelandAt(placement.r,placement.c) || this.isProtected(placement.r,placement.c)
-        || this.isOnBoard('hourai_kaguya') || this.isActiveOnBoard('hourai_eirin')) return null;
+        || this.isOnBoard('hourai_kaguya') || this.eirinActive()) return null;
       members.push({...placement,id:'hourai_kaguya'});
     }
     const kaguya=members.find(cell=>cell.id==='hourai_kaguya');
@@ -2907,6 +3021,7 @@ class Game {
   estimateDirectDiscardPoints(playerIdx, cardId, r, c){
     if(this.isProtected(r,c)) return 0;
     switch(cardId){
+      case 'temple_byakuren': return this.payableCards(playerIdx).filter(id=>id!==cardId).length>=this.byakurenCost({r,c}) ? Math.min(3,this.templeDiscardTargets(playerIdx).length) : 0;
       case 'palace_yuugi': return this.payableCards(playerIdx).filter(id=>id!==cardId).length>=2 && this.yuugiTargets(r,c).length ? 1 : 0;
       case 'haku_yuyuko': {
         if(this.payableCards(playerIdx).filter(id=>id!==cardId).length===0) return 0;
@@ -2939,7 +3054,7 @@ class Game {
      specific cell it goes in. Used only as the lowest-priority tiebreaker (goal 2). */
   estimateHandGain(playerIdx, cardId){
     const player = this.players[playerIdx];
-    if(!this.drawPile.length && DRAW_ABILITY_CARDS.has(cardId) && cardId!=='yuuka') return 0;
+    if(!this.drawPile.length && DRAW_ABILITY_CARDS.has(cardId) && cardId!=='yuuka' && cardId!=='temple_shou') return 0;
     switch(cardId){
       case 'sdm_remilia': {
         let n = 0;
@@ -2953,6 +3068,7 @@ class Game {
         const returned=this.payableCards(playerIdx).filter(id=>id!==cardId).length;
         return Math.min(4,this.drawPile.length+returned)-returned;
       }
+      case 'temple_shou': return Math.min(this.drawPile.length+1,this.templeWasteland().length);
       case 'mtn_sanae': return this.sanaeDrawCount();
       case 'hourai_mokou': return player.discard.length;
       case 'sage_ran': return this.isActiveOnBoard('sage_yukari') ? 0 : 1;
@@ -3009,10 +3125,11 @@ class Game {
   }
 
   emptyCells(){return this.allTiles().filter(({r,c})=>!this.cardAt(r,c) && !this.wastelandAt(r,c));}
-  emptyOrWastelandForCard(card){
+  emptyOrWastelandForCard(card,playerIdx=this.currentPlayerIdx){
+    if(this.isPlacementBlocked(playerIdx))return [];
     return this.allTiles().filter(({r,c})=>{
       if(this.cardAt(r,c)) return this.canOverrideTarget(card.id,this.cardAt(r,c)) && this.canSelectBoardCard(r,c)
-        && (card.id==='sage_yukari' || this.canMoveBoardCard(r,c));
+        && (this.abilityId(card.id)==='sage_yukari' || this.canMoveBoardCard(r,c));
       return !this.wastelandAt(r,c) || this.canPlaceOnWasteland(card);
     });
   }
@@ -3077,7 +3194,7 @@ class Game {
     return cardId;
   }
   canEnterDiscard(p,cardId,source){
-    if(cardId!=='hell_hecatia' || this.isCrownAbilityDisabled(cardId)) return true;
+    if(this.abilityId(cardId)!=='hell_hecatia' || this.isCrownAbilityDisabled(cardId)) return true;
     return this.players[p].discard.filter(id=>CARD[id].faction==='hell').length>3
       || !!source?.allowHecatiaFromClaim;
   }
@@ -3314,7 +3431,7 @@ class Game {
   }
   commitCostCards(playerIdx, chosen, minCount, maxCount){
     const hand=this.players[playerIdx].hand;
-    if(!Array.isArray(chosen) || chosen.length<minCount || chosen.length>maxCount
+    if(this.cancelled || !Array.isArray(chosen) || chosen.length<minCount || chosen.length>maxCount
       || new Set(chosen).size!==chosen.length || chosen.some(id=>!hand.includes(id) || !this.canHandEnterPile(id))) return 0;
     if(this.ui?.onCostPaid){try{this.ui.onCostPaid({playerIdx,count:chosen.length});}catch(_error){}}
     for(const id of chosen){
@@ -3326,15 +3443,15 @@ class Game {
     return chosen.length;
   }
   async payCost(playerIdx, count){
-    const roman=n=>['','I','II','III','IV'][n] || String(n);
+    const roman=romanNumeral;
     const chosen=await this.selectCostCards(playerIdx,count,count,
       `Cost ${roman(count)}: select ${count} card${count===1?'':'s'} to return to the draw pile`);
     return this.commitCostCards(playerIdx,chosen,count,count)===count;
   }
-  async payCostX(playerIdx, maxCount){
+  async payCostN(playerIdx, maxCount){
     const chosen=await this.selectCostCards(playerIdx,1,maxCount,
       maxCount===1 ? 'Yuyuko: select 1 card to pay Cost I'
-        : `Yuyuko: select 1–${maxCount} cards to pay Cost X`);
+        : `Yuyuko: select 1–${maxCount} cards to pay Cost N`);
     return this.commitCostCards(playerIdx,chosen,1,maxCount);
   }
   async payCost1(playerIdx){ return await this.payCost(playerIdx,1); }
@@ -3392,11 +3509,12 @@ class Game {
     const palaceCount = this.factionCells('palace').length;
     if(palaceCount!==3) return null;
     for(const p of this.players){
-      if(p.hand.includes('palace_koishi')){
+      const triggerId=p.hand.find(id=>CARD[this.abilityId(id)]?.trigger && !this.isCrownAbilityDisabled(id));
+      if(!this.isPlacementBlocked(p.idx) && triggerId){
         const cells = this.emptyCells();
         if(!cells.length) return null;
-        this.removeFromHand(p.idx, 'palace_koishi');
-        return {ownerIdx:p.idx, cellCandidates:cells};
+        this.removeFromHand(p.idx,triggerId);
+        return {ownerIdx:p.idx,cardId:triggerId,cellCandidates:cells};
       }
     }
     return null;
@@ -3412,15 +3530,15 @@ class Game {
     while(koishi && guard<4){
       guard++;
       const cell = koishi.cellCandidates.length===1 ? koishi.cellCandidates[0]
-        : (this.players[koishi.ownerIdx].isAI ? aiFactionPlacement(koishi.ownerIdx,'palace_koishi',koishi.cellCandidates,'palace') : await this.chooseCell(koishi.ownerIdx, koishi.cellCandidates, 'Koishi Komeiji wanders onto the board — choose where'));
-      this.setCardAt(cell.r,cell.c,'palace_koishi');
-      this.log(`Koishi Komeiji triggers and wanders onto the board!`);
+        : (this.players[koishi.ownerIdx].isAI ? aiFactionPlacement(koishi.ownerIdx,koishi.cardId,koishi.cellCandidates,CARD[koishi.cardId].faction) : await this.chooseCell(koishi.ownerIdx, koishi.cellCandidates, `${CARD[koishi.cardId].name} wanders onto the board — choose where`));
+      this.setCardAt(cell.r,cell.c,koishi.cardId);
+      this.log(`${CARD[koishi.cardId].name} triggers and wanders onto the board!`);
       lastPlacedCell = null;
       this.render();
       if(this.ui && this.ui.onKoishiSelfPlace){
-        try{ if(await this.ui.onKoishiSelfPlace({playerIdx:koishi.ownerIdx,r:cell.r,c:cell.c})===false) return; }catch(_error){}
+        try{ if(await this.ui.onKoishiSelfPlace({cardId:koishi.cardId,playerIdx:koishi.ownerIdx,r:cell.r,c:cell.c})===false) return; }catch(_error){}
       }
-      triggerPlacementPresentation('palace_koishi', cell.r, cell.c);
+      triggerPlacementPresentation(koishi.cardId, cell.r, cell.c);
       this.checkClaims(koishi.ownerIdx);
       koishi = this.checkKoishiTrigger(depth);
     }
@@ -3429,11 +3547,12 @@ class Game {
   /* ---------- Placement + ability resolution ---------- */
   async internalPlace(cardId, r, c, playerIdx, depth, crownEffectId=null){
     depth = depth||0;
-    if(this.cancelled || !this.hasTile(r,c) || (this.cardAt(r,c) && this.isProtected(r,c) && cardId!=='sage_yukari')) return {};
+    if(this.cancelled || this.isPlacementBlocked(playerIdx) || !this.hasTile(r,c) || (this.cardAt(r,c) && this.isProtected(r,c) && this.abilityId(cardId)!=='sage_yukari')) return {};
     const occupied=this.cardAt(r,c);
-    if(cardId==='sage_yukari' && occupied){
+    if(occupied){
       if(!this.canOverrideTarget(cardId,occupied) || !this.moveBoardToHand(r,c,playerIdx,'yukari')) return {};
     } else if(!occupied && this.wastelandAt(r,c) && !this.canPlaceOnWasteland(CARD[cardId])) return {};
+    delete this.borrowedAbilities[cardId];
     this.setCardAt(r,c,cardId);
     this.log(`${this.players[playerIdx].name} places ${CARD[cardId].name}.`);
     const handArrival=this.ui?.onPlacementArrival?.({cardId,r,c,playerIdx,crownEffectId});
@@ -3456,7 +3575,7 @@ class Game {
     if(depth<6) await this.resolveKoishiCascade(depth);
     if(this.cancelled) return {};
 
-    const eirinActive = this.isActiveOnBoard('hourai_eirin') && cardId !== 'hourai_eirin';
+    const eirinActive = this.eirinActive() && cardId !== 'hourai_eirin';
     let flags = {};
     const card = CARD[cardId];
     if(eirinActive && card.crown){
@@ -3476,9 +3595,82 @@ class Game {
     const self = this;
     const me = self.players[playerIdx].name;
     const meS = possessive(me);
-    if(this.cancelled) return {};
+    if(this.cancelled || depth>=6) return {};
+    cardId=this.abilityId(cardId);
     if(this.isProtected(r,c) && cardId!=='sage_yukari'){ this.log(`${CARD[cardId].name} is silenced by Rinnosuke.`); return {}; }
+    if(CARD[cardId].crown && this.eirinActive() && cardId!=='hourai_eirin')return {};
     switch(CARD[cardId].token ? 'trap_token' : cardId){
+      case 'temple_byakuren': {
+        const cost=self.byakurenCost();
+        if(cost && !await self.payCost(playerIdx,cost))break;
+        if(self.cancelled)break;
+        self.presentTemple('byakuren',{r,c});
+        const targets=self.templeDiscardTargets(playerIdx);
+        const chosen=await self.chooseCells(playerIdx,Math.min(3,targets.length),targets,'Byakuren — choose cards for your discard pile');
+        if(self.cancelled)break;
+        for(const cell of chosen)self.moveBoardToDiscard(cell.r,cell.c,playerIdx,'byakuren');
+        self.render();
+        if(self.cancelled)break;
+        const spaces=self.allTiles().filter(cell=>!self.wastelandAt(cell.r,cell.c) && !self.isProtected(cell.r,cell.c));
+        const ruined=await self.chooseCells(playerIdx,Math.min(3,spaces.length),spaces,'Byakuren — choose spaces to turn into wasteland');
+        if(self.cancelled)break;
+        for(const cell of ruined){self.presentTemple('strength',{r:cell.r,c:cell.c});self.setWastelandAt(cell.r,cell.c,true);}
+        self.log(`${me} unleashes Superhuman Strength and gains three extra turns (Cost ${romanNumeral(cost)}).`);
+        return {extraTurns:3};
+      }
+      case 'temple_shou': {
+        if(!await self.payCost1(playerIdx) || self.cancelled)break;
+        const waste=self.templeWasteland();
+        self.presentTemple('shou',{r,c,tiles:waste});
+        const count=Math.min(waste.length,self.drawPile.length);
+        for(let i=0;i<count;i++){
+          const id=self.takeFromDrawPile(playerIdx);self.addToHand(playerIdx,id);
+          try{self.ui?.onDrawCard?.({playerIdx,cardId:id,effect:'shou',source:{r,c}});}catch(_error){}
+        }
+        for(const cell of waste)self.clearWasteland(cell.r,cell.c);
+        self.log(`${me} draws ${count} card${count===1?'':'s'} with Radiant Treasure and clears ${waste.length} wasteland tile${waste.length===1?'':'s'}.`);
+        break;
+      }
+      case 'temple_nue': {
+        const actor=self.cardAt(r,c);
+        if(!actor)break;
+        const choices=shuffle(CARDS.filter(card=>!card.token && !card.shopkeeper && card.id!=='temple_nue' && card.id!==actor).map(card=>card.id)).slice(0,3);
+        self.presentTemple('nue',{r,c});
+        const ability=await self.chooseChimeraAbility(playerIdx,choices,r,c);
+        if(self.cancelled || !choices.includes(ability))break;
+        self.borrowedAbilities[actor]=ability;
+        self.log(`${CARD[actor].name} borrows ${CARD[ability].name}’s ability.`);
+        self.presentTemple('chimera',{r,c});
+        self.render();
+        return await self.resolveAbility(ability,r,c,playerIdx,depth+1);
+      }
+      case 'temple_murasa': {
+        const target=await self.choosePlayer(playerIdx,'Murasa — choose a player to seal for two turns',{preferOpponent:true});
+        if(target==null || self.cancelled)break;
+        self.placementBlockTurns[target]=Math.max(self.placementBlockTurns[target],2);
+        self.presentTemple('murasa',{r,c,playerIdx:target});
+        self.log(`${self.players[target].name} cannot place cards on their next two turns.`);
+        break;
+      }
+      case 'temple_ichirin': {
+        if(!await self.payCost2(playerIdx) || self.cancelled)break;
+        self.presentTemple('ichirin',{r,c});
+        let pushed=0,returned=0;
+        for(const move of self.ichirinPushes(r,c)){
+          const id=self.cardAt(move.r,move.c);
+          if(!id)continue;
+          const inside=inBounds(move.r,move.c) ? inBounds(move.toR,move.toC) : !inBounds(move.toR,move.toC) && self.hasTile(move.toR,move.toC);
+          if(!inside){
+            if(self.moveBoardToDraw(move.r,move.c,'ichirin'))returned++;
+          }else if(!self.cardAt(move.toR,move.toC) && (!self.wastelandAt(move.toR,move.toC) || self.canPlaceOnWasteland(CARD[id]))){
+            try{self.ui?.onBoardPush?.({cardId:id,source:{r,c},from:move,to:{r:move.toR,c:move.toC},effect:'ichirin'});}catch(_error){}
+            self.setCardAt(move.r,move.c,null);self.setCardAt(move.toR,move.toC,id);pushed++;
+          }
+        }
+        self.shuffleDrawPile();
+        self.log(`${me} pushes ${pushed} card${pushed===1?'':'s'} and returns ${returned} card${returned===1?'':'s'} to the draw pile.`);
+        break;
+      }
       case 'sdm_meiling': {
         const moves=self.meilingPushes(r,c,!self.players[playerIdx].isAI);
         const target=await self.chooseBoardCell(playerIdx,moves,'Meiling: choose an adjacent card to push away');
@@ -3634,7 +3826,7 @@ class Game {
         const maxX=Math.min(adjacent.length,self.payableCards(playerIdx).length);
         if(!maxX){ self.log(`${meS} Yuyuko has no eligible adjacent target or no cards to pay her cost.`); break; }
         const roman=['','I','II','III','IV'];
-        const x=await self.payCostX(playerIdx,maxX);
+        const x=await self.payCostN(playerIdx,maxX);
         if(!x){
           self.log(`${me} declines Yuyuko's cost — the ability is skipped.`);
           break;
@@ -4213,6 +4405,7 @@ document.getElementById('sound-toggle').addEventListener('click',()=>{
 });
 const DEFAULT_CROWN_LIGHT = Object.freeze({main:'#e8c874', soft:'#fff2bd', rgb:'232,200,116'});
 const CROWN_LIGHT_PALETTES = Object.freeze({
+  temple_byakuren:Object.freeze({main:'#c58bff',soft:'#fff0b7',rgb:'197,139,255'}),
   sdm_remilia:   Object.freeze({main:'#ff365f', soft:'#ffd5df', rgb:'255,54,95'}),
   haku_yuyuko:   Object.freeze({main:'#ff91c8', soft:'#ffe1f1', rgb:'255,145,200'}),
   hourai_kaguya: Object.freeze({main:'#f4f7ff', soft:'#ffffff', rgb:'244,247,255'}),
@@ -4228,7 +4421,7 @@ const CROWN_LIGHT_PALETTES = Object.freeze({
 const FACTION_CROWN_LIGHT = Object.freeze({
   sdm:'sdm_remilia', hakugyokurou:'haku_yuyuko', hourai:'hourai_kaguya',
   mountain:'mtn_kanako', palace:'palace_satori', sage:'sage_yukari',
-  sunflower:'yuuka', hell:'hell_hecatia', heaven:'heaven_tenshi',
+  sunflower:'yuuka', hell:'hell_hecatia', heaven:'heaven_tenshi', temple:'temple_byakuren',
 });
 const DISCARD_LIGHT_EXCEPTIONS = Object.freeze({
   sage_mai_satono:Object.freeze({main:'#48ee86',soft:'#ff40be',rgb:'72,238,134'}),
@@ -4319,7 +4512,7 @@ function showDrawFlight({playerIdx,effect}){
   const dx=endX-left-26, dy=endY-top-34;
   const flight=document.createElement('div');
   flight.className='pile-card-face draw-flight-card'
-    + (effect==='sanae' ? ' draw-sanae' : effect==='mokou' ? ' draw-mokou' : '');
+    + (effect==='sanae' ? ' draw-sanae' : effect==='mokou' ? ' draw-mokou' : effect==='shou' ? ' draw-shou' : '');
   flight.setAttribute('aria-hidden','true');
   flight.textContent='✦';
   flight.style.left=`${left}px`;
@@ -4389,7 +4582,7 @@ const CROWN_SCENE_BACKGROUND = Object.freeze({
   sdm_remilia:'--sdm-plaid',haku_yuyuko:'--haku-bg',hourai_kaguya:'--eientei-bg',
   mtn_kanako:'--mountain-bg',palace_satori:'--palace-bg',
   sage_yukari:'--sage-yukari-bg',sage_matara:'--sage-matara-bg',sage_kasen:'--sage-kasen-bg',
-  yuuka:'--sunflower-bg',hell_hecatia:'--hell-makai-bg',heaven_tenshi:'--heaven-bg'
+  temple_byakuren:'--temple-bg',yuuka:'--sunflower-bg',hell_hecatia:'--hell-makai-bg',heaven_tenshi:'--heaven-bg'
 });
 let activeCrownBackdrop=-1;
 function showCrownBackdrop(cardId){
@@ -4637,6 +4830,11 @@ function showCardExit({cardId, playerIdx, source}, destination){
   ghost.style.top = `${top}px`;
   ghost.style.width = `${width}px`;
   ghost.style.height = `${height}px`;
+  if(effect==='ichirin' && Number.isInteger(source.r)){
+    const board=el('board').getBoundingClientRect();
+    ghost.style.setProperty('--push-off-x',`${(rect.left+rect.width/2-board.left-board.width/2)*5}px`);
+    ghost.style.setProperty('--push-off-y',`${(rect.top+rect.height/2-board.top-board.height/2)*5}px`);
+  }
   if(effect==='tenshi'){
     ghost.style.setProperty('--fly-off-y',`${-top-height-window.innerHeight*.25}px`);
     ghost.style.setProperty('--tenshi-flight-duration',`${Math.round(flightDuration)}ms`);
@@ -4697,7 +4895,7 @@ function tradeHandCardRect(playerIdx,cardId){
   if(!anchor) return null;
   return {left:anchor.left+(anchor.width-64)/2,top:anchor.top+(anchor.height-88)/2,width:64,height:88};
 }
-function showKoishiSelfPlace({playerIdx,r,c}){
+function showKoishiSelfPlace({playerIdx,r,c,cardId='palace_koishi'}){
   if(cancelKoishiWalk) cancelKoishiWalk();
   if(!document.body || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
   const end=boardCardRect(r,c),start=handOrSeatRect(playerIdx);
@@ -4720,7 +4918,7 @@ function showKoishiSelfPlace({playerIdx,r,c}){
   ghost.className='koishi-walk';
   ghost.setAttribute('aria-hidden','true');
   Object.assign(ghost.style,{left:`${left}px`,top:`${top}px`,width:`${width}px`,height:`${height}px`});
-  ghost.innerHTML=cardBoardHtml('palace_koishi');
+  ghost.innerHTML=cardBoardHtml(cardId);
   const key=`${r},${c}`,until=Date.now()+duration+100;
   koishiArrivalUntil.set(key,until);
   tileElement(r,c)?.classList.add('koishi-arriving');
@@ -5088,6 +5286,33 @@ function addMindNode(node,key,duration=1150){
   node.dataset.abilityKey=key;node.setAttribute('aria-hidden','true');
   document.body.appendChild(node);finishMindEffect(()=>node.remove(),duration);
 }
+function showTempleEffect({effect,r,c,playerIdx,tiles=[]}){
+  if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+  const key=`temple-${effect}-${Date.now()}`;
+  const emit=(rect,kind,sizeMultiplier=1.8)=>{
+    if(!rect?.width)return;
+    const size=Math.max(90,Math.min(310,Math.max(rect.width,rect.height)*sizeMultiplier));
+    const node=document.createElement('div');node.className=`mind-fx temple-fx ${kind}`;
+    Object.assign(node.style,{left:`${rect.left+rect.width/2-size/2}px`,top:`${rect.top+rect.height/2-size/2}px`,width:`${size}px`,height:`${size}px`});
+    const petals=Array.from({length:8},(_,i)=>`<path d="M50 50Q18 13 50 4Q82 13 50 50Z" transform="rotate(${i*45} 50 50)"/>`).join('');
+    const art={
+      byakuren:`<circle cx="50" cy="50" r="42"/><circle cx="50" cy="50" r="28"/>${petals}<path d="M50 8L86 71H14Z"/>`,
+      strength:'<circle cx="50" cy="50" r="34"/><path d="M50 0L44 36 16 8 37 43 0 50 37 57 16 92 44 64 50 100 56 64 84 92 63 57 100 50 63 43 84 8 56 36Z"/>',
+      shou:'<circle cx="50" cy="50" r="34"/><path d="M50 12L78 40 50 88 22 40Z M22 40H78 M50 12L38 40 50 88 62 40Z"/>'+petals,
+      nue:'<path d="M10 50Q30 0 55 22T88 50Q64 98 44 74T10 50Z M20 40L80 60 M20 60L80 40"/><circle cx="50" cy="50" r="9"/>',
+      chimera:petals+'<circle cx="50" cy="50" r="12"/>',
+      murasa:'<path d="M50 50C12 15 4 70 37 85S104 49 78 20S14 30 27 57S71 78 73 45S37 27 35 48S58 62 60 47"/><path d="M50 15V72 M28 50V65Q50 98 72 65V50 M28 65L19 65 22 55 M72 65L81 65 78 55"/><circle cx="50" cy="50" r="44"/>',
+      ichirin:'<circle cx="50" cy="50" r="36"/><path d="M16 48L21 32 34 34 34 20 48 20 51 34 65 22 73 35 66 47 83 47 83 62 67 67 57 82 35 79Z"/>'
+    };
+    node.innerHTML=`<svg viewBox="0 0 100 100">${art[kind]||art.chimera}</svg>`;
+    if(kind==='ichirin'){const stand=document.createElement('img');stand.src=TEMPLE_UNZAN_PORTRAIT;stand.alt='';node.prepend(stand);}
+    addMindNode(node,key,kind==='murasa'?1350:1150);
+  };
+  emit(boardCardRect(r,c),effect);
+  if(effect==='shou')for(const tile of tiles)emit(tileElement(tile.r,tile.c)?.getBoundingClientRect(),'shou',1.2);
+  if(effect==='murasa' && playerIdx!=null)emit(handOrSeatRect(playerIdx),'murasa',1.15);
+}
+
 function mindSeal(effect,rect,stage,key,streak=0){
   if(!rect?.width) return;
   const fx=document.createElement('div'),size=Math.max(100,Math.min(150,rect.height*1.35));
@@ -5171,8 +5396,11 @@ function factionTag(faction){
   return `<span class="faction-tag" style="background:${f.color}">${factionReferenceHtml(faction)}</span>`;
 }
 
-const FACTION_BG_CLASS = { sdm: 'faction-bg-sdm', hakugyokurou: 'faction-bg-haku', hourai: 'faction-bg-eientei', mountain: 'faction-bg-mountain', palace: 'faction-bg-palace', sage: 'faction-bg-sage', hakurei: 'faction-bg-hakurei', sunflower: 'faction-bg-sunflower', hell: 'faction-bg-hell', heaven: 'faction-bg-heaven' }; // fallback for faction cards with no dedicated art
+const FACTION_BG_CLASS = { sdm: 'faction-bg-sdm', hakugyokurou: 'faction-bg-haku', hourai: 'faction-bg-eientei', mountain: 'faction-bg-mountain', palace: 'faction-bg-palace', sage: 'faction-bg-sage', hakurei: 'faction-bg-hakurei', sunflower: 'faction-bg-sunflower', hell: 'faction-bg-hell', heaven: 'faction-bg-heaven', temple:'faction-bg-temple' }; // fallback for faction cards with no dedicated art
 const CARD_ART_CLASS = {
+  temple_byakuren:'card-art-temple card-art-byakuren',temple_shou:'card-art-temple card-art-shou',
+  temple_nue:'card-art-temple card-art-nue',temple_murasa:'card-art-temple card-art-murasa',
+  temple_ichirin:'card-art-temple card-art-ichirin',
   shop_rinnosuke: 'card-art-rinnosuke',
   sdm_remilia: 'card-art-remilia',
   sdm_sakuya: 'card-art-sakuya',
@@ -5227,6 +5455,7 @@ CARD_DETAIL_FACTION_ICONS.hakurei = "https://raw.githubusercontent.com/khooruizh
 CARD_DETAIL_FACTION_ICONS.hell = "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/icons/hell.png";
 CARD_DETAIL_FACTION_ICONS.sunflower = "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/icons/sunflower_field.png";
 CARD_DETAIL_FACTION_ICONS.heaven = "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/icons/heaven.png";
+CARD_DETAIL_FACTION_ICONS.temple="https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/icons/myouren_temple.webp";
 const CARD_DETAIL_PORTRAITS = {
   sdm_remilia: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/scarlet_devil_mansion/remilia_scarlet.webp",
   sdm_sakuya: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/scarlet_devil_mansion/izayoi_sakuya.png",
@@ -5299,7 +5528,11 @@ Object.assign(CARD_DETAIL_PORTRAITS,{
   hourai_tewi:KOURINDOU_PORTRAITS.hourai_tewi,
   sdm_meiling:KOURINDOU_PORTRAITS.sdm_meiling,
 });
+
+Object.assign(CARD_DETAIL_PORTRAITS,{"temple_byakuren": "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/myouren_temple/hijiri_byakuren.webp", "temple_shou": "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/myouren_temple/toramaru_shou.webp", "temple_nue": "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/myouren_temple/houjuu_nue.webp", "temple_murasa": "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/myouren_temple/murasa_minamitu.webp", "temple_ichirin": "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/myouren_temple/kumoi_ichirin.webp"});
+const TEMPLE_UNZAN_PORTRAIT="https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/myouren_temple/unzan.webp";
 const CARD_ABILITY_NAMES = {
+  temple_byakuren:'Superhuman Strength',temple_shou:'Radiant Treasure',temple_nue:'Ability Chimera',temple_murasa:'Bottomless Vortex',temple_ichirin:'Fist Smash',
   sdm_remilia: 'Fate Manipulation',
   sdm_flandre: '“Eye” Destruction',
   sdm_patchouli: 'Magical Gathering',
@@ -5352,7 +5585,7 @@ const CARD_REFERENCE_ALIASES={
 };
 const RULE_TERMS={
   wasteland:{title:'Wasteland',text:'Wasteland is a blocked tile. A card can be placed there only if its ability allows it.'},
-  cost:{title:'Cost',text:'Return the shown number of hand cards to the draw pile to use the ability. Cost X lets you choose how many cards to pay. If you do not pay, the ability is skipped.'}
+  cost:{title:'Cost',text:'Return the shown number of hand cards to the draw pile to use the ability. Cost N lets you choose how many cards to pay. If you do not pay, the ability is skipped.'}
 };
 const RULE_REFERENCES=new Map();
 for(const card of CARDS) RULE_REFERENCES.set(card.name,{cardId:card.id});
@@ -5475,10 +5708,10 @@ function openCardDetails(cardId,{followReference=false}={}){
   }
   detailCardId=cardId;
   const detail = el('card-detail');
-  detail.className = ['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower','hell','heaven'].includes(c.faction)
+  detail.className = ['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower','hell','heaven','temple'].includes(c.faction)
     ? `${c.faction} detail-card-${cardId}`
     : `other-faction detail-card-${cardId}`;
-  if(c.crown && game && game.isActiveOnBoard('hourai_eirin')) detail.classList.add('eirin-muted');
+  if(c.crown && game && game.eirinActive()) detail.classList.add('eirin-muted');
   const factionIcon = CARD_DETAIL_FACTION_ICONS[c.faction];
   const iconHost = el('card-detail-icon');
   iconHost.replaceChildren();
@@ -5507,6 +5740,11 @@ function openCardDetails(cardId,{followReference=false}={}){
       artwork.alt=name;
       portrait.appendChild(artwork);
     }
+  } else if(cardId==='temple_ichirin'){
+    portrait.classList.add('ichirin-stand');
+    for(const [name,url] of [['Unzan',TEMPLE_UNZAN_PORTRAIT],['Ichirin',CARD_DETAIL_PORTRAITS[cardId]]]){
+      const artwork=document.createElement('img');artwork.src=url;artwork.alt=name;portrait.appendChild(artwork);
+    }
   } else if(CARD_DETAIL_PORTRAITS[cardId]){
     const artwork = document.createElement('img');
     artwork.className = `detail-art-${cardId}`;
@@ -5521,7 +5759,8 @@ function openCardDetails(cardId,{followReference=false}={}){
     portrait.appendChild(fallback);
   }
   el('card-detail-ability').textContent = CARD_ABILITY_NAMES[c.token ? 'trap_token' : cardId] || 'Card Ability';
-  setRuleText(el('card-detail-description'),inHand && c.handDesc ? c.handDesc : c.desc);
+  const borrowed=game?.borrowedAbilities?.[cardId];
+  setRuleText(el('card-detail-description'),borrowed && game.isOnBoard(cardId) ? `Using ${CARD[borrowed].name}’s ability.\n${CARD[borrowed].desc}` : inHand && c.handDesc ? c.handDesc : c.desc);
   el('card-detail-description').parentElement.scrollTop=0;
   el('card-detail-overlay').classList.add('show');
   requestAnimationFrame(fitCardDetailHeadings);
@@ -5578,7 +5817,7 @@ function cardBoardHtml(cardId){
   const f = FACTIONS[c.faction];
   const bgClass = cardBgClass(c, cardId);
   const crownStyle = c.crown ? ` style="--crown-light-main:${crownLightFor(cardId).main};--crown-light-rgb:${crownLightFor(cardId).rgb}"` : '';
-  const muted = c.crown && game && typeof game.isOnBoard==='function' && game.isActiveOnBoard('hourai_eirin') ? ' eirin-muted' : '';
+  const muted = c.crown && game && typeof game.isOnBoard==='function' && game.eirinActive() ? ' eirin-muted' : '';
   return `<div class="board-card ${c.crown?'crown':''} ${bgClass}${muted}"${crownStyle}>
     <div class="icon-row"><span>${f.icon}</span>${c.crown?'<span class="crown-mark">👑</span>':''}</div>
     <div class="cname">${c.name}</div>
@@ -5845,7 +6084,7 @@ function renderBoard(){
       if(cardId){
         const face=cell.querySelector('.board-card');
         if(face && CARD[cardId].crown){
-          face.classList.toggle('eirin-muted',game.isActiveOnBoard('hourai_eirin'));
+          face.classList.toggle('eirin-muted',game.eirinActive());
         }
         if(cardId!=='hell_hecatia' && hecatiaCell){
           const dy=hecatiaCell.r-r, dx=hecatiaCell.c-c;
@@ -5924,13 +6163,13 @@ function renderShop(){
     const impact=placed && (lastPlacedCell.crownEffectId || (id && CARD[id].crown ? id : null));
     tile.classList.toggle('crown-impact',!!impact && !lastPlacedCell?.handArrival);
     if(impact) applyCrownLight(tile,crownLightFor(impact));
-    tile.classList.toggle('koishi-arriving',id==='palace_koishi' && koishiArrivalUntil.get(`${r},${c}`)>Date.now());
+    tile.classList.toggle('koishi-arriving',CARD[game.abilityId(id)]?.trigger && koishiArrivalUntil.get(`${r},${c}`)>Date.now());
     tile.classList.toggle('selectable',selectable);
     tile.classList.toggle('pick-target',selectable);
     tile.classList.toggle('dimmed',!!pendingCellChoice && !selectable);
     tile.classList.toggle('shopkeeper-tile',id==='shop_rinnosuke');
     const face=tile.querySelector('.board-card');
-    if(face && id && CARD[id].crown) face.classList.toggle('eirin-muted',game.isActiveOnBoard('hourai_eirin'));
+    if(face && id && CARD[id].crown) face.classList.toggle('eirin-muted',game.eirinActive());
     tile.title=id ? `${CARD[id].name}${game.isProtected(r,c) ? ' · Protected by Rinnosuke; no faction' : ''}. Double-click or press I for details.` : 'Empty tile';
     tile.setAttribute('aria-label',tile.title+(selectable ? ' Click to choose.' : ''));
   }
@@ -6153,7 +6392,7 @@ function renderHand(){
   handEl.innerHTML = '';
   const me = game.players[0];
   const isMyTurn = game.currentPlayerIdx === 0 && !game.winner;
-  const forced = game.forcedPlay[0];
+  const forced = game.isPlacementBlocked(0) ? null : game.forcedPlay[0];
   me.hand.forEach(cardId => {
     const c = CARD[cardId];
     const f = FACTIONS[c.faction];
@@ -6171,7 +6410,7 @@ function renderHand(){
       + (selectedForChoice ? ' selected':'')
       + (forced===cardId ? ' reisen-bound':'')
       + (mindArrivals.get(cardId)>Date.now() ? ' mind-arriving':'')
-      + (c.crown && game.isActiveOnBoard('hourai_eirin') ? ' eirin-muted' : '')
+      + (c.crown && game.eirinActive() ? ' eirin-muted' : '')
       + (sanaeArrivalUntil.get(cardId)>Date.now() ? ' sanae-glow' : '')
       + (mokouArrivalUntil.get(cardId)>Date.now() ? ' mokou-glow' : '')
       + (yukariArrivalUntil.get(cardId)>Date.now() ? ' yukari-arriving' : '')
@@ -6304,7 +6543,9 @@ function renderPlayers(){
       lanternsHtml += `<div class="lantern ${i<wc?'lit':''}"></div>`;
     }
     const avatar = p.idx===0 ? '🧑' : AI_AVATARS[(p.idx-1) % AI_AVATARS.length];
+    const sealed=game.placementBlockTurns[p.idx]+(game.placementBlockedForTurn[p.idx]?1:0);
     seat.innerHTML = `
+      ${sealed?`<span class="murasa-seal-badge">⚓ No placement · ${sealed} turn${sealed===1?'':'s'}</span>`:''}
       <div class="avatar">${avatar}</div>
       <div class="sname">${p.name}<span class="tag">${p.isAI?AI_DIFFICULTIES[game.aiDifficulty].name+' AI':'You'}</span></div>
       <div class="lanterns">${lanternsHtml}</div>
@@ -6365,6 +6606,8 @@ function renderStatus(){
       ? 'Choose merchandise to swap with your selected card.'
       : game.canDrawNormally(0) ? 'Your move — place, trade, or draw for everyone.' : 'Your move — place a card or trade at Kourindou.';
   }
+  if(humanReady && game.isPlacementBlocked(0))el('status-line').textContent=game.canDrawNormally(0)
+    ? 'Murasa seals placement this turn — trade or draw for everyone.' : 'Murasa seals placement this turn — you may trade.';
   el('draw-btn').disabled = !humanReady || !game.canDrawNormally(0) || !!pendingCellChoice;
 }
 
@@ -6426,11 +6669,12 @@ const ui = {
     animateAbilityCard(boughtId,shop,hand,'trade');
     speakRinnosuke('exchange',{force:playerIdx===0});
   },
-  onBoardPush({cardId,source,from,to}){
+  onBoardPush({cardId,source,from,to,effect}){
     const start=boardCardRect(from.r,from.c),end=boardCardRect(to.r,to.c);
-    showExpansionBurst('meiling',source ? boardCardRect(source.r,source.c) : start,start);
-    animateAbilityCard(cardId,start,end,'meiling');
+    if(effect!=='ichirin')showExpansionBurst('meiling',source ? boardCardRect(source.r,source.c) : start,start);
+    animateAbilityCard(cardId,start,end,effect||'meiling');
   },
+  onTempleEffect:showTempleEffect,
   onExpansionEffect:showExpansionEffect,
   render(g){ renderAll(); },
   pickPlayer(title,candidates){
@@ -6458,10 +6702,28 @@ const ui = {
       renderPlayers();
     });
   },
+  pickAbilityCards(title,ids){
+    return new Promise(resolve=>{
+      setRuleText(el('modal-title'),title);
+      const box=el('modal-options');box.replaceChildren();box.classList.add('chimera-options');
+      for(const id of ids){
+        const option=document.createElement('div');option.className='chimera-option';
+        const face=document.createElement('div');face.innerHTML=cardBoardHtml(id);face.title='Click to inspect';
+        face.addEventListener('click',()=>openCardDetails(id));
+        const inspect=document.createElement('button');inspect.className='modal-opt';inspect.textContent='Inspect';inspect.addEventListener('click',()=>openCardDetails(id));
+        const name=document.createElement('small');name.textContent=CARD_ABILITY_NAMES[id];
+        const pick=document.createElement('button');pick.className='modal-opt';pick.textContent='Use this ability';
+        pick.addEventListener('click',()=>{playGameCue('select');box.classList.remove('chimera-options');el('modal-overlay').classList.remove('show');resolve(id);});
+        option.append(face,name,inspect,pick);box.append(option);
+      }
+      el('modal-overlay').classList.add('show');
+    });
+  },
   pickFromList(title, options){
     return new Promise(resolve => {
       setRuleText(el('modal-title'),title);
       const box = el('modal-options');
+      box.classList.remove('chimera-options');
       box.innerHTML = '';
       options.forEach(opt => {
         const btn = document.createElement('button');
@@ -6605,7 +6867,7 @@ const ui = {
         const card = CARD[cardId];
         const tile = document.createElement('button');
         tile.type = 'button';
-        tile.className = `hand-card look-into-card ${cardBgClass(card,cardId)}${card.crown && game.isActiveOnBoard('hourai_eirin') ? ' eirin-muted' : ''}`;
+        tile.className = `hand-card look-into-card ${cardBgClass(card,cardId)}${card.crown && game.eirinActive() ? ' eirin-muted' : ''}`;
         tile.dataset.cardId = cardId;
         tile.style.setProperty('--read-delay',`${tiles.length*65}ms`);
         tile.setAttribute('aria-label', `${card.name}. Select card; double-click to inspect.`);
@@ -6749,7 +7011,7 @@ function waitForVisualEffects(owner){
     check();
   });
 }
-for(const name of ['pickPlayer','pickFromList','pickOwnHandCard','pickOwnHandCards','pickHandCard','pickRectByDrag','pickCell','promptText']){
+for(const name of ['pickPlayer','pickAbilityCards','pickFromList','pickOwnHandCard','pickOwnHandCards','pickHandCard','pickRectByDrag','pickCell','promptText']){
   const openChoice=ui[name];
   ui[name]=async function(...args){
     const owner=game;
@@ -6786,6 +7048,7 @@ function canTakeTurnAction(playerIdx){
 }
 function canAct(playerIdx){
   const player=game.players[playerIdx];
+  if(game.isPlacementBlocked(playerIdx))return game.canDrawNormally(playerIdx) || player.hand.some(id=>game.canTrade(playerIdx,id));
   if(game.forcedPlay[playerIdx] && player.hand.includes(game.forcedPlay[playerIdx])) return true;
   if(canTakeTurnAction(playerIdx)) return true;
   // A trade is useful here only if the purchased card supplies a legal placement.
@@ -6817,10 +7080,10 @@ function endStalemate(){
    by definition, so the AI should only ever do so when the placement itself banks discard points
    (goal 1/3 below), never as a bare tiebreaker over an equally-scored card that DOES have one. */
 const NO_PLACED_ABILITY = new Set(['sage_yukari', 'sage_kasen', 'hourai_eirin','mtn_nitori','hell_hecatia']);
-const DRAW_ABILITY_CARDS = new Set(['hourai_mokou','mtn_sanae','sage_ran','yuuka','hell_kutaka']);
+const DRAW_ABILITY_CARDS = new Set(['hourai_mokou','mtn_sanae','sage_ran','yuuka','hell_kutaka','temple_shou']);
 
 function aiPlacementCells(currentGame, cardId, spaces){
-  if(cardId==='sage_yukari') return spaces.filter(cell=>currentGame.cardAt(cell.r,cell.c)!=='shop_rinnosuke');
+  if(currentGame.abilityId(cardId)==='sage_yukari') return spaces.filter(cell=>currentGame.cardAt(cell.r,cell.c)!=='shop_rinnosuke');
   if(cardId==='haku_yuyuko') return spaces.filter(cell=>currentGame.adjacentOccupiedCount(cell.r,cell.c)>=2);
   if(cardId==='marisa') return spaces.filter(cell=>currentGame.safeMarisaPlacement(cell.r,cell.c));
   if(cardId==='reimu' && !currentGame.movableBoardCells(cell=>CARD[cell.id].crown && currentGame.canSelectBoardCard(cell.r,cell.c)).length) return [];
@@ -6834,15 +7097,17 @@ function aiCostCanResolve(playerIdx, cardId, r, c){
   if(cardId==='hell_kutaka') return game.wastelandAt(r,c) && game.drawPile.some(id=>CARD[id].faction==='hell');
   if(cardId==='sdm_meiling') return game.meilingPushes(r,c).length>0;
   // Kaguya herself leaves the hand before her ability checks for targets.
-  if(cardId==='hourai_kaguya') return !game.isActiveOnBoard('hourai_eirin')
+  if(cardId==='hourai_kaguya') return !game.eirinActive()
     && game.emptyCells().length>1
     && (game.knownHandCards(playerIdx,'hourai').some(c=>c.id!==cardId)
       || game.players.some(p=>p.idx!==playerIdx && p.hand.length>0));
   if(cardId==='haku_yuyuko') return game.payableCards(playerIdx).filter(id=>id!==cardId).length>0
-    && game.yuyukoTargets(r,c).length>0 && !game.isActiveOnBoard('hourai_eirin');
-  const cost=card.cost3 ? 3 : card.cost2 ? 2 : card.cost1 ? 1 : 0;
+    && game.yuyukoTargets(r,c).length>0 && !game.eirinActive();
+  const cost=game.abilityCost(cardId,{r,c});
+  if(cardId==='temple_shou' && !game.templeWasteland().length)return false;
+  if(cardId==='temple_ichirin' && !game.ichirinPushes(r,c).length)return false;
   if(!cost) return true;
-  if(game.payableCards(playerIdx).filter(id=>id!==cardId).length<cost || (card.crown && game.isActiveOnBoard('hourai_eirin'))) return false;
+  if(game.payableCards(playerIdx).filter(id=>id!==cardId).length<cost || (card.crown && game.eirinActive())) return false;
   if(cardId==='palace_satori') return game.players.some(pl=>pl.idx!==playerIdx && pl.hand.length>0);
   if(cardId==='heaven_tenshi') return game.tenshiOccupiedCount({r,c}) >= Math.ceil(SIZE*SIZE/2)
     && game.boardCells(cell=>game.boardFaction(cell.r,cell.c)!=='heaven' && game.canReturnBoardToDraw(cell.r,cell.c)).length>0;
@@ -6880,7 +7145,7 @@ function aiBestTrade(playerIdx){
       let rate=0;
       try{
         game.setCardAt(target.r,target.c,offeredId);
-        if(!game.canDrawNormally(playerIdx)
+        if(!game.isPlacementBlocked(playerIdx) && !game.canDrawNormally(playerIdx)
           && !next.some(id=>aiPlacementCells(game,id,game.emptyOrWastelandForCard(CARD[id])).length>0)) continue;
         for(const space of spaces) rate=Math.max(rate,aiWithPlacement(boughtId,space,()=>aiCurrentClaims(playerIdx).reduce((n,claim)=>n+claim.points,0)));
       }finally{game.setCardAt(target.r,target.c,stored);}
@@ -6915,7 +7180,7 @@ function aiKanakoTrade(playerIdx,placement){
 }
 
 // Shared placement evaluation: also used in reverse when deciding which cards to pay.
-const AI_ONE_MORE = new Set(['sdm_sakuya','hourai_kaguya','mtn_kanako','hell_komachi']);
+const AI_ONE_MORE = new Set(['sdm_sakuya','hourai_kaguya','mtn_kanako','hell_komachi','temple_byakuren']);
 
 function aiWithPlacement(cardId,cell,callback){
   const previous=game.cardAt(cell.r,cell.c);
@@ -6988,7 +7253,8 @@ function aiFactionForecast(playerIdx,cardId){
     if(!missing || !members.some(cell=>game.cardAt(cell.r,cell.c)===cardId))continue;
     const held=hand.filter(id=>CARD[id].faction===faction || game.isWildActive(id));
     let available=held.length,bonus=0;
-    const active=!game.isActiveOnBoard('hourai_eirin') || !card.crown;
+    const active=!game.eirinActive() || !card.crown;
+    if(active && cardId==='temple_byakuren' && game.payableCards(playerIdx).filter(id=>id!==cardId).length>=game.byakurenCost())bonus=Math.min(3,held.length);
     if(active && cardId==='sdm_sakuya')bonus=Math.min(2,held.length);
     if(active && cardId==='mtn_kanako' && held.some(id=>CARD[id].faction==='mountain'))bonus=1;
     if(cardId==='hell_komachi' && game.isActiveOnBoard('hell_eiki'))bonus=1;
@@ -7030,7 +7296,7 @@ function aiEvaluateCard(playerIdx,cardId){
   let best=null;
   for(const cell of cells){
     const works=aiCostCanResolve(playerIdx,cardId,cell.r,cell.c);
-    const muted=!!card.crown && game.isActiveOnBoard('hourai_eirin');
+    const muted=!!card.crown && game.eirinActive();
     let direct=muted ? 0 : game.estimateDirectDiscardPoints(playerIdx,cardId,cell.r,cell.c);
     if((cardId==='haku_yuyuko' || cardId==='heaven_iku') && direct<=1 && game.winCount(game.players[playerIdx])<6)direct=0;
     const evaluated=aiWithPlacement(cardId,cell,()=>{
@@ -7053,11 +7319,12 @@ function aiEvaluateCard(playerIdx,cardId){
     const handGain=suppressedCrown || !works ? 0 : Math.max(game.estimateHandGain(playerIdx,cardId),kaguyaKnown?Math.min(3,kaguyaKnown+1):-Infinity,
       cardId==='hell_komachi' && game.isActiveOnBoard('hell_eiki') ? 1.1 : -Infinity);
     // Rin's denial helps our position, but cannot itself deliver our seventh discard point.
+    const sealValue=cardId==='temple_murasa' && works ? 1 : cardId==='temple_nue' && works ? .5 : 0;
     const denial=cardId==='palace_rin' && works && game.players.some(p=>p.idx!==playerIdx && p.discard.length) ? 1 : 0;
     const winsNow=game.winCount(game.players[playerIdx])+direct+evaluated.points>=7;
     const lowPriority=!claimsNow && !winsNow && (suppressedCrown || !works || (cardId==='marisa' && !game.marisaTargets(cell.r,cell.c,true).length) || evaluated.reserveCombo
-      || (!game.drawPile.length && DRAW_ABILITY_CARDS.has(cardId) && !(cardId==='yuuka' && game.payableCards(playerIdx).some(id=>id!==cardId))));
-    const candidate={cardId,cell,rate:Math.max(direct+evaluated.points+denial,evaluated.forecast.rate),handGain,
+      || (!game.drawPile.length && DRAW_ABILITY_CARDS.has(cardId) && !((cardId==='yuuka' || cardId==='temple_shou') && game.payableCards(playerIdx).some(id=>id!==cardId))));
+    const candidate={cardId,cell,rate:Math.max(direct+evaluated.points+denial+sealValue,evaluated.forecast.rate),handGain,
       noAbility:NO_PLACED_ABILITY.has(cardId),lowPriority,suppressedCrown,winsNow,claimSize:evaluated.claimSize,
       claimsNow,reserveCombo:evaluated.reserveCombo,position:evaluated.position};
     if(aiBetterCandidate(candidate,best))best=candidate;
@@ -7138,6 +7405,10 @@ function aiKomachiTarget(playerIdx,r,c,cells){
 
 async function aiDecideHardAction(playerIdx,allowTrade=true){
   const player=game.players[playerIdx];let best=null;
+  if(game.isPlacementBlocked(playerIdx)){
+    const trade=allowTrade ? aiBestTrade(playerIdx) : null;
+    return trade || (game.canDrawNormally(playerIdx)?{type:'draw'}:{type:'pass'});
+  }
   for(const cardId of player.hand){const candidate=aiEvaluateCard(playerIdx,cardId);if(candidate && aiBetterCandidate(candidate,best))best=candidate;}
   const canDraw=game.canDrawNormally(playerIdx),drawHandGain=aiDrawValue(playerIdx);
   const willPlace=best && ((best.rate>0 && !best.lowPriority)
@@ -7172,7 +7443,7 @@ async function doPlayerAction(playerIdx){
   if(!activeGame || activeGame.cancelled) return {};
   const player = game.players[playerIdx];
   if(!player.isAI) humanActionResolving = false;
-  if(game.forcedPlay[playerIdx]){
+  if(!game.isPlacementBlocked(playerIdx) && game.forcedPlay[playerIdx]){
     const cardId = game.forcedPlay[playerIdx];
     if(player.hand.includes(cardId)){
       const cardObj = CARD[cardId];
@@ -7295,6 +7566,7 @@ async function resolveFollowups(playerIdx, flags){
   if(flags && flags.extraTurns){
     for(let i=0;i<flags.extraTurns;i++){
       if(game.winner || game.stalemateMessage) break;
+      game.endPlayerTurn(playerIdx);game.beginPlayerTurn(playerIdx);
       game.tradedThisTurn[playerIdx]=false;
       if(!canAct(playerIdx)){
         game.log(`${game.players[playerIdx].name} has no legal action for this extra turn.`);
@@ -7326,8 +7598,10 @@ async function afterAction(playerIdx, flags, scheduledExtra=0){
   if(game!==activeGame) return;
   if(game.winner || game.stalemateMessage){ renderAll(); return; }
   for(let i=0;i<scheduledExtra;i++){
+    game.endPlayerTurn(playerIdx);game.beginPlayerTurn(playerIdx);
     game.tradedThisTurn[playerIdx]=false;
-    if(!canAct(playerIdx) || game.winner || game.stalemateMessage) break;
+    if(game.winner || game.stalemateMessage)break;
+    if(!canAct(playerIdx)){game.log(`${game.players[playerIdx].name} has no legal action for this extra turn.`);continue;}
     game.log(`${game.players[playerIdx].name} takes an extra action from Mai and Satono.`);
     if(game.ui?.onExpansionEffect){try{game.ui.onExpansionEffect({effect:'dancers',playerIdx});}catch(_error){}}
     const bonusFlags=await doPlayerAction(playerIdx);
@@ -7341,6 +7615,7 @@ async function afterAction(playerIdx, flags, scheduledExtra=0){
 
 let stuckStreak = 0;
 function advanceTurn(){
+  game.endPlayerTurn(game.currentPlayerIdx);
   game.currentPlayerIdx = (game.currentPlayerIdx+1) % game.numPlayers;
   renderAll();
   runNextTurn();
@@ -7350,12 +7625,13 @@ async function runNextTurn(){
   const activeGame=game;
   if(!activeGame || activeGame.cancelled || game.winner || game.stalemateMessage) return;
   const p = game.currentPlayerIdx;
+  game.beginPlayerTurn(p);
   game.tradedThisTurn[p]=false;
   const scheduledExtra=game.takeScheduledExtraTurns(p);
   if(!canAct(p)){
     game.log(`${game.players[p].name} has no legal action and skips their turn.`);
     renderAll();
-    stuckStreak++;
+    stuckStreak=game.isPlacementBlocked(p) || game.placementBlockTurns.some(n=>n>0) ? 0 : stuckStreak+1;
     if(stuckStreak >= game.numPlayers){
       endStalemate();
       renderAll();
@@ -7570,7 +7846,7 @@ function onHandCardClick(cardId){
 function prepareHandCardDrag(cardId){
   if(!tutorialAllowsAction('place',cardId)) return false;
   if(!game || game.cancelled || handDragSettling || game.currentPlayerIdx!==0 || !window.__resolveHumanTurn || humanActionResolving) return false;
-  const forced = game.forcedPlay[0];
+  const forced = game.isPlacementBlocked(0) ? null : game.forcedPlay[0];
   if(forced && cardId !== forced) return false;
   if(pendingCellChoice && !pendingCellChoice.cancellable) return false;
   const cardObj = CARD[cardId];

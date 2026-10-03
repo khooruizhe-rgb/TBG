@@ -50,8 +50,8 @@ const document={get activeElement(){return activeElement;},createElement:tag=>ne
   addEventListener:(type,fn,options)=>listeners.push({type,fn,capture:options===true})};
 const windowListeners=[];
 const context={console,document,el,requestAnimationFrame:fn=>fn(),getComputedStyle:node=>({fontSize:`${node.baseFontSize||22}px`}),
-  window:{innerWidth:360,innerHeight:640,addEventListener:(type,fn)=>windowListeners.push({type,fn})},KOURINDOU_PORTRAITS:{},CARD_DETAIL_PORTRAITS:{},
-  game:{players:[{hand:['shop_rinnosuke']}],isActiveOnBoard:()=>false},
+  window:{innerWidth:360,innerHeight:640,addEventListener:(type,fn)=>windowListeners.push({type,fn})},KOURINDOU_PORTRAITS:{},CARD_DETAIL_PORTRAITS:{},TEMPLE_UNZAN_PORTRAIT:"https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/myouren_temple/unzan.webp",
+  game:{players:[{hand:['shop_rinnosuke']}],isActiveOnBoard:()=>false,eirinActive:()=>false},
   pendingCellChoice:{cancellable:true},cancelHandSelection(){context.cancelledSelection=true;context.pendingCellChoice=null;}};
 vm.createContext(context);
 const data=js.slice(js.indexOf('const FACTIONS ='),js.indexOf('const NORMAL_HAND_LIMIT'));
@@ -103,7 +103,7 @@ test('HTML text cannot inject markup and regex metacharacters are literal',()=>{
   assert.equal([...('axb aaab').matchAll(pattern)].length,0);
 });
 test('Descriptions keep Roman costs and leave Yuyuko exclusions to discovery',()=>{
-  assert.equal(A.CARD.haku_yuyuko.desc,'[Cost X] Placed: Send X random orthogonally adjacent cards to your discard pile.');
+  assert.equal(A.CARD.haku_yuyuko.desc,'[Cost N] Placed: Send N random orthogonally adjacent cards to your discard pile.');
   assert.match(A.CARD.heaven_tenshi.desc,/\[Cost II\]/);assert.match(A.CARD.heaven_iku.desc,/\[Cost III\]/);
   assert.ok(A.CARDS.every(c=>!c.desc.includes('excluding')&&!c.desc.includes('checked after')));
 });

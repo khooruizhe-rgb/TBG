@@ -186,7 +186,7 @@ test('Every board size and player count includes Kourindou, even with an old dis
     A.setSize(size);const g=new A.Game(count,{},null,options);
     assert(g.kourindouEnabled);assert.equal(g.shopTiles.length,4);assert.equal(g.shopCards[0],'shop_rinnosuke');
     assert.equal(g.shopCards.length,4);assert(g.shopCards.slice(1).every(id=>A.CARD[id].shopExpansion));
-    assert(g.shopTiles.every(tile=>tile.r>=size&&g.wastelandAt(tile.r,tile.c)));
+    assert(g.shopTiles.every(tile=>tile.r>=size&&!g.wastelandAt(tile.r,tile.c)));
     assert(g.players.every(p=>p.hand.length===6&&p.hand.every(id=>!A.CARD[id].shopExpansion&&!A.CARD[id].shopkeeper)));
     assert(g.drawPile.every(id=>!A.CARD[id].shopExpansion&&!A.CARD[id].shopkeeper));assertConserved(g);
   }

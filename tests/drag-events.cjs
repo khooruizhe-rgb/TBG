@@ -26,7 +26,7 @@ const document={body:{appendChild:e=>elements.push(e)},
   addEventListener(type,fn){(listeners[type]||=[]).push(fn);},
   elementFromPoint(x,y){return elements.find(e=>e.isConnected && ['board','shop'].includes(e.kind) && x>=e.rect.left && y>=e.rect.top && x<e.rect.left+e.rect.width && y<e.rect.top+e.rect.height)||null;}};
 const window={__resolveHumanTurn:()=>{},matchMedia:()=>({matches:reduced}),addEventListener:(type,fn)=>document.addEventListener(type,fn)};
-const context={console,Math,Date,Promise,Set,Map,document,window,el,performance:{now:()=>now},
+const context={tutorialAllowsAction:()=>true,tutorialAllowsTrade:()=>true,updateTutorialProgress(){},console,Math,Date,Promise,Set,Map,document,window,el,performance:{now:()=>now},
   requestAnimationFrame:fn=>{frames.set(++nextFrame,fn);return nextFrame;},cancelAnimationFrame:id=>frames.delete(id),
   renderBoard(){},renderStatus(){},syncHandSelection(){},renderAll(){},playGameCue(){},speakRinnosuke(){},queueMobileViewport(){},
   tileElement:(r,c)=>elements.find(e=>['board','shop'].includes(e.kind) && Number(e.dataset.r)===r && Number(e.dataset.c)===c),
@@ -42,7 +42,7 @@ vm.runInContext('let game=null,pendingCellChoice=null,selectedHandCard=null,drag
 const A=context.api;
 function fixture(shop=false){
   A.reset();elements=[];animations=[];frames.clear();now=0;reduced=false;
-  const cards=new Map();const g={cancelled:false,currentPlayerIdx:0,players:[{hand:['plain']}],forcedPlay:{},
+  const cards=new Map();const g={cancelled:false,currentPlayerIdx:0,players:[{hand:['plain']}],forcedPlay:{},isPlacementBlocked:()=>false,
     shopTiles:shop?[{r:6,c:1,slot:0}]:[],shopCards:shop?['shop_rinnosuke']:[],
     emptyOrWastelandForCard:()=>[{r:0,c:0}],canTrade:()=>shop,boardCells:()=>shop?[{r:6,c:1,id:'shop_rinnosuke'}]:[],
     cardAt:(r,c)=>r===6?'shop_rinnosuke':cards.get(`${r},${c}`),
