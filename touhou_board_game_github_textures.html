@@ -2266,6 +2266,66 @@ body.mobile-landscape #winner-box h2{font-size:24px;}
 @keyframes templeKnockAway{0%{transform:translate(0,0) rotate(0);opacity:1}20%{transform:translate(0,-15px) scale(.95)}100%{transform:translate(var(--push-off-x,400px),var(--push-off-y,-100px)) rotate(75deg) scale(.2);opacity:0}}
 @media(prefers-reduced-motion:reduce){.temple-fx{display:none!important}.discard-vanish.ability-byakuren,.draw-return-ghost.ability-ichirin{animation:none}}
 
+/* Temple ability choices stay large enough to compare without opening each card. */
+#modal-box.chimera-mode{max-width:940px;width:calc(100vw - 32px);max-height:calc(100dvh - 32px);overflow:auto;border-color:#be92e5;background:linear-gradient(140deg,#181022,#2a193b);padding:22px}
+#modal-options.chimera-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;max-height:none;overflow:visible}
+.chimera-option{width:auto;min-width:0;display:flex;flex-direction:column;gap:10px;align-items:center;padding:14px;border:1px solid #a583b35c;border-radius:12px;background:#100b1b80}
+.chimera-option .chimera-card{width:100%;display:flex;justify-content:center;cursor:pointer}
+.chimera-option .board-card{width:clamp(138px,18vw,204px);height:auto;aspect-ratio:3/4;flex:none;padding:9px 8px}
+.chimera-option .board-card .cname{font-size:16px;line-height:1.15}
+.chimera-option .chimera-ability{margin:0;color:#f2d9ff;font-size:18px;font-weight:700;line-height:1.2;white-space:nowrap;width:100%;overflow:hidden;text-align:center}
+.chimera-description{align-self:stretch;margin:0;color:#f4eaf7;font-size:14px;line-height:1.45;white-space:pre-line}
+.chimera-actions{display:flex;width:100%;gap:8px;margin-top:auto}
+.chimera-actions .modal-opt{width:auto;text-align:center;font-size:14px;padding:10px 12px}
+.chimera-actions .chimera-use{flex:1;background:#654779;border-color:#c799de;color:#fff7ff;font-weight:700}
+.card-art-illusion{background-image:var(--illusion-images);background-size:var(--illusion-sizes);background-position:var(--illusion-positions);background-repeat:no-repeat}
+.nue-morph-hidden{visibility:hidden!important}
+.card-detail-portrait.illusory-body{filter:drop-shadow(0 0 9px #b889df85)}
+.nue-body-illusion{position:fixed;pointer-events:none;z-index:86;isolation:isolate;overflow:visible;animation:nueBodyVeil 1.1s ease-out both}
+.nue-body-illusion .illusion-original{position:absolute;inset:0;animation:nueBodyDissolve 1.1s ease-in-out both}
+.nue-body-illusion .illusion-form{position:absolute;inset:0;display:grid;place-items:center;animation:nueBodyBecome 1.1s ease-in-out both}
+.illusion-form img{grid-area:1/1;width:100%;height:100%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 0 6px #b99bf2)}
+.illusion-form img:nth-child(2){transform:translateX(13%)}
+.illusion-form.illusion-stand img:first-child{transform:translate(-5%,-8%) scale(1.1)}
+.illusion-form.illusion-stand img:last-child{transform:translate(10%,4%) scale(.9)}
+.illusion-form.illusion-dancers img{width:55%}
+.illusion-form.illusion-dancers img:first-child{transform:translateX(-20%)}
+.illusion-form.illusion-dancers img:last-child{transform:translateX(20%)}
+.nue-illusion-smoke{position:absolute;width:75%;height:45%;left:12.5%;top:30%;border-radius:50%;background:radial-gradient(ellipse,#f8eaff90,#9572c27d 32%,transparent 70%);filter:blur(7px);animation:nueSmokeCurl 1.1s ease-in-out both}
+.nue-illusion-smoke:nth-last-child(2){top:8%;animation-delay:80ms;rotate:80deg}
+.nue-illusion-smoke:last-child{top:58%;rotate:-50deg;animation-delay:40ms}
+.cell.shou-gold{background:linear-gradient(135deg,#fff1a4 0%,#dfb646 27%,#fff0a2 47%,#b88d29 72%,#e9c763 100%);border-color:#d6b254;box-shadow:inset 0 0 0 1px #fff1bd75,inset 0 2px 10px #72531155}
+.shou-blue-laser{position:fixed;pointer-events:none;z-index:83;height:12px;transform-origin:0 50%;animation:shouLaserSweep .8s ease-out both;border-radius:50%;background:linear-gradient(0deg,#168bef00,#208ef9,#e8ffff,#208ef9,#168bef00);box-shadow:0 0 13px #39baff,0 0 27px #497bff88}
+.shou-gold-wash{position:fixed;pointer-events:none;z-index:81;border-radius:9px;background:linear-gradient(125deg,#77d6ff33,#fffbc1e8,#d9a63ad9);box-shadow:inset 0 0 0 2px #f5da73,0 0 22px #eac65780;animation:shouGild 1.05s ease-out both}
+.murasa-submerged{visibility:hidden!important}
+.murasa-sinking-player{position:fixed;pointer-events:none;z-index:84;overflow:hidden;animation:murasaSink 1.7s cubic-bezier(.38,.12,.7,.85) both;transform-origin:50% 100%}
+.murasa-sinking-player>.seat{position:static!important;inset:auto!important;transform:none!important;width:100%!important;max-width:none!important;height:100%;margin:0;visibility:visible!important}
+.murasa-vortex{position:fixed;pointer-events:none;z-index:87;overflow:visible;animation:murasaWaterOpen 1.85s ease-out both}
+.murasa-vortex svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 9px #35b6de88)}
+.murasa-vortex .vortex-swirl{transform-origin:50% 50%;animation:murasaWaterSpin 1.85s linear both}
+.murasa-vortex .vortex-mist{fill:#94efff;opacity:.65}
+.byakuren-fist-flight{position:fixed;pointer-events:none;z-index:88;width:76px;height:64px;animation:byakurenPunch .62s cubic-bezier(.25,.7,.25,1) both;transform-origin:50% 50%}
+.byakuren-fist-flight svg{width:100%;height:100%;filter:drop-shadow(0 3px 4px #1f0c26b0)}
+.byakuren-impact{position:fixed;pointer-events:none;z-index:85;animation:byakurenImpact .85s ease-out both;overflow:visible}
+.byakuren-impact svg{width:100%;height:100%;stroke:#fff1c4;stroke-width:3;fill:none;filter:drop-shadow(0 0 4px #f6c355)}
+.discard-vanish.ability-byakuren{animation:byakurenDiscardFlight .95s cubic-bezier(.2,.75,.3,1) both}
+.discard-vanish.ability-byakuren::before,.discard-vanish.ability-byakuren::after{display:none}
+@keyframes nueBodyVeil{0%,100%{filter:none}40%{filter:hue-rotate(45deg) blur(1.5px)}70%{filter:hue-rotate(-15deg)}}
+@keyframes nueBodyDissolve{0%{opacity:1;transform:scale(1)}32%{opacity:.8;transform:scaleX(.68) skewY(7deg);filter:blur(2px)}62%,100%{opacity:0;transform:scaleX(.25) skewY(-9deg);filter:blur(6px)}}
+@keyframes nueBodyBecome{0%,20%{opacity:0;transform:scaleX(.2) skewY(-14deg);filter:blur(9px)}60%{opacity:.9;transform:scaleX(1.14) skewY(5deg);filter:blur(1px)}100%{opacity:1;transform:none;filter:none}}
+@keyframes nueSmokeCurl{0%{opacity:0;transform:translateY(24px) scale(.3)}35%{opacity:.9}100%{opacity:0;transform:translateY(-35px) scale(1.5) rotate(120deg)}}
+@keyframes shouLaserSweep{0%{opacity:0;scale:0 1}22%{opacity:1;scale:1 1.5}65%{opacity:1;scale:1 1}100%{opacity:0;scale:1 .1}}
+@keyframes shouGild{0%{opacity:0;filter:hue-rotate(90deg)}20%{opacity:.75;filter:hue-rotate(45deg)}45%{opacity:1;filter:none}100%{opacity:0;filter:none}}
+@keyframes murasaSink{0%{opacity:1;transform:none;clip-path:inset(0)}25%{transform:translateY(10%) rotate(-3deg) scale(.96);clip-path:inset(0)}70%{opacity:.8;transform:translateY(65%) rotate(10deg) scale(.6);clip-path:inset(0 0 45% 0)}100%{opacity:0;transform:translateY(93%) rotate(28deg) scale(.25);clip-path:inset(0 0 100% 0)}}
+@keyframes murasaWaterOpen{0%{opacity:0;scale:.25}20%,75%{opacity:1;scale:1}100%{opacity:0;scale:.6}}
+@keyframes murasaWaterSpin{to{transform:rotate(540deg)}}
+@keyframes byakurenPunch{0%{opacity:0;transform:translate(0,0) rotate(var(--punch-angle)) scale(.7)}12%{opacity:1}58%{opacity:1;transform:translate(var(--punch-x),var(--punch-y)) rotate(var(--punch-angle)) scale(1.2)}100%{opacity:0;transform:translate(var(--punch-x),var(--punch-y)) rotate(var(--punch-angle)) scale(1.05)}}
+@keyframes byakurenImpact{0%{opacity:0;transform:scale(.4)}15%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.7)}}
+@keyframes byakurenDiscardFlight{0%{opacity:1;transform:none}14%{opacity:1;transform:translate(8px,-12px) rotate(-8deg) scale(.98)}48%{opacity:1;transform:translate(calc(var(--hit-fly-x)*.48),calc(var(--hit-fly-y)*.48 - 38px)) rotate(16deg) scale(.73)}100%{opacity:0;transform:translate(var(--hit-fly-x),var(--hit-fly-y)) rotate(30deg) scale(.12)}}
+@media(max-width:600px){#modal-box.chimera-mode{padding:12px}#modal-options.chimera-options{gap:7px}.chimera-option{padding:7px;gap:7px}.chimera-option .board-card{width:100%;min-width:0}.chimera-option .board-card .cname{font-size:12px}.chimera-description{font-size:11px}.chimera-actions{flex-direction:column}.chimera-actions .modal-opt{padding:7px 4px;font-size:12px}}
+@media(orientation:landscape) and (max-height:600px){#modal-box.chimera-mode{padding:10px}#modal-box.chimera-mode h3{margin-bottom:8px}.chimera-option{display:grid;grid-template-columns:minmax(80px,38%) minmax(0,1fr);grid-template-rows:auto 1fr auto;gap:6px;padding:8px;align-items:start}.chimera-card{grid-column:1;grid-row:1/4}.chimera-option .board-card{width:100%;max-height:calc(100dvh - 110px);font-size:11px}.chimera-option .chimera-ability{grid-column:2;font-size:14px}.chimera-description{grid-column:2;font-size:12px}.chimera-actions{grid-column:2;flex-direction:row;gap:4px}.chimera-actions .modal-opt{font-size:12px;padding:7px 5px}}
+@media(prefers-reduced-motion:reduce){.nue-body-illusion,.shou-blue-laser,.shou-gold-wash,.murasa-sinking-player,.murasa-vortex,.byakuren-fist-flight,.byakuren-impact{display:none!important}.discard-vanish.ability-byakuren{animation:none}}
+
 </style>
 </head>
 <body>
@@ -2547,11 +2607,11 @@ const CARDS = [
 
 CARDS.push(
   {id:'temple_byakuren',faction:'temple',name:'Hijiri Byakuren',crown:true,cost7:true,
-    desc:'[Cost VII] Placed: Send three board cards to your discard pile, take three extra turns and turn three board spaces into wasteland. Each Myouren Temple card on the board reduces the cost by one.'},
+    desc:'[Cost VII] Placed: Send three other board cards to your discard pile, turn their spaces into wasteland and take three extra turns. Each Myouren Temple card on the board reduces the cost by one.'},
   {id:'temple_shou',faction:'temple',name:'Toramaru Shou',cost1:true,
-    desc:'[Cost I] Placed: Draw a card for each wasteland on the board, then clear all wasteland.'},
+    desc:'[Cost I] Placed: Draw a card for each wasteland on the board, then turn all wasteland into playable gold tiles.'},
   {id:'temple_nue',faction:'temple',name:'Houjuu Nue',
-    desc:'Placed: Choose an ability from three random cards and use it as this card’s ability.'},
+    desc:'Placed: Choose an ability from three random cards. This card takes an illusory form and uses that ability.'},
   {id:'temple_murasa',faction:'temple',name:'Murasa Minamitu',
     desc:'Placed: Choose a player. They cannot place cards on their next two turns.'},
   {id:'temple_ichirin',faction:'temple',name:'Kumoi Ichirin',shopExpansion:true,cost2:true,
@@ -2622,6 +2682,7 @@ class Game {
     this.aiDifficulty=AI_DIFFICULTIES[options.aiDifficulty] ? options.aiDifficulty : 'hard';
     this.board = Array.from({length:SIZE},()=>Array(SIZE).fill(null));
     this.wasteland = Array.from({length:SIZE},()=>Array(SIZE).fill(false));
+    this.goldTiles=new Set();
     this.kourindouEnabled=true; // Kourindou is part of every match.
     this.shopCards=[];
     this.shopTiles=[[0,1],[1,0],[1,1],[1,2]].map(([r,c],slot)=>({r:SIZE+2+r,c,slot,wasteland:false}));
@@ -2705,12 +2766,12 @@ class Game {
     const card=CARD[id];
     return id==='temple_byakuren' ? this.byakurenCost(placement) : card.cost3?3:card.cost2?2:card.cost1?1:0;
   }
-  templeDiscardTargets(p){return this.boardCells(cell=>this.canMoveBoardCard(cell.r,cell.c)
+  templeDiscardTargets(p,r=null,c=null){return this.boardCells(cell=>!(cell.r===r && cell.c===c) && this.canMoveBoardCard(cell.r,cell.c)
     && this.canSelectBoardCard(cell.r,cell.c) && this.canEnterDiscard(p,cell.id));}
   templeWasteland(){return this.allTiles().filter(cell=>this.wastelandAt(cell.r,cell.c));}
   presentTemple(effect,details){
     if(this.cancelled)return;
-    try{this.ui?.onTempleEffect?.({effect,...details});}catch(_error){}
+    try{return this.ui?.onTempleEffect?.({effect,...details});}catch(_error){}
   }
   ichirinPushes(r,c){
     return this.boardCells(cell=>this.boardFaction(cell.r,cell.c)!=='temple'
@@ -2726,7 +2787,7 @@ class Game {
     const score=id=>{
       const cost=this.abilityCost(id);
       if(this.payableCards(p).length<cost || (CARD[id].crown && this.eirinActive()))return -10;
-      if(id==='temple_byakuren')return Math.min(3,this.templeDiscardTargets(p).length)+3;
+      if(id==='temple_byakuren')return Math.min(3,this.templeDiscardTargets(p,r,c).length)+3;
       if(id==='temple_shou')return Math.min(this.drawPile.length+cost,this.templeWasteland().length);
       if(id==='temple_murasa')return 2;
       if(id==='sage_kasen')return 2;
@@ -2752,7 +2813,9 @@ class Game {
     else {const tile=this.shopTileAt(r,c);if(tile) this.shopCards[tile.slot]=id;}
   }
   wastelandAt(r,c){return inBounds(r,c) ? this.wasteland[r][c] : !!this.shopTileAt(r,c)?.wasteland;}
+  isGoldTile(r,c){return this.goldTiles.has(`${r},${c}`) && !this.wastelandAt(r,c);}
   setWastelandAt(r,c,value){
+    if(value)this.goldTiles.delete(`${r},${c}`);
     if(inBounds(r,c)) this.wasteland[r][c]=value;
     else {const tile=this.shopTileAt(r,c);if(tile) tile.wasteland=value;}
   }
@@ -2861,9 +2924,11 @@ class Game {
     this.pendingExtraTurns[playerIdx]=0;
     return count;
   }
-  clearWasteland(r,c){
+  clearWasteland(r,c,{gold=false}={}){
     if(!this.hasTile(r,c) || !this.wastelandAt(r,c)) return false;
-    this.setWastelandAt(r,c,false); return true;
+    this.setWastelandAt(r,c,false);
+    if(gold)this.goldTiles.add(`${r},${c}`);
+    return true;
   }
   moveBoardToDraw(r,c,effect){
     if(!this.canReturnBoardToDraw(r,c)) return this.reportBlocked(r,c);
@@ -3025,7 +3090,7 @@ class Game {
   estimateDirectDiscardPoints(playerIdx, cardId, r, c){
     if(this.isProtected(r,c)) return 0;
     switch(cardId){
-      case 'temple_byakuren': return this.payableCards(playerIdx).filter(id=>id!==cardId).length>=this.byakurenCost({r,c}) ? Math.min(3,this.templeDiscardTargets(playerIdx).length) : 0;
+      case 'temple_byakuren': return this.payableCards(playerIdx).filter(id=>id!==cardId).length>=this.byakurenCost({r,c}) ? Math.min(3,this.templeDiscardTargets(playerIdx,r,c).length) : 0;
       case 'palace_yuugi': return this.payableCards(playerIdx).filter(id=>id!==cardId).length>=2 && this.yuugiTargets(r,c).length ? 1 : 0;
       case 'haku_yuyuko': {
         if(this.payableCards(playerIdx).filter(id=>id!==cardId).length===0) return 0;
@@ -3608,18 +3673,23 @@ class Game {
         const cost=self.byakurenCost();
         if(cost && !await self.payCost(playerIdx,cost))break;
         if(self.cancelled)break;
-        self.presentTemple('byakuren',{r,c});
-        const targets=self.templeDiscardTargets(playerIdx);
-        const chosen=await self.chooseCells(playerIdx,Math.min(3,targets.length),targets,'Byakuren — choose cards for your discard pile');
+        const targets=self.templeDiscardTargets(playerIdx,r,c);
+        const chosen=await self.chooseCells(playerIdx,Math.min(3,targets.length),targets,'Byakuren — choose other cards for your discard pile');
         if(self.cancelled)break;
-        for(const cell of chosen)self.moveBoardToDiscard(cell.r,cell.c,playerIdx,'byakuren');
+        const strike=self.presentTemple('byakuren',{r,c,targets:chosen,playerIdx});
+        if(strike?.ready && await strike.ready===false)break;
+        if(self.cancelled)break;
+        let hit=0;
+        for(const cell of chosen){
+          if(cell.r===r && cell.c===c)continue;
+          if(self.moveBoardToDiscard(cell.r,cell.c,playerIdx,'byakuren')){
+            self.setWastelandAt(cell.r,cell.c,true);hit++;
+          }
+        }
         self.render();
+        if(strike?.finished)await strike.finished;
         if(self.cancelled)break;
-        const spaces=self.allTiles().filter(cell=>!self.wastelandAt(cell.r,cell.c) && !self.isProtected(cell.r,cell.c));
-        const ruined=await self.chooseCells(playerIdx,Math.min(3,spaces.length),spaces,'Byakuren — choose spaces to turn into wasteland');
-        if(self.cancelled)break;
-        for(const cell of ruined){self.presentTemple('strength',{r:cell.r,c:cell.c});self.setWastelandAt(cell.r,cell.c,true);}
-        self.log(`${me} unleashes Superhuman Strength and gains three extra turns (Cost ${romanNumeral(cost)}).`);
+        self.log(`${me} strikes ${hit} card${hit===1?'':'s'} into their discard pile, leaves wasteland in their spaces and gains three extra turns (Cost ${romanNumeral(cost)}).`);
         return {extraTurns:3};
       }
       case 'temple_shou': {
@@ -3631,8 +3701,8 @@ class Game {
           const id=self.takeFromDrawPile(playerIdx);self.addToHand(playerIdx,id);
           try{self.ui?.onDrawCard?.({playerIdx,cardId:id,effect:'shou',source:{r,c}});}catch(_error){}
         }
-        for(const cell of waste)self.clearWasteland(cell.r,cell.c);
-        self.log(`${me} draws ${count} card${count===1?'':'s'} with Radiant Treasure and clears ${waste.length} wasteland tile${waste.length===1?'':'s'}.`);
+        for(const cell of waste)self.clearWasteland(cell.r,cell.c,{gold:true});
+        self.log(`${me} draws ${count} card${count===1?'':'s'} with Radiant Treasure and turns ${waste.length} wasteland tile${waste.length===1?'':'s'} to gold.`);
         break;
       }
       case 'temple_nue': {
@@ -3644,8 +3714,10 @@ class Game {
         if(self.cancelled || !choices.includes(ability))break;
         self.borrowedAbilities[actor]=ability;
         self.log(`${CARD[actor].name} borrows ${CARD[ability].name}’s ability.`);
-        self.presentTemple('chimera',{r,c});
+        const illusion=self.presentTemple('chimera',{r,c,fromId:actor,toId:ability});
         self.render();
+        if(illusion?.finished)await illusion.finished;
+        if(self.cancelled)break;
         return await self.resolveAbility(ability,r,c,playerIdx,depth+1);
       }
       case 'temple_murasa': {
@@ -4834,6 +4906,11 @@ function showCardExit({cardId, playerIdx, source}, destination){
   ghost.style.top = `${top}px`;
   ghost.style.width = `${width}px`;
   ghost.style.height = `${height}px`;
+  if(effect==='byakuren'){
+    const seat=el('seats').querySelector(`.seat-${playerIdx}`);
+    const end=(seat?.querySelector('.lanterns') || seat)?.getBoundingClientRect() || handOrSeatRect(playerIdx);
+    if(end){ghost.style.setProperty('--hit-fly-x',`${end.left+end.width/2-left-width/2}px`);ghost.style.setProperty('--hit-fly-y',`${end.top+end.height/2-top-height/2}px`);}
+  }
   if(effect==='ichirin' && Number.isInteger(source.r)){
     const board=el('board').getBoundingClientRect();
     ghost.style.setProperty('--push-off-x',`${(rect.left+rect.width/2-board.left-board.width/2)*5}px`);
@@ -5278,6 +5355,7 @@ function finishMindEffect(callback,delay){
   mindEffectTimers.add(timer);
 }
 function clearMindEffects(){
+  for(const cancel of [...templeAnimationCancels])cancel();
   for(const timer of mindEffectTimers) clearTimeout(timer);
   mindEffectTimers.clear();mindArrivals.clear();
   mindEffectsUntil=0;
@@ -5290,7 +5368,136 @@ function addMindNode(node,key,duration=1150){
   node.dataset.abilityKey=key;node.setAttribute('aria-hidden','true');
   document.body.appendChild(node);finishMindEffect(()=>node.remove(),duration);
 }
-function showTempleEffect({effect,r,c,playerIdx,tiles=[]}){
+const templeAnimationCancels=new Set();
+function templeTimeline(duration){
+  const owner=game;
+  if(!owner || owner.cancelled || !document.body || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return null;
+  const started=Date.now();
+  let done=false,readyResolve,finishResolve;
+  const timers=[],nodes=[],cleanup=[];
+  const handle={ready:new Promise(resolve=>readyResolve=resolve),finished:new Promise(resolve=>finishResolve=resolve)};
+  const finish=valid=>{
+    if(done)return;done=true;
+    timers.forEach(clearTimeout);nodes.forEach(node=>node.remove());cleanup.forEach(fn=>fn());
+    templeAnimationCancels.delete(cancel);readyResolve(valid);finishResolve(valid);
+  };
+  const cancel=()=>finish(false);templeAnimationCancels.add(cancel);
+  handle.at=(delay,fn)=>{timers.push(setTimeout(()=>{if(!done && game===owner && !owner.cancelled)fn();else if(!done)finish(false);},delay));};
+  handle.add=node=>{nodes.push(node);addMindNode(node,'temple-physical',Math.max(0,started+duration-Date.now()));};
+  handle.cleanup=fn=>cleanup.push(fn);
+  handle.hit=()=>readyResolve(true);
+  handle.at(duration,()=>finish(true));
+  mindEffectsUntil=Math.max(mindEffectsUntil,Date.now()+duration);
+  return handle;
+}
+function illusionPortraitLayers(id){
+  if(id==='sage_mai_satono')return [KOURINDOU_PORTRAITS.sage_satono,KOURINDOU_PORTRAITS.sage_mai].filter(Boolean);
+  if(id==='temple_ichirin')return [TEMPLE_UNZAN_PORTRAIT,CARD_DETAIL_PORTRAITS[id]];
+  return CARD_DETAIL_PORTRAITS[id] ? [CARD_DETAIL_PORTRAITS[id]] : [];
+}
+function illusionCardStyle(cardId){
+  const borrowed=game?.borrowedAbilities?.[cardId];
+  if(!borrowed || !game.isOnBoard(cardId))return '';
+  const layers=illusionPortraitLayers(borrowed);if(!layers.length)return '';
+  const portraits=(borrowed==='temple_ichirin' ? layers.slice().reverse() : layers).map(url=>`url('${url}')`);
+  const background=cardId==='sage_matara' ? 'var(--sage-matara-bg)' : 'var(--temple-bg)';
+  const size=borrowed==='temple_ichirin' ? 'auto 91%,auto 107%,cover' : layers.length===2 ? 'auto 97%,auto 91%,cover' : 'auto 99%,cover';
+  const positions=borrowed==='temple_ichirin' ? '64% bottom,37% bottom,center' : layers.length===2 ? '37% bottom,64% bottom,center' : 'center bottom,center';
+  return `--illusion-images:${portraits.join(',')},${background};--illusion-sizes:${size};--illusion-positions:${positions}`;
+}
+function syncIllusionFace(face,cardId){
+  if(!face)return;
+  const style=illusionCardStyle(cardId);
+  face.classList.toggle('card-art-illusion',!!style);
+  if(style){
+    for(const property of style.split(';')){const split=property.indexOf(':');face.style.setProperty(property.slice(0,split),property.slice(split+1));}
+  }else for(const property of ['--illusion-images','--illusion-sizes','--illusion-positions'])face.style.removeProperty(property);
+  face.classList.toggle('nue-morph-hidden',game.uiEffects?.nueMorphUntil?.[cardId]>Date.now());
+}
+function showNueBodyIllusion({r,c,fromId,toId}){
+  const tile=tileElement(r,c),face=tile?.querySelector('.board-card');
+  const rect=face?.getBoundingClientRect();
+  const layers=illusionPortraitLayers(toId);
+  if(!rect?.width || !layers.length)return null;
+  const animation=templeTimeline(1150);if(!animation)return null;
+  const owner=game,until=Date.now()+1150;
+  owner.uiEffects??={};owner.uiEffects.nueMorphUntil??={};owner.uiEffects.nueMorphUntil[fromId]=until;
+  const ghost=document.createElement('div');ghost.className='mind-fx nue-body-illusion';
+  Object.assign(ghost.style,{left:`${rect.left}px`,top:`${rect.top}px`,width:`${rect.width}px`,height:`${rect.height}px`});
+  const original=face.cloneNode(true);original.classList.remove('nue-morph-hidden');original.classList.add('illusion-original');
+  original.style.backgroundImage=getComputedStyle(face).backgroundImage;
+  const form=document.createElement('div');form.className='illusion-form'+(toId==='temple_ichirin' ? ' illusion-stand' : toId==='sage_mai_satono' ? ' illusion-dancers' : '');
+  for(const url of layers){const image=document.createElement('img');image.src=url;image.alt='';form.appendChild(image);}
+  ghost.append(original,form);
+  for(let i=0;i<3;i++){const smoke=document.createElement('span');smoke.className='nue-illusion-smoke';ghost.appendChild(smoke);}
+  animation.add(ghost);face.classList.add('nue-morph-hidden');
+  animation.cleanup(()=>{
+    if(owner.uiEffects?.nueMorphUntil?.[fromId]===until)delete owner.uiEffects.nueMorphUntil[fromId];
+    if(game===owner)document.querySelectorAll('.nue-morph-hidden').forEach(node=>node.classList.remove('nue-morph-hidden'));
+  });
+  return animation;
+}
+function showShouGoldLasers({r,c,tiles=[]}){
+  const origin=boardCardRect(r,c);if(!origin?.width || !tiles.length)return;
+  const animation=templeTimeline(1100);if(!animation)return;
+  const x=origin.left+origin.width/2,y=origin.top+origin.height/2;
+  for(const tile of tiles){
+    const rect=tileElement(tile.r,tile.c)?.getBoundingClientRect();if(!rect?.width)continue;
+    const dx=rect.left+rect.width/2-x,dy=rect.top+rect.height/2-y;
+    const beam=document.createElement('div');beam.className='mind-fx shou-blue-laser';
+    Object.assign(beam.style,{left:`${x}px`,top:`${y-6}px`,width:`${Math.max(8,Math.hypot(dx,dy))}px`,transform:`rotate(${Math.atan2(dy,dx)}rad)`});
+    animation.add(beam);
+    const gold=document.createElement('div');gold.className='mind-fx shou-gold-wash';
+    Object.assign(gold.style,{left:`${rect.left}px`,top:`${rect.top}px`,width:`${rect.width}px`,height:`${rect.height}px`});animation.add(gold);
+  }
+}
+function showMurasaPlayerVortex({playerIdx}){
+  const seat=el('seats').querySelector(`.seat-${playerIdx}`),rect=seat?.getBoundingClientRect();if(!rect?.width)return;
+  const animation=templeTimeline(1900);if(!animation)return;
+  const owner=game,until=Date.now()+1900;
+  owner.uiEffects??={};owner.uiEffects.murasaSinkUntil??={};owner.uiEffects.murasaSinkUntil[playerIdx]=until;
+  const ghost=document.createElement('div');ghost.className='mind-fx murasa-sinking-player';
+  Object.assign(ghost.style,{left:`${rect.left}px`,top:`${rect.top}px`,width:`${rect.width}px`,height:`${rect.height}px`});
+  const snapshot=seat.cloneNode(true);snapshot.classList.remove('murasa-submerged','player-target');ghost.appendChild(snapshot);animation.add(ghost);
+  seat.classList.add('murasa-submerged');
+  const vortex=document.createElement('div');vortex.className='mind-fx murasa-vortex';
+  const width=Math.max(150,rect.width*1.35),height=Math.max(64,Math.min(145,rect.height*.7));
+  const top=Math.min(window.innerHeight-height-3,rect.top+rect.height*.64);
+  Object.assign(vortex.style,{left:`${rect.left+rect.width/2-width/2}px`,top:`${top}px`,width:`${width}px`,height:`${height}px`});
+  vortex.innerHTML='<svg viewBox="0 0 200 90" preserveAspectRatio="none"><defs><radialGradient id="murasa-water-'+playerIdx+'"><stop stop-color="#020d1c"/><stop offset=".5" stop-color="#072d49"/><stop offset=".78" stop-color="#207c9d"/><stop offset="1" stop-color="#70d3e9" stop-opacity="0"/></radialGradient></defs><ellipse cx="100" cy="45" rx="96" ry="39" fill="url(#murasa-water-'+playerIdx+')"/><ellipse cx="100" cy="45" rx="37" ry="14" fill="#020a16"/><g class="vortex-swirl" fill="none" stroke="#89eeff" stroke-width="2"><path d="M10 44Q50 5 132 21T180 56Q143 90 62 70T37 35Q80 12 135 35T122 62Q75 73 66 48T110 39"/><path d="M29 25Q93 0 163 30T161 66M49 76Q8 44 73 28T150 45Q147 70 91 59" stroke="#3cadd8" stroke-width="4"/></g><g class="vortex-mist"><ellipse cx="29" cy="46" rx="8" ry="2"/><ellipse cx="157" cy="28" rx="10" ry="2"/><ellipse cx="135" cy="70" rx="9" ry="2"/></g></svg>';
+  animation.add(vortex);
+  animation.cleanup(()=>{
+    if(owner.uiEffects?.murasaSinkUntil?.[playerIdx]===until)delete owner.uiEffects.murasaSinkUntil[playerIdx];
+    if(game===owner)el('seats').querySelector(`.seat-${playerIdx}`)?.classList.remove('murasa-submerged');
+  });
+}
+function showByakurenStrikes({r,c,targets=[],playerIdx}){
+  const origin=boardCardRect(r,c);if(!origin?.width || !targets.length)return null;
+  const animation=templeTimeline(1400);if(!animation)return null;
+  const x=origin.left+origin.width/2,y=origin.top+origin.height/2;
+  const fistSvg='<svg viewBox="0 0 100 80"><path d="M2 20H29V67H2Z" fill="#725081" stroke="#f1cf84" stroke-width="3"/><path d="M27 25Q33 16 41 21L42 13Q49 5 56 15Q64 6 71 17Q80 9 85 24L95 28Q101 35 95 43L90 54Q78 69 60 66L41 57 27 58Z" fill="#f9d7bd" stroke="#65413d" stroke-width="3"/><path d="M43 18V35M57 17V35M72 21V37M30 43Q46 36 56 43L68 50Q66 57 59 57L41 51" fill="none" stroke="#bb8d79" stroke-width="3"/></svg>';
+  for(const target of targets){
+    const rect=boardCardRect(target.r,target.c);if(!rect?.width)continue;
+    const dx=rect.left+rect.width/2-x,dy=rect.top+rect.height/2-y;
+    const fist=document.createElement('div');fist.className='mind-fx byakuren-fist-flight';
+    Object.assign(fist.style,{left:`${x-38}px`,top:`${y-32}px`});
+    fist.style.setProperty('--punch-x',`${dx}px`);fist.style.setProperty('--punch-y',`${dy}px`);fist.style.setProperty('--punch-angle',`${Math.atan2(dy,dx)}rad`);fist.innerHTML=fistSvg;animation.add(fist);
+    animation.at(360,()=>{
+      const impact=document.createElement('div');impact.className='mind-fx byakuren-impact';
+      const size=Math.max(75,rect.width*1.25);Object.assign(impact.style,{left:`${rect.left+rect.width/2-size/2}px`,top:`${rect.top+rect.height/2-size/2}px`,width:`${size}px`,height:`${size}px`});
+      impact.innerHTML='<svg viewBox="0 0 100 100"><path d="M50 10L46 36 23 16 37 44 8 50 35 55 19 80 44 63 50 91 57 64 82 82 65 56 94 50 65 43 84 17 56 37Z"/><path d="M10 8L26 26M74 12L92 3M75 80L90 94M10 81L21 70"/></svg>';animation.add(impact);
+    });
+  }
+  animation.at(360,animation.hit);
+  return animation;
+}
+
+function showTempleEffect(details){
+  const {effect,r,c,playerIdx,tiles=[]}=details;
+  if(effect==='chimera')return showNueBodyIllusion(details);
+  if(effect==='shou')return showShouGoldLasers(details);
+  if(effect==='murasa')return showMurasaPlayerVortex(details);
+  if(effect==='byakuren')return showByakurenStrikes(details);
   if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
   const key=`temple-${effect}-${Date.now()}`;
   const emit=(rect,kind,sizeMultiplier=1.8)=>{
@@ -5736,7 +5943,13 @@ function openCardDetails(cardId,{followReference=false}={}){
   portrait.className = 'card-detail-portrait';
   portrait.replaceChildren();
   const inHand=game && game.players.some(p=>p.hand.includes(cardId));
-  if(cardId==='sage_mai_satono' && KOURINDOU_PORTRAITS.sage_satono && KOURINDOU_PORTRAITS.sage_mai){
+  const illusoryBody=game?.borrowedAbilities?.[cardId] && game.isOnBoard(cardId) ? game.borrowedAbilities[cardId] : null;
+  if(illusoryBody && illusionPortraitLayers(illusoryBody).length){
+    portrait.classList.add('illusory-body');
+    if(illusoryBody==='temple_ichirin')portrait.classList.add('ichirin-stand');
+    if(illusoryBody==='sage_mai_satono')portrait.classList.add('dual-dancers');
+    for(const url of illusionPortraitLayers(illusoryBody)){const artwork=document.createElement('img');artwork.src=url;artwork.alt=CARD[illusoryBody].name;portrait.appendChild(artwork);}
+  }else if(cardId==='sage_mai_satono' && KOURINDOU_PORTRAITS.sage_satono && KOURINDOU_PORTRAITS.sage_mai){
     portrait.classList.add('dual-dancers');
     for(const [name,url] of [['Satono',KOURINDOU_PORTRAITS.sage_satono],['Mai',KOURINDOU_PORTRAITS.sage_mai]]){
       const artwork=document.createElement('img');
@@ -5820,9 +6033,12 @@ function cardBoardHtml(cardId){
   const c = CARD[cardId];
   const f = FACTIONS[c.faction];
   const bgClass = cardBgClass(c, cardId);
-  const crownStyle = c.crown ? ` style="--crown-light-main:${crownLightFor(cardId).main};--crown-light-rgb:${crownLightFor(cardId).rgb}"` : '';
+  const illusion=illusionCardStyle(cardId);
+  const style=[c.crown ? `--crown-light-main:${crownLightFor(cardId).main};--crown-light-rgb:${crownLightFor(cardId).rgb}` : '',illusion].filter(Boolean).join(';');
+  const crownStyle=style ? ` style="${escapeLogHtml(style)}"` : '';
+  const illusionClass=illusion ? ' card-art-illusion' : '';
   const muted = c.crown && game && typeof game.isOnBoard==='function' && game.eirinActive() ? ' eirin-muted' : '';
-  return `<div class="board-card ${c.crown?'crown':''} ${bgClass}${muted}"${crownStyle}>
+  return `<div class="board-card ${c.crown?'crown':''} ${bgClass}${muted}${illusionClass}"${crownStyle}>
     <div class="icon-row"><span>${f.icon}</span>${c.crown?'<span class="crown-mark">👑</span>':''}</div>
     <div class="cname">${c.name}</div>
   </div>`;
@@ -6076,6 +6292,7 @@ function renderBoard(){
       }
       const isWasteland=!!game.wastelandAt(r,c);
       cell.classList.toggle('wasteland',isWasteland);
+      cell.classList.toggle('shou-gold',game.isGoldTile(r,c));
       const cardId = game.cardAt(r,c);
       if(cell.dataset.cardId!==(cardId||'')){
         cell.innerHTML=cardId ? cardBoardHtml(cardId) : '';
@@ -6087,6 +6304,7 @@ function renderBoard(){
       cell.classList.toggle('koishi-arriving',cardId==='palace_koishi' && koishiArrivalUntil.get(`${r},${c}`)>Date.now());
       if(cardId){
         const face=cell.querySelector('.board-card');
+        syncIllusionFace(face,cardId);
         if(face && CARD[cardId].crown){
           face.classList.toggle('eirin-muted',game.eirinActive());
         }
@@ -6139,7 +6357,7 @@ function renderShop(){
   for(let slot=0;slot<4;slot++){
     let tile=grid.children[slot];
     if(!tile){
-      tile=document.createElement('button');tile.type='button';tile.className='cell shop-tile wasteland';tile.dataset.slot=String(slot);
+      tile=document.createElement('button');tile.type='button';tile.className='cell shop-tile';tile.dataset.slot=String(slot);
       tile.addEventListener('click',()=>commitShopChoice(slot));
       tile.addEventListener('dblclick',()=>{if(game.shopCards[slot]) openCardDetails(game.shopCards[slot]);});
       tile.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='i' && game.shopCards[slot]) openCardDetails(game.shopCards[slot]);});
@@ -6154,6 +6372,7 @@ function renderShop(){
     if(tile.dataset.cardId!==id){tile.innerHTML=id ? cardBoardHtml(id) : '';tile.dataset.cardId=id||'';}
     const selectable=isShopSelectable(slot);
     tile.classList.toggle('wasteland',game.wastelandAt(r,c));
+    tile.classList.toggle('shou-gold',game.isGoldTile(r,c));
     syncProtectionIndicator(tile,r,c);
     syncTerrainAnimations(tile,r,c,game.wastelandAt(r,c));
     tile.classList.toggle('rect-pickable',!!pendingRectChoice);
@@ -6170,9 +6389,10 @@ function renderShop(){
     tile.classList.toggle('koishi-arriving',CARD[game.abilityId(id)]?.trigger && koishiArrivalUntil.get(`${r},${c}`)>Date.now());
     tile.classList.toggle('selectable',selectable);
     tile.classList.toggle('pick-target',selectable);
-    tile.classList.toggle('dimmed',!!pendingCellChoice && !selectable);
+    tile.classList.remove('dimmed');
     tile.classList.toggle('shopkeeper-tile',id==='shop_rinnosuke');
     const face=tile.querySelector('.board-card');
+    syncIllusionFace(face,id);
     if(face && id && CARD[id].crown) face.classList.toggle('eirin-muted',game.eirinActive());
     tile.title=id ? `${CARD[id].name}${game.isProtected(r,c) ? ' · Protected by Rinnosuke; no faction' : ''}. Double-click or press I for details.` : 'Empty tile';
     tile.setAttribute('aria-label',tile.title+(selectable ? ' Click to choose.' : ''));
@@ -6520,7 +6740,7 @@ function renderPlayers(){
   seatsEl.innerHTML = '';
   game.players.forEach(p => {
     const seat = document.createElement('div');
-    seat.className = `seat seat-${p.idx}` + (game.currentPlayerIdx===p.idx && !game.winner ? ' active-turn':'');
+    seat.className = `seat seat-${p.idx}` + (game.uiEffects?.murasaSinkUntil?.[p.idx]>Date.now() ? ' murasa-submerged' : '') + (game.currentPlayerIdx===p.idx && !game.winner ? ' active-turn':'');
     seat.dataset.playerIdx=String(p.idx);
     if(pendingPlayerChoice){
       const choice=pendingPlayerChoice;
@@ -6709,21 +6929,27 @@ const ui = {
   pickAbilityCards(title,ids){
     return new Promise(resolve=>{
       setRuleText(el('modal-title'),title);
+      el('modal-box').classList.add('chimera-mode');
       const box=el('modal-options');box.replaceChildren();box.classList.add('chimera-options');
       for(const id of ids){
         const option=document.createElement('div');option.className='chimera-option';
-        const face=document.createElement('div');face.innerHTML=cardBoardHtml(id);face.title='Click to inspect';
+        const face=document.createElement('div');face.className='chimera-card';face.innerHTML=cardBoardHtml(id);face.title='Inspect card';face.tabIndex=0;face.setAttribute('role','button');face.setAttribute('aria-label',`Inspect ${CARD[id].name}`);
         face.addEventListener('click',()=>openCardDetails(id));
+        face.addEventListener('keydown',event=>{if(event.key==='Enter' || event.key===' '){event.preventDefault();openCardDetails(id);}});
+        const name=document.createElement('h4');name.className='chimera-ability';name.textContent=CARD_ABILITY_NAMES[id];
+        const description=document.createElement('p');description.className='chimera-description';setRuleText(description,CARD[id].desc);
+        const actions=document.createElement('div');actions.className='chimera-actions';
         const inspect=document.createElement('button');inspect.className='modal-opt';inspect.textContent='Inspect';inspect.addEventListener('click',()=>openCardDetails(id));
-        const name=document.createElement('small');name.textContent=CARD_ABILITY_NAMES[id];
-        const pick=document.createElement('button');pick.className='modal-opt';pick.textContent='Use this ability';
-        pick.addEventListener('click',()=>{playGameCue('select');box.classList.remove('chimera-options');el('modal-overlay').classList.remove('show');resolve(id);});
-        option.append(face,name,inspect,pick);box.append(option);
+        const pick=document.createElement('button');pick.className='modal-opt chimera-use';pick.textContent='Use ability';
+        pick.addEventListener('click',()=>{playGameCue('select');box.classList.remove('chimera-options');el('modal-box').classList.remove('chimera-mode');el('modal-overlay').classList.remove('show');resolve(id);});
+        actions.append(inspect,pick);option.append(face,name,description,actions);box.append(option);
       }
       el('modal-overlay').classList.add('show');
+      requestAnimationFrame(()=>box.querySelectorAll('.chimera-ability').forEach(node=>fitSingleLineText(node,10)));
     });
   },
   pickFromList(title, options){
+    el('modal-box').classList.remove('chimera-mode');
     return new Promise(resolve => {
       setRuleText(el('modal-title'),title);
       const box = el('modal-options');
@@ -7109,6 +7335,7 @@ function aiCostCanResolve(playerIdx, cardId, r, c){
     && game.yuyukoTargets(r,c).length>0 && !game.eirinActive();
   const cost=game.abilityCost(cardId,{r,c});
   if(cardId==='temple_shou' && !game.templeWasteland().length)return false;
+  if(cardId==='temple_byakuren' && !game.templeDiscardTargets(playerIdx,r,c).length)return false;
   if(cardId==='temple_ichirin' && !game.ichirinPushes(r,c).length)return false;
   if(!cost) return true;
   if(game.payableCards(playerIdx).filter(id=>id!==cardId).length<cost || (card.crown && game.eirinActive())) return false;
@@ -8176,6 +8403,8 @@ function resetGameView(){
   clearRinnosukeBubble();
   clearCrownBackdrop();
   clearMindEffects();
+  el('modal-box').classList.remove('chimera-mode');
+  el('modal-options').classList.remove('chimera-options');
   game=null;
   announcedGameResult=null;
   if(pendingPlayerChoice){document.removeEventListener('keydown',pendingPlayerChoice.onEscape);pendingPlayerChoice=null;}
