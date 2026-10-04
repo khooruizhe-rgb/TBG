@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  GITHUB TEXTURES DEVELOPMENT EDITION — KOURINDOU ART FIX 2
+  BOUNDARY OF FATES — WOODEN TABLE TITLE EDITION
   Images load from khooruizhe-rgb/TBG on GitHub.
   Gameplay, layout, and card data follow the textureless development edition.
 -->
@@ -2310,8 +2310,8 @@ body.mobile-landscape #winner-box h2{font-size:24px;}
 .discard-vanish.ability-byakuren{animation:byakurenDiscardFlight .95s cubic-bezier(.2,.75,.3,1) both}
 .discard-vanish.ability-byakuren::before,.discard-vanish.ability-byakuren::after{display:none}
 @keyframes nueBodyVeil{0%,100%{filter:none}40%{filter:hue-rotate(45deg) blur(1.5px)}70%{filter:hue-rotate(-15deg)}}
-@keyframes nueBodyDissolve{0%{opacity:1;transform:scale(1)}32%{opacity:.8;transform:scaleX(.68) skewY(7deg);filter:blur(2px)}62%,100%{opacity:0;transform:scaleX(.25) skewY(-9deg);filter:blur(6px)}}
-@keyframes nueBodyBecome{0%,20%{opacity:0;transform:scaleX(.2) skewY(-14deg);filter:blur(9px)}60%{opacity:.9;transform:scaleX(1.14) skewY(5deg);filter:blur(1px)}100%{opacity:1;transform:none;filter:none}}
+@keyframes nueBodyDissolve{0%,100%{opacity:1;transform:scale(1);filter:none}28%,68%{opacity:0;transform:scaleX(.25) skewY(-9deg);filter:blur(6px)}86%{opacity:.8;transform:scaleX(.75) skewY(3deg);filter:blur(1px)}}
+@keyframes nueBodyBecome{0%,100%{opacity:0;transform:scaleX(.2) skewY(-14deg);filter:blur(9px)}35%,62%{opacity:1;transform:scale(1);filter:none}82%{opacity:0;transform:scaleX(.25) skewY(8deg);filter:blur(6px)}}
 @keyframes nueSmokeCurl{0%{opacity:0;transform:translateY(24px) scale(.3)}35%{opacity:.9}100%{opacity:0;transform:translateY(-35px) scale(1.5) rotate(120deg)}}
 @keyframes shouLaserSweep{0%{opacity:0;scale:0 1}22%{opacity:1;scale:1 1.5}65%{opacity:1;scale:1 1}100%{opacity:0;scale:1 .1}}
 @keyframes shouGild{0%{opacity:0;filter:hue-rotate(90deg)}20%{opacity:.75;filter:hue-rotate(45deg)}45%{opacity:1;filter:none}100%{opacity:0;filter:none}}
@@ -2325,43 +2325,102 @@ body.mobile-landscape #winner-box h2{font-size:24px;}
 @media(orientation:landscape) and (max-height:600px){#modal-box.chimera-mode{padding:10px}#modal-box.chimera-mode h3{margin-bottom:8px}.chimera-option{display:grid;grid-template-columns:minmax(80px,38%) minmax(0,1fr);grid-template-rows:auto 1fr auto;gap:6px;padding:8px;align-items:start}.chimera-card{grid-column:1;grid-row:1/4}.chimera-option .board-card{width:100%;max-height:calc(100dvh - 110px);font-size:11px}.chimera-option .chimera-ability{grid-column:2;font-size:14px}.chimera-description{grid-column:2;font-size:12px}.chimera-actions{grid-column:2;flex-direction:row;gap:4px}.chimera-actions .modal-opt{font-size:12px;padding:7px 5px}}
 @media(prefers-reduced-motion:reduce){.nue-body-illusion,.shou-blue-laser,.shou-gold-wash,.byakuren-fist-flight,.byakuren-impact{display:none!important}.discard-vanish.ability-byakuren,.murasa-restriction-vortex,.murasa-restriction-vortex .water-ripples{animation:none}.seat.murasa-caught .avatar{transition:none}}
 
+/* The title is a quiet tabletop; this layer leaves the playing table to its own theme. */
+:root{--title-wood:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22900%22%20height%3D%22420%22%20viewBox%3D%220%200%20900%20420%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22wood%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%238b603d%22%2F%3E%3Cstop%20offset%3D%22.5%22%20stop-color%3D%22%23785134%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2370472d%22%2F%3E%3C%2FlinearGradient%3E%3Cfilter%20id%3D%22grain%22%20x%3D%220%22%20y%3D%220%22%20width%3D%22100%25%22%20height%3D%22100%25%22%3E%3CfeTurbulence%20type%3D%22fractalNoise%22%20baseFrequency%3D%22.008%20.56%22%20numOctaves%3D%223%22%20seed%3D%2224%22%20stitchTiles%3D%22stitch%22%2F%3E%3CfeColorMatrix%20type%3D%22saturate%22%20values%3D%220%22%2F%3E%3CfeComponentTransfer%3E%3CfeFuncR%20type%3D%22linear%22%20slope%3D%22.44%22%20intercept%3D%22.09%22%2F%3E%3CfeFuncG%20type%3D%22linear%22%20slope%3D%22.3%22%20intercept%3D%22.06%22%2F%3E%3CfeFuncB%20type%3D%22linear%22%20slope%3D%22.18%22%20intercept%3D%22.035%22%2F%3E%3CfeFuncA%20type%3D%22linear%22%20slope%3D%22.55%22%2F%3E%3C%2FfeComponentTransfer%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Crect%20width%3D%22900%22%20height%3D%22420%22%20fill%3D%22url(%23wood)%22%2F%3E%3Crect%20y%3D%22104%22%20width%3D%22900%22%20height%3D%22104%22%20fill%3D%22%239e734d%22%20opacity%3D%22.2%22%2F%3E%3Crect%20y%3D%22210%22%20width%3D%22900%22%20height%3D%22104%22%20fill%3D%22%2347301e%22%20opacity%3D%22.12%22%2F%3E%3Crect%20width%3D%22900%22%20height%3D%22420%22%20filter%3D%22url(%23grain)%22%20opacity%3D%22.7%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23382014%22%20stroke-opacity%3D%22.2%22%3E%3Cpath%20d%3D%22M-30%2028Q90%2017%20230%2031T490%2026T940%2029M-40%2042Q94%2054%20250%2044T554%2043T940%2050M-30%2076Q180%2071%20360%2083T690%2076T940%2084M-30%20123Q200%20139%20398%20131T695%20126T940%20133M-20%20159Q163%20146%20298%20161T620%20154T940%20161M-20%20191Q145%20196%20392%20187T712%20195T940%20188M-20%20238Q166%20232%20331%20242T630%20235T940%20243M-30%20278Q150%20295%20292%20279T581%20278T940%20289M-30%20302Q166%20292%20331%20306T637%20305T940%20298M-30%20343Q235%20359%20442%20346T731%20351T940%20350M-30%20384Q95%20379%20293%20390T612%20381T940%20393M-30%20403Q109%20411%20319%20401T578%20410T940%20404%22%2F%3E%3Cellipse%20cx%3D%22710%22%20cy%3D%22167%22%20rx%3D%2263%22%20ry%3D%229%22%2F%3E%3Cellipse%20cx%3D%22710%22%20cy%3D%22167%22%20rx%3D%2239%22%20ry%3D%225%22%2F%3E%3Cellipse%20cx%3D%22710%22%20cy%3D%22167%22%20rx%3D%2214%22%20ry%3D%222.5%22%2F%3E%3Cpath%20d%3D%22M315%20248Q373%20244%20409%20251T485%20252M286%20254Q374%20240%20418%20252T515%20255%22%2F%3E%3C%2Fg%3E%3Cg%20stroke%3D%22%23291c14%22%20stroke-width%3D%222%22%20opacity%3D%22.4%22%3E%3Cpath%20d%3D%22M0%20104H900M0%20210H900M0%20314H900%22%2F%3E%3C%2Fg%3E%3Cg%20stroke%3D%22%23c59362%22%20stroke-opacity%3D%22.22%22%3E%3Cpath%20d%3D%22M0%20106H900M0%20212H900M0%20316H900M0%2021Q160%2015%20317%2022T635%2019T900%2024M0%20365Q213%20369%20421%20364T900%20372%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E")}
+#title-table{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;background-color:#6a442b;background-image:radial-gradient(ellipse at 42% 24%,#ffd28a29 0%,transparent 58%),radial-gradient(ellipse at center,transparent 35%,#170c0a99 100%),var(--title-wood);background-size:cover,cover,900px 420px}
+#title-table::after{content:'';position:absolute;inset:0;box-shadow:inset 0 0 100px #160e0a66;pointer-events:none}
+body:has(#game.active) #title-table{display:none}
+body:not(:has(#game.active)){padding:24px;background:#593921;min-height:100dvh}
+body:not(:has(#game.active))>.stars,body:not(:has(#game.active)) #app>header.top{display:none}
+body:not(:has(#game.active)) #app{min-height:calc(100dvh - 48px);display:grid;place-items:center;max-width:none}
+.table-scatter-card{position:absolute;left:var(--table-x);top:var(--table-y);width:clamp(132px,13vw,188px);aspect-ratio:3/4;transform:translate(-50%,-50%) rotate(var(--table-angle));filter:drop-shadow(4px 9px 5px #170d0b7a);animation:tableCardSettle .65s ease-out both;animation-delay:var(--table-delay,0s)}
+.table-scatter-card .board-card{width:100%;height:100%;padding:9px;border:3px solid #e7d6b8;border-radius:8px;box-shadow:inset 0 0 0 1px #fff5df66,1px 2px 0 #aa8b65;pointer-events:none}
+.table-scatter-card .board-card .cname{font-size:clamp(13px,1.25vw,18px);text-shadow:0 2px 3px #080510}
+.table-scatter-card .board-card .icon-row{font-size:20px}
+.table-scatter-card .board-card .icon-row img{width:30px;height:30px;object-fit:contain}
+.table-card-back{height:100%;display:grid;place-items:center;border:5px solid #e8d9bf;border-radius:8px;color:#dac08c;background:repeating-linear-gradient(45deg,#cda26c18 0 1px,transparent 1px 10px),repeating-linear-gradient(-45deg,#cda26c18 0 1px,transparent 1px 10px),#34213c;box-shadow:inset 0 0 0 2px #c1a36c,1px 2px 0 #aa8b65}
+.table-card-back span{display:grid;place-items:center;width:70%;aspect-ratio:1;border:1px solid #b59660;border-radius:50%;font-size:46px;background:#34213c;box-shadow:0 0 0 7px #34213c,0 0 0 8px #b5966055}
+#setup.menu-paper{--ink:#423021;--muted:#80634e;--gold:#775020;--sakura:#80513e;--line:#c9b395;--bg-panel-2:#f4e5cd;position:relative;width:min(100%,600px);max-width:600px;margin:0;padding:34px 36px 24px;isolation:isolate;border:1px solid #d5ba8c;border-radius:3px;color:var(--ink);background:radial-gradient(ellipse at 40% 0%,#fff9e9aa,transparent 65%),repeating-linear-gradient(3deg,#69401b03 0 1px,transparent 1px 5px),#eedfc2;box-shadow:0 18px 50px #190e0b6b,2px 3px 0 #b89c73,inset 0 0 0 7px #f6ead3,inset 0 0 0 8px #c2a77355}
+.menu-intro{margin-bottom:25px}
+.menu-intro .menu-kicker{font:600 12px 'Cinzel',serif;letter-spacing:.16em;margin:0 0 12px;color:#886444}
+.menu-intro .menu-japanese{display:block;margin-bottom:7px;font:600 20px 'Noto Serif JP',serif;letter-spacing:.32em;color:#9c573d}
+.menu-intro h1{font-size:clamp(29px,4.2vw,43px);line-height:1.12;letter-spacing:-.035em;margin:0;color:#40291e;text-shadow:0 1px #fff7e4;text-wrap:balance}
+.menu-divider{display:flex;align-items:center;gap:14px;margin:16px 20% 13px;color:#96724b;font-size:20px}
+.menu-divider::before,.menu-divider::after{content:'';height:1px;background:#b69a6d;flex:1}
+.menu-intro .menu-description{margin:0;color:#74583f;font-size:13px;line-height:1.6}
+.menu-settings{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:24px}
+.menu-setting{border:0;margin:0;padding:0;min-width:0}
+.menu-setting legend{float:none;width:100%;margin-bottom:10px;padding:0;color:#735337;font-size:13px;font-weight:700}
+#setup .menu-setting .opts{gap:5px;margin:0;flex-wrap:nowrap}
+#setup .menu-setting .pill-btn{flex:1;min-width:0;padding:10px 6px;font-size:13px;white-space:nowrap;border-radius:5px;background:#fbf1df66;border-color:#b89d7888;box-shadow:0 1px 0 #fff4dc}
+#setup .menu-setting .pill-btn.selected{background:#694934;color:#fff1d3;border-color:#694934;box-shadow:0 2px 5px #51301e2b}
+#setup .pill-btn:hover{border-color:#8c5e35;color:#59371e}
+#setup .menu-setting .pill-btn.selected:hover{color:#fff1d3;background:#7d563b}
+#setup button:focus-visible{outline:3px solid #97653f;outline-offset:3px}
+.menu-actions{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:stretch}
+#setup #start-btn{padding:13px 18px;background:linear-gradient(135deg,#9b5239,#733c2b);color:#fff2d6;border:1px solid #663424;border-radius:5px;box-shadow:0 3px 0 #542b1e,0 6px 12px #61381f26;font-size:15px}
+#setup #tutorial-start{padding:12px 15px;font-size:13px;border-radius:5px;background:#f8ecd5;border-color:#ba9c74;color:#61452e}
+.menu-advanced{margin-top:18px}
+#setup #customize-toggle{font-size:12px;padding:5px 9px;border:0;border-radius:4px;background:transparent;color:#8b6c52;box-shadow:none}
+#setup #customize-toggle.selected{background:#d9c4a2;color:#513824}
+#setup #custom-hand-picker{padding-top:14px;border-top:1px solid #ccb38b}
+#setup #custom-hand-grid{max-height:min(300px,45dvh)!important}
+.menu-footnote{margin:12px 0 0;font-size:11px;color:#8c6c4e;letter-spacing:.025em}
+@keyframes tableCardSettle{from{opacity:0;transform:translate(-50%,calc(-50% - 10px)) rotate(calc(var(--table-angle) - 3deg))}to{opacity:1;transform:translate(-50%,-50%) rotate(var(--table-angle))}}
+@media(max-width:560px){body:not(:has(#game.active)){padding:18px}body:not(:has(#game.active)) #app{min-height:calc(100dvh - 36px)}#setup.menu-paper{padding:28px 23px 22px}.menu-settings{gap:8px}.menu-setting legend{font-size:12px}#setup .menu-setting .pill-btn{font-size:12px;padding:10px 4px}.table-scatter-card{width:140px}.menu-actions{grid-template-columns:1fr}#setup #tutorial-start{padding:10px}.menu-intro{margin-bottom:22px}}
+@media(max-width:520px){.menu-settings{grid-template-columns:1fr;gap:12px}.menu-setting{display:grid;grid-template-columns:82px 1fr;align-items:center}.menu-setting legend{display:contents}}
+@media(max-width:360px){#setup.menu-paper{padding:25px 18px 20px}.menu-settings{grid-template-columns:1fr;gap:14px}.menu-setting{display:grid;grid-template-columns:68px 1fr;align-items:center}.menu-setting legend{display:contents}.menu-intro .menu-description{font-size:12px}}
+@media(orientation:landscape) and (max-height:600px){body:not(:has(#game.active)){padding:12px}body:not(:has(#game.active)) #app{min-height:calc(100dvh - 24px)}#setup.menu-paper{width:min(100%,710px);max-width:710px;padding:18px 26px 16px}.menu-intro{margin-bottom:16px}.menu-intro .menu-kicker{margin-bottom:5px;font-size:10px}.menu-intro .menu-japanese{font-size:14px;margin-bottom:4px}.menu-intro h1{font-size:30px}.menu-divider{display:none}.menu-intro .menu-description{margin-top:8px;font-size:12px}.menu-settings{margin-bottom:16px}.menu-setting legend{margin-bottom:6px}#setup .menu-setting .pill-btn{padding:8px 6px}.menu-actions{grid-template-columns:1fr auto}.menu-advanced{margin-top:10px}.menu-footnote{margin-top:5px}.table-scatter-card{width:142px}}
+@media(orientation:landscape) and (max-height:600px) and (max-width:520px){#setup.menu-paper{padding:14px 16px}.menu-intro .menu-japanese,.menu-intro .menu-kicker,.menu-footnote{display:none}.menu-intro h1{font-size:25px}.menu-intro .menu-description{font-size:11px;line-height:1.35}.menu-intro{margin-bottom:10px}.menu-settings{gap:6px;margin-bottom:10px}#setup .menu-setting .pill-btn{padding:6px}.menu-actions #start-btn,.menu-actions #tutorial-start{padding:9px;font-size:12px}.menu-advanced{margin-top:6px}}
+@media(prefers-reduced-motion:reduce){.table-scatter-card{animation:none}}
+
 </style>
 </head>
 <body>
 <div class="crown-backdrop" id="crown-backdrop-a" aria-hidden="true"></div>
 <div class="crown-backdrop" id="crown-backdrop-b" aria-hidden="true"></div>
 <div class="stars"></div>
+<div id="title-table" aria-hidden="true"><div id="title-table-cards"></div></div>
 <div id="app">
   <header class="top">
     <h1>幻想郷 · Boundary of Fates</h1>
     <p>A Touhou faction-claiming board game — play against spellcard-slinging AI opponents.</p>
   </header>
 
-  <div id="setup">
-    <h2>Gather your party</h2>
-    <p style="color:var(--muted); font-size:0.88rem;">Choose how many players sit at the table. You control the first seat; the rest are played by AI.</p>
-    <div class="opts" id="player-count-opts">
-      <button class="pill-btn" data-n="2">2 Players</button>
-      <button class="pill-btn selected" data-n="3">3 Players</button>
-      <button class="pill-btn" data-n="4">4 Players</button>
+  <div id="setup" class="menu-paper">
+    <div class="menu-intro">
+      <p class="menu-kicker">A Touhou board game</p>
+      <h1><span class="menu-japanese" lang="ja">幻想郷</span>Boundary of Fates</h1>
+      <div class="menu-divider" aria-hidden="true"><span>☯</span></div>
+      <p class="menu-description">Claim factions. Trade at Kourindou. Make your move.<br>You take the first seat. The other seats are AI.</p>
     </div>
-
-    <p style="color:var(--muted); font-size:0.88rem;">Board size:</p>
-    <div class="opts" id="board-size-opts">
-      <button class="pill-btn selected" data-size="4">4×4 (standard)</button>
-      <button class="pill-btn" data-size="5">5×5 (more room)</button>
+    <div class="menu-settings">
+      <fieldset class="menu-setting"><legend>Players</legend>
+        <div class="opts" id="player-count-opts">
+          <button class="pill-btn" data-n="2" aria-label="2 players" aria-pressed="false">2</button>
+          <button class="pill-btn selected" data-n="3" aria-label="3 players" aria-pressed="true">3</button>
+          <button class="pill-btn" data-n="4" aria-label="4 players" aria-pressed="false">4</button>
+        </div>
+      </fieldset>
+      <fieldset class="menu-setting"><legend>Board size</legend>
+        <div class="opts" id="board-size-opts">
+          <button class="pill-btn selected" data-size="4" aria-pressed="true">4×4</button>
+          <button class="pill-btn" data-size="5" aria-pressed="false">5×5</button>
+        </div>
+      </fieldset>
+      <fieldset class="menu-setting"><legend>AI difficulty</legend>
+        <div class="opts" id="ai-difficulty-opts">
+          <button class="pill-btn" data-difficulty="easy" aria-pressed="false">Easy</button>
+          <button class="pill-btn" data-difficulty="normal" aria-pressed="false">Normal</button>
+          <button class="pill-btn selected" data-difficulty="hard" aria-pressed="true">Hard</button>
+        </div>
+      </fieldset>
     </div>
-
-    <p style="color:var(--muted); font-size:0.88rem;">AI difficulty:</p>
-    <div class="opts" id="ai-difficulty-opts" role="group" aria-label="AI difficulty">
-      <button class="pill-btn" data-difficulty="easy" aria-pressed="false">Easy</button>
-      <button class="pill-btn" data-difficulty="normal" aria-pressed="false">Normal</button>
-      <button class="pill-btn selected" data-difficulty="hard" aria-pressed="true">Hard</button>
+    <div class="menu-actions">
+      <button class="big-btn" id="start-btn" type="button">Begin the Game</button>
+      <button class="pill-btn" id="tutorial-start" type="button">Learn to Play</button>
     </div>
-    <div class="opts">
-      <button class="pill-btn" id="customize-toggle">🛠️ Customize My Starting Hand (playtest)</button>
-    </div>
-
+    <div class="menu-advanced"><button class="pill-btn" id="customize-toggle" type="button">Customize starting hand</button></div>
     <div id="custom-hand-picker" style="display:none; text-align:left; margin-top:14px;">
       <p style="color:var(--sakura); font-size:0.85rem; text-align:center;">
         Pick exactly 6 cards for your opening hand — <span id="custom-hand-count">0</span>/6 selected
@@ -2369,11 +2428,7 @@ body.mobile-landscape #winner-box h2{font-size:24px;}
       <div id="custom-hand-grid" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center; max-height:360px; overflow-y:auto; padding:6px;"></div>
     </div>
 
-    <div class="tutorial-options" aria-label="Optional tutorial">
-      <button class="pill-btn" id="tutorial-start" type="button">Learn to Play</button>
-    </div>
-    <button class="big-btn" id="start-btn" style="margin-top:18px;">Begin the Incident</button>
-
+    <p class="menu-footnote">The table is ready.</p>
   </div>
 
   <div id="game">
@@ -2610,7 +2665,7 @@ CARDS.push(
   {id:'temple_shou',faction:'temple',name:'Toramaru Shou',cost1:true,
     desc:'[Cost I] Placed: Draw a card for each wasteland on the board, then clear all wasteland.'},
   {id:'temple_nue',faction:'temple',name:'Houjuu Nue',
-    desc:'Placed: Choose an ability from three random cards. This card takes an illusory form and uses that ability.'},
+    desc:'Placed: Choose an ability from three random cards. Briefly take its appearance and use its ability.'},
   {id:'temple_murasa',faction:'temple',name:'Murasa Minamitu',
     desc:'Placed: Choose a player. They cannot place cards or trade on their next two turns.'},
   {id:'temple_ichirin',faction:'temple',name:'Kumoi Ichirin',shopExpansion:true,cost2:true,
@@ -5392,7 +5447,7 @@ function illusionPortraitLayers(id){
 }
 function illusionCardStyle(cardId){
   const borrowed=game?.borrowedAbilities?.[cardId];
-  if(!borrowed || !game.isOnBoard(cardId))return '';
+  if(!borrowed || !(game.uiEffects?.nueMorphUntil?.[cardId]>Date.now()) || !game.isOnBoard(cardId))return '';
   const layers=illusionPortraitLayers(borrowed);if(!layers.length)return '';
   const portraits=(borrowed==='temple_ichirin' ? layers.slice().reverse() : layers).map(url=>`url('${url}')`);
   const background=cardId==='sage_matara' ? 'var(--sage-matara-bg)' : 'var(--temple-bg)';
@@ -5428,7 +5483,12 @@ function showNueBodyIllusion({r,c,fromId,toId}){
   animation.add(ghost);face.classList.add('nue-morph-hidden');
   animation.cleanup(()=>{
     if(owner.uiEffects?.nueMorphUntil?.[fromId]===until)delete owner.uiEffects.nueMorphUntil[fromId];
-    if(game===owner)document.querySelectorAll('.nue-morph-hidden').forEach(node=>node.classList.remove('nue-morph-hidden'));
+    if(game===owner){
+      syncIllusionFace(face,fromId);
+      document.querySelectorAll('.nue-morph-hidden,.card-art-illusion').forEach(node=>{
+        if(node.parentElement?.dataset.cardId===fromId)syncIllusionFace(node,fromId);
+      });
+    }
   });
   return animation;
 }
@@ -5961,13 +6021,7 @@ function openCardDetails(cardId,{followReference=false}={}){
   portrait.className = 'card-detail-portrait';
   portrait.replaceChildren();
   const inHand=game && game.players.some(p=>p.hand.includes(cardId));
-  const illusoryBody=game?.borrowedAbilities?.[cardId] && game.isOnBoard(cardId) ? game.borrowedAbilities[cardId] : null;
-  if(illusoryBody && illusionPortraitLayers(illusoryBody).length){
-    portrait.classList.add('illusory-body');
-    if(illusoryBody==='temple_ichirin')portrait.classList.add('ichirin-stand');
-    if(illusoryBody==='sage_mai_satono')portrait.classList.add('dual-dancers');
-    for(const url of illusionPortraitLayers(illusoryBody)){const artwork=document.createElement('img');artwork.src=url;artwork.alt=CARD[illusoryBody].name;portrait.appendChild(artwork);}
-  }else if(cardId==='sage_mai_satono' && KOURINDOU_PORTRAITS.sage_satono && KOURINDOU_PORTRAITS.sage_mai){
+  if(cardId==='sage_mai_satono' && KOURINDOU_PORTRAITS.sage_satono && KOURINDOU_PORTRAITS.sage_mai){
     portrait.classList.add('dual-dancers');
     for(const [name,url] of [['Satono',KOURINDOU_PORTRAITS.sage_satono],['Mai',KOURINDOU_PORTRAITS.sage_mai]]){
       const artwork=document.createElement('img');
@@ -8356,11 +8410,27 @@ el('draw-btn').addEventListener('click', async () => {
 });
 
 /* ---------- Setup screen wiring ---------- */
+function renderTitleTableCards(){
+  const host=el('title-table-cards');host.replaceChildren();
+  const scattered=[
+    ['sdm_remilia',12,23,-17],['marisa',20,63,12],['sage_yukari',7,83,-9],
+    ['haku_yuyuko',86,19,16],['temple_byakuren',82,59,-12],['heaven_tenshi',95,82,14],
+    [null,35,96,-11],[null,67,95,15],['shop_rinnosuke',74,-2,-7]
+  ];
+  scattered.forEach(([id,x,y,angle],index)=>{
+    const card=document.createElement('div');card.className='table-scatter-card';
+    card.style.setProperty('--table-x',`${x}%`);card.style.setProperty('--table-y',`${y}%`);
+    card.style.setProperty('--table-angle',`${angle}deg`);card.style.setProperty('--table-delay',`${index*.04}s`);
+    card.innerHTML=id ? cardBoardHtml(id) : '<div class="table-card-back"><span>☯</span></div>';
+    host.appendChild(card);
+  });
+}
 let chosenPlayerCount = 3;
 document.querySelectorAll('#player-count-opts .pill-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('#player-count-opts .pill-btn').forEach(b=>b.classList.remove('selected'));
+    document.querySelectorAll('#player-count-opts .pill-btn').forEach(b=>{b.classList.remove('selected');b.setAttribute('aria-pressed','false');});
     btn.classList.add('selected');
+    btn.setAttribute('aria-pressed','true');
     chosenPlayerCount = parseInt(btn.dataset.n,10);
   });
 });
@@ -8377,8 +8447,9 @@ document.querySelectorAll('#ai-difficulty-opts .pill-btn').forEach(btn=>{
 let chosenBoardSize = 4;
 document.querySelectorAll('#board-size-opts .pill-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('#board-size-opts .pill-btn').forEach(b=>b.classList.remove('selected'));
+    document.querySelectorAll('#board-size-opts .pill-btn').forEach(b=>{b.classList.remove('selected');b.setAttribute('aria-pressed','false');});
     btn.classList.add('selected');
+    btn.setAttribute('aria-pressed','true');
     chosenBoardSize = parseInt(btn.dataset.size,10);
   });
 });
@@ -8421,7 +8492,7 @@ function updateStartButtonState(){
     startBtn.textContent = `Select ${6 - customSelected.size} more card${6 - customSelected.size===1?'':'s'}…`;
   } else {
     startBtn.disabled = false;
-    startBtn.textContent = 'Begin the Incident';
+    startBtn.textContent = 'Begin the Game';
   }
 }
 
@@ -8918,6 +8989,7 @@ el('start-btn').addEventListener('click', () => {
 el('restart-btn').addEventListener('click', startNewGame);
 el('main-menu-btn').addEventListener('click',returnToMainMenu);
 el('winner-menu-btn').addEventListener('click',returnToMainMenu);
+renderTitleTableCards();
 
 </script>
 </body>

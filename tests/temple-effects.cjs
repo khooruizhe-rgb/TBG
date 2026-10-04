@@ -73,7 +73,7 @@ function setup(size=5){A.clearMindEffects();timers.clear();now=1000;reduced=fals
  el('board').replaceChildren();el('kourindou').replaceChildren();
  for(let r=0;r<size;r++)for(let c=0;c<size;c++){const tile=new Element('div',{left:300+c*78,top:80+r*99,width:70,height:92});tile.className='cell';tile.dataset={r:String(r),c:String(c)};el('board').appendChild(tile);}
  A.renderPlayers();for(const [i,s]of el('seats').children.entries()){s.rect={left:i===1?930:50,top:i===2?650:45,width:190,height:110};s.children.forEach(n=>n.rect={...s.rect});}return g;}
-function place(g,r,c,id){g.setCardAt(r,c,id);const tile=el('board').children[r*g.board.length+c];tile.innerHTML=A.cardBoardHtml(id);return tile.querySelector('.board-card');}
+function place(g,r,c,id){g.setCardAt(r,c,id);const tile=el('board').children[r*g.board.length+c];tile.dataset.cardId=id;tile.innerHTML=A.cardBoardHtml(id);return tile.querySelector('.board-card');}
 const tests=[],test=(n,f)=>tests.push([n,f]);
 test('Hand placement selection keeps every shop card visible while highlighting Rinnosuke',()=>{
  const g=setup();g.shopCards=['shop_rinnosuke','sdm_meiling','hourai_tewi','hell_kutaka'];A.renderShop();const tiles=el('kourindou').children;
@@ -100,11 +100,22 @@ test('The bigger Nue chooser displays three descriptions, supports inspection an
  options[2].querySelector('.chimera-use').click();assert.equal(await chosen,ids[2]);assert(!el('modal-box').classList.contains('chimera-mode'));assert(!el('modal-overlay').classList.contains('show'));
  assert(html.includes('#modal-options.chimera-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))'));assert(html.includes('max-width:940px'));
 });
-test('Nue changes her visible body while preserving card identity and finishes before the next interface',async()=>{
+test('Nue briefly changes her visible body, restores her own portrait and retains the chosen ability',async()=>{
  const g=setup(),face=place(g,1,1,'temple_nue');g.borrowedAbilities.temple_nue='sdm_patchouli';const animation=A.showNueBodyIllusion({r:1,c:1,fromId:'temple_nue',toId:'sdm_patchouli'});
  A.syncIllusionFace(face,'temple_nue');assert(face.classList.contains('nue-morph-hidden'));assert(face.classList.contains('card-art-illusion'));assert(face.values.get('--illusion-images').includes('patchouli.webp'));assert.equal(g.cardAt(1,1),'temple_nue');
  const ghost=document.querySelectorAll('.nue-body-illusion')[0];assert.equal(ghost.querySelector('.illusion-form').children[0].src,'patchouli.webp');assert.equal(ghost.querySelector('.illusion-original').style.backgroundImage,'url(original-portrait)');
- let finished=false;animation.finished.then(()=>finished=true);await advance(1149);assert(!finished);await advance(1);assert(finished);assert(!face.classList.contains('nue-morph-hidden'));assert(face.classList.contains('card-art-illusion'));assert.equal(document.querySelectorAll('.nue-body-illusion').length,0);
+ let finished=false;animation.finished.then(()=>finished=true);await advance(1149);assert(!finished);await advance(1);assert(finished);assert(!face.classList.contains('nue-morph-hidden'));assert(!face.classList.contains('card-art-illusion'));assert(!face.values.has('--illusion-images'));assert.equal(A.illusionCardStyle('temple_nue'),'');assert.equal(g.abilityId('temple_nue'),'sdm_patchouli');assert.equal(document.querySelectorAll('.nue-body-illusion').length,0);
+ A.renderBoard();assert(!face.classList.contains('card-art-illusion'));assert(!A.cardBoardHtml('temple_nue').includes('--illusion-images'));
+});
+test('A borrowed passive or expired transformation never permanently changes Nue’s portrait',()=>{
+ const g=setup(),face=place(g,1,1,'temple_nue');g.borrowedAbilities.temple_nue='sage_kasen';A.syncIllusionFace(face,'temple_nue');assert(!face.classList.contains('card-art-illusion'));assert.equal(A.illusionCardStyle('temple_nue'),'');assert(g.isWildActive('temple_nue'));
+ g.uiEffects={nueMorphUntil:{temple_nue:now-1}};A.syncIllusionFace(face,'temple_nue');assert(!face.classList.contains('card-art-illusion'));assert(g.isWildActive('temple_nue'));
+});
+test('One brief transformation finishing does not clear another caster’s transformation',async()=>{
+ const g=setup(),nue=place(g,1,1,'temple_nue'),matara=place(g,1,2,'sage_matara');g.borrowedAbilities.temple_nue='sdm_patchouli';g.borrowedAbilities.sage_matara='temple_ichirin';
+ const first=A.showNueBodyIllusion({r:1,c:1,fromId:'temple_nue',toId:'sdm_patchouli'});A.syncIllusionFace(nue,'temple_nue');await advance(300);
+ const second=A.showNueBodyIllusion({r:1,c:2,fromId:'sage_matara',toId:'temple_ichirin'});A.syncIllusionFace(matara,'sage_matara');await advance(850);assert.equal(await first.finished,true);assert(!nue.classList.contains('card-art-illusion'));assert(matara.classList.contains('nue-morph-hidden'));assert(matara.classList.contains('card-art-illusion'));
+ await advance(300);assert.equal(await second.finished,true);assert(!matara.classList.contains('nue-morph-hidden'));assert(!matara.classList.contains('card-art-illusion'));assert.equal(g.abilityId('sage_matara'),'temple_ichirin');
 });
 test('Nue reset restores the real body and cannot keep the next match hidden',async()=>{
  const g=setup(),face=place(g,1,1,'temple_nue');g.borrowedAbilities.temple_nue='temple_ichirin';const animation=A.showNueBodyIllusion({r:1,c:1,fromId:'temple_nue',toId:'temple_ichirin'});
