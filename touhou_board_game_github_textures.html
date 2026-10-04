@@ -2294,16 +2294,15 @@ body.mobile-landscape #winner-box h2{font-size:24px;}
 .nue-illusion-smoke{position:absolute;width:75%;height:45%;left:12.5%;top:30%;border-radius:50%;background:radial-gradient(ellipse,#f8eaff90,#9572c27d 32%,transparent 70%);filter:blur(7px);animation:nueSmokeCurl 1.1s ease-in-out both}
 .nue-illusion-smoke:nth-last-child(2){top:8%;animation-delay:80ms;rotate:80deg}
 .nue-illusion-smoke:last-child{top:58%;rotate:-50deg;animation-delay:40ms}
-.cell.shou-gold{background:linear-gradient(135deg,#fff1a4 0%,#dfb646 27%,#fff0a2 47%,#b88d29 72%,#e9c763 100%);border-color:#d6b254;box-shadow:inset 0 0 0 1px #fff1bd75,inset 0 2px 10px #72531155}
+.cell.shou-clearing>.board-card{position:relative;z-index:2}
 .shou-blue-laser{position:fixed;pointer-events:none;z-index:83;height:12px;transform-origin:0 50%;animation:shouLaserSweep .8s ease-out both;border-radius:50%;background:linear-gradient(0deg,#168bef00,#208ef9,#e8ffff,#208ef9,#168bef00);box-shadow:0 0 13px #39baff,0 0 27px #497bff88}
-.shou-gold-wash{position:fixed;pointer-events:none;z-index:81;border-radius:9px;background:linear-gradient(125deg,#77d6ff33,#fffbc1e8,#d9a63ad9);box-shadow:inset 0 0 0 2px #f5da73,0 0 22px #eac65780;animation:shouGild 1.05s ease-out both}
-.murasa-submerged{visibility:hidden!important}
-.murasa-sinking-player{position:fixed;pointer-events:none;z-index:84;overflow:hidden;animation:murasaSink 1.7s cubic-bezier(.38,.12,.7,.85) both;transform-origin:50% 100%}
-.murasa-sinking-player>.seat{position:static!important;inset:auto!important;transform:none!important;width:100%!important;max-width:none!important;height:100%;margin:0;visibility:visible!important}
-.murasa-vortex{position:fixed;pointer-events:none;z-index:87;overflow:visible;animation:murasaWaterOpen 1.85s ease-out both}
-.murasa-vortex svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 9px #35b6de88)}
-.murasa-vortex .vortex-swirl{transform-origin:50% 50%;animation:murasaWaterSpin 1.85s linear both}
-.murasa-vortex .vortex-mist{fill:#94efff;opacity:.65}
+.shou-gold-wash{position:absolute;inset:0;pointer-events:none;z-index:1;border-radius:inherit;background:linear-gradient(135deg,#fff1a4,#dfb646 27%,#fff0a2 47%,#b88d29 72%,#e9c763);box-shadow:inset 0 0 0 2px #f5da73,0 0 16px #eac65780;animation:shouGild 1.05s ease-out both}
+.seat.murasa-caught .avatar{clip-path:inset(0 0 12% 0)}
+.murasa-restriction-vortex{position:fixed;pointer-events:none;z-index:87;overflow:visible;animation:murasaWaterAppear .65s ease-out both}
+.murasa-restriction-vortex svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 9px #35b6de88)}
+.murasa-restriction-vortex .vortex-swirl{transform-origin:50% 50%;animation:murasaWaterSpin 4s linear infinite}
+.murasa-restriction-vortex .vortex-mist{fill:#94efff;opacity:.65}
+.murasa-restriction-vortex.murasa-vortex-leaving{animation:murasaWaterLeave .5s ease-out both}
 .byakuren-fist-flight{position:fixed;pointer-events:none;z-index:88;width:76px;height:64px;animation:byakurenPunch .62s cubic-bezier(.25,.7,.25,1) both;transform-origin:50% 50%}
 .byakuren-fist-flight svg{width:100%;height:100%;filter:drop-shadow(0 3px 4px #1f0c26b0)}
 .byakuren-impact{position:fixed;pointer-events:none;z-index:85;animation:byakurenImpact .85s ease-out both;overflow:visible}
@@ -2316,15 +2315,15 @@ body.mobile-landscape #winner-box h2{font-size:24px;}
 @keyframes nueSmokeCurl{0%{opacity:0;transform:translateY(24px) scale(.3)}35%{opacity:.9}100%{opacity:0;transform:translateY(-35px) scale(1.5) rotate(120deg)}}
 @keyframes shouLaserSweep{0%{opacity:0;scale:0 1}22%{opacity:1;scale:1 1.5}65%{opacity:1;scale:1 1}100%{opacity:0;scale:1 .1}}
 @keyframes shouGild{0%{opacity:0;filter:hue-rotate(90deg)}20%{opacity:.75;filter:hue-rotate(45deg)}45%{opacity:1;filter:none}100%{opacity:0;filter:none}}
-@keyframes murasaSink{0%{opacity:1;transform:none;clip-path:inset(0)}25%{transform:translateY(10%) rotate(-3deg) scale(.96);clip-path:inset(0)}70%{opacity:.8;transform:translateY(65%) rotate(10deg) scale(.6);clip-path:inset(0 0 45% 0)}100%{opacity:0;transform:translateY(93%) rotate(28deg) scale(.25);clip-path:inset(0 0 100% 0)}}
-@keyframes murasaWaterOpen{0%{opacity:0;scale:.25}20%,75%{opacity:1;scale:1}100%{opacity:0;scale:.6}}
+@keyframes murasaWaterAppear{from{opacity:0;scale:.25}to{opacity:1;scale:1}}
+@keyframes murasaWaterLeave{from{opacity:1;scale:1}to{opacity:0;scale:.6}}
 @keyframes murasaWaterSpin{to{transform:rotate(540deg)}}
 @keyframes byakurenPunch{0%{opacity:0;transform:translate(0,0) rotate(var(--punch-angle)) scale(.7)}12%{opacity:1}58%{opacity:1;transform:translate(var(--punch-x),var(--punch-y)) rotate(var(--punch-angle)) scale(1.2)}100%{opacity:0;transform:translate(var(--punch-x),var(--punch-y)) rotate(var(--punch-angle)) scale(1.05)}}
 @keyframes byakurenImpact{0%{opacity:0;transform:scale(.4)}15%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.7)}}
 @keyframes byakurenDiscardFlight{0%{opacity:1;transform:none}14%{opacity:1;transform:translate(8px,-12px) rotate(-8deg) scale(.98)}48%{opacity:1;transform:translate(calc(var(--hit-fly-x)*.48),calc(var(--hit-fly-y)*.48 - 38px)) rotate(16deg) scale(.73)}100%{opacity:0;transform:translate(var(--hit-fly-x),var(--hit-fly-y)) rotate(30deg) scale(.12)}}
 @media(max-width:600px){#modal-box.chimera-mode{padding:12px}#modal-options.chimera-options{gap:7px}.chimera-option{padding:7px;gap:7px}.chimera-option .board-card{width:100%;min-width:0}.chimera-option .board-card .cname{font-size:12px}.chimera-description{font-size:11px}.chimera-actions{flex-direction:column}.chimera-actions .modal-opt{padding:7px 4px;font-size:12px}}
 @media(orientation:landscape) and (max-height:600px){#modal-box.chimera-mode{padding:10px}#modal-box.chimera-mode h3{margin-bottom:8px}.chimera-option{display:grid;grid-template-columns:minmax(80px,38%) minmax(0,1fr);grid-template-rows:auto 1fr auto;gap:6px;padding:8px;align-items:start}.chimera-card{grid-column:1;grid-row:1/4}.chimera-option .board-card{width:100%;max-height:calc(100dvh - 110px);font-size:11px}.chimera-option .chimera-ability{grid-column:2;font-size:14px}.chimera-description{grid-column:2;font-size:12px}.chimera-actions{grid-column:2;flex-direction:row;gap:4px}.chimera-actions .modal-opt{font-size:12px;padding:7px 5px}}
-@media(prefers-reduced-motion:reduce){.nue-body-illusion,.shou-blue-laser,.shou-gold-wash,.murasa-sinking-player,.murasa-vortex,.byakuren-fist-flight,.byakuren-impact{display:none!important}.discard-vanish.ability-byakuren{animation:none}}
+@media(prefers-reduced-motion:reduce){.nue-body-illusion,.shou-blue-laser,.shou-gold-wash,.byakuren-fist-flight,.byakuren-impact{display:none!important}.discard-vanish.ability-byakuren,.murasa-restriction-vortex,.murasa-restriction-vortex .vortex-swirl{animation:none}.seat.murasa-caught .avatar{transition:none}}
 
 </style>
 </head>
@@ -2609,7 +2608,7 @@ CARDS.push(
   {id:'temple_byakuren',faction:'temple',name:'Hijiri Byakuren',crown:true,cost7:true,
     desc:'[Cost VII] Placed: Send three other board cards to your discard pile, turn their spaces into wasteland and take three extra turns. Each Myouren Temple card on the board reduces the cost by one.'},
   {id:'temple_shou',faction:'temple',name:'Toramaru Shou',cost1:true,
-    desc:'[Cost I] Placed: Draw a card for each wasteland on the board, then turn all wasteland into playable gold tiles.'},
+    desc:'[Cost I] Placed: Draw a card for each wasteland on the board, then clear all wasteland.'},
   {id:'temple_nue',faction:'temple',name:'Houjuu Nue',
     desc:'Placed: Choose an ability from three random cards. This card takes an illusory form and uses that ability.'},
   {id:'temple_murasa',faction:'temple',name:'Murasa Minamitu',
@@ -2682,7 +2681,6 @@ class Game {
     this.aiDifficulty=AI_DIFFICULTIES[options.aiDifficulty] ? options.aiDifficulty : 'hard';
     this.board = Array.from({length:SIZE},()=>Array(SIZE).fill(null));
     this.wasteland = Array.from({length:SIZE},()=>Array(SIZE).fill(false));
-    this.goldTiles=new Set();
     this.kourindouEnabled=true; // Kourindou is part of every match.
     this.shopCards=[];
     this.shopTiles=[[0,1],[1,0],[1,1],[1,2]].map(([r,c],slot)=>({r:SIZE+2+r,c,slot,wasteland:false}));
@@ -2813,9 +2811,7 @@ class Game {
     else {const tile=this.shopTileAt(r,c);if(tile) this.shopCards[tile.slot]=id;}
   }
   wastelandAt(r,c){return inBounds(r,c) ? this.wasteland[r][c] : !!this.shopTileAt(r,c)?.wasteland;}
-  isGoldTile(r,c){return this.goldTiles.has(`${r},${c}`) && !this.wastelandAt(r,c);}
   setWastelandAt(r,c,value){
-    if(value)this.goldTiles.delete(`${r},${c}`);
     if(inBounds(r,c)) this.wasteland[r][c]=value;
     else {const tile=this.shopTileAt(r,c);if(tile) tile.wasteland=value;}
   }
@@ -2924,10 +2920,9 @@ class Game {
     this.pendingExtraTurns[playerIdx]=0;
     return count;
   }
-  clearWasteland(r,c,{gold=false}={}){
+  clearWasteland(r,c){
     if(!this.hasTile(r,c) || !this.wastelandAt(r,c)) return false;
     this.setWastelandAt(r,c,false);
-    if(gold)this.goldTiles.add(`${r},${c}`);
     return true;
   }
   moveBoardToDraw(r,c,effect){
@@ -3701,15 +3696,14 @@ class Game {
           const id=self.takeFromDrawPile(playerIdx);self.addToHand(playerIdx,id);
           try{self.ui?.onDrawCard?.({playerIdx,cardId:id,effect:'shou',source:{r,c}});}catch(_error){}
         }
-        for(const cell of waste)self.clearWasteland(cell.r,cell.c,{gold:true});
-        self.log(`${me} draws ${count} card${count===1?'':'s'} with Radiant Treasure and turns ${waste.length} wasteland tile${waste.length===1?'':'s'} to gold.`);
+        for(const cell of waste)self.clearWasteland(cell.r,cell.c);
+        self.log(`${me} draws ${count} card${count===1?'':'s'} with Radiant Treasure and clears ${waste.length} wasteland tile${waste.length===1?'':'s'}.`);
         break;
       }
       case 'temple_nue': {
         const actor=self.cardAt(r,c);
         if(!actor)break;
         const choices=shuffle(CARDS.filter(card=>!card.token && !card.shopkeeper && card.id!=='temple_nue' && card.id!==actor).map(card=>card.id)).slice(0,3);
-        self.presentTemple('nue',{r,c});
         const ability=await self.chooseChimeraAbility(playerIdx,choices,r,c);
         if(self.cancelled || !choices.includes(ability))break;
         self.borrowedAbilities[actor]=ability;
@@ -5355,6 +5349,7 @@ function finishMindEffect(callback,delay){
   mindEffectTimers.add(timer);
 }
 function clearMindEffects(){
+  clearMurasaVortices();
   for(const cancel of [...templeAnimationCancels])cancel();
   for(const timer of mindEffectTimers) clearTimeout(timer);
   mindEffectTimers.clear();mindArrivals.clear();
@@ -5368,7 +5363,7 @@ function addMindNode(node,key,duration=1150){
   node.dataset.abilityKey=key;node.setAttribute('aria-hidden','true');
   document.body.appendChild(node);finishMindEffect(()=>node.remove(),duration);
 }
-const templeAnimationCancels=new Set();
+const templeAnimationCancels=new Set(),murasaVortices=new Map();
 function templeTimeline(duration){
   const owner=game;
   if(!owner || owner.cancelled || !document.body || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return null;
@@ -5442,35 +5437,58 @@ function showShouGoldLasers({r,c,tiles=[]}){
   const animation=templeTimeline(1100);if(!animation)return;
   const x=origin.left+origin.width/2,y=origin.top+origin.height/2;
   for(const tile of tiles){
-    const rect=tileElement(tile.r,tile.c)?.getBoundingClientRect();if(!rect?.width)continue;
+    const cell=tileElement(tile.r,tile.c),rect=cell?.getBoundingClientRect();if(!rect?.width)continue;
     const dx=rect.left+rect.width/2-x,dy=rect.top+rect.height/2-y;
     const beam=document.createElement('div');beam.className='mind-fx shou-blue-laser';
     Object.assign(beam.style,{left:`${x}px`,top:`${y-6}px`,width:`${Math.max(8,Math.hypot(dx,dy))}px`,transform:`rotate(${Math.atan2(dy,dx)}rad)`});
     animation.add(beam);
-    const gold=document.createElement('div');gold.className='mind-fx shou-gold-wash';
-    Object.assign(gold.style,{left:`${rect.left}px`,top:`${rect.top}px`,width:`${rect.width}px`,height:`${rect.height}px`});animation.add(gold);
+    const gold=document.createElement('div');gold.className='shou-gold-wash';
+    cell.classList.add('shou-clearing');animation.add(gold);cell.appendChild(gold);
+    animation.cleanup(()=>{if(!cell.querySelector('.shou-gold-wash'))cell.classList.remove('shou-clearing');});
   }
 }
-function showMurasaPlayerVortex({playerIdx}){
-  const seat=el('seats').querySelector(`.seat-${playerIdx}`),rect=seat?.getBoundingClientRect();if(!rect?.width)return;
-  const animation=templeTimeline(1900);if(!animation)return;
-  const owner=game,until=Date.now()+1900;
-  owner.uiEffects??={};owner.uiEffects.murasaSinkUntil??={};owner.uiEffects.murasaSinkUntil[playerIdx]=until;
-  const ghost=document.createElement('div');ghost.className='mind-fx murasa-sinking-player';
-  Object.assign(ghost.style,{left:`${rect.left}px`,top:`${rect.top}px`,width:`${rect.width}px`,height:`${rect.height}px`});
-  const snapshot=seat.cloneNode(true);snapshot.classList.remove('murasa-submerged','player-target');ghost.appendChild(snapshot);animation.add(ghost);
-  seat.classList.add('murasa-submerged');
-  const vortex=document.createElement('div');vortex.className='mind-fx murasa-vortex';
-  const width=Math.max(150,rect.width*1.35),height=Math.max(64,Math.min(145,rect.height*.7));
-  const top=Math.min(window.innerHeight-height-3,rect.top+rect.height*.64);
-  Object.assign(vortex.style,{left:`${rect.left+rect.width/2-width/2}px`,top:`${top}px`,width:`${width}px`,height:`${height}px`});
-  vortex.innerHTML='<svg viewBox="0 0 200 90" preserveAspectRatio="none"><defs><radialGradient id="murasa-water-'+playerIdx+'"><stop stop-color="#020d1c"/><stop offset=".5" stop-color="#072d49"/><stop offset=".78" stop-color="#207c9d"/><stop offset="1" stop-color="#70d3e9" stop-opacity="0"/></radialGradient></defs><ellipse cx="100" cy="45" rx="96" ry="39" fill="url(#murasa-water-'+playerIdx+')"/><ellipse cx="100" cy="45" rx="37" ry="14" fill="#020a16"/><g class="vortex-swirl" fill="none" stroke="#89eeff" stroke-width="2"><path d="M10 44Q50 5 132 21T180 56Q143 90 62 70T37 35Q80 12 135 35T122 62Q75 73 66 48T110 39"/><path d="M29 25Q93 0 163 30T161 66M49 76Q8 44 73 28T150 45Q147 70 91 59" stroke="#3cadd8" stroke-width="4"/></g><g class="vortex-mist"><ellipse cx="29" cy="46" rx="8" ry="2"/><ellipse cx="157" cy="28" rx="10" ry="2"/><ellipse cx="135" cy="70" rx="9" ry="2"/></g></svg>';
-  animation.add(vortex);
-  animation.cleanup(()=>{
-    if(owner.uiEffects?.murasaSinkUntil?.[playerIdx]===until)delete owner.uiEffects.murasaSinkUntil[playerIdx];
-    if(game===owner)el('seats').querySelector(`.seat-${playerIdx}`)?.classList.remove('murasa-submerged');
-  });
+function clearMurasaVortices(){
+  for(const record of murasaVortices.values())record.node.remove();
+  murasaVortices.clear();
+  document.querySelectorAll('.murasa-restriction-vortex').forEach(node=>node.remove());
+  el('seats').querySelectorAll('.murasa-caught').forEach(seat=>seat.classList.remove('murasa-caught'));
 }
+function syncMurasaVortices(){
+  const owner=game,active=new Set();let created=false;
+  for(const p of owner?.players||[]){
+    const seat=el('seats').querySelector(`.seat-${p.idx}`);
+    const caught=!owner.cancelled && !!(owner.placementBlockTurns[p.idx] || owner.placementBlockedForTurn[p.idx]);
+    seat?.classList.toggle('murasa-caught',caught);
+    if(!caught || !seat)continue;
+    const avatar=seat.querySelector('.avatar')||seat,rect=avatar.getBoundingClientRect();if(!rect.width)continue;
+    active.add(p.idx);
+    let record=murasaVortices.get(p.idx);
+    if(record?.owner!==owner){record?.node.remove();record=null;}
+    if(!record){
+      record={owner,node:createMurasaVortex(p.idx)};murasaVortices.set(p.idx,record);document.body.appendChild(record.node);created=true;
+    }
+    const width=Math.max(90,Math.min(160,rect.width*1.8)),height=Math.max(38,Math.min(60,rect.height*.7));
+    Object.assign(record.node.style,{left:`${rect.left+rect.width/2-width/2}px`,top:`${rect.bottom-height*.45}px`,width:`${width}px`,height:`${height}px`});
+  }
+  for(const [p,record]of murasaVortices){
+    if(active.has(p)&&record.owner===owner)continue;
+    murasaVortices.delete(p);
+    if(record.owner!==owner || owner?.cancelled){record.node.remove();continue;}
+    record.node.classList.add('murasa-vortex-leaving');
+    finishMindEffect(()=>record.node.remove(),520);
+    if(!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)mindEffectsUntil=Math.max(mindEffectsUntil,Date.now()+520);
+  }
+  return created;
+}
+function createMurasaVortex(playerIdx){
+  const vortex=document.createElement('div');vortex.className='murasa-restriction-vortex';vortex.setAttribute('aria-hidden','true');
+  vortex.innerHTML='<svg viewBox="0 0 200 90" preserveAspectRatio="none"><defs><radialGradient id="murasa-water-'+playerIdx+'"><stop stop-color="#020d1c"/><stop offset=".5" stop-color="#072d49"/><stop offset=".78" stop-color="#207c9d"/><stop offset="1" stop-color="#70d3e9" stop-opacity="0"/></radialGradient></defs><ellipse cx="100" cy="45" rx="96" ry="39" fill="url(#murasa-water-'+playerIdx+')"/><ellipse cx="100" cy="45" rx="37" ry="14" fill="#020a16"/><g class="vortex-swirl" fill="none" stroke="#89eeff" stroke-width="2"><path d="M10 44Q50 5 132 21T180 56Q143 90 62 70T37 35Q80 12 135 35T122 62Q75 73 66 48T110 39"/><path d="M29 25Q93 0 163 30T161 66M49 76Q8 44 73 28T150 45Q147 70 91 59" stroke="#3cadd8" stroke-width="4"/></g><g class="vortex-mist"><ellipse cx="29" cy="46" rx="8" ry="2"/><ellipse cx="157" cy="28" rx="10" ry="2"/><ellipse cx="135" cy="70" rx="9" ry="2"/></g></svg>';
+  return vortex;
+}
+function showMurasaPlayerVortex(){
+  if(syncMurasaVortices() && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)mindEffectsUntil=Math.max(mindEffectsUntil,Date.now()+650);
+}
+window.addEventListener('resize',syncMurasaVortices);
 function showByakurenStrikes({r,c,targets=[],playerIdx}){
   const origin=boardCardRect(r,c);if(!origin?.width || !targets.length)return null;
   const animation=templeTimeline(1400);if(!animation)return null;
@@ -6292,7 +6310,6 @@ function renderBoard(){
       }
       const isWasteland=!!game.wastelandAt(r,c);
       cell.classList.toggle('wasteland',isWasteland);
-      cell.classList.toggle('shou-gold',game.isGoldTile(r,c));
       const cardId = game.cardAt(r,c);
       if(cell.dataset.cardId!==(cardId||'')){
         cell.innerHTML=cardId ? cardBoardHtml(cardId) : '';
@@ -6372,7 +6389,6 @@ function renderShop(){
     if(tile.dataset.cardId!==id){tile.innerHTML=id ? cardBoardHtml(id) : '';tile.dataset.cardId=id||'';}
     const selectable=isShopSelectable(slot);
     tile.classList.toggle('wasteland',game.wastelandAt(r,c));
-    tile.classList.toggle('shou-gold',game.isGoldTile(r,c));
     syncProtectionIndicator(tile,r,c);
     syncTerrainAnimations(tile,r,c,game.wastelandAt(r,c));
     tile.classList.toggle('rect-pickable',!!pendingRectChoice);
@@ -6386,7 +6402,7 @@ function renderShop(){
     const impact=placed && (lastPlacedCell.crownEffectId || (id && CARD[id].crown ? id : null));
     tile.classList.toggle('crown-impact',!!impact && !lastPlacedCell?.handArrival);
     if(impact) applyCrownLight(tile,crownLightFor(impact));
-    tile.classList.toggle('koishi-arriving',CARD[game.abilityId(id)]?.trigger && koishiArrivalUntil.get(`${r},${c}`)>Date.now());
+    tile.classList.toggle('koishi-arriving',!!CARD[game.abilityId(id)]?.trigger && koishiArrivalUntil.get(`${r},${c}`)>Date.now());
     tile.classList.toggle('selectable',selectable);
     tile.classList.toggle('pick-target',selectable);
     tile.classList.remove('dimmed');
@@ -6740,7 +6756,7 @@ function renderPlayers(){
   seatsEl.innerHTML = '';
   game.players.forEach(p => {
     const seat = document.createElement('div');
-    seat.className = `seat seat-${p.idx}` + (game.uiEffects?.murasaSinkUntil?.[p.idx]>Date.now() ? ' murasa-submerged' : '') + (game.currentPlayerIdx===p.idx && !game.winner ? ' active-turn':'');
+    seat.className = `seat seat-${p.idx}` + (game.currentPlayerIdx===p.idx && !game.winner ? ' active-turn':'');
     seat.dataset.playerIdx=String(p.idx);
     if(pendingPlayerChoice){
       const choice=pendingPlayerChoice;
@@ -6784,6 +6800,7 @@ function renderPlayers(){
     }
     seatsEl.appendChild(seat);
   });
+  syncMurasaVortices();
 }
 
 function escapeLogHtml(value){

@@ -65,10 +65,10 @@ test('Shou counts all wasteland, clears it, and draws past the normal seven-card
 test('Shou clears every wasteland even when the pile runs out',async()=>{
  const g=setup({hand:['medicine'],waste:[[0,0],[0,1],[0,2],[0,3],[1,0]]});await g.resolveAbility('temple_shou',2,2,1,0);assert.equal(g.players[1].hand.length,1);assert.equal(g.templeWasteland().length,0);
 });
-test('Shou gilds main and shop spaces as normal playable terrain, and new wasteland removes the gold',async()=>{
+test('Shou clears main and shop spaces as ordinary playable terrain',async()=>{
  const g=setup({hand:['medicine'],board:[[1,1,'temple_shou']],waste:[[0,0],[7,0]]});await g.resolveAbility('temple_shou',1,1,1,0);
- for(const [r,c]of [[0,0],[7,0]])assert(g.isGoldTile(r,c));assert(g.emptyOrWastelandForCard(A.CARD.sdm_patchouli).some(t=>t.r===0&&t.c===0));
- g.setWastelandAt(0,0,true);assert(!g.isGoldTile(0,0));g.clearWasteland(0,0);assert(!g.isGoldTile(0,0));assert(g.isGoldTile(7,0));assert.equal(setup().goldTiles.size,0);
+ for(const [r,c]of [[0,0],[7,0]])assert(!g.wastelandAt(r,c));assert(g.emptyOrWastelandForCard(A.CARD.sdm_patchouli).some(t=>t.r===0&&t.c===0));
+ g.setWastelandAt(0,0,true);assert(g.wastelandAt(0,0));g.clearWasteland(0,0);assert(!g.wastelandAt(0,0));assert(!g.wastelandAt(7,0));
 });
 test('Nue offers exactly three different valid abilities, executes from her tile and records the choice',async()=>{
  const g=setup({board:[[1,1,'temple_nue']],deck:['medicine','hourai_mokou']});let offered=[];g.chooseChimeraAbility=async(_p,ids)=>{offered=Array.from(ids);return ids[0];};let copied;
@@ -78,7 +78,7 @@ test('Nue offers exactly three different valid abilities, executes from her tile
 test('Nue finishes changing her body before the borrowed ability can ask for input',async()=>{
  let finish;const finished=new Promise(resolve=>finish=resolve),events=[];
  const g=setup({board:[[1,1,'temple_nue']],ui:{onTempleEffect:e=>{events.push(e.effect);return e.effect==='chimera'?{finished}:null;},render(){}}});
- let chosen;g.chooseChimeraAbility=async(_p,ids)=>chosen=ids[0];const resolve=g.resolveAbility.bind(g);let copied=false;
+ let chosen;g.chooseChimeraAbility=async(_p,ids)=>{assert.deepEqual(events,[],'no decorative effect before the ability chooser');return chosen=ids[0];};const resolve=g.resolveAbility.bind(g);let copied=false;
  g.resolveAbility=async(...args)=>args[4]>0?(copied=true,{}):resolve(...args);
  const action=g.resolveAbility('temple_nue',1,1,1,0);for(let i=0;i<30;i++)await Promise.resolve();
  assert(!copied);assert.equal(g.cardAt(1,1),'temple_nue');assert.equal(g.borrowedAbilities.temple_nue,chosen);assert(events.includes('chimera'));
