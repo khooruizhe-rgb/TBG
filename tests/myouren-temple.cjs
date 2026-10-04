@@ -107,10 +107,15 @@ test('Ichirin pushes outer cards first, sends edge cards to draw and spares her 
 test('Ichirin preserves protected cards and cannot push into an occupied or illegal wasteland tile',async()=>{
  const g=setup({hand:['medicine','palace_rin'],board:[[1,1,'temple_ichirin'],[1,2,'sdm_patchouli'],[1,3,'temple_nue'],[2,1,'sdm_flandre'],[0,0,'shop_rinnosuke'],[0,1,'hourai_mokou']],waste:[[3,1]]});await g.resolveAbility('temple_ichirin',1,1,1,0);assert.equal(g.cardAt(1,2),'sdm_patchouli');assert.equal(g.cardAt(2,1),'sdm_flandre');assert.equal(g.cardAt(0,1),'hourai_mokou');
 });
-test('Murasa seals two actual turns, allows drawing and trading, preserves Reisen, then expires',async()=>{
- const g=setup({hand:['medicine'],deck:['hourai_mokou','sdm_flandre','sdm_patchouli']});g.choosePlayer=async()=>1;await g.resolveAbility('temple_murasa',1,1,0,0);g.forcedPlay[1]='medicine';
- for(let turn=0;turn<2;turn++){g.beginPlayerTurn(1);assert(g.isPlacementBlocked(1));assert.equal(g.emptyOrWastelandForCard(A.CARD.medicine).length,0);assert(g.canTrade(1,'medicine'));assert(A.canAct(1));await A.doPlayerAction(1);assert.equal(g.forcedPlay[1],'medicine');assert.equal(g.board.flat().filter(Boolean).length,0);g.endPlayerTurn(1);}
- g.beginPlayerTurn(1);assert(!g.isPlacementBlocked(1));assert(g.emptyOrWastelandForCard(A.CARD.medicine).length>0);
+test('Murasa seals placement and trading for two actual turns, allows drawing and preserves Reisen',async()=>{
+ const g=setup({hand:['medicine'],deck:['hourai_mokou','sdm_flandre','sdm_patchouli','mtn_aya','sage_ran','palace_rin']});g.choosePlayer=async()=>1;await g.resolveAbility('temple_murasa',1,1,0,0);g.forcedPlay[1]='medicine';
+ for(let turn=0;turn<2;turn++){g.beginPlayerTurn(1);assert(g.isPlacementBlocked(1));assert.equal(g.emptyOrWastelandForCard(A.CARD.medicine).length,0);assert(!g.canTrade(1,'medicine'));assert(A.canAct(1));await A.doPlayerAction(1);assert.equal(g.forcedPlay[1],'medicine');assert.equal(g.board.flat().filter(Boolean).length,0);g.endPlayerTurn(1);}
+ g.beginPlayerTurn(1);assert(!g.isPlacementBlocked(1));assert(g.emptyOrWastelandForCard(A.CARD.medicine).length>0);assert(!g.canTrade(1,'medicine'));g.forcedPlay[1]=null;assert(g.canTrade(1,'medicine'));
+});
+test('A Murasa-blocked trade cannot change the hand, merchandise or once-per-turn allowance',async()=>{
+ const g=setup({hand:['medicine']});g.choosePlayer=async()=>1;await g.resolveAbility('temple_murasa',1,1,0,0);g.beginPlayerTurn(1);
+ const before=JSON.stringify([g.players[1].hand,g.shopCards,g.tradedThisTurn]);assert(!g.tradeCard(1,'medicine',1));assert.equal(JSON.stringify([g.players[1].hand,g.shopCards,g.tradedThisTurn]),before);
+ assert(!A.canAct(1));const flags=await A.doPlayerAction(1);assert.equal(g.players[1].hand.length,1);assert(!g.tradedThisTurn[1]);assert.equal(g.mainBoardCells().length,0);assert(!flags.skipAdvance);
 });
 test('Murasa prevents automatic Koishi placement between the sealed player’s turns',()=>{
  const g=setup({board:[[0,0,'palace_satori'],[0,1,'palace_rin'],[1,0,'palace_utsuho']]});g.players[2].hand=['palace_koishi'];g.placementBlockTurns[2]=2;assert.equal(g.checkKoishiTrigger(0),null);assert(g.players[2].hand.includes('palace_koishi'));

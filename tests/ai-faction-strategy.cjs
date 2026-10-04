@@ -10,7 +10,7 @@ const context={console,Math:seededMath,Set,Map,Promise,setTimeout:fn=>{fn();retu
   triggerPlacementPresentation(){},speakRinnosuke(){},logOverride(){},lastPlacedCell:null,renderAll(){},humanActionResolving:false};
 vm.createContext(context);
 vm.runInContext(core+'\nvar game=null;\n'+ai+`\nthis.api={Game,CARD,CARDS,FACTIONS,aiEvaluateCard,aiDecideAction,aiDrawValue,aiChooseCostCards,
-aiRetentionValue,aiFactionPlacement,aiCurrentClaims,aiCostCanResolve,aiPlacementCells,aiDecideHardAction,AI_DIFFICULTIES,
+aiRetentionValue,aiFactionPlacement,aiCurrentClaims,aiCostCanResolve,aiPlacementCells,aiDecideHardAction,aiTwoCardFactionTrade,AI_DIFFICULTIES,
 setGame:g=>game=g,setSize:n=>SIZE=n};`,context);
 vm.runInContext(js.slice(js.indexOf('async function doPlayerAction'),js.indexOf('async function afterAction'))+
   '\nthis.api.doPlayerAction=doPlayerAction;this.api.resolveFollowups=resolveFollowups;'+
@@ -27,6 +27,56 @@ function setup({size=4,hand=[],opponents=[[],[],[]],board=[],waste=[],deck=[],di
 }
 const six=['mtn_suwako','mtn_aya','palace_utsuho','palace_rin','sage_ran','medicine'];
 const tests=[];function test(name,fn){tests.push([name,fn]);}
+
+test('Each two-card faction buys its missing partner before the chosen placement on both board sizes',()=>{
+  for(const size of [4,5])for(const [cardId,partner] of [['haku_youmu','haku_yuyuko'],['marisa','reimu'],['medicine','yuuka'],['heaven_iku','heaven_tenshi']]){
+    const g=setup({size,hand:[cardId,'sdm_meiling'],shop:true});g.shopCards=['shop_rinnosuke',partner,'hourai_tewi','hell_kutaka'];
+    const placement={type:'place',cardId,r:2,c:2},before=JSON.stringify([g.board,g.players,g.drawPile,g.shopCards]);
+    const action=A.aiTwoCardFactionTrade(1,placement);assert(action);assert.equal(action.type,'trade');assert.equal(action.cardId,'sdm_meiling');assert.equal(g.cardAt(action.target.r,action.target.c),partner);assert.equal(action.thenPlace,placement);
+    assert.equal(JSON.stringify([g.board,g.players,g.drawPile,g.shopCards]),before);
+  }
+});
+test('Preparatory trading keeps cards that can already complete a larger faction',()=>{
+  const g=setup({hand:['medicine','temple_murasa','sdm_meiling'],board:[[0,0,'temple_nue'],[0,1,'temple_shou'],[1,0,'temple_ichirin']]});g.shopCards=['shop_rinnosuke','yuuka','hourai_tewi','hell_kutaka'];
+  const action=A.aiTwoCardFactionTrade(1,{type:'place',cardId:'medicine',r:2,c:2});assert.equal(action.cardId,'sdm_meiling');
+});
+test('No preparatory trade is made for an existing partner, a larger faction or unrelated stock',()=>{
+  const g=setup({hand:['medicine','sdm_meiling']});g.shopCards=['shop_rinnosuke','yuuka','hourai_tewi','hell_kutaka'];
+  const placement={type:'place',cardId:'medicine',r:2,c:2};
+  g.players[1].hand.push('yuuka');assert.equal(A.aiTwoCardFactionTrade(1,placement),null);g.players[1].hand.pop();
+  g.setCardAt(0,0,'yuuka');assert.equal(A.aiTwoCardFactionTrade(1,placement),null);g.setCardAt(0,0,null);
+  assert.equal(A.aiTwoCardFactionTrade(1,{...placement,cardId:'sdm_meiling'}),null);
+  g.shopCards[1]='palace_yuugi';assert.equal(A.aiTwoCardFactionTrade(1,placement),null);
+});
+test('Preparatory trading respects Murasa, Reisen, the once-per-turn limit and untradeable Trap cards',()=>{
+  const g=setup({hand:['medicine','sdm_meiling']});g.shopCards=['shop_rinnosuke','yuuka','hourai_tewi','hell_kutaka'];const placement={type:'place',cardId:'medicine',r:2,c:2};
+  g.placementBlockedForTurn[1]=true;assert.equal(A.aiTwoCardFactionTrade(1,placement),null);g.placementBlockedForTurn[1]=false;
+  g.forcedPlay[1]='medicine';assert.equal(A.aiTwoCardFactionTrade(1,placement),null);g.forcedPlay[1]=null;
+  g.tradedThisTurn[1]=true;assert.equal(A.aiTwoCardFactionTrade(1,placement),null);g.tradedThisTurn[1]=false;
+  g.players[1].hand=['medicine','trap_token'];assert.equal(A.aiTwoCardFactionTrade(1,placement),null);g.players[1].hand=['medicine'];assert.equal(A.aiTwoCardFactionTrade(1,placement),null);
+});
+test('Kasen can supply the missing partner when active, with the physical partner preferred',()=>{
+  const g=setup({hand:['medicine','sdm_meiling']});g.shopCards=['shop_rinnosuke','sage_kasen','yuuka','hell_kutaka'];const placement={type:'place',cardId:'medicine',r:2,c:2};
+  let action=A.aiTwoCardFactionTrade(1,placement);assert.equal(g.cardAt(action.target.r,action.target.c),'yuuka');
+  g.shopCards[2]='hourai_tewi';action=A.aiTwoCardFactionTrade(1,placement);assert.equal(g.cardAt(action.target.r,action.target.c),'sage_kasen');
+  g.setCardAt(0,0,'hourai_eirin');assert.equal(A.aiTwoCardFactionTrade(1,placement),null);
+});
+test('An actual AI turn trades for a partner first, then keeps its planned placement and spends only one turn',async()=>{
+  const g=setup({hand:['medicine','sdm_meiling'],opponents:[['mtn_aya','hourai_mokou'],[],[]]});g.shopCards=['shop_rinnosuke','yuuka','hourai_tewi','hell_kutaka'];const events=[];
+  g.ui.onShopTrade=e=>events.push(['trade',e.boughtId]);g.ui.onPlacementArrival=e=>{events.push(['place',e.cardId]);assert(g.players[1].hand.includes('yuuka'));};
+  const action=await A.aiDecideAction(1);assert.equal(action.type,'trade');assert.equal(action.thenPlace.cardId,'medicine');
+  const flags=await A.doPlayerAction(1);assert.deepEqual(events,[['trade','yuuka'],['place','medicine']]);assert.equal(g.mainBoardCells().length,1);assert(g.players[1].hand.includes('yuuka'));assert(!g.players[1].hand.includes('medicine'));assert.equal(g.currentPlayerIdx,1);assert(g.tradedThisTurn[1]);assert(!flags.skipAdvance);
+});
+test('Easy and Normal prepare the partner trade even when a mistake changes their chosen placement',async()=>{
+  for(const difficulty of ['normal','easy']){
+    const g=setup({hand:['medicine','sdm_meiling'],deck:['hourai_mokou']});g.aiDifficulty=difficulty;g.shopCards=['shop_rinnosuke','yuuka','hourai_tewi','hell_kutaka'];g.aiMakesMistake=kind=>kind==='action';let prepared=0;
+    for(let i=0;i<35;i++){
+      const action=await A.aiDecideAction(1);if(action.thenPlace?.cardId==='medicine'){prepared++;assert.equal(action.type,'trade');assert.equal(action.cardId,'sdm_meiling');assert.equal(g.cardAt(action.target.r,action.target.c),'yuuka');}
+      assert(!(action.type==='place' && action.cardId==='medicine'));
+    }
+    assert(prepared>0);
+  }
+});
 
 test('A hand placement lands before its Placed ability can ask for input',async()=>{
   const g=setup();let finish,abilityCalls=0;
@@ -77,6 +127,86 @@ test('A winning two-card claim is not sacrificed to a speculative four-card plan
 test('Eirin disables Kasen faction substitution in both rule and evaluator',()=>{
   const g=setup({hand:['sage_kasen'],board:[[0,0,'sdm_remilia'],[0,1,'sdm_flandre'],[1,0,'sdm_patchouli'],[3,3,'hourai_eirin']]});
   assert.equal(g.wouldCompleteFaction('sage_kasen',1,1),false);assert.equal(A.aiEvaluateCard(1,'sage_kasen').claimsNow,false);
+});
+test('Eirin disables Crown passive scoring, discard restrictions, and Kanako doubling until removed',()=>{
+  const g=setup({board:[[3,3,'hourai_eirin'],[0,0,'mtn_kanako'],[0,3,'sage_kasen']],discards:[[],['hell_hecatia']]});
+  assert.equal(g.hasActiveAbility('mtn_kanako'),false);assert.equal(g.isWildActive('sage_kasen'),false);
+  assert.equal(g.pointValue('hell_hecatia'),1);assert.equal(g.winCount(g.players[1]),1);
+  assert.equal(g.canEnterDiscard(1,'hell_hecatia'),true);
+  g.setCardAt(3,3,null);
+  assert.equal(g.hasActiveAbility('mtn_kanako'),true);assert.equal(g.isWildActive('sage_kasen'),true);
+  assert.equal(g.pointValue('hell_hecatia'),3);assert.equal(g.winCount(g.players[1]),3);
+  assert.equal(g.canEnterDiscard(1,'hell_hecatia'),false);
+});
+test('Eirin disables Kanako wasteland permission but leaves ordinary non-Crown abilities active',async()=>{
+  const g=setup({board:[[3,3,'hourai_eirin']],waste:[[0,0]]});
+  assert.ok(!g.emptyOrWastelandForCard(A.CARD.mtn_kanako).some(c=>c.r===0&&c.c===0));
+  await g.internalPlace('mtn_kanako',0,0,1,0);assert.equal(g.cardAt(0,0),null);
+  await g.internalPlace('mtn_kanako',0,1,1,0);assert.equal(g.hasActiveAbility('mtn_kanako'),false);
+  const result=await g.internalPlace('haku_youmu',1,0,1,0);assert.ok(result.skipAdvance);
+});
+test('Sanae draws one alone, four with Kanako, and two when Eirin disables Kanako doubling',async()=>{
+  const deck=['sdm_remilia','sdm_flandre','sdm_patchouli','sdm_sakuya','hourai_mokou','hourai_reisen'];
+  for(const [board,count] of [[[],1],[[[0,0,'mtn_kanako']],4],[[[0,0,'mtn_kanako'],[3,3,'hourai_eirin']],2]]){
+    const g=setup({board,deck});g.setCardAt(1,1,'mtn_sanae');
+    assert.equal(g.estimateHandGain(1,'mtn_sanae'),count);
+    await g.resolveAbility('mtn_sanae',1,1,1,0);assert.equal(g.players[1].hand.length,count);
+  }
+});
+test('Eirin stops Kanako from doubling Suwako and Aya',async()=>{
+  const g=setup({board:[[0,0,'mtn_kanako'],[3,3,'hourai_eirin']],opponents:[six,[],[]]});
+  let requested=0;g.chooseCells=async(_p,n)=>{requested=n;return [];};
+  await g.resolveAbility('mtn_suwako',1,0,1,0);assert.equal(requested,3);
+  await g.resolveAbility('mtn_aya',1,1,1,0);assert.equal(g.logLines.at(-1).reports[0].cards.length,4);
+  g.setCardAt(3,3,null);
+  await g.resolveAbility('mtn_suwako',1,0,1,0);assert.equal(requested,6);
+  await g.resolveAbility('mtn_aya',1,1,1,0);assert.equal(g.logLines.at(-1).reports[0].cards.length,6);
+});
+test('While Eirin is active Yukari can override only Eirin, then abilities restore',async()=>{
+  const g=setup({hand:['sage_yukari'],board:[[3,3,'hourai_eirin'],[1,1,'shop_rinnosuke'],[0,3,'medicine'],[3,0,'mtn_kanako']]});
+  const occupied=g.emptyOrWastelandForCard(A.CARD.sage_yukari).filter(c=>g.cardAt(c.r,c.c));
+  assert.equal(occupied.length,1);assert.equal(g.cardAt(occupied[0].r,occupied[0].c),'hourai_eirin');
+  await g.internalPlace('sage_yukari',0,3,1,0);assert.equal(g.cardAt(0,3),'medicine');
+  assert.ok(!g.canOverrideTarget('sage_yukari','shop_rinnosuke'));
+  g.removeFromHand(1,'sage_yukari');await g.internalPlace('sage_yukari',3,3,1,0);
+  assert.equal(g.cardAt(3,3),'sage_yukari');assert.ok(g.players[1].hand.includes('hourai_eirin'));
+  assert.ok(g.hasActiveAbility('mtn_kanako'));assert.ok(g.canOverrideTarget('sage_yukari','shop_rinnosuke'));
+});
+test('Yukari removes Rinnosuke protection before resolving her own placement',async()=>{
+  const g=setup({hand:['sage_yukari'],board:[[1,1,'shop_rinnosuke'],[1,2,'sdm_remilia']],waste:[[1,1]]});
+  assert.ok(g.isProtected(1,2));g.removeFromHand(1,'sage_yukari');
+  await g.internalPlace('sage_yukari',1,1,1,0);
+  assert.equal(g.cardAt(1,1),'sage_yukari');assert.ok(g.players[1].hand.includes('shop_rinnosuke'));
+  assert.equal(g.isProtected(1,2),false);
+});
+test('The real forced-placement path overrides Eirin on wasteland exactly once',async()=>{
+  const waste=Array.from({length:16},(_,i)=>[Math.floor(i/4),i%4]);
+  const g=setup({hand:['sage_yukari'],board:[[0,0,'hourai_eirin']],waste});
+  let overrides=0;g.ui.onBoardToHand=()=>overrides++;g.forcedPlay[1]='sage_yukari';
+  await A.doPlayerAction(1);
+  assert.equal(g.cardAt(0,0),'sage_yukari');assert.deepEqual(Array.from(g.players[1].hand),['hourai_eirin']);
+  assert.equal(overrides,1);
+});
+test('Restoring Hecatia scoring after overriding Eirin immediately checks for a win',async()=>{
+  const discard=['hell_hecatia','sdm_flandre','sdm_patchouli','sdm_sakuya','hourai_mokou'];
+  const g=setup({hand:['sage_yukari'],board:[[0,0,'hourai_eirin']],discards:[[],discard]});
+  assert.equal(g.winCount(g.players[1]),5);g.removeFromHand(1,'sage_yukari');
+  await g.internalPlace('sage_yukari',0,0,1,0);assert.equal(g.winCount(g.players[1]),7);assert.equal(g.winner,g.players[1]);
+});
+test('Cost payment snapshots effects then immediately renders the paid cards out of the hand',()=>{
+  const hand=['sdm_remilia','sdm_flandre','sdm_patchouli','sdm_sakuya'];
+  const g=setup({hand});const events=[];let shown=hand.slice();
+  g.ui.onDrawPileReturn=({cardId,source})=>{assert.ok(shown.includes(cardId));assert.equal(source.effect,'cost');events.push(cardId);};
+  g.ui.render=()=>{shown=Array.from(g.players[1].hand);events.push('render');};
+  const paid=g.commitCostCards(1,hand.slice(0,3),3,3);
+  assert.equal(paid,3);assert.deepEqual(shown,['sdm_sakuya']);
+  assert.deepEqual(events,[...hand.slice(0,3),'render']);assert.equal(g.drawPile.length,3);
+});
+test('Invalid cost selections do not animate, remove cards, or render',()=>{
+  const g=setup({hand:['sdm_remilia','trap_token']});let effects=0;
+  g.ui.onCostPaid=g.ui.onDrawPileReturn=g.ui.render=()=>effects++;
+  assert.equal(g.commitCostCards(1,['sdm_remilia','trap_token'],2,2),0);
+  assert.equal(effects,0);assert.deepEqual(Array.from(g.players[1].hand),['sdm_remilia','trap_token']);
 });
 test('Iku discounts one target until six points, then permits the winning ability',async()=>{
   let g=setup({hand:['heaven_iku','sage_ran','mtn_suwako','mtn_aya'],board:[[0,0,'sdm_patchouli']]});

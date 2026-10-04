@@ -117,9 +117,9 @@ test('Shou’s blue beams gild wasteland below placed cards and fade to ordinary
  for(const t of waste)g.clearWasteland(t.r,t.c);A.renderBoard();const tile=el('kourindou').children[1];assert(tile.classList.contains('shou-clearing'));assert(tile.querySelector('.shou-gold-wash'));assert(tile.querySelector('.board-card'));assert(!tile.classList.contains('wasteland'));
  await advance(1100);assert.equal(document.querySelectorAll('.shou-blue-laser').length,0);assert.equal(document.querySelectorAll('.shou-gold-wash').length,0);assert(!tile.classList.contains('shou-clearing'));assert(!g.wastelandAt(waste[2].r,waste[2].c));
 });
-test('Murasa’s player remains visible and the same vortex lasts until both restricted turns finish',async()=>{
+test('Murasa’s player remains visible and the same water pool lasts until both restricted turns finish',async()=>{
  const g=setup();g.placementBlockTurns[1]=2;A.showMurasaPlayerVortex({playerIdx:1});assert(el('seats').querySelector('.seat-1').classList.contains('murasa-caught'));assert(!el('seats').querySelector('.seat-0').classList.contains('murasa-caught'));
- const vortex=document.querySelectorAll('.murasa-restriction-vortex')[0];assert(vortex);assert.equal(document.querySelectorAll('.murasa-sinking-player').length,0);assert(!el('seats').querySelector('.seat-1').classList.contains('murasa-submerged'));
+ const vortex=document.querySelectorAll('.murasa-restriction-vortex')[0];assert(vortex);assert(vortex.innerHTML.includes('murasa-water-pool'));assert(!vortex.innerHTML.includes('vortex-swirl'));assert.equal(document.querySelectorAll('.murasa-sinking-player').length,0);assert(!el('seats').querySelector('.seat-1').classList.contains('murasa-submerged'));
  await advance(10000);A.renderPlayers();assert.equal(document.querySelectorAll('.murasa-restriction-vortex')[0],vortex);assert(!vortex.classList.contains('murasa-vortex-leaving'));
  for(let turn=0;turn<2;turn++){
   g.beginPlayerTurn(1);A.renderPlayers();assert(g.isPlacementBlocked(1));assert.equal(document.querySelectorAll('.murasa-restriction-vortex')[0],vortex);assert(!vortex.classList.contains('murasa-vortex-leaving'));

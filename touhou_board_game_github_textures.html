@@ -2299,9 +2299,9 @@ body.mobile-landscape #winner-box h2{font-size:24px;}
 .shou-gold-wash{position:absolute;inset:0;pointer-events:none;z-index:1;border-radius:inherit;background:linear-gradient(135deg,#fff1a4,#dfb646 27%,#fff0a2 47%,#b88d29 72%,#e9c763);box-shadow:inset 0 0 0 2px #f5da73,0 0 16px #eac65780;animation:shouGild 1.05s ease-out both}
 .seat.murasa-caught .avatar{clip-path:inset(0 0 12% 0)}
 .murasa-restriction-vortex{position:fixed;pointer-events:none;z-index:87;overflow:visible;animation:murasaWaterAppear .65s ease-out both}
-.murasa-restriction-vortex svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 9px #35b6de88)}
-.murasa-restriction-vortex .vortex-swirl{transform-origin:50% 50%;animation:murasaWaterSpin 4s linear infinite}
-.murasa-restriction-vortex .vortex-mist{fill:#94efff;opacity:.65}
+.murasa-restriction-vortex svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 3px 5px #020b16aa)}
+.murasa-restriction-vortex .water-ripples{animation:murasaWaterRipple 3.2s ease-in-out infinite;opacity:.35}
+.murasa-restriction-vortex .water-ripples-delayed{animation-delay:-1.6s}
 .murasa-restriction-vortex.murasa-vortex-leaving{animation:murasaWaterLeave .5s ease-out both}
 .byakuren-fist-flight{position:fixed;pointer-events:none;z-index:88;width:76px;height:64px;animation:byakurenPunch .62s cubic-bezier(.25,.7,.25,1) both;transform-origin:50% 50%}
 .byakuren-fist-flight svg{width:100%;height:100%;filter:drop-shadow(0 3px 4px #1f0c26b0)}
@@ -2317,13 +2317,13 @@ body.mobile-landscape #winner-box h2{font-size:24px;}
 @keyframes shouGild{0%{opacity:0;filter:hue-rotate(90deg)}20%{opacity:.75;filter:hue-rotate(45deg)}45%{opacity:1;filter:none}100%{opacity:0;filter:none}}
 @keyframes murasaWaterAppear{from{opacity:0;scale:.25}to{opacity:1;scale:1}}
 @keyframes murasaWaterLeave{from{opacity:1;scale:1}to{opacity:0;scale:.6}}
-@keyframes murasaWaterSpin{to{transform:rotate(540deg)}}
+@keyframes murasaWaterRipple{0%,100%{opacity:.2;transform:translateY(1px)}50%{opacity:.5;transform:translateY(-1px)}}
 @keyframes byakurenPunch{0%{opacity:0;transform:translate(0,0) rotate(var(--punch-angle)) scale(.7)}12%{opacity:1}58%{opacity:1;transform:translate(var(--punch-x),var(--punch-y)) rotate(var(--punch-angle)) scale(1.2)}100%{opacity:0;transform:translate(var(--punch-x),var(--punch-y)) rotate(var(--punch-angle)) scale(1.05)}}
 @keyframes byakurenImpact{0%{opacity:0;transform:scale(.4)}15%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.7)}}
 @keyframes byakurenDiscardFlight{0%{opacity:1;transform:none}14%{opacity:1;transform:translate(8px,-12px) rotate(-8deg) scale(.98)}48%{opacity:1;transform:translate(calc(var(--hit-fly-x)*.48),calc(var(--hit-fly-y)*.48 - 38px)) rotate(16deg) scale(.73)}100%{opacity:0;transform:translate(var(--hit-fly-x),var(--hit-fly-y)) rotate(30deg) scale(.12)}}
 @media(max-width:600px){#modal-box.chimera-mode{padding:12px}#modal-options.chimera-options{gap:7px}.chimera-option{padding:7px;gap:7px}.chimera-option .board-card{width:100%;min-width:0}.chimera-option .board-card .cname{font-size:12px}.chimera-description{font-size:11px}.chimera-actions{flex-direction:column}.chimera-actions .modal-opt{padding:7px 4px;font-size:12px}}
 @media(orientation:landscape) and (max-height:600px){#modal-box.chimera-mode{padding:10px}#modal-box.chimera-mode h3{margin-bottom:8px}.chimera-option{display:grid;grid-template-columns:minmax(80px,38%) minmax(0,1fr);grid-template-rows:auto 1fr auto;gap:6px;padding:8px;align-items:start}.chimera-card{grid-column:1;grid-row:1/4}.chimera-option .board-card{width:100%;max-height:calc(100dvh - 110px);font-size:11px}.chimera-option .chimera-ability{grid-column:2;font-size:14px}.chimera-description{grid-column:2;font-size:12px}.chimera-actions{grid-column:2;flex-direction:row;gap:4px}.chimera-actions .modal-opt{font-size:12px;padding:7px 5px}}
-@media(prefers-reduced-motion:reduce){.nue-body-illusion,.shou-blue-laser,.shou-gold-wash,.byakuren-fist-flight,.byakuren-impact{display:none!important}.discard-vanish.ability-byakuren,.murasa-restriction-vortex,.murasa-restriction-vortex .vortex-swirl{animation:none}.seat.murasa-caught .avatar{transition:none}}
+@media(prefers-reduced-motion:reduce){.nue-body-illusion,.shou-blue-laser,.shou-gold-wash,.byakuren-fist-flight,.byakuren-impact{display:none!important}.discard-vanish.ability-byakuren,.murasa-restriction-vortex,.murasa-restriction-vortex .water-ripples{animation:none}.seat.murasa-caught .avatar{transition:none}}
 
 </style>
 </head>
@@ -2612,7 +2612,7 @@ CARDS.push(
   {id:'temple_nue',faction:'temple',name:'Houjuu Nue',
     desc:'Placed: Choose an ability from three random cards. This card takes an illusory form and uses that ability.'},
   {id:'temple_murasa',faction:'temple',name:'Murasa Minamitu',
-    desc:'Placed: Choose a player. They cannot place cards on their next two turns.'},
+    desc:'Placed: Choose a player. They cannot place cards or trade on their next two turns.'},
   {id:'temple_ichirin',faction:'temple',name:'Kumoi Ichirin',shopExpansion:true,cost2:true,
     desc:'[Cost II] Placed: Push every non-Myouren Temple card one tile farther from this card. Return cards pushed off the board to the draw pile.'},
   { id:'sdm_meiling', faction:'sdm', name:'Hong Meiling', shopExpansion:true,
@@ -2935,9 +2935,9 @@ class Game {
   canTrade(playerIdx,cardId){
     return !this.cancelled && this.kourindouEnabled && this.shopkeeperAvailable()
       && this.tradeCells().length>0
-      && !this.winner && !this.tradedThisTurn[playerIdx]
+      && !this.winner && !this.isPlacementBlocked(playerIdx) && !this.tradedThisTurn[playerIdx]
       && this.players[playerIdx].hand.includes(cardId) && !CARD[cardId].shopkeeper && !CARD[cardId].token
-      && !(!this.isPlacementBlocked(playerIdx) && this.forcedPlay[playerIdx] && this.players[playerIdx].hand.includes(this.forcedPlay[playerIdx]));
+      && !(this.forcedPlay[playerIdx] && this.players[playerIdx].hand.includes(this.forcedPlay[playerIdx]));
   }
   tradeCard(playerIdx,offeredId,target){
     const cell=Number.isInteger(target) ? this.shopTiles[target] : target;
@@ -3719,7 +3719,7 @@ class Game {
         if(target==null || self.cancelled)break;
         self.placementBlockTurns[target]=Math.max(self.placementBlockTurns[target],2);
         self.presentTemple('murasa',{r,c,playerIdx:target});
-        self.log(`${self.players[target].name} cannot place cards on their next two turns.`);
+        self.log(`${self.players[target].name} cannot place cards or trade on their next two turns.`);
         break;
       }
       case 'temple_ichirin': {
@@ -5482,7 +5482,7 @@ function syncMurasaVortices(){
 }
 function createMurasaVortex(playerIdx){
   const vortex=document.createElement('div');vortex.className='murasa-restriction-vortex';vortex.setAttribute('aria-hidden','true');
-  vortex.innerHTML='<svg viewBox="0 0 200 90" preserveAspectRatio="none"><defs><radialGradient id="murasa-water-'+playerIdx+'"><stop stop-color="#020d1c"/><stop offset=".5" stop-color="#072d49"/><stop offset=".78" stop-color="#207c9d"/><stop offset="1" stop-color="#70d3e9" stop-opacity="0"/></radialGradient></defs><ellipse cx="100" cy="45" rx="96" ry="39" fill="url(#murasa-water-'+playerIdx+')"/><ellipse cx="100" cy="45" rx="37" ry="14" fill="#020a16"/><g class="vortex-swirl" fill="none" stroke="#89eeff" stroke-width="2"><path d="M10 44Q50 5 132 21T180 56Q143 90 62 70T37 35Q80 12 135 35T122 62Q75 73 66 48T110 39"/><path d="M29 25Q93 0 163 30T161 66M49 76Q8 44 73 28T150 45Q147 70 91 59" stroke="#3cadd8" stroke-width="4"/></g><g class="vortex-mist"><ellipse cx="29" cy="46" rx="8" ry="2"/><ellipse cx="157" cy="28" rx="10" ry="2"/><ellipse cx="135" cy="70" rx="9" ry="2"/></g></svg>';
+  vortex.innerHTML='<svg viewBox="0 0 200 90" preserveAspectRatio="none"><defs><radialGradient id="murasa-water-'+playerIdx+'"><stop stop-color="#020912"/><stop offset=".6" stop-color="#0b2633"/><stop offset=".85" stop-color="#294650" stop-opacity=".6"/><stop offset="1" stop-color="#294650" stop-opacity="0"/></radialGradient></defs><ellipse class="murasa-water-pool" cx="100" cy="45" rx="96" ry="31" fill="url(#murasa-water-'+playerIdx+')"/><g class="water-ripples" fill="none" stroke="#7babb8" stroke-width="1.2"><path d="M21 43Q43 36 65 41M125 40Q151 34 178 42M48 62Q99 72 150 61"/></g><g class="water-ripples water-ripples-delayed" fill="none" stroke="#6d919e" stroke-width="1"><path d="M34 51Q60 58 85 53M110 55Q145 63 171 52M69 29Q99 24 130 30"/></g></svg>';
   return vortex;
 }
 function showMurasaPlayerVortex(){
@@ -6848,7 +6848,7 @@ function renderStatus(){
       : game.canDrawNormally(0) ? 'Your move — place, trade, or draw for everyone.' : 'Your move — place a card or trade at Kourindou.';
   }
   if(humanReady && game.isPlacementBlocked(0))el('status-line').textContent=game.canDrawNormally(0)
-    ? 'Murasa seals placement this turn — trade or draw for everyone.' : 'Murasa seals placement this turn — you may trade.';
+    ? 'Murasa blocks placement and trading this turn — draw for everyone.' : 'Murasa blocks placement and trading this turn — no action available.';
   el('draw-btn').disabled = !humanReady || !game.canDrawNormally(0) || !!pendingCellChoice;
 }
 
@@ -7295,7 +7295,7 @@ function canTakeTurnAction(playerIdx){
 }
 function canAct(playerIdx){
   const player=game.players[playerIdx];
-  if(game.isPlacementBlocked(playerIdx))return game.canDrawNormally(playerIdx) || player.hand.some(id=>game.canTrade(playerIdx,id));
+  if(game.isPlacementBlocked(playerIdx))return game.canDrawNormally(playerIdx);
   if(game.forcedPlay[playerIdx] && player.hand.includes(game.forcedPlay[playerIdx])) return true;
   if(canTakeTurnAction(playerIdx)) return true;
   // A trade is useful here only if the purchased card supplies a legal placement.
@@ -7425,6 +7425,27 @@ function aiKanakoTrade(playerIdx,placement){
     }
   }
   return best;
+}
+
+function aiTwoCardFactionTrade(playerIdx,placement){
+  if(placement?.type!=='place')return null;
+  const player=game.players[playerIdx],faction=CARD[placement.cardId]?.faction;
+  if(FACTIONS[faction]?.size!==2 || !player.hand.includes(placement.cardId))return null;
+  const isPartner=id=>id!==placement.cardId && (CARD[id]?.faction===faction || game.isWildActive(id));
+  // An existing partner already supplies the pair; protected merchandise does not.
+  if(game.factionCells(faction).length || player.hand.some(isPartner))return null;
+  const stock=game.tradeCells().filter(cell=>isPartner(game.cardAt(cell.r,cell.c)));
+  if(!stock.length)return null;
+  let offeredId=null,keepValue=Infinity;
+  for(const id of player.hand){
+    if(id===placement.cardId || !game.canTrade(playerIdx,id))continue;
+    const value=aiRetentionValue(playerIdx,id);
+    if(value<keepValue){offeredId=id;keepValue=value;}
+  }
+  if(!offeredId)return null;
+  // Prefer the actual faction member so Kasen remains available for a larger claim.
+  const target=stock.find(cell=>CARD[game.cardAt(cell.r,cell.c)].faction===faction) || stock[0];
+  return {type:'trade',cardId:offeredId,target,thenPlace:placement};
 }
 
 // Shared placement evaluation: also used in reverse when deciding which cards to pay.
@@ -7654,15 +7675,17 @@ function aiKomachiTarget(playerIdx,r,c,cells){
 async function aiDecideHardAction(playerIdx,allowTrade=true){
   const player=game.players[playerIdx];let best=null;
   if(game.isPlacementBlocked(playerIdx)){
-    const trade=allowTrade ? aiBestTrade(playerIdx) : null;
-    return trade || (game.canDrawNormally(playerIdx)?{type:'draw'}:{type:'pass'});
+    return game.canDrawNormally(playerIdx)?{type:'draw'}:{type:'pass'};
   }
   for(const cardId of player.hand){const candidate=aiEvaluateCard(playerIdx,cardId);if(candidate && aiBetterCandidate(candidate,best))best=candidate;}
   const canDraw=game.canDrawNormally(playerIdx),drawHandGain=aiDrawValue(playerIdx);
   const willPlace=best && ((best.rate>0 && !best.lowPriority)
     || !(canDraw && (best.lowPriority || drawHandGain>=best.handGain)));
-  if(allowTrade && willPlace && best.cardId==='mtn_kanako'){
-    const trade=aiKanakoTrade(playerIdx,{type:'place',cardId:best.cardId,r:best.cell.r,c:best.cell.c});if(trade)return trade;
+  if(allowTrade && willPlace){
+    const placement={type:'place',cardId:best.cardId,r:best.cell.r,c:best.cell.c};
+    const trade=aiTwoCardFactionTrade(playerIdx,placement)
+      || (best.cardId==='mtn_kanako' ? aiKanakoTrade(playerIdx,placement) : null);
+    if(trade)return trade;
   }
   const trade=allowTrade?aiBestTrade(playerIdx):null;
   if(!best?.winsNow && trade && (!best || best.lowPriority || trade.rate>best.rate || (best.rate===0 && trade.gain>=.8)))return trade;
@@ -7674,7 +7697,7 @@ async function aiDecideHardAction(playerIdx,allowTrade=true){
 
 async function aiDecideAction(playerIdx,allowTrade=true){
   const best=await aiDecideHardAction(playerIdx,allowTrade);
-  if(!game.aiMakesMistake('action'))return best;
+  if(!game.aiMakesMistake('action'))return (allowTrade && aiTwoCardFactionTrade(playerIdx,best)) || best;
   // Mistakes remain legal: preserve forced-play, protection, and character safety restrictions.
   const alternatives=[];
   for(const cardId of game.players[playerIdx].hand){
@@ -7683,7 +7706,8 @@ async function aiDecideAction(playerIdx,allowTrade=true){
     if(other.length){const cell=other[Math.floor(Math.random()*other.length)];alternatives.push({type:'place',cardId,r:cell.r,c:cell.c});}
   }
   if(game.canDrawNormally(playerIdx) && best.type!=='draw')alternatives.push({type:'draw'});
-  return alternatives.length ? alternatives[Math.floor(Math.random()*alternatives.length)] : best;
+  const chosen=alternatives.length ? alternatives[Math.floor(Math.random()*alternatives.length)] : best;
+  return (allowTrade && aiTwoCardFactionTrade(playerIdx,chosen)) || chosen;
 }
 
 async function doPlayerAction(playerIdx){
@@ -7746,10 +7770,11 @@ async function doPlayerAction(playerIdx){
       if(game.winner || game.stalemateMessage) return {};
       await sleep(420);
       if(game!==activeGame || activeGame.cancelled) return {};
-      if(action.thenPlace && player.hand.includes('mtn_kanako')){
-        const cells=aiPlacementCells(game,'mtn_kanako',game.emptyOrWastelandForCard(CARD.mtn_kanako));
+      if(action.thenPlace && !game.isPlacementBlocked(playerIdx) && player.hand.includes(action.thenPlace.cardId)){
+        const plannedId=action.thenPlace.cardId;
+        const cells=aiPlacementCells(game,plannedId,game.emptyOrWastelandForCard(CARD[plannedId]));
         const nextCell=cells.find(cell=>cell.r===action.thenPlace.r && cell.c===action.thenPlace.c)
-          || cells.find(cell=>game.wouldCompleteFaction('mtn_kanako',cell.r,cell.c)) || cells[0];
+          || cells.find(cell=>game.wouldCompleteFaction(plannedId,cell.r,cell.c)) || cells[0];
         if(nextCell){action={...action.thenPlace,r:nextCell.r,c:nextCell.c};break;}
       }
     }
