@@ -35,7 +35,7 @@ vm.createContext(context);
 const choice=js.slice(js.indexOf('function isShopSelectable'),js.indexOf('function onCellDragOver'));
 const hand=js.slice(js.indexOf('/* Keep a hand card visible'),js.indexOf('/* Clicking anywhere outside the board/hand/cancel-button'));
 vm.runInContext('let game=null,pendingCellChoice=null,selectedHandCard=null,draggingCardId=null,humanActionResolving=false;'+choice+hand+`
-  this.api={onHandCardPointerDown,onHandCardClick,clearHandDragPhysics,commitShopChoice,createAbilityCardDragger,
+  this.api={onHandCardPointerDown,onHandCardClick,clearHandDragPhysics,commitShopChoice,
     setGame:g=>game=g,get:()=>({game,pendingCellChoice,touchHandDrag,handDragSettling,draggingCardId}),
     arrivals:()=>[...handPlacementArrivals],
     reset:()=>{clearHandDragPhysics();clearHandPlacementArrivals();pendingCellChoice=selectedHandCard=draggingCardId=suppressTouchDropClick=null;humanActionResolving=false;window.__resolveHumanTurn=()=>{};}};`,context);
@@ -84,28 +84,6 @@ function computedGhostPosition(names){
 test('Marisa’s artwork cannot override the floating hand or ability card’s fixed position',()=>{
  assert.equal(computedGhostPosition(['hand-card','card-art-marisa','touch-drag-ghost']),'fixed');
  assert.equal(computedGhostPosition(['hand-card','look-into-card','card-art-marisa','touch-drag-ghost']),'fixed');
-});
-test('An ability touch drag uses the hand spring and chooses exactly once after landing',async()=>{
- const f=fixture(),drop=new Element('drop',{left:250,top:100,width:230,height:66});let picked=[];
- const dragger=A.createAbilityCardDragger(drop,id=>picked.push(id));dragger.bind(f.source);
- cardEvent(f.source,'pointerdown');cardEvent(f.source,'pointermove',110,440);frame();assert(f.source.classList.contains('dragging'));
- const ghost=elements.find(e=>e.classList.contains('touch-drag-ghost'));assert(ghost.style.transform.includes('perspective'));cardEvent(f.source,'pointermove',290,132);frame();assert(drop.classList.contains('drag-hover'));
- cardEvent(f.source,'pointerup',290,132);assert.deepEqual(picked,[]);assert.equal(f.source.capture,null);await finishAnimations();assert.deepEqual(picked,['plain']);
- assert.equal(animations[0].keyframes[1].width,'100px');assert.equal(animations[0].keyframes[1].height,'150px');assert.equal(ghost.isConnected,false);assert.deepEqual(f.g.players[0].hand,['plain']);
- cardEvent(f.source,'pointerup',290,132);assert.deepEqual(picked,['plain']);dragger.cancel();
-});
-test('A tap, invalid ability drop, or cancelled pointer cannot accidentally choose a card',async()=>{
- const f=fixture(),drop=new Element('drop',{left:250,top:100,width:230,height:66});let picked=[];const dragger=A.createAbilityCardDragger(drop,id=>picked.push(id));dragger.bind(f.source);
- cardEvent(f.source,'pointerdown');cardEvent(f.source,'pointerup');assert.equal(animations.length,0);assert.deepEqual(picked,[]);
- cardEvent(f.source,'pointerdown');cardEvent(f.source,'pointermove',110,440);frame();cardEvent(f.source,'pointerup',900,50);await finishAnimations();assert.deepEqual(picked,[]);
- cardEvent(f.source,'pointerdown');cardEvent(f.source,'pointermove',290,132);frame();cardEvent(f.source,'pointercancel',290,132);await finishAnimations();assert.deepEqual(picked,[]);assert(!drop.classList.contains('drag-hover'));assert.equal(f.source.capture,null);dragger.cancel();
-});
-test('Leaving an ability chooser during a held or settling drag removes the ghost and retires the choice',async()=>{
- for(const settling of [false,true]){
-  const f=fixture(),drop=new Element('drop',{left:250,top:100,width:230,height:66});let picked=[];const dragger=A.createAbilityCardDragger(drop,id=>picked.push(id));dragger.bind(f.source);
-  cardEvent(f.source,'pointerdown');cardEvent(f.source,'pointermove',290,132);frame();if(settling)cardEvent(f.source,'pointerup',290,132);
-  dragger.cancel();await finishAnimations();assert.deepEqual(picked,[]);assert.equal(f.source.capture,null);assert(elements.filter(e=>e.isConnected && e.classList.contains('touch-drag-ghost')).length===0);assert.equal(frames.size,0);
- }
 });
 for(const type of ['mouse','touch','pen'])test(`${type} drag follows spring, then commits the pointer's tile after settling`,async()=>{
   const f=fixture();down(f,type);event('pointermove',72,473,type);assert.equal(A.get().touchHandDrag.started,false);

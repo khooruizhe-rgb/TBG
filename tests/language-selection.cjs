@@ -69,6 +69,12 @@ test('Mobile fullscreen notices and draggable ability destinations have Chinese 
  A.setGameLanguage('zh-CN');for(const text of ['Tap anywhere to enter fullscreen.','Fullscreen is unavailable in this browser. Rotate your phone to play sideways.','Fullscreen was blocked. Tap Fullscreen to retry, or rotate your phone.','Drag a card into the highlighted area, or select it and confirm. Double-tap to inspect.','Must play next turn','AI 1 · Discard pile'])assert(!/[A-Za-z]{3,}/.test(A.translateGameText(text)),text);
  assert.equal(A.translateGameText('Your Hand'),'你的手牌');A.setGameLanguage('en');assert.equal(A.translateGameText('Must play next turn'),'Must play next turn');
 });
+test('Physical card table instructions, discard regions and changing card counts are localized',()=>{
+ A.setGameLanguage('zh-CN');
+ for(const text of ['Move and stack cards freely. Drag one into the target area, then confirm. Double-tap to inspect.',"Each area is one player's discard pile. Move cards freely, then drag one into Your Hand and confirm.",'Confirm card choice','Place selected card here','Empty discard pile','Discard pile'])assert(!/[A-Za-z]{3,}/.test(A.translateGameText(text)),text);
+ assert.equal(A.translateGameText('1 card'),'1 张牌');assert.equal(A.translateGameText('10 cards'),'10 张牌');
+ A.setGameLanguage('en');assert.equal(A.translateGameText('10 cards'),'10 cards');assert.equal(A.translateGameText('Empty discard pile'),'Empty discard pile');
+});
 test('Dynamic text updates retain an English source and the observer settles after one rewrite',()=>{
  A.setGameLanguage('zh-CN');
  const node=text('Draw pile: 6 cards remaining');A.localizeTextNode(node);assert.equal(node.nodeValue,'抽牌堆剩余 6 张牌');observer([{type:'characterData',target:node}]);assert.equal(node.nodeValue,'抽牌堆剩余 6 张牌');node.nodeValue='Draw pile: 2 cards remaining';observer([{type:'characterData',target:node}]);assert.equal(node.nodeValue,'抽牌堆剩余 2 张牌');A.setGameLanguage('en');assert.equal(node.nodeValue,'Draw pile: 2 cards remaining');

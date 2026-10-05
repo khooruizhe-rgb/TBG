@@ -1584,15 +1584,6 @@
   .look-into-actions button:not(:disabled):hover{ border-color:var(--gold); }
   .look-into-actions button:disabled{ opacity:.45; cursor:default; }
   #look-into-confirm{ background:var(--gold); color:var(--bg-deep); border-color:var(--gold); font-weight:700; }
-  .ability-drag-ready{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:grab}
-  #look-into-drop{display:flex;align-items:center;justify-content:center;min-height:66px;margin:0 0 12px;padding:10px;border:2px dashed #b48b50;border-radius:7px;background:#c89b3020;color:#684321;font-weight:700;transition:background .15s,border-color .15s}
-  #look-into-drop[hidden]{display:none}
-  #look-into-drop.drag-hover{border-color:#8e6126;background:#d5ab4c55;box-shadow:inset 0 0 15px #d5ab4c40}
-  .look-into-origin{position:absolute;left:3px;right:3px;top:27px;z-index:2;font-size:10px;line-height:1.2;color:#fff8dd;text-shadow:0 1px 3px #000;background:#0007;border-radius:3px;padding:3px}
-  body.mobile-landscape #look-into-drop{min-height:42px;margin-bottom:7px;font-size:12px}
-  #look-into-overlay.transfer-mode #look-into-panel{display:flex;flex-direction:column;height:min(640px,calc(100dvh - 24px));overflow:hidden}
-  #look-into-overlay.transfer-mode #look-into-cards{flex:1;min-height:0;overflow-y:auto;align-content:flex-start;align-items:flex-start;margin:8px 0;padding:8px 6px}
-  #look-into-overlay.transfer-mode #look-into-drop,#look-into-overlay.transfer-mode .look-into-actions{flex-shrink:0}
   @media(max-width:480px){
     #look-into-panel{ padding:12px; }
     #look-into-cards{ gap:8px; padding:14px 6px 20px; }
@@ -2490,6 +2481,22 @@ html[lang="zh-CN"] .menu-intro h1{letter-spacing:.06em}
 .peek-actions{display:flex;gap:10px;justify-content:flex-end}
 .peek-actions button{font:inherit;font-size:12px;cursor:pointer;border:1px solid #c4a16e;border-radius:5px;padding:8px 12px;background:#f4e4c8;color:#4c3223}
 .peek-actions button:disabled{opacity:.45;cursor:default}
+#byakuren-peek-emblem{position:absolute;right:20px;top:14px;width:60px;height:34px;color:#ff626d;pointer-events:none}
+#byakuren-peek-overlay[data-reading="reisen"] #byakuren-peek-emblem{color:#e79aff}
+#byakuren-peek-overlay[data-reading] h3{padding-right:70px}
+#byakuren-peek-overlay.card-choice #byakuren-peek-panel{width:min(1000px,96vw);height:min(760px,94dvh)}
+#byakuren-peek-overlay.card-choice #byakuren-peek-table{min-height:0}
+#byakuren-peek-overlay.card-choice #byakuren-peek-hand{height:80px;min-height:64px;flex-shrink:0}
+#byakuren-peek-overlay.card-choice .peek-actions{position:relative;z-index:2}
+#byakuren-peek-groups{position:absolute;inset:0}
+.peek-pile-group{position:absolute;box-sizing:border-box;width:50%;height:50%;padding:8px 10px;border:1px solid #edd5a644;border-radius:6px;background:#1b11122b}
+.peek-pile-heading{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:0;font-size:12px;font-weight:700}
+.peek-pile-kind{color:#e4d3b6;font-size:10px;font-weight:400}
+.peek-pile-count{white-space:nowrap;color:#ffdeb0;font-size:11px}
+.peek-pile-empty{position:absolute;inset:35px 8px 8px;display:grid;place-items:center;color:#d5c4a8;font-size:12px}
+#byakuren-peek-overlay.peek-grouped .peek-order{opacity:0;max-width:170px;overflow:hidden;text-overflow:ellipsis}
+#byakuren-peek-overlay.peek-grouped .peek-selected .peek-order{opacity:1}
+@media(orientation:landscape) and (max-height:600px){#byakuren-peek-overlay.card-choice #byakuren-peek-hand{height:60px;min-height:60px}.peek-pile-group{padding:5px 8px}.peek-pile-heading{font-size:11px}.peek-pile-kind,.peek-pile-count{font-size:10px}#byakuren-peek-emblem{right:12px;top:8px;width:48px;height:28px}}
 body.crown-scene-active #game #board-panel,body.crown-scene-active #byakuren-peek-panel{background-image:linear-gradient(rgb(var(--wood-rgb,var(--scene-rgb))),rgb(var(--wood-rgb,var(--scene-rgb)))),var(--title-wood);background-blend-mode:color,normal;background-size:cover,900px 420px}
 body.crown-scene-active #title-table{background-image:linear-gradient(rgb(var(--wood-rgb,var(--scene-rgb))),rgb(var(--wood-rgb,var(--scene-rgb)))),var(--title-wood);background-blend-mode:color,normal;background-size:cover,1100px 520px}
 @media(orientation:landscape) and (max-height:600px){#byakuren-peek-panel{padding:12px;gap:6px}#byakuren-peek-panel p{font-size:11px}#byakuren-peek-hand{min-height:55px;height:26%}#byakuren-peek-overlay .table-scatter-card{width:min(var(--peek-card-width),17dvh)}.peek-order{top:-18px;font-size:9px}.peek-actions button{padding:5px 9px}}
@@ -2639,7 +2646,6 @@ body.crown-scene-active #title-table{background-image:linear-gradient(rgb(var(--
     <h3 id="look-into-title"></h3>
     <p id="look-into-instruction">Select a card, then confirm. Double-click it or press I to inspect its ability.</p>
     <div id="look-into-cards"></div>
-    <div id="look-into-drop" hidden></div>
     <div class="look-into-actions">
       <button type="button" id="look-into-cancel">Cancel</button>
       <button type="button" id="look-into-inspect" disabled>Inspect selected</button>
@@ -2650,9 +2656,10 @@ body.crown-scene-active #title-table{background-image:linear-gradient(rgb(var(--
 <div id="byakuren-peek-overlay" role="dialog" aria-modal="true" aria-labelledby="byakuren-peek-title">
   <section id="byakuren-peek-panel">
     <h3 id="byakuren-peek-title">Makai Fantastica — top three cards</h3>
-    <p>Drag one card into Your Hand. Arrange the rest left to right, or stack the next card on top. Double-click or double-tap to inspect.</p>
-    <div id="byakuren-peek-table"><span class="peek-table-label">Draw pile · next card on the left</span></div>
-    <div id="byakuren-peek-hand"><span>Your Hand · take one card</span></div>
+    <div id="byakuren-peek-emblem" aria-hidden="true" hidden></div>
+    <p id="byakuren-peek-instruction">Drag one card into Your Hand. Arrange the rest left to right, or stack the next card on top. Double-click or double-tap to inspect.</p>
+    <div id="byakuren-peek-table"><span id="byakuren-peek-source" class="peek-table-label">Draw pile · next card on the left</span><div id="byakuren-peek-groups" hidden></div></div>
+    <div id="byakuren-peek-hand"><span id="byakuren-peek-destination">Your Hand · take one card</span></div>
     <div id="byakuren-peek-cards"></div>
     <div class="peek-actions"><button id="byakuren-peek-take" type="button" disabled>Take selected card</button><button id="byakuren-peek-confirm" type="button" disabled>Confirm order and take card</button></div>
   </section>
@@ -4375,7 +4382,9 @@ class Game {
             pick = self.aiMakesMistake('target') ? all[Math.floor(Math.random()*all.length)] : pool[0];
           } else {
             if(self.ui?.pickCardPool){
-              const id=await self.ui.pickCardPool('Rin: take a card from any discard pile',all.map(d=>({id:d.id,source:`${self.players[d.idx].name} · Discard pile`})));
+              const id=await self.ui.pickCardPool('Rin: take a card from any discard pile',all.map(d=>({id:d.id,source:`${self.players[d.idx].name} · Discard pile`,group:d.idx})),{
+                groups:self.players.map(p=>({key:p.idx,label:p.name,kind:'Discard pile'}))
+              });
               pick=all.find(d=>d.id===id);
             }else{
               const listOpts = all.map(d=>({label:`${CARD[d.id].name} (${possessive(self.players[d.idx].name)} discard)`, value:d}));
@@ -6227,6 +6236,12 @@ const ZH_TEXT={
   "Draw pile · next card on the left": "抽牌堆 · 左侧卡牌先抽",
   "Your Hand · take one card": "你的手牌 · 拿取一张牌",
   "Confirm order and take card": "确认顺序并拿取卡牌",
+  "Move and stack cards freely. Drag one into the target area, then confirm. Double-tap to inspect.": "卡牌可自由移动、叠放。将一张拖入目标区后确认，双击可查看详情。",
+  "Each area is one player's discard pile. Move cards freely, then drag one into Your Hand and confirm.": "每格对应一位玩家的弃牌堆。卡牌可自由移动，拖入你的手牌区后确认。",
+  "Confirm card choice": "确认选择",
+  "Place selected card here": "将所选卡牌放入目标区",
+  "Empty discard pile": "弃牌堆为空",
+  "Discard pile": "弃牌堆",
   "Next draw": "先抽",
   "Then draw": "后抽",
   "Take three extra turns.": "获得三个额外回合。",
@@ -6496,6 +6511,7 @@ function canonicalCardName(value){
 }
 // Patterns cover changing counts, player names and choices; no game data is translated.
 const ZH_DYNAMIC=[
+  [/^(\d+) cards?$/,(_,n)=>`${n} 张牌`],
   [/^(.+) · Discard pile$/,(_,player)=>`${player} · 弃牌堆`],
   [/^Draw pile: (\d+) cards remaining$/,(_,n)=>`抽牌堆剩余 ${n} 张牌`],
   [/^Cost ([IVXLCDMN]+): select (\d+) cards? to return to the draw pile$/,(_,cost,n)=>`代价 ${cost} — 选择 ${n} 张手牌放回抽牌堆`],
@@ -7955,9 +7971,13 @@ const ui = {
     });
   },
   pickHandCard(title, cardIds, targetName, opts={}){
+    if(opts.dragAction)return openByakurenPeek(cardIds,{
+      choice:true,title:opts.heading || `${possessive(targetName)} hand`,destination:opts.dropLabel || 'Your Hand',
+      source:opts.source || `${possessive(targetName)} hand`,sourceLabels:opts.sourceLabels,
+      groups:opts.groups,cardGroups:opts.cardGroups,presentation:opts.presentation
+    }).then(result=>result?.taken ?? null);
     return new Promise(resolve => {
       const overlay = el('look-into-overlay');
-      overlay.classList.toggle('transfer-mode',!!opts.dragAction);
       const reading=['satori','reisen'].includes(opts.presentation)?opts.presentation:null;
       if(reading) overlay.dataset.reading=reading;else delete overlay.dataset.reading;
       el('look-into-emblem').innerHTML=reading?mindEyeSvg(reading):'';
@@ -7965,13 +7985,10 @@ const ui = {
       const confirm = el('look-into-confirm');
       const inspect = el('look-into-inspect');
       const cancel = el('look-into-cancel');
-      const drop=el('look-into-drop');
-      drop.hidden=!opts.dragAction;drop.textContent=opts.dropLabel || 'Your Hand';
-      let dragger=null;
       let selected = null;
       let settled = false;
       el('look-into-title').textContent = opts.heading || `${possessive(targetName)} hand`;
-      el('look-into-instruction').textContent=opts.instruction || (opts.dragAction ? 'Drag a card into the highlighted area, or select it and confirm. Double-tap to inspect.' : 'Select a card, then confirm. Double-click it or press I to inspect its ability.');
+      el('look-into-instruction').textContent=opts.instruction || 'Select a card, then confirm. Double-click it or press I to inspect its ability.';
       confirm.textContent = title;
       confirm.disabled = true;
       inspect.disabled = true;
@@ -7980,14 +7997,13 @@ const ui = {
         if(settled) return;
         if(value!==null) playGameCue('select');
         settled = true;
-        dragger?.cancel();cancelLookIntoView=null;
+        cancelLookIntoView=null;
         overlay.classList.remove('show');
-        overlay.classList.remove('transfer-mode');
         delete overlay.dataset.reading;el('look-into-emblem').replaceChildren();
         overlay.removeEventListener('click', onBackdrop);
         document.removeEventListener('keydown', onEscape);
         cardsEl.replaceChildren();
-        confirm.onclick=null;inspect.onclick=null;cancel.onclick=null;drop.hidden=true;
+        confirm.onclick=null;inspect.onclick=null;cancel.onclick=null;
         resolve(value);
       };
       cancelLookIntoView=()=>finish(null);
@@ -7999,7 +8015,6 @@ const ui = {
         finish(null);
       };
       const tiles = [];
-      if(opts.dragAction)dragger=createAbilityCardDragger(drop,cardId=>finish(cardId));
       cardIds.forEach(cardId => {
         const card = CARD[cardId];
         const tile = document.createElement('button');
@@ -8032,10 +8047,6 @@ const ui = {
             openCardDetails(cardId);
           }
         });
-        if(opts.sourceLabels?.[cardId]){
-          const origin=document.createElement('span');origin.className='look-into-origin';origin.textContent=opts.sourceLabels[cardId];tile.appendChild(origin);
-        }
-        dragger?.bind(tile);
         cardsEl.appendChild(tile);
         tiles.push(tile);
       });
@@ -8050,9 +8061,11 @@ const ui = {
       });
     });
   },
-  pickCardPool(title,entries){
+  pickCardPool(title,entries,opts={}){
     return this.pickHandCard(title,entries.map(entry=>entry.id),'Draw pile',{
-      heading:title,dragAction:'take',dropLabel:'Your Hand',sourceLabels:Object.fromEntries(entries.map(entry=>[entry.id,entry.source]))
+      heading:title,dragAction:'take',dropLabel:'Your Hand',source:'Draw pile',
+      sourceLabels:Object.fromEntries(entries.map(entry=>[entry.id,entry.source])),
+      cardGroups:Object.fromEntries(entries.map(entry=>[entry.id,entry.group])),groups:opts.groups
     });
   },
   arrangeDrawPileCards(ids){return openByakurenPeek(ids);},
@@ -9156,60 +9169,6 @@ async function settleHandDrag(drag,tile,{keepSize=false}={}){
   return completed;
 }
 
-/* Ability cards use the same spring and landing motion as the real hand. */
-function createAbilityCardDragger(dropZone,onDrop){
-  let active=null,settling=null,closed=false;
-  const inside=(x,y)=>{const rect=dropZone.getBoundingClientRect();return x>=rect.left && x<=rect.left+rect.width && y>=rect.top && y<=rect.top+rect.height;};
-  const release=drag=>{
-    cancelAnimationFrame(drag.frame);drag.source.classList.remove('dragging');dropZone.classList.remove('drag-hover');
-    try{if(drag.source.hasPointerCapture(drag.id))drag.source.releasePointerCapture(drag.id);}catch(_error){}
-  };
-  const move=event=>{
-    const drag=active;if(!drag || drag.id!==event.pointerId)return;
-    if(!drag.started){
-      if(Math.hypot(event.clientX-drag.x,event.clientY-drag.y)<(event.pointerType==='mouse'?6:12))return;
-      drag.started=true;drag.source.classList.add('dragging');
-      drag.ghost=drag.source.cloneNode(true);drag.ghost.draggable=false;drag.ghost.tabIndex=-1;
-      drag.ghost.classList.remove('dragging','selected');drag.ghost.classList.add('touch-drag-ghost');drag.ghost.setAttribute('aria-hidden','true');drag.ghost.removeAttribute('id');
-      drag.ghost.style.width=`${drag.origin.width}px`;drag.ghost.style.height=`${drag.origin.height}px`;
-      document.body.appendChild(drag.ghost);runPhysicalCardDrag(drag,()=>active===drag && !closed);
-    }
-    if(event.cancelable)event.preventDefault();
-    drag.goal.x=event.clientX-drag.grabX;drag.goal.y=event.clientY-drag.grabY;
-    dropZone.classList.toggle('drag-hover',inside(event.clientX,event.clientY));
-  };
-  const finish=(event,cancelled=false)=>{
-    const drag=active;if(!drag || drag.id!==event.pointerId)return;
-    if(!cancelled)move(event);
-    active=null;release(drag);if(!drag.started)return;
-    if(event.cancelable)event.preventDefault();drag.source.dataset.ignoreClickUntil=String(Date.now()+450);
-    const valid=!cancelled && inside(event.clientX,event.clientY);settling=drag;
-    settleHandDrag(drag,valid?dropZone:null,{keepSize:true}).then(landed=>{
-      if(landed && valid && !closed)onDrop(drag.cardId);
-    }).finally(()=>{drag.ghost?.remove();if(settling===drag)settling=null;});
-  };
-  return {
-    bind(node){
-      node.classList.add('ability-drag-ready');
-      node.addEventListener('pointerdown',event=>{
-        if(closed || active || settling || event.button>0 || event.isPrimary===false)return;
-        const rect=node.getBoundingClientRect();
-        active={id:event.pointerId,cardId:node.dataset.cardId,source:node,x:event.clientX,y:event.clientY,
-          grabX:event.clientX-rect.left-rect.width/2,grabY:event.clientY-rect.top-rect.height/2,origin:rect,started:false,frame:null,ghost:null};
-        try{node.setPointerCapture(event.pointerId);}catch(_error){}
-      });
-      node.addEventListener('pointermove',move);node.addEventListener('pointerup',event=>finish(event));
-      node.addEventListener('pointercancel',event=>finish(event,true));node.addEventListener('lostpointercapture',event=>finish(event,true));
-    },
-    cancel(){
-      closed=true;
-      if(active){const drag=active;active=null;release(drag);drag.ghost?.remove();}
-      if(settling){settling.settleAnimation?.cancel();settling.ghost?.remove();settling=null;}
-      dropZone.classList.remove('drag-hover');
-    }
-  };
-}
-
 async function finishHandDrag(cancelled=false,x=0,y=0){
   const drag=touchHandDrag;if(!drag)return;
   touchHandDrag=null;
@@ -9430,13 +9389,49 @@ window.addEventListener('resize',()=>{
   finishTitleCardDrag(true);lastTitleCardTap=null;
   document.querySelectorAll('.table-card-moved').forEach(node=>{const rect=node.getBoundingClientRect();moveTitleCard(node,rect.left+rect.width/2,rect.top+rect.height/2);});
 });
-function openByakurenPeek(ids){
+function cardChoiceGroupSeat(index,count){
+  if(index===0)return {row:1,col:0};
+  if(count===2 || index===2)return {row:0,col:1};
+  return index===1 ? {row:0,col:0} : {row:1,col:1};
+}
+function cardChoiceGroupRect(rect,index,count){
+  const seat=cardChoiceGroupSeat(index,count);
+  return {left:rect.left+rect.width*seat.col/2,top:rect.top+rect.height*seat.row/2,width:rect.width/2,height:rect.height/2};
+}
+/* All revealed-card choices share the physical table used to reorder Byakuren's cards. */
+function openByakurenPeek(ids,opts={}){
   cancelByakurenPeek?.();finishTitleCardDrag(true);lastTitleCardTap=null;
   return new Promise(resolve=>{
     const overlay=el('byakuren-peek-overlay'),host=el('byakuren-peek-cards'),tray=el('byakuren-peek-table'),hand=el('byakuren-peek-hand');
-    const take=el('byakuren-peek-take'),confirm=el('byakuren-peek-confirm'),nodes=[];
-    let selected=null,taken=null,settled=false,order=[];
+    const take=el('byakuren-peek-take'),confirm=el('byakuren-peek-confirm'),groupHost=el('byakuren-peek-groups'),nodes=[];
+    const groups=opts.choice ? opts.groups || [] : [],destination=opts.choice ? opts.destination || 'Your Hand' : 'Your Hand';
+    const parked=new Map(),freelyMoved=new Set();
+    let selected=null,taken=null,settled=false,order=[],previousTray=null;
     const focusBefore=document.activeElement;
+    overlay.classList.toggle('card-choice',!!opts.choice);overlay.classList.toggle('peek-grouped',groups.length>0);
+    const reading=opts.choice && ['satori','reisen'].includes(opts.presentation) ? opts.presentation : null;
+    if(reading)overlay.dataset.reading=reading;else delete overlay.dataset.reading;
+    el('byakuren-peek-emblem').hidden=!reading;el('byakuren-peek-emblem').innerHTML=reading ? mindEyeSvg(reading) : '';
+    setRuleText(el('byakuren-peek-title'),opts.choice ? opts.title : 'Makai Fantastica — top three cards');
+    setRuleText(el('byakuren-peek-instruction'),opts.choice
+      ? groups.length ? "Each area is one player's discard pile. Move cards freely, then drag one into Your Hand and confirm." : 'Move and stack cards freely. Drag one into the target area, then confirm. Double-tap to inspect.'
+      : 'Drag one card into Your Hand. Arrange the rest left to right, or stack the next card on top. Double-click or double-tap to inspect.');
+    const source=el('byakuren-peek-source');source.hidden=groups.length>0;
+    setRuleText(source,opts.choice ? opts.source || 'Draw pile' : 'Draw pile · next card on the left');
+    setRuleText(el('byakuren-peek-destination'),opts.choice ? destination : 'Your Hand · take one card');
+    setRuleText(take,opts.choice ? 'Place selected card here' : 'Take selected card');
+    setRuleText(confirm,opts.choice ? 'Confirm card choice' : 'Confirm order and take card');
+    groupHost.replaceChildren();groupHost.hidden=!groups.length;
+    groups.forEach((group,index)=>{
+      const panel=document.createElement('section'),heading=document.createElement('div'),name=document.createElement('span'),count=document.createElement('span');
+      const seat=cardChoiceGroupSeat(index,groups.length),members=ids.filter(id=>String(opts.cardGroups?.[id])===String(group.key));
+      panel.className='peek-pile-group';panel.dataset.group=String(group.key);panel.style.left=`${seat.col*50}%`;panel.style.top=`${seat.row*50}%`;
+      heading.className='peek-pile-heading';name.className='peek-pile-name';count.className='peek-pile-count';
+      setRuleText(name,group.label);setRuleText(count,`${members.length} card${members.length===1?'':'s'}`);heading.appendChild(name);heading.appendChild(count);panel.appendChild(heading);
+      const kind=document.createElement('div');kind.className='peek-pile-kind';setRuleText(kind,group.kind || 'Discard pile');panel.appendChild(kind);
+      if(!members.length){const empty=document.createElement('div');empty.className='peek-pile-empty';setRuleText(empty,'Empty discard pile');panel.appendChild(empty);}
+      groupHost.appendChild(panel);
+    });
     const center=node=>{const rect=node.getBoundingClientRect();return {x:rect.left+rect.width/2,y:rect.top+rect.height/2};};
     const inHand=node=>{const point=center(node),rect=hand.getBoundingClientRect();return point.x>=rect.left && point.x<=rect.right && point.y>=rect.top && point.y<=rect.bottom;};
     const update=(node,moved=false)=>{
@@ -9444,11 +9439,14 @@ function openByakurenPeek(ids){
       if(moved && node){
         if(inHand(node)){
           if(taken && taken!==node.dataset.cardId){
-            const previous=nodes.find(card=>card.dataset.cardId===taken),rect=tray.getBoundingClientRect();
-            moveTitleCard(previous,rect.left+rect.width*.5,rect.top+rect.height*.5);
+            const previous=nodes.find(card=>card.dataset.cardId===taken),rect=tray.getBoundingClientRect(),point=parked.get(taken) || {x:rect.left+rect.width/2,y:rect.top+rect.height/2};
+            moveTitleCard(previous,point.x,point.y);
           }
           taken=node.dataset.cardId;
-        }else if(taken===node.dataset.cardId)taken=null;
+        }else{
+          if(taken===node.dataset.cardId)taken=null;
+          parked.set(node.dataset.cardId,center(node));freelyMoved.add(node.dataset.cardId);
+        }
       }
       order=nodes.filter(card=>card.dataset.cardId!==taken).sort((a,b)=>{
         const dx=center(a).x-center(b).x;
@@ -9460,24 +9458,44 @@ function openByakurenPeek(ids){
         card.classList.toggle('peek-selected',id===selected);card.classList.toggle('peek-taken',id===taken);
         card.setAttribute('aria-pressed',String(id===selected));
         const label=card.querySelector('.peek-order');
-        label.textContent=id===taken ? 'Your Hand' : `${order.indexOf(id)+1} · ${order.indexOf(id)===0?'Next draw':'Then draw'}`;
+        setRuleText(label,id===taken ? destination : opts.choice
+          ? opts.sourceLabels?.[id] || opts.source || 'Draw pile'
+          : `${order.indexOf(id)+1} · ${order.indexOf(id)===0?'Next draw':'Then draw'}`);
       });
       take.disabled=!selected || selected===taken;confirm.disabled=!taken;
     };
     const finish=value=>{
       if(settled)return;settled=true;finishTitleCardDrag(true);lastTitleCardTap=null;
-      overlay.classList.remove('show');host.replaceChildren();take.onclick=null;confirm.onclick=null;
+      overlay.classList.remove('show','card-choice','peek-grouped');delete overlay.dataset.reading;
+      host.replaceChildren();groupHost.replaceChildren();groupHost.hidden=true;el('byakuren-peek-emblem').replaceChildren();el('byakuren-peek-emblem').hidden=true;take.onclick=null;confirm.onclick=null;
       document.removeEventListener('keydown',onKey);window.removeEventListener('resize',layout);
       peekCardSession=null;cancelByakurenPeek=null;focusBefore?.focus?.({preventScroll:true});resolve(value);
     };
     const onKey=event=>{if(event.key==='Escape' && !el('card-detail-overlay').classList.contains('show')){event.preventDefault();finish(null);}};
     const layout=()=>{
       finishTitleCardDrag(true);const rect=tray.getBoundingClientRect(),handRect=hand.getBoundingClientRect();
-      const width=Math.min(150,rect.width/(ids.length+1));overlay.style.setProperty('--peek-card-width',`${width}px`);
+      const width=opts.choice
+        ? Math.max(36,Math.min(150,(rect.height/(groups.length ? 2 : 1)-44)*.75,rect.width/(groups.length ? 4 : Math.min(ids.length,5)+1)))
+        : Math.min(150,rect.width/(ids.length+1));
+      overlay.style.setProperty('--peek-card-width',`${width}px`);
       nodes.forEach((node,index)=>{
         const rank=order.indexOf(node.dataset.cardId),x=rect.left+rect.width*(Math.max(0,rank)+1)/(order.length+1);
-        moveTitleCard(node,node.dataset.cardId===taken ? handRect.left+handRect.width/2 : x,node.dataset.cardId===taken ? handRect.top+handRect.height/2 : rect.top+rect.height/2+8);
-      });update();
+        let point={x,y:rect.top+rect.height/2+8};
+        const saved=parked.get(node.dataset.cardId);
+        if(saved && freelyMoved.has(node.dataset.cardId) && previousTray){
+          point={x:rect.left+(saved.x-previousTray.left)*rect.width/previousTray.width,y:rect.top+(saved.y-previousTray.top)*rect.height/previousTray.height};
+        }else if(groups.length){
+          const groupIndex=groups.findIndex(group=>String(group.key)===String(opts.cardGroups?.[node.dataset.cardId]));
+          if(groupIndex>=0){
+            const area=cardChoiceGroupRect(rect,groupIndex,groups.length),members=nodes.filter(card=>String(opts.cardGroups?.[card.dataset.cardId])===String(groups[groupIndex].key));
+            const cardWidth=window.innerHeight<=600 && window.innerWidth>window.innerHeight ? Math.min(width,window.innerHeight*.17) : width;
+            const margin=cardWidth/2+10,spread=Math.max(0,area.width-margin*2),position=members.indexOf(node);
+            point={x:area.left+area.width/2+(members.length>1 ? (position/(members.length-1)-.5)*spread : 0),y:area.top+32+(area.height-40)/2};
+          }
+        }
+        parked.set(node.dataset.cardId,point);
+        moveTitleCard(node,node.dataset.cardId===taken ? handRect.left+handRect.width/2 : point.x,node.dataset.cardId===taken ? handRect.top+handRect.height/2 : point.y);
+      });previousTray=rect;update();
     };
     host.replaceChildren();
     ids.forEach((id,index)=>{

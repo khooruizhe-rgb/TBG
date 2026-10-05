@@ -19,7 +19,7 @@ class Element{
  set innerHTML(s){this.markup=s;this.replaceChildren();
   // Only parsed nodes used by these interactions; other markup remains text.
   for(const m of s.matchAll(/<(div|span)[^>]*class="([^"]+)"[^>]*>/g)){
-   if(!/(board-card|avatar|lanterns)/.test(m[2]))continue;
+   if(!/(board-card|avatar|lanterns|peek-order)/.test(m[2]))continue;
    const n=new Element(m[1],this.getBoundingClientRect());n.className=m[2];this.appendChild(n);
   }
  }
@@ -30,13 +30,13 @@ class Element{
  getBoundingClientRect(){const r={...this.rect};for(const k of ['left','top','width','height'])if(this.style[k])r[k]=parseFloat(this.style[k]);return {...r,right:r.left+r.width,bottom:r.top+r.height};}
  setAttribute(k,v){this.attributes[k]=String(v);}addEventListener(k,fn){(this.events[k]??=[]).push(fn);}
  removeEventListener(k,fn){this.events[k]=(this.events[k]||[]).filter(listener=>listener!==fn);}focus(){document.activeElement=this;}
- click(){(this.events.click||[]).forEach(fn=>fn({target:this}));}
+ click(){(this.events.click||[]).forEach(fn=>fn({target:this,stopPropagation(){}}));}
  cloneNode(deep){const n=new Element(this.tagName,this.getBoundingClientRect());n.className=this.className;n.dataset={...this.dataset};n.style={...this.style,setProperty:(k,v)=>n.values.set(k,String(v)),removeProperty:k=>n.values.delete(k)};n.values=new Map(this.values);if(deep)n.append(...this.children.map(c=>c.cloneNode(true)));return n;}
 }
 const el=id=>{if(!controls.has(id))controls.set(id,new Element());return controls.get(id);};
 const document={body:new Element('body'),createElement:tag=>new Element(tag),querySelectorAll:s=>document.body.querySelectorAll(s),addEventListener(){},removeEventListener(){}};
 for(const id of ['board','seats','kourindou','shop-panel','shop-status','modal-box','modal-options','modal-overlay','modal-title','look-into-overlay','look-into-emblem'])document.body.appendChild(el(id));
-const context={console,Math,document,el,window:{innerWidth:1200,innerHeight:800,matchMedia:()=>({matches:reduced}),addEventListener(){},__resolveHumanTurn(){}},Date:{now:()=>now},
+const context={console,Math,document,el,window:{innerWidth:1200,innerHeight:800,matchMedia:()=>({matches:reduced}),addEventListener(){},removeEventListener(){},__resolveHumanTurn(){}},Date:{now:()=>now},
  setTimeout:(fn,delay=0)=>{const id=nextTimer++;timers.set(id,{fn,due:now+delay});return id;},clearTimeout:id=>timers.delete(id),requestAnimationFrame:fn=>fn(),
  getComputedStyle:()=>({backgroundImage:'url(original-portrait)'}),setRuleText:(node,text)=>node.textContent=text,fitSingleLineText(){},
  cardBgClass:(c,id)=>'card-art-'+id,crownLightFor:()=>({main:'#fff',rgb:'255,255,255'}),applyCrownLight(){},discardLightFor:()=>({}),handExitAnimationDelay:()=>0,
@@ -65,7 +65,7 @@ vm.runInContext(slice('const DIRS4','/* ===================== UI layer')+`
  slice('function humanActionCells(cardId){','/* Dragging a hand card')+
  slice('function renderPlayers(','function escapeLogHtml(')+
  slice('function showCardExit(','function showDiscardVanish(')+`
-`+slice('function createAbilityCardDragger(','async function finishHandDrag(')+`
+`+slice('let titleCardDrag=null','let chosenPlayerCount = 3;')+`
  const choiceUI={
 `+slice('  pickAbilityCards(title,ids){','  pickFromList(title, options){')+slice('  pickHandCard(title, cardIds, targetName, opts={}){','  /* Hover or drag the whole zone; release to choose it. */')+`};
  this.api={Game,CARD,renderShop,renderBoard,renderPlayers,onHandCardClick,beginShopTrade,showNueBodyIllusion,showShouGoldLasers,showMurasaPlayerVortex,showByakurenStrikes,showTempleEffect,
@@ -81,21 +81,21 @@ function place(g,r,c,id){g.setCardAt(r,c,id);const tile=el('board').children[r*g
 const tests=[],test=(n,f)=>tests.push([n,f]);
 test('Rin shows draggable discard cards with their owners and takes only the confirmed card',async()=>{
  const g=setup();g.ui=A.choiceUI;g.players[0].isAI=false;g.players[1].discard=['sdm_flandre'];g.players[2].discard=['mtn_aya'];
- const action=g.resolveAbility('palace_rin',1,1,0,0);await flush();const cards=el('look-into-cards').children;
- assert.equal(cards.length,2);assert(cards.every(card=>card.classList.contains('ability-drag-ready')));assert.equal(el('look-into-drop').textContent,'Your Hand');assert(!el('look-into-drop').hidden);
- assert(cards[0].querySelector('.look-into-origin').textContent.includes(g.players[1].name));assert.deepEqual(g.players[0].hand,[]);
- cards[0].click();el('look-into-confirm').onclick();await action;assert.deepEqual(Array.from(g.players[0].hand),['sdm_flandre']);assert.deepEqual(g.players[1].discard,[]);assert.deepEqual(g.players[2].discard,['mtn_aya']);assert(el('look-into-drop').hidden);
+ const action=g.resolveAbility('palace_rin',1,1,0,0);await flush();const cards=el('byakuren-peek-cards').children;
+ assert.equal(cards.length,2);assert(cards.every(card=>card.classList.contains('table-scatter-card')));assert.equal(el('byakuren-peek-destination').textContent,'Your Hand');assert.equal(el('byakuren-peek-groups').children.length,3);
+ assert(cards[0].querySelector('.peek-order').textContent.includes(g.players[1].name));assert.deepEqual(g.players[0].hand,[]);
+ cards[0].click();el('byakuren-peek-take').onclick();el('byakuren-peek-confirm').onclick();await action;assert.deepEqual(Array.from(g.players[0].hand),['sdm_flandre']);assert.deepEqual(g.players[1].discard,[]);assert.deepEqual(g.players[2].discard,['mtn_aya']);assert(!el('byakuren-peek-overlay').classList.contains('show'));
 });
 test('Kutaka uses draggable draw-pile choices without drawing the unchosen cards',async()=>{
  const g=setup();g.ui=A.choiceUI;g.players[0].isAI=false;g.wasteland[1][1]=true;g.drawPile=['hell_clownpiece','hell_eiki','mtn_aya'];
- const action=g.resolveAbility('hell_kutaka',1,1,0,0);await flush();const cards=el('look-into-cards').children;assert.equal(cards.length,2);assert(cards[1].classList.contains('ability-drag-ready'));assert.equal(cards[1].querySelector('.look-into-origin').textContent,'Draw pile');
- cards[1].click();el('look-into-confirm').onclick();await action;assert.deepEqual(Array.from(g.players[0].hand),['hell_eiki']);assert.deepEqual(g.drawPile,['hell_clownpiece','mtn_aya']);
+ const action=g.resolveAbility('hell_kutaka',1,1,0,0);await flush();const cards=el('byakuren-peek-cards').children;assert.equal(cards.length,2);assert(cards[1].classList.contains('table-scatter-card'));assert.equal(cards[1].querySelector('.peek-order').textContent,'Draw pile');
+ cards[1].click();el('byakuren-peek-take').onclick();el('byakuren-peek-confirm').onclick();await action;assert.deepEqual(Array.from(g.players[0].hand),['hell_eiki']);assert.deepEqual(g.drawPile,['hell_clownpiece','mtn_aya']);
 });
 test('Satori, Reisen and Flandre use the appropriate drag destination and retain tap-to-confirm',async()=>{
  for(const [opts,label] of [[{presentation:'satori'},'Your Hand'],[{presentation:'reisen'},'Must play next turn'],[{forPile:true,forDiscard:true},'AI 1 · Discard pile']]){
   const g=setup();g.ui=A.choiceUI;g.players[0].isAI=false;g.players[1].hand=['sdm_patchouli'];
-  const choice=g.chooseHandCard(0,1,'Take this card',opts);await flush();const card=el('look-into-cards').children[0];assert(card.classList.contains('ability-drag-ready'));assert.equal(el('look-into-drop').textContent,label);
-  card.click();assert(!el('look-into-confirm').disabled);el('look-into-confirm').onclick();assert.equal(await choice,'sdm_patchouli');assert.deepEqual(g.players[1].hand,['sdm_patchouli']);assert(!el('look-into-overlay').classList.contains('transfer-mode'));
+  const choice=g.chooseHandCard(0,1,'Take this card',opts);await flush();const card=el('byakuren-peek-cards').children[0];assert(card.classList.contains('table-scatter-card'));assert.equal(el('byakuren-peek-destination').textContent,label);
+  card.click();assert(!el('byakuren-peek-take').disabled);el('byakuren-peek-take').onclick();el('byakuren-peek-confirm').onclick();assert.equal(await choice,'sdm_patchouli');assert.deepEqual(g.players[1].hand,['sdm_patchouli']);assert(!el('byakuren-peek-overlay').classList.contains('show'));
  }
 });
 test('Hand placement selection keeps every shop card visible while highlighting Rinnosuke',()=>{
