@@ -6558,7 +6558,7 @@ function translateGameText(value){
   if(output===undefined && text.includes('\n'))output=text.split('\n').map(translateGameText).join('\n');
   if(output===undefined)output=text;
   for(const [pattern,zh] of ZH_NAMES)output=output.replace(pattern,(_m,prefix)=>prefix+zh);
-  output=output.replace(/\bAI (\d+)\b/g,'电脑 $1').replace(/\bYou(?:[’']s|r)?\b/g,'你').replace(/\b(?:Cost|cost) ([IVXLCDMN]+)\b/g,'代价 $1')
+  output=output.replace(/\bAI (\d+)\b/g,'电脑 $1').replace(/\bYou(?:[’']s|r)?\b/g,'你').replace(/\bwastelands?\b/gi,'荒地').replace(/\bcost\b/gi,'代价')
     .replace(/\[Free\]/g,'[免费]').replace(/\bfor free\b/g,'免费').replace(/^(\d+) · (Next draw|Then draw)$/,(m,n,order)=>`${n} · ${order==='Next draw'?'先抽':'后抽'}`);
   const result=original.slice(0,original.length-original.trimStart().length)+output+original.slice(original.trimEnd().length);
   if(localizedTextCache.size>2000)localizedTextCache.clear();localizedTextCache.set(original,result);return result;
@@ -6598,6 +6598,7 @@ function setGameLanguage(language){
   for(const id of ['menu-language','game-language'])el(id).value=gameLanguage;
   for(const [node,source] of ruleTextSources){if(node.isConnected)setRuleText(node,source.value,source.options);else ruleTextSources.delete(node);}
   if(game && !game.cancelled)renderLog();
+  refreshRuleTerm();
   const list=el('card-name-list');list.replaceChildren();
   for(const card of CARDS){if(card.token && card.id!=='trap_token')continue;const option=document.createElement('option');option.value=translateGameText(card.name);list.appendChild(option);}
   localizeSubtree(document.body);
@@ -6687,6 +6688,13 @@ document.addEventListener('error',event=>{
   }
 },true);
 let ruleTermAnchor=null;
+function refreshRuleTerm(){
+  const info=RULE_TERMS[ruleTermAnchor?.dataset.ruleTerm];
+  if(!info)return;
+  const localize=typeof translateGameText==='function'?translateGameText:String;
+  el('rule-term-title').textContent=localize(info.title);
+  el('rule-term-copy').textContent=localize(info.text);
+}
 function positionRuleTerm(){
   const popover=el('rule-term-popover');
   if(popover.hidden || !ruleTermAnchor) return;
@@ -6705,7 +6713,7 @@ function openRuleTerm(term,anchor){
   const info=RULE_TERMS[term];if(!info || !anchor) return;
   if(ruleTermAnchor===anchor && !el('rule-term-popover').hidden){closeRuleTerm(true);return;}
   closeRuleTerm();ruleTermAnchor=anchor;
-  el('rule-term-title').textContent=info.title;el('rule-term-copy').textContent=info.text;
+  anchor.dataset.ruleTerm=term;refreshRuleTerm();
   anchor.setAttribute('aria-expanded','true');anchor.setAttribute('aria-describedby','rule-term-popover');
   anchor.focus({preventScroll:true});el('rule-term-popover').hidden=false;positionRuleTerm();
 }

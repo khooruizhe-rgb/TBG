@@ -4,10 +4,12 @@ const file=process.argv[2]||(fs.existsSync('touhou_board_game_github_textures.ht
 const html=fs.readFileSync(file,'utf8'),js=html.split('<script>')[1].split('</script>')[0];new vm.Script(js);
 const slice=(a,b)=>js.slice(js.indexOf(a),js.indexOf(b,js.indexOf(a)));
 class Node{
- constructor(tag='div'){this.nodeType=1;this.tagName=tag.toUpperCase();this.children=[];this.attributes={};this.events={};this.isConnected=true;this.style={setProperty(){}};}
+ constructor(tag='div'){this.nodeType=1;this.tagName=tag.toUpperCase();this.children=[];this.attributes={};this.events={};this.dataset={};this.isConnected=true;this.offsetWidth=300;this.offsetHeight=100;this.style={setProperty(){}};}
  appendChild(child){this.children.push(child);child.parentElement=this;return child;}
  replaceChildren(...children){for(const child of this.children)child.isConnected=false;this.children=[];children.forEach(child=>this.appendChild(child));}
  setAttribute(k,v){this.attributes[k]=String(v);}getAttribute(k){return this.attributes[k]??null;}
+ removeAttribute(k){delete this.attributes[k];}focus(){document.activeElement=this;}
+ getBoundingClientRect(){return {left:20,top:200,bottom:220};}
  addEventListener(k,fn){this.events[k]=fn;}matches(selector){return selector.split(',').some(s=>s.startsWith('#')?s.slice(1)===this.id:s.toUpperCase()===this.tagName);}
  closest(selector){let n=this;while(n){if(n.matches(selector))return n;n=n.parentElement;}return null;}
 }
@@ -19,7 +21,7 @@ const ctx={console,Math,window:{localStorage:{getItem:k=>storage.get(k),setItem:
 vm.createContext(ctx);
 vm.runInContext(slice('const DIRS4','/* ===================== UI layer')+'\nlet game=null;\n'+slice('const CARD_ABILITY_NAMES =','/* Only trusted rule text')+
 slice('/* Only trusted rule text becomes references','let detailReturnFocus')+slice('function escapeLogHtml(','function renderLog(')+
-'this.api={CARD,CARDS,FACTIONS,ZH_CARDS,ZH_TEXT,canonicalCardName,translateGameText,setGameLanguage,initializeGameLanguage,localizeTextNode,ruleTextHtml,setRuleText,language:()=>gameLanguage,setGame:g=>game=g};',ctx);
+'this.api={CARD,CARDS,FACTIONS,ZH_CARDS,ZH_TEXT,canonicalCardName,translateGameText,setGameLanguage,initializeGameLanguage,localizeTextNode,ruleTextHtml,setRuleText,openRuleTerm,closeRuleTerm,language:()=>gameLanguage,setGame:g=>game=g};',ctx);
 const A=ctx.api,tests=[],test=(name,fn)=>tests.push([name,fn]);
 test('Both selectors offer English and Chinese, and preference is saved without restarting',()=>{
  for(const id of ['menu-language','game-language'])assert(html.includes(`id="${id}"`));
@@ -46,5 +48,21 @@ test('Dynamic text updates retain an English source and the observer settles aft
 });
 test('Switching language during an ability preserves listeners and entered guess text',()=>{
  const button=el('choice-button');let clicks=0;button.addEventListener('click',()=>clicks++);const input=new Node('input');input.value='雾雨魔理沙';body.appendChild(input);const node=text('Choose card',button);A.setGameLanguage('zh-CN');assert.equal(node.nodeValue,'选择卡牌');button.events.click();A.setGameLanguage('en');button.events.click();assert.equal(clicks,2);assert.equal(input.value,'雾雨魔理沙');
+});
+test('Wasteland and Cost use 荒地 and 代价 in every case and keep Roman or variable costs',()=>{
+ A.setGameLanguage('zh-CN');
+ for(const word of ['wasteland','Wasteland','WASTELAND','wastelands'])assert.equal(A.translateGameText(word),'荒地');
+ for(const word of ['cost','Cost','COST'])assert.equal(A.translateGameText(word),'代价');
+ for(const value of ['I','II','III','IV','VII','N'])assert.equal(A.translateGameText(`cost ${value}`),`代价 ${value}`);
+ assert.equal(A.translateGameText('wasteland_cost'),'wasteland_cost');
+ const rules=A.ruleTextHtml('wasteland and cost II');assert(rules.includes('data-rule-term="wasteland"'));assert(rules.includes('data-rule-term="cost"'));assert(rules.includes('>荒地</button>'));assert(rules.includes('>代价</button> II'));
+ A.setGameLanguage('en');assert.equal(A.translateGameText('wasteland and cost II'),'wasteland and cost II');
+});
+test('Clicked term popups are Chinese immediately and switch languages without losing the anchor',()=>{
+ A.setGameLanguage('zh-CN');
+ for(const [term,title] of [['wasteland','荒地'],['cost','代价']]){
+  const anchor=el('term-'+term);A.openRuleTerm(term,anchor);assert.equal(el('rule-term-title').textContent,title);assert(!/[A-Za-z]{3,}/.test(el('rule-term-copy').textContent));assert.equal(el('rule-term-popover').hidden,false);assert.equal(anchor.attributes['aria-expanded'],'true');
+  A.setGameLanguage('en');assert.equal(el('rule-term-title').textContent,term==='cost'?'Cost':'Wasteland');assert.equal(anchor.attributes['aria-expanded'],'true');A.setGameLanguage('zh-CN');assert.equal(el('rule-term-title').textContent,title);A.closeRuleTerm();assert.equal(el('rule-term-popover').hidden,true);
+ }
 });
 (async()=>{for(const [name,fn] of tests){await fn();console.log('PASS '+name);}console.log(`${tests.length}/${tests.length} language selection checks passed`);})().catch(error=>{console.error(error);process.exitCode=1;});
