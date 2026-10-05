@@ -2333,7 +2333,8 @@ body.mobile-landscape #winner-box h2{font-size:24px;}
 body:has(#game.active) #title-table-cards,body:has(#game.active) .table-scatter-card{display:none}
 body:not(:has(#game.active)){padding:24px;background:#593921;min-height:100dvh}
 body:not(:has(#game.active))>.stars,body:not(:has(#game.active)) #app>header.top{display:none}
-body:not(:has(#game.active)) #app{min-height:calc(100dvh - 48px);display:grid;place-items:center;max-width:none}
+body:not(:has(#game.active)) #app{min-height:calc(100dvh - 48px);display:grid;place-items:center;max-width:none;pointer-events:none}
+body:not(:has(#game.active)) #setup{pointer-events:auto}
 .table-scatter-card{position:absolute;left:var(--table-x);top:var(--table-y);width:clamp(132px,13vw,188px);aspect-ratio:3/4;transform:translate(-50%,-50%) rotate(var(--table-angle));filter:drop-shadow(4px 9px 5px #170d0b7a);animation:tableCardSettle .65s ease-out both;animation-delay:var(--table-delay,0s);pointer-events:auto;cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .table-scatter-card.table-card-moved{position:fixed;z-index:3;animation:none}
 .table-scatter-card.table-card-dragging{cursor:grabbing;filter:drop-shadow(7px 15px 9px #170d0b8a)}
@@ -2381,7 +2382,7 @@ body:not(:has(#game.active)) #app{min-height:calc(100dvh - 48px);display:grid;pl
 /* Paper notes and a felt playing mat share the title's wooden table. */
 body{--bg-panel:#efdfc2;--bg-panel-2:#e5d3b2;--line:#bea482;--gold:#845c31;--sakura:#8d4939;--ink:#453124;--muted:#765c46;background:#593921}
 .stars{display:none}
-.crown-backdrop.active{opacity:.34}
+.crown-backdrop.active{opacity:1}
 .crown-backdrop{filter:blur(14px) brightness(.85) saturate(.9)}
 header.top h1{color:#fff0d1;text-shadow:0 2px 5px #211209aa}
 header.top p{color:#eed9b9}
@@ -2419,6 +2420,16 @@ body.crown-scene-active #hand-area{background:linear-gradient(115deg,rgba(var(--
 .chimera-actions .chimera-use{background:#8a5036;border-color:#714128;color:#fff0d0}
 #modal-box.chimera-mode{background:repeating-linear-gradient(3deg,#704b2603 0 1px,transparent 1px 5px),#efdfc2;border-color:#b99a70}
 .board-card,.hand-card,.look-into-card,.custom-card-tile,#card-detail{--gold:#e8c874}
+
+/* Cream paper edges, a light bevel and stacked stock match the title cards. */
+.board-card,.hand-card{
+  --card-relief:inset 0 0 0 1px #fff5df66,1px 2px 0 #aa8b65,3px 5px 5px #170d0b45;
+  border:2px solid #e7d6b8;border-radius:8px;
+  background-origin:padding-box;background-clip:padding-box;
+  box-shadow:var(--card-relief);
+}
+#hand{padding-bottom:5px}
+body.mobile-landscape .board-card,body.mobile-landscape #hand .hand-card{border-width:1px;border-radius:5px}
 
 </style>
 </head>
@@ -2475,7 +2486,7 @@ body.crown-scene-active #hand-area{background:linear-gradient(115deg,rgba(var(--
       <div id="custom-hand-grid" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center; max-height:360px; overflow-y:auto; padding:6px;"></div>
     </div>
 
-    <p class="menu-footnote">Drag cards to rearrange them. Click a card to inspect it.</p>
+    <p class="menu-footnote">Drag cards to rearrange them. Double-click or double-tap to inspect.</p>
   </div>
 
   <div id="game">
@@ -8457,7 +8468,7 @@ el('draw-btn').addEventListener('click', async () => {
 });
 
 /* ---------- Setup screen wiring ---------- */
-let titleCardDrag=null,lastTitleCardIds=[];
+let titleCardDrag=null,lastTitleCardTap=null,lastTitleCardIds=[];
 function drawTitlePreviewCards(count=9){
   if(!lastTitleCardIds.length){
     try{const saved=JSON.parse(window.localStorage?.getItem('boundary-title-preview') || '[]');if(Array.isArray(saved))lastTitleCardIds=saved.filter(id=>CARD[id]);}catch(_error){}
@@ -8483,22 +8494,33 @@ function finishTitleCardDrag(cancelled=false){
   titleCardDrag=null;
   drag.node.classList.remove('table-card-dragging');
   drag.node.style.setProperty('--table-angle',`${drag.angle}deg`);
-  if(cancelled)moveTitleCard(drag.node,drag.center.x,drag.center.y);
-  drag.node.dataset.ignoreClickUntil=String(Date.now()+400);
+  if(cancelled && drag.moved)moveTitleCard(drag.node,drag.center.x,drag.center.y);
   try{if(drag.node.hasPointerCapture?.(drag.pointerId))drag.node.releasePointerCapture(drag.pointerId);}catch(_error){}
-  if(!cancelled && !drag.moved)openCardDetails(drag.node.dataset.cardId);
+  if(cancelled || drag.moved){
+    lastTitleCardTap=null;drag.node.dataset.ignoreClickUntil=String(Date.now()+400);return;
+  }
+  const time=Date.now(),previous=lastTitleCardTap;
+  lastTitleCardTap={node:drag.node,time,x:drag.startX,y:drag.startY,pointerType:drag.pointerType};
+  if(previous?.node===drag.node && previous.pointerType===drag.pointerType && time-previous.time<=500 &&
+    Math.hypot(drag.startX-previous.x,drag.startY-previous.y)<=16){
+    lastTitleCardTap=null;drag.node.dataset.ignoreClickUntil=String(time+450);
+    openCardDetails(drag.node.dataset.cardId);
+  }
 }
 function onTitleCardPointerDown(event){
-  if(event.button>0 || el('game').classList.contains('active'))return;
+  if(event.button>0 || event.isPrimary===false || el('game').classList.contains('active'))return;
   event.preventDefault();finishTitleCardDrag(true);
-  const node=event.currentTarget,center=liftTitleCard(node);
+  const node=event.currentTarget,rect=node.getBoundingClientRect(),center={x:rect.left+rect.width/2,y:rect.top+rect.height/2};
   node.focus({preventScroll:true});
-  titleCardDrag={node,center,pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,offsetX:event.clientX-center.x,offsetY:event.clientY-center.y,angle:Number(node.dataset.angle),moved:false};
+  titleCardDrag={node,center,pointerId:event.pointerId,pointerType:event.pointerType || 'mouse',startX:event.clientX,startY:event.clientY,offsetX:event.clientX-center.x,offsetY:event.clientY-center.y,angle:Number(node.dataset.angle),moved:false};
   try{node.setPointerCapture(event.pointerId);}catch(_error){}
 }
 function onTitleCardPointerMove(event){
   const drag=titleCardDrag;if(!drag || drag.pointerId!==event.pointerId)return;
-  if(Math.hypot(event.clientX-drag.startX,event.clientY-drag.startY)>5)drag.moved=true;
+  if(!drag.moved && Math.hypot(event.clientX-drag.startX,event.clientY-drag.startY)>5){
+    drag.moved=true;liftTitleCard(drag.node);
+    try{drag.node.setPointerCapture(drag.pointerId);}catch(_error){}
+  }
   if(!drag.moved)return;
   drag.node.classList.add('table-card-dragging');
   moveTitleCard(drag.node,event.clientX-drag.offsetX,event.clientY-drag.offsetY);
@@ -8507,13 +8529,23 @@ function onTitleCardPointerUp(event){
   if(titleCardDrag?.pointerId!==event.pointerId)return;
   onTitleCardPointerMove(event);finishTitleCardDrag(false);
 }
-function onTitleCardPointerCancel(event){if(titleCardDrag?.pointerId===event.pointerId)finishTitleCardDrag(true);}
+function onTitleCardPointerCancel(event){
+  if(titleCardDrag?.pointerId!==event.pointerId)return;
+  if(event.type==='lostpointercapture' && titleCardDrag.node.hasPointerCapture?.(event.pointerId))return;
+  finishTitleCardDrag(true);
+}
 function onTitleCardClick(event){
-  event.stopPropagation();const node=event.currentTarget;
-  if(!el('game').classList.contains('active') && Number(node.dataset.ignoreClickUntil || 0)<=Date.now())openCardDetails(node.dataset.cardId);
+  event.stopPropagation();
+  if(event.detail===0)onTitleCardDoubleClick(event);
+}
+function onTitleCardDoubleClick(event){
+  event.preventDefault();event.stopPropagation();const node=event.currentTarget;
+  if(el('game').classList.contains('active') || Number(node.dataset.ignoreClickUntil || 0)>Date.now())return;
+  lastTitleCardTap=null;node.dataset.ignoreClickUntil=String(Date.now()+450);openCardDetails(node.dataset.cardId);
 }
 function onTitleCardKeyDown(event){
   if(el('game').classList.contains('active'))return;
+  lastTitleCardTap=null;
   if(event.key==='Enter' || event.key===' '){event.preventDefault();openCardDetails(event.currentTarget.dataset.cardId);return;}
   const directions={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};
   const delta=directions[event.key];if(!delta)return;
@@ -8521,26 +8553,26 @@ function onTitleCardKeyDown(event){
   moveTitleCard(event.currentTarget,center.x+delta[0]*step,center.y+delta[1]*step);
 }
 function renderTitleTableCards(){
-  finishTitleCardDrag(true);
+  finishTitleCardDrag(true);lastTitleCardTap=null;
   document.querySelectorAll('.table-scatter-card').forEach(node=>node.remove());
   const host=el('title-table-cards');host.replaceChildren();
   const positions=[[12,23,-17],[20,63,12],[7,83,-9],[86,19,16],[82,59,-12],[95,82,14],[35,96,-11],[67,95,15],[74,4,-7]];
   drawTitlePreviewCards().forEach((preview,index)=>{
     const [x,y,baseAngle]=positions[index],angle=baseAngle+Math.random()*12-6;
     const card=document.createElement('div');card.className='table-scatter-card';card.dataset.cardId=preview.id;card.dataset.angle=String(angle);
-    card.setAttribute('role','button');card.setAttribute('tabindex','0');card.setAttribute('aria-label',`${preview.name}. Drag to move; click to inspect.`);
+    card.setAttribute('role','button');card.setAttribute('tabindex','0');card.setAttribute('aria-label',`${preview.name}. Drag to move; double-click or double-tap to inspect.`);
     card.style.setProperty('--table-x',`${x+Math.random()*4-2}%`);card.style.setProperty('--table-y',`${y+Math.random()*6-3}%`);
     card.style.setProperty('--table-angle',`${angle}deg`);card.style.setProperty('--table-delay',`${index*.04}s`);
     card.innerHTML=index===6 || index===7 ? '<div class="table-card-back"><span>☯</span></div>' : cardBoardHtml(preview.id);
     card.addEventListener('pointerdown',onTitleCardPointerDown);card.addEventListener('pointermove',onTitleCardPointerMove);
     card.addEventListener('pointerup',onTitleCardPointerUp);card.addEventListener('pointercancel',onTitleCardPointerCancel);card.addEventListener('lostpointercapture',onTitleCardPointerCancel);
-    card.addEventListener('click',onTitleCardClick);card.addEventListener('keydown',onTitleCardKeyDown);
+    card.addEventListener('click',onTitleCardClick);card.addEventListener('dblclick',onTitleCardDoubleClick);card.addEventListener('keydown',onTitleCardKeyDown);
     host.appendChild(card);
   });
 }
-window.addEventListener('blur',()=>finishTitleCardDrag(true));
+window.addEventListener('blur',()=>{finishTitleCardDrag(true);lastTitleCardTap=null;});
 window.addEventListener('resize',()=>{
-  finishTitleCardDrag(true);
+  finishTitleCardDrag(true);lastTitleCardTap=null;
   document.querySelectorAll('.table-card-moved').forEach(node=>{const rect=node.getBoundingClientRect();moveTitleCard(node,rect.left+rect.width/2,rect.top+rect.height/2);});
 });
 let chosenPlayerCount = 3;
