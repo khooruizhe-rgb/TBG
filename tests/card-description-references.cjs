@@ -186,20 +186,23 @@ test('Placed is the only colon label and Mountain descriptions do not repeat Kan
   assert.equal(A.CARD.hourai_mokou.desc,'Placed: Draw a card for each card in your discard pile.');
   assert.equal(A.CARD.hourai_eirin.desc,'While this card is on the board, all Crown abilities are disabled.');
 });
-test('Ability headings fit on open and resize rather than wrapping or truncating',()=>{
+test('Ability headings in both languages fit on open and resize rather than wrapping or truncating',()=>{
   const heading=el('card-detail-ability');heading.baseFontSize=36;
   Object.defineProperty(heading,'scrollWidth',{configurable:true,get(){
     return this.textContent.length*.6*(parseFloat(this.style.fontSize)||this.baseFontSize);
   }});
-  for(const width of [466,306,180]){
-    heading.clientWidth=width;
-    for(const card of A.CARDS){
-      A.openCardDetails(card.id);assert.ok(heading.scrollWidth<=heading.clientWidth,`${card.id} at ${width}px`);
+  for(const language of ['en','zh-CN']){
+    vm.runInContext(`gameLanguage=${JSON.stringify(language)}`,context);
+    for(const width of [466,306,180]){
+      heading.clientWidth=width;
+      for(const card of A.CARDS){
+        A.openCardDetails(card.id);assert.ok(heading.scrollWidth<=heading.clientWidth,`${card.id} in ${language} at ${width}px`);
+      }
     }
   }
   heading.clientWidth=170;windowListeners.filter(l=>l.type==='resize').forEach(l=>l.fn());
   assert.ok(heading.scrollWidth<=heading.clientWidth);
-  assert.ok(/\.card-detail-ability\{[^}]*white-space:nowrap/s.test(html));A.closeCardDetails();
+  assert.ok(/\.card-detail-ability\{[^}]*white-space:nowrap/s.test(html));vm.runInContext('gameLanguage="en"',context);A.closeCardDetails();
 });
 test('Cost and wasteland are clickable without turning partial words into links',()=>{
   assert.match(A.ruleTextHtml('[Cost III] Placed: Clear wasteland.'),/data-rule-term="cost"/);

@@ -17,11 +17,11 @@ const body=new Node('body'),root=new Node('html'),elements=new Map(),el=id=>{if(
 const text=(value,parent=body)=>{const node={nodeType:3,nodeValue:value,parentElement:parent,isConnected:true};parent.children.push(node);return node;};
 const document={body,documentElement:root,title:'',createElement:tag=>new Node(tag),addEventListener(){},createTreeWalker(node){const walk=n=>(n.children||[]).flatMap(c=>[c,...walk(c)]),children=walk(node);let i=-1;return {nextNode(){return ++i<children.length;},get currentNode(){return children[i];}};}};
 const storage=new Map();let observer,frames=[];
-const ctx={console,Math,window:{localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)},addEventListener(){}},document,el,NodeFilter:{SHOW_ELEMENT:1,SHOW_TEXT:4},MutationObserver:class{constructor(callback){observer=callback;}observe(){}},requestAnimationFrame:fn=>frames.push(fn),fitCardDetailHeadings(){},positionRuleTerm(){},positionRinnosukeBubble(){},queueMobileViewport(){},renderLog(){ctx.logsRendered=(ctx.logsRendered||0)+1;},CARD_DETAIL_FACTION_ICONS:{},setTimeout,clearTimeout};
+const ctx={console,Math:Object.create(Math),window:{localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)},addEventListener(){}},document,el,NodeFilter:{SHOW_ELEMENT:1,SHOW_TEXT:4},MutationObserver:class{constructor(callback){observer=callback;}observe(){}},requestAnimationFrame:fn=>frames.push(fn),fitCardDetailHeadings(){},positionRuleTerm(){},positionRinnosukeBubble(){},queueMobileViewport(){},renderLog(){ctx.logsRendered=(ctx.logsRendered||0)+1;},CARD_DETAIL_FACTION_ICONS:{},setTimeout,clearTimeout};
 vm.createContext(ctx);
 vm.runInContext(slice('const DIRS4','/* ===================== UI layer')+'\nlet game=null;\n'+slice('const CARD_ABILITY_NAMES =','/* Only trusted rule text')+
 slice('/* Only trusted rule text becomes references','let detailReturnFocus')+slice('function escapeLogHtml(','function renderLog(')+
-'this.api={CARD,CARDS,FACTIONS,CARD_ABILITY_NAMES,ZH_CARDS,ZH_TEXT,canonicalCardName,translateGameText,setGameLanguage,initializeGameLanguage,localizeTextNode,ruleTextHtml,setRuleText,openRuleTerm,closeRuleTerm,language:()=>gameLanguage,setGame:g=>game=g};',ctx);
+'this.api={CARD,CARDS,FACTIONS,CARD_ABILITY_NAMES,ZH_CARDS,ZH_TEXT,canonicalCardName,translateGameText,setCardAbilityTitle,setGameLanguage,initializeGameLanguage,localizeTextNode,ruleTextHtml,setRuleText,openRuleTerm,closeRuleTerm,language:()=>gameLanguage,setGame:g=>game=g};',ctx);
 const A=ctx.api,tests=[],test=(name,fn)=>tests.push([name,fn]);
 test('Both selectors offer English and Chinese, and preference is saved without restarting',()=>{
  for(const id of ['menu-language','game-language'])assert(html.includes(`id="${id}"`));
@@ -31,6 +31,28 @@ test('Both selectors offer English and Chinese, and preference is saved without 
 test('Every real card has a Chinese name, ability title and complete rules without changing engine data',()=>{
  A.setGameLanguage('zh-CN');assert.equal(Object.keys(A.ZH_CARDS).length,A.CARDS.length);
  for(const card of A.CARDS){const [name,ability,description]=A.ZH_CARDS[card.id];assert.equal(A.translateGameText(card.name),name);assert.equal(A.translateGameText(card.desc),description);assert.equal(A.translateGameText(A.CARD_ABILITY_NAMES[card.id]),ability);assert(ability);assert(!/[A-Za-z]{3,}/.test(description.replace(/\b[IVXLCDMN]+\b/g,'')),card.id);assert.notEqual(card.name,name);}
+});
+test('Placed and Skip Ability use the requested Chinese wording while English remains intact',()=>{
+ A.setGameLanguage('zh-CN');for(const label of ['Skip ability','Skip Ability','Cancel (skip ability)'])assert.equal(A.translateGameText(label),'跳过技能');
+ for(const card of A.CARDS){const description=A.translateGameText(card.desc);assert(!description.includes('放置时：'),card.id);if(card.desc.includes('Placed:'))assert(description.includes('放置：'),card.id);}
+ A.setGameLanguage('en');assert.equal(A.translateGameText('Skip Ability'),'Skip Ability');assert(A.translateGameText(A.CARD.mtn_sanae.desc).startsWith('Placed:'));
+});
+test('Tenshi has exactly a 20 percent alternate-title threshold and keeps the normal English title',()=>{
+ const random=ctx.Math.random;try{
+  A.setGameLanguage('zh-CN');let alternate=0;
+  for(let i=0;i<100;i++){ctx.Math.random=()=>i/100;const heading=new Node('h3');A.setCardAbilityTitle(heading,'heaven_tenshi');assert.equal(heading.textContent,i<20?'全卡牌都飞上天！':'全卡牌的绯想天！');if(heading.textContent==='全卡牌都飞上天！')alternate++;}
+  assert.equal(alternate,20);ctx.Math.random=()=>0.199999;const heading=el('tenshi-english-title');A.setGameLanguage('en');A.setCardAbilityTitle(heading,'heaven_tenshi');assert.equal(heading.textContent,'All Pieces Vermilion High!');A.setGameLanguage('zh-CN');assert.equal(heading.textContent,'全卡牌都飞上天！');
+ }finally{ctx.Math.random=random;}
+});
+test('An open ability title stays stable through observer updates and language switches',()=>{
+ const random=ctx.Math.random;let rolls=0;try{
+  ctx.Math.random=()=>{rolls++;return 0.1;};A.setGameLanguage('zh-CN');const heading=el('stable-tenshi-title');A.setCardAbilityTitle(heading,'heaven_tenshi');assert.equal(rolls,1);
+  const child=text(heading.textContent,heading);for(let i=0;i<5;i++)observer([{type:'characterData',target:child}]);assert.equal(heading.textContent,'全卡牌都飞上天！');
+  A.setGameLanguage('en');assert.equal(heading.textContent,'All Pieces Vermilion High!');A.setGameLanguage('zh-CN');assert.equal(heading.textContent,'全卡牌都飞上天！');assert.equal(rolls,1);
+  A.setCardAbilityTitle(heading,'sage_matara');assert.equal(heading.textContent,'/op');A.setGameLanguage('en');assert.equal(heading.textContent,'/op');assert.equal(rolls,1);
+  ctx.Math.random=()=>0.8;A.setCardAbilityTitle(heading,'heaven_tenshi');A.setGameLanguage('zh-CN');assert.equal(heading.textContent,'全卡牌的绯想天！');
+  assert.equal(A.translateGameText(A.CARD_ABILITY_NAMES.heaven_tenshi),'全卡牌的绯想天！');
+ }finally{ctx.Math.random=random;}
 });
 test('Chinese faction icons, clickable card references and Cost/Wasteland help survive localization',()=>{
  const rule=A.ruleTextHtml(A.CARD.mtn_sanae.desc);assert(rule.includes('data-inspect-card="mtn_kanako"'));assert(rule.includes('八坂神奈子'));

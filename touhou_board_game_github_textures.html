@@ -6099,7 +6099,7 @@ const CARD_ABILITY_NAMES = {
   palace_rin: "Cat's Walk",
   palace_utsuho: 'Nuclear Fission',
   sage_yukari: 'Boundary Manipulation',
-  sage_matara: 'Secret Power: /op',
+  sage_matara: '/op',
   sage_kasen: 'Wildest Hermit',
   sage_ran: 'Shikigami Callback',
   reimu: 'Innate Dream',
@@ -6109,7 +6109,7 @@ const CARD_ABILITY_NAMES = {
   hell_hecatia: 'Trinitarian Rhapsody',
   hell_clownpiece: 'Impurity Tolerence',
   hell_eiki: 'Black and White',
-  hell_komachi: 'Distance exchange',
+  hell_komachi: 'Distance Manipulation',
   heaven_tenshi: 'All Pieces Vermilion High!',
   heaven_iku: 'Ride the Lightning',
   sdm_meiling:'Inner Chi',hourai_tewi:'Ancient Duper',mtn_nitori:'Optical Camouflage',
@@ -6120,7 +6120,7 @@ const CARD_ABILITY_NAMES = {
 /* ---------- Language selection: canonical rules stay language-independent. ---------- */
 let gameLanguage='en';
 try{const saved=window.localStorage?.getItem('boundary-language');if(saved==='zh-CN')gameLanguage=saved;}catch(_error){}
-const ZH_CARDS={"sdm_remilia":["蕾米莉亚·斯卡蕾特","命运操纵","放置时：将其他玩家手中的所有红魔馆卡牌加入你的手牌。"],"sdm_flandre":["芙兰朵露·斯卡蕾特","「目」之破坏","放置时：选择任意玩家的一张手牌，将其送入该玩家的弃牌堆。"],"sdm_patchouli":["帕秋莉·诺蕾姬","魔法风云","放置时：猜测另一名玩家手中的一张卡牌。猜对后，将该卡牌加入你的手牌。"],"sdm_sakuya":["十六夜咲夜","Zawarudo","放置时：获得两个额外回合，然后将你的手牌洗入抽牌堆。"],"haku_yuyuko":["西行寺幽幽子","幽冥缠身","[代价 N] 放置时：将 N 张随机的正交相邻卡牌送入你的弃牌堆。"],"haku_youmu":["魂魄妖梦","先之先","放置时：放置此卡不消耗你的回合。"],"hourai_kaguya":["蓬莱山辉夜","看我操作！","放置时：猜测另一名玩家手中的一张永远亭卡牌。每次猜对，你可以将该卡牌放到棋盘上并继续猜测。"],"hourai_eirin":["八意永琳","思兼装置","此卡在棋盘上时，所有领主卡牌的能力均被禁用。"],"hourai_reisen":["铃仙·优昙华院·因幡","狂气之瞳","放置时：选择另一名玩家的一张手牌。该玩家必须在下个回合放置这张卡牌。"],"hourai_mokou":["藤原妹红","凤凰复生","放置时：你的弃牌堆中每有一张卡牌，就抽一张牌。"],"mtn_kanako":["八坂神奈子","风神之神德","此卡可以放在荒地上。此卡在棋盘上时，其他妖怪之山卡牌的放置能力发动两次。\n放置时：将你手中的一张妖怪之山卡牌放到棋盘上。"],"mtn_suwako":["洩矢诹访子","诅咒之地","放置时：将三个棋盘格变为荒地。"],"mtn_sanae":["东风谷早苗","神风","放置时：抽一张牌。如果八坂神奈子在棋盘上，再抽一张牌。"],"mtn_aya":["射命丸文","传闻探寻者","放置时：其他每名玩家展示四张手牌。"],"palace_satori":["古明地觉","恐怖催眠术","[代价 I] 放置时：查看另一名玩家的手牌，并将其中一张加入你的手牌。"],"palace_rin":["火焰猫燐","猫之步伐","放置时：将任意弃牌堆中的一张卡牌加入你的手牌。"],"palace_utsuho":["灵乌路空","核裂变","放置时：将棋盘上的一个 2×2 区域变为荒地。"],"palace_koishi":["古明地恋","无意识","棋盘上有三张地灵殿卡牌时，此卡会自动从你的手牌移到棋盘上。"],"sage_yukari":["八云紫","境界操纵","你可以将此卡放在另一张棋盘卡牌上，并将被覆盖的卡牌加入你的手牌。"],"sage_kasen":["茨木华扇","野性仙人","收取阵营卡牌时，此卡可视为任意阵营的卡牌。"],"sage_matara":["摩多罗隐岐奈","秘神之力 /op","放置时：选择另一张棋盘卡牌，由此卡使用它的放置能力。"],"sage_ran":["八云蓝","式神召回","放置时：抽一张牌。如果八云紫在棋盘上，立即放置抽到的卡牌。"],"reimu":["博丽灵梦","梦想天生","放置时：将棋盘上的一张领主卡牌加入你的手牌。"],"marisa":["雾雨魔理沙","极限火花","放置时：将棋盘上的一张非领主卡牌送入你的弃牌堆。"],"yuuka":["风见幽香","花之主宰","放置时：清除一个 3×3 区域中的荒地，然后将你的手牌洗入抽牌堆并抽四张牌。"],"medicine":["梅蒂欣·梅兰可莉","铃兰中毒","放置时：选择一名玩家，将其两张随机手牌放回抽牌堆。"],"hell_hecatia":["赫卡提亚·拉碧斯拉祖利","三位一体狂想曲","此卡计为 3 点弃牌分数。只有弃牌堆已有超过 3 张地狱卡牌时，此卡才能进入该弃牌堆。"],"hell_clownpiece":["克劳恩皮丝","污秽耐受","此卡可以放在荒地上。\n放置时：清除此卡周围的荒地。"],"hell_eiki":["四季映姬","黑与白","[代价 I] 放置时：将棋盘上数量最多的阵营的所有卡牌放回抽牌堆。"],"hell_komachi":["小野塚小町","距离交换","放置时：将此卡与另一张棋盘卡牌交换位置。如果四季映姬在棋盘上，此次放置不消耗你的回合。"],"heaven_tenshi":["比那名居天子","全人类的绯想天！","[代价 II] 放置时：将棋盘上的所有非天界卡牌放回抽牌堆。"],"heaven_iku":["永江衣玖","驾驭雷霆","[代价 III] 放置时：选择一个 2×2 区域，将其中最多两张随机的非天界卡牌送入你的弃牌堆。"],"temple_byakuren":["圣白莲","魔界幻想","放置时：你可以按任意顺序使用每个效果一次。\n[代价 IV] 获得三个额外回合。\n[代价 III] 将另外三张棋盘卡牌放回抽牌堆，并将其所在格变为荒地。\n[代价 II] 查看抽牌堆顶的三张牌，拿取一张，并按任意顺序放回其余卡牌。\n棋盘上每有一张其他命莲寺卡牌，每个效果的代价减少一。"],"temple_shou":["寅丸星","光辉宝藏","[代价 I] 放置时：棋盘上每有一块荒地，就抽一张牌，然后清除所有荒地。"],"temple_nue":["封兽鵺","能力奇美拉","放置时：从三张随机卡牌中选择一个能力。短暂变为该卡牌的外貌，并使用它的能力。"],"temple_murasa":["村纱水蜜","无底漩涡","放置时：选择一名玩家。该玩家在接下来两个回合中不能放置卡牌或交易。"],"temple_ichirin":["云居一轮","拳击粉碎","[代价 II] 放置时：将每张非命莲寺卡牌向远离此卡的方向推一格。被推出棋盘的卡牌放回抽牌堆。"],"sdm_meiling":["红美铃","内劲","放置时：将一张相邻卡牌向远离此卡的方向移动一格。"],"hourai_tewi":["因幡帝","远古骗术","放置时：向其他每名玩家的手牌中加入一张陷阱。"],"mtn_nitori":["河城荷取","光学迷彩","以此卡为中心的 3×3 区域中的卡牌不能被选中。"],"palace_yuugi":["星熊勇仪","怪力","[代价 II] 放置时：将一张正交相邻的卡牌送入你的弃牌堆。"],"sage_mai_satono":["丁礼田舞与尔子田里乃","驱动活力","放置时：在你的下个回合获得一个额外回合。"],"hell_kutaka":["庭渡久侘歌","门户守望者","此卡可以放在荒地上。\n放置时：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。"],"shop_rinnosuke":["森近霖之助","香霖堂","此卡及其周围的卡牌不能移动或使用能力。\n先选择一张手牌，再点击森近霖之助即可交易。每回合限一次，且不消耗回合。"],"trap_token":["陷阱","嗯……这是陷阱！","此卡在手牌中时，不能交易、弃置或放回抽牌堆。\n放置时：将另一张手牌放回抽牌堆。"]};
+const ZH_CARDS={"sdm_remilia":["蕾米莉亚·斯卡蕾特","命运操纵","放置：将其他玩家手中的所有红魔馆卡牌加入你的手牌。"],"sdm_flandre":["芙兰朵露·斯卡蕾特","「目」之破坏","放置：选择任意玩家的一张手牌，将其送入该玩家的弃牌堆。"],"sdm_patchouli":["帕秋莉·诺蕾姬","魔法风云","放置：猜测另一名玩家手中的一张卡牌。猜对后，将该卡牌加入你的手牌。"],"sdm_sakuya":["十六夜咲夜","Zawarudo","放置：获得两个额外回合，然后将你的手牌洗入抽牌堆。"],"haku_yuyuko":["西行寺幽幽子","幽冥缠身","[代价 N] 放置：将 N 张随机的正交相邻卡牌送入你的弃牌堆。"],"haku_youmu":["魂魄妖梦","先之先","放置：放置此卡不消耗你的回合。"],"hourai_kaguya":["蓬莱山辉夜","看我操作！","放置：猜测另一名玩家手中的一张永远亭卡牌。每次猜对，你可以将该卡牌放到棋盘上并继续猜测。"],"hourai_eirin":["八意永琳","思兼装置","此卡在棋盘上时，所有领主卡牌的能力均被禁用。"],"hourai_reisen":["铃仙·优昙华院·因幡","狂气之瞳","放置：选择另一名玩家的一张手牌。该玩家必须在下个回合放置这张卡牌。"],"hourai_mokou":["藤原妹红","凤凰复生","放置：你的弃牌堆中每有一张卡牌，就抽一张牌。"],"mtn_kanako":["八坂神奈子","风神之神德","此卡可以放在荒地上。此卡在棋盘上时，其他妖怪之山卡牌的放置能力发动两次。\n放置：将你手中的一张妖怪之山卡牌放到棋盘上。"],"mtn_suwako":["洩矢诹访子","诅咒之地","放置：将三个棋盘格变为荒地。"],"mtn_sanae":["东风谷早苗","八坂之神风","放置：抽一张牌。如果八坂神奈子在棋盘上，再抽一张牌。"],"mtn_aya":["射命丸文","才不是道听途说呢！","放置：其他每名玩家展示四张手牌。"],"palace_satori":["古明地觉","恐怖催眠术","[代价 I] 放置：查看另一名玩家的手牌，并将其中一张加入你的手牌。"],"palace_rin":["火焰猫燐","猫之步伐","放置：将任意弃牌堆中的一张卡牌加入你的手牌。"],"palace_utsuho":["灵乌路空","核裂变","放置：将棋盘上的一个 2×2 区域变为荒地。"],"palace_koishi":["古明地恋","无意识的哲学","棋盘上有三张地灵殿卡牌时，此卡会自动从你的手牌移到棋盘上。"],"sage_yukari":["八云紫","境界操纵","你可以将此卡放在另一张棋盘卡牌上，并将被覆盖的卡牌加入你的手牌。"],"sage_kasen":["茨木华扇","无拘无束","收取阵营卡牌时，此卡可视为任意阵营的卡牌。"],"sage_matara":["摩多罗隐岐奈","/op","放置：选择另一张棋盘卡牌，由此卡使用它的放置能力。"],"sage_ran":["八云蓝","式神召回","放置：抽一张牌。如果八云紫在棋盘上，立即放置抽到的卡牌。"],"reimu":["博丽灵梦","梦想天生","放置：将棋盘上的一张领主卡牌加入你的手牌。"],"marisa":["雾雨魔理沙","极限火花","放置：将棋盘上的一张非领主卡牌送入你的弃牌堆。"],"yuuka":["风见幽香","花之主宰","放置：清除一个 3×3 区域中的荒地，然后将你的手牌洗入抽牌堆并抽四张牌。"],"medicine":["梅蒂欣·梅兰可莉","铃兰中毒","放置：选择一名玩家，将其两张随机手牌放回抽牌堆。"],"hell_hecatia":["赫卡提亚·拉碧斯拉祖利","三位一体狂想曲","此卡计为 3 点弃牌分数。只有弃牌堆已有超过 3 张地狱卡牌时，此卡才能进入该弃牌堆。"],"hell_clownpiece":["克劳恩皮丝","污秽耐受","此卡可以放在荒地上。\n放置：清除此卡周围的荒地。"],"hell_eiki":["四季映姬","黑白的判决","[代价 I] 放置：将棋盘上数量最多的阵营的所有卡牌放回抽牌堆。"],"hell_komachi":["小野塚小町","距离操控","放置：将此卡与另一张棋盘卡牌交换位置。如果四季映姬在棋盘上，此次放置不消耗你的回合。"],"heaven_tenshi":["比那名居天子","全卡牌的绯想天！","[代价 II] 放置：将棋盘上的所有非天界卡牌放回抽牌堆。"],"heaven_iku":["永江衣玖","驾驭雷云","[代价 III] 放置：选择一个 2×2 区域，将其中最多两张随机的非天界卡牌送入你的弃牌堆。"],"temple_byakuren":["圣白莲","魔界幻想","放置：你可以按任意顺序使用每个效果一次。\n[代价 IV] 获得三个额外回合。\n[代价 III] 将另外三张棋盘卡牌放回抽牌堆，并将其所在格变为荒地。\n[代价 II] 查看抽牌堆顶的三张牌，拿取一张，并按任意顺序放回其余卡牌。\n棋盘上每有一张其他命莲寺卡牌，每个效果的代价减少一。"],"temple_shou":["寅丸星","光辉宝藏","[代价 I] 放置：棋盘上每有一块荒地，就抽一张牌，然后清除所有荒地。"],"temple_nue":["封兽鵺","能力奇美拉","放置：从三张随机卡牌中选择一个能力。短暂变为该卡牌的外貌，并使用它的能力。"],"temple_murasa":["村纱水蜜","无底漩涡","放置：选择一名玩家。该玩家在接下来两个回合中不能放置卡牌或交易。"],"temple_ichirin":["云居一轮","再打一轮！","[代价 II] 放置：将每张非命莲寺卡牌向远离此卡的方向推一格。被推出棋盘的卡牌放回抽牌堆。"],"sdm_meiling":["红美铃","内劲","放置：将一张相邻卡牌向远离此卡的方向移动一格。"],"hourai_tewi":["因幡帝","远古骗术","放置：向其他每名玩家的手牌中加入一张陷阱。"],"mtn_nitori":["河城荷取","光学迷彩","以此卡为中心的 3×3 区域中的卡牌不能被选中。"],"palace_yuugi":["星熊勇仪","怪力乱神","[代价 II] 放置：将一张正交相邻的卡牌送入你的弃牌堆。"],"sage_mai_satono":["丁礼田舞与尔子田里乃","驱动活力","放置：在你的下个回合获得一个额外回合。"],"hell_kutaka":["庭渡久侘歌","门户守望者","此卡可以放在荒地上。\n放置：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。"],"shop_rinnosuke":["森近霖之助","香霖堂","此卡及其周围的卡牌不能移动或使用能力。\n先选择一张手牌，再点击森近霖之助即可交易。每回合限一次，且不消耗回合。"],"trap_token":["陷阱","嗯……这是陷阱！","此卡在手牌中时，不能交易、弃置或放回抽牌堆。\n放置：将另一张手牌放回抽牌堆。"]};
 const ZH_FACTIONS={"sdm":"红魔馆","hakugyokurou":"白玉楼","hourai":"永远亭","mountain":"妖怪之山","palace":"地灵殿","sage":"贤者","hakurei":"博丽","sunflower":"太阳花田","hell":"地狱","heaven":"天界","temple":"命莲寺","kourindou":"香霖堂","token":"衍生物"};
 const ZH_TEXT={
   "Boundary of Fates": "命运的境界",
@@ -6166,9 +6166,10 @@ const ZH_TEXT={
   "Inspect": "查看详情",
   "Inspect selected": "查看所选卡牌",
   "Use ability": "使用能力",
-  "Skip ability": "跳过能力",
+  "Skip ability": "跳过技能",
+  "Skip Ability": "跳过技能",
   "Finish ability": "结束能力",
-  "Cancel (skip ability)": "跳过能力",
+  "Cancel (skip ability)": "跳过技能",
   "Guess": "猜测",
   "Type a card name…": "输入卡牌名称……",
   "Look into": "查看卡牌",
@@ -6211,7 +6212,7 @@ const ZH_TEXT={
   "Murasa blocks placement and trading this turn — no action available.": "村纱水蜜封锁了本回合的放置与交易 — 当前无可执行的行动。",
   "Choose merchandise.": "选择商品。",
   "Wasteland is a blocked tile. A card can be placed there only if its ability allows it.": "荒地是被封锁的棋盘格。只有能力允许的卡牌才能放在荒地上。",
-  "Return the shown number of hand cards to the draw pile to use the ability. Cost N lets you choose how many cards to pay. If you do not pay, the ability is skipped.": "使用能力时，将指定数量的手牌放回抽牌堆。代价 N 由你决定支付几张牌。不支付则跳过能力。",
+  "Return the shown number of hand cards to the draw pile to use the ability. Cost N lets you choose how many cards to pay. If you do not pay, the ability is skipped.": "使用能力时，将指定数量的手牌放回抽牌堆。代价 N 由你决定支付几张牌。不支付则跳过技能。",
   "Wait, place me back! You can’t just put me into your hand!": "等等，把我放回去！你可不能就这样把我放进手牌！",
   "Nue — choose an ability": "鵺 — 选择一个能力",
   "Byakuren — choose other cards to return to the draw pile": "白莲 — 选择要放回抽牌堆的其他卡牌",
@@ -6249,7 +6250,7 @@ const ZH_TEXT={
   "Extended Edition": "增刊",
   "No cards in hand.": "手牌为空。",
   "No other hands to report.": "没有其他手牌可供报道。",
-  "Hearsay Finder": "传闻探寻者",
+  "Hearsay Finder": "才不是道听途说呢！",
   "Reisen’s decree · forced play": "铃仙的命令 · 强制放置",
   "Place a card": "放置卡牌",
   "Connect a faction": "连接阵营",
@@ -6281,138 +6282,138 @@ const ZH_TEXT={
   "You have no card to place or draw after trading, so your turn ends.": "交易后没有可放置或可抽取的卡牌，你的回合结束。",
   "Remilia Scarlet": "蕾米莉亚·斯卡蕾特",
   "Fate Manipulation": "命运操纵",
-  "Placed: Take all Scarlet Devil Mansion cards from the other players’ hands into your hand.": "放置时：将其他玩家手中的所有红魔馆卡牌加入你的手牌。",
+  "Placed: Take all Scarlet Devil Mansion cards from the other players’ hands into your hand.": "放置：将其他玩家手中的所有红魔馆卡牌加入你的手牌。",
   "Flandre Scarlet": "芙兰朵露·斯卡蕾特",
   "“Eye” Destruction": "「目」之破坏",
-  "Placed: Choose a card in any player’s hand and send it to that player’s discard pile.": "放置时：选择任意玩家的一张手牌，将其送入该玩家的弃牌堆。",
+  "Placed: Choose a card in any player’s hand and send it to that player’s discard pile.": "放置：选择任意玩家的一张手牌，将其送入该玩家的弃牌堆。",
   "Patchouli Knowledge": "帕秋莉·诺蕾姬",
   "Magical Gathering": "魔法风云",
-  "Placed: Guess a card in another player’s hand. If your guess is correct, take that card into your hand.": "放置时：猜测另一名玩家手中的一张卡牌。猜对后，将该卡牌加入你的手牌。",
+  "Placed: Guess a card in another player’s hand. If your guess is correct, take that card into your hand.": "放置：猜测另一名玩家手中的一张卡牌。猜对后，将该卡牌加入你的手牌。",
   "Izayoi Sakuya": "十六夜咲夜",
   "Zawarudo": "Zawarudo",
-  "Placed: Take two extra turns, then shuffle your hand into the draw pile.": "放置时：获得两个额外回合，然后将你的手牌洗入抽牌堆。",
+  "Placed: Take two extra turns, then shuffle your hand into the draw pile.": "放置：获得两个额外回合，然后将你的手牌洗入抽牌堆。",
   "Yuyuko Saigyouji": "西行寺幽幽子",
   "Surrounding Death": "幽冥缠身",
-  "[Cost N] Placed: Send N random orthogonally adjacent cards to your discard pile.": "[代价 N] 放置时：将 N 张随机的正交相邻卡牌送入你的弃牌堆。",
+  "[Cost N] Placed: Send N random orthogonally adjacent cards to your discard pile.": "[代价 N] 放置：将 N 张随机的正交相邻卡牌送入你的弃牌堆。",
   "Youmu Konpaku": "魂魄妖梦",
   "First Before First": "先之先",
-  "Placed: Placing this card does not use your turn.": "放置时：放置此卡不消耗你的回合。",
+  "Placed: Placing this card does not use your turn.": "放置：放置此卡不消耗你的回合。",
   "Kaguya Houraisan": "蓬莱山辉夜",
   "Gamer Move!": "看我操作！",
-  "Placed: Guess an Eientei card in another player’s hand. Each correct guess lets you place that card on the board and guess again.": "放置时：猜测另一名玩家手中的一张永远亭卡牌。每次猜对，你可以将该卡牌放到棋盘上并继续猜测。",
+  "Placed: Guess an Eientei card in another player’s hand. Each correct guess lets you place that card on the board and guess again.": "放置：猜测另一名玩家手中的一张永远亭卡牌。每次猜对，你可以将该卡牌放到棋盘上并继续猜测。",
   "Eirin Yagokoro": "八意永琳",
   "Omoikane's Device": "思兼装置",
   "While this card is on the board, all Crown abilities are disabled.": "此卡在棋盘上时，所有领主卡牌的能力均被禁用。",
   "Reisen Udongein Inaba": "铃仙·优昙华院·因幡",
   "Lunatic Eye": "狂气之瞳",
-  "Placed: Choose a card in another player’s hand. They must place that card on their next turn.": "放置时：选择另一名玩家的一张手牌。该玩家必须在下个回合放置这张卡牌。",
+  "Placed: Choose a card in another player’s hand. They must place that card on their next turn.": "放置：选择另一名玩家的一张手牌。该玩家必须在下个回合放置这张卡牌。",
   "Fujiwara no Mokou": "藤原妹红",
   "Pheonix Resurrection": "凤凰复生",
-  "Placed: Draw a card for each card in your discard pile.": "放置时：你的弃牌堆中每有一张卡牌，就抽一张牌。",
+  "Placed: Draw a card for each card in your discard pile.": "放置：你的弃牌堆中每有一张卡牌，就抽一张牌。",
   "Kanako Yasaka": "八坂神奈子",
   "Divine Virtues": "风神之神德",
-  "This card can be placed on wasteland and doubles other Youkai Mountain cards’ Placed abilities while on the board.\nPlaced: Place one Youkai Mountain card from your hand on the board.": "此卡可以放在荒地上。此卡在棋盘上时，其他妖怪之山卡牌的放置能力发动两次。\n放置时：将你手中的一张妖怪之山卡牌放到棋盘上。",
+  "This card can be placed on wasteland and doubles other Youkai Mountain cards’ Placed abilities while on the board.\nPlaced: Place one Youkai Mountain card from your hand on the board.": "此卡可以放在荒地上。此卡在棋盘上时，其他妖怪之山卡牌的放置能力发动两次。\n放置：将你手中的一张妖怪之山卡牌放到棋盘上。",
   "Suwako Moriya": "洩矢诹访子",
   "Cursed Land": "诅咒之地",
-  "Placed: Turn three board tiles into wasteland.": "放置时：将三个棋盘格变为荒地。",
+  "Placed: Turn three board tiles into wasteland.": "放置：将三个棋盘格变为荒地。",
   "Sanae Kochiya": "东风谷早苗",
-  "Divine Wind": "神风",
-  "Placed: Draw a card. If Kanako Yasaka is on the board, draw another card.": "放置时：抽一张牌。如果八坂神奈子在棋盘上，再抽一张牌。",
+  "Divine Wind": "八坂之神风",
+  "Placed: Draw a card. If Kanako Yasaka is on the board, draw another card.": "放置：抽一张牌。如果八坂神奈子在棋盘上，再抽一张牌。",
   "Aya Shameimaru": "射命丸文",
-  "Placed: Every other player reveals four cards from their hand.": "放置时：其他每名玩家展示四张手牌。",
+  "Placed: Every other player reveals four cards from their hand.": "放置：其他每名玩家展示四张手牌。",
   "Satori Komeiji": "古明地觉",
   "Terrifying Hypnotism": "恐怖催眠术",
-  "[Cost I] Placed: Look at another player’s hand and take one card into your hand.": "[代价 I] 放置时：查看另一名玩家的手牌，并将其中一张加入你的手牌。",
+  "[Cost I] Placed: Look at another player’s hand and take one card into your hand.": "[代价 I] 放置：查看另一名玩家的手牌，并将其中一张加入你的手牌。",
   "Rin Kaenbyou": "火焰猫燐",
   "Cat's Walk": "猫之步伐",
-  "Placed: Take one card from any discard pile into your hand.": "放置时：将任意弃牌堆中的一张卡牌加入你的手牌。",
+  "Placed: Take one card from any discard pile into your hand.": "放置：将任意弃牌堆中的一张卡牌加入你的手牌。",
   "Utsuho Reiuji": "灵乌路空",
   "Nuclear Fission": "核裂变",
-  "Placed: Turn a 2×2 area of the board into wasteland.": "放置时：将棋盘上的一个 2×2 区域变为荒地。",
+  "Placed: Turn a 2×2 area of the board into wasteland.": "放置：将棋盘上的一个 2×2 区域变为荒地。",
   "Koishi Komeiji": "古明地恋",
-  "Devoid Consciousness": "无意识",
+  "Devoid Consciousness": "无意识的哲学",
   "When three Palace of the Earth Spirits cards are on the board, this card automatically moves from your hand onto the board.": "棋盘上有三张地灵殿卡牌时，此卡会自动从你的手牌移到棋盘上。",
   "Yukari Yakumo": "八云紫",
   "Boundary Manipulation": "境界操纵",
   "You can place this card on another board card to take that card into your hand.": "你可以将此卡放在另一张棋盘卡牌上，并将被覆盖的卡牌加入你的手牌。",
   "Kasen Ibara": "茨木华扇",
-  "Wildest Hermit": "野性仙人",
+  "Wildest Hermit": "无拘无束",
   "This card counts as any faction when claiming cards.": "收取阵营卡牌时，此卡可视为任意阵营的卡牌。",
   "Matara Okina": "摩多罗隐岐奈",
-  "Secret Power: /op": "秘神之力 /op",
-  "Placed: This card uses the Placed ability of another board card you choose.": "放置时：选择另一张棋盘卡牌，由此卡使用它的放置能力。",
+  "/op": "/op",
+  "Placed: This card uses the Placed ability of another board card you choose.": "放置：选择另一张棋盘卡牌，由此卡使用它的放置能力。",
   "Ran Yakumo": "八云蓝",
   "Shikigami Callback": "式神召回",
-  "Placed: Draw one card. If Yukari Yakumo is on the board, immediately place that card.": "放置时：抽一张牌。如果八云紫在棋盘上，立即放置抽到的卡牌。",
+  "Placed: Draw one card. If Yukari Yakumo is on the board, immediately place that card.": "放置：抽一张牌。如果八云紫在棋盘上，立即放置抽到的卡牌。",
   "Hakurei Reimu": "博丽灵梦",
   "Innate Dream": "梦想天生",
-  "Placed: Take a Crown card from the board into your hand.": "放置时：将棋盘上的一张领主卡牌加入你的手牌。",
+  "Placed: Take a Crown card from the board into your hand.": "放置：将棋盘上的一张领主卡牌加入你的手牌。",
   "Marisa Kirisame": "雾雨魔理沙",
   "Master Spark": "极限火花",
-  "Placed: Send a non-Crown card from the board to your discard pile.": "放置时：将棋盘上的一张非领主卡牌送入你的弃牌堆。",
+  "Placed: Send a non-Crown card from the board to your discard pile.": "放置：将棋盘上的一张非领主卡牌送入你的弃牌堆。",
   "Yuuka Kazami": "风见幽香",
   "Master of Blossom": "花之主宰",
-  "Placed: Clear wasteland in a 3×3 area, then shuffle your hand into the draw pile and draw four cards.": "放置时：清除一个 3×3 区域中的荒地，然后将你的手牌洗入抽牌堆并抽四张牌。",
+  "Placed: Clear wasteland in a 3×3 area, then shuffle your hand into the draw pile and draw four cards.": "放置：清除一个 3×3 区域中的荒地，然后将你的手牌洗入抽牌堆并抽四张牌。",
   "Medicine Melancholy": "梅蒂欣·梅兰可莉",
   "Lily Poisoning": "铃兰中毒",
-  "Placed: Choose a player and return two random cards from their hand to the draw pile.": "放置时：选择一名玩家，将其两张随机手牌放回抽牌堆。",
+  "Placed: Choose a player and return two random cards from their hand to the draw pile.": "放置：选择一名玩家，将其两张随机手牌放回抽牌堆。",
   "Hecatia Lapislazuli": "赫卡提亚·拉碧斯拉祖利",
   "Trinitarian Rhapsody": "三位一体狂想曲",
   "This card counts as 3 discard points. It can enter a discard pile only if that pile has more than 3 Hell cards.": "此卡计为 3 点弃牌分数。只有弃牌堆已有超过 3 张地狱卡牌时，此卡才能进入该弃牌堆。",
   "Clownpiece": "克劳恩皮丝",
   "Impurity Tolerence": "污秽耐受",
-  "This card can be placed on wasteland.\nPlaced: Clear wasteland around this card.": "此卡可以放在荒地上。\n放置时：清除此卡周围的荒地。",
+  "This card can be placed on wasteland.\nPlaced: Clear wasteland around this card.": "此卡可以放在荒地上。\n放置：清除此卡周围的荒地。",
   "Eiki Shiki": "四季映姬",
-  "Black and White": "黑与白",
-  "[Cost I] Placed: Return all cards from the largest faction on the board to the draw pile.": "[代价 I] 放置时：将棋盘上数量最多的阵营的所有卡牌放回抽牌堆。",
+  "Black and White": "黑白的判决",
+  "[Cost I] Placed: Return all cards from the largest faction on the board to the draw pile.": "[代价 I] 放置：将棋盘上数量最多的阵营的所有卡牌放回抽牌堆。",
   "Komachi Onozuka": "小野塚小町",
-  "Distance exchange": "距离交换",
-  "Placed: Swap this card with another board card. If Eiki Shiki is on the board, this placement does not use your turn.": "放置时：将此卡与另一张棋盘卡牌交换位置。如果四季映姬在棋盘上，此次放置不消耗你的回合。",
+  "Distance Manipulation": "距离操控",
+  "Placed: Swap this card with another board card. If Eiki Shiki is on the board, this placement does not use your turn.": "放置：将此卡与另一张棋盘卡牌交换位置。如果四季映姬在棋盘上，此次放置不消耗你的回合。",
   "Tenshi Hinanawi": "比那名居天子",
-  "All Pieces Vermilion High!": "全人类的绯想天！",
-  "[Cost II] Placed: Return every non-Heaven card on the board to the draw pile.": "[代价 II] 放置时：将棋盘上的所有非天界卡牌放回抽牌堆。",
+  "All Pieces Vermilion High!": "全卡牌的绯想天！",
+  "[Cost II] Placed: Return every non-Heaven card on the board to the draw pile.": "[代价 II] 放置：将棋盘上的所有非天界卡牌放回抽牌堆。",
   "Iku Nagae": "永江衣玖",
-  "Ride the Lightning": "驾驭雷霆",
-  "[Cost III] Placed: Choose a 2×2 area and send up to two random non-Heaven cards in it to your discard pile.": "[代价 III] 放置时：选择一个 2×2 区域，将其中最多两张随机的非天界卡牌送入你的弃牌堆。",
+  "Ride the Lightning": "驾驭雷云",
+  "[Cost III] Placed: Choose a 2×2 area and send up to two random non-Heaven cards in it to your discard pile.": "[代价 III] 放置：选择一个 2×2 区域，将其中最多两张随机的非天界卡牌送入你的弃牌堆。",
   "Hijiri Byakuren": "圣白莲",
   "Makai Fantastica": "魔界幻想",
-  "Placed: You may use each effect once, in any order.\n[Cost IV] Take three extra turns.\n[Cost III] Send three other board cards to the draw pile and turn their spaces into wasteland.\n[Cost II] Look at the top three cards of the draw pile. Take one and put the rest back in any order.\nEach other Myouren Temple card on the board reduces each cost by one.": "放置时：你可以按任意顺序使用每个效果一次。\n[代价 IV] 获得三个额外回合。\n[代价 III] 将另外三张棋盘卡牌放回抽牌堆，并将其所在格变为荒地。\n[代价 II] 查看抽牌堆顶的三张牌，拿取一张，并按任意顺序放回其余卡牌。\n棋盘上每有一张其他命莲寺卡牌，每个效果的代价减少一。",
+  "Placed: You may use each effect once, in any order.\n[Cost IV] Take three extra turns.\n[Cost III] Send three other board cards to the draw pile and turn their spaces into wasteland.\n[Cost II] Look at the top three cards of the draw pile. Take one and put the rest back in any order.\nEach other Myouren Temple card on the board reduces each cost by one.": "放置：你可以按任意顺序使用每个效果一次。\n[代价 IV] 获得三个额外回合。\n[代价 III] 将另外三张棋盘卡牌放回抽牌堆，并将其所在格变为荒地。\n[代价 II] 查看抽牌堆顶的三张牌，拿取一张，并按任意顺序放回其余卡牌。\n棋盘上每有一张其他命莲寺卡牌，每个效果的代价减少一。",
   "Toramaru Shou": "寅丸星",
   "Radiant Treasure": "光辉宝藏",
-  "[Cost I] Placed: Draw a card for each wasteland on the board, then clear all wasteland.": "[代价 I] 放置时：棋盘上每有一块荒地，就抽一张牌，然后清除所有荒地。",
+  "[Cost I] Placed: Draw a card for each wasteland on the board, then clear all wasteland.": "[代价 I] 放置：棋盘上每有一块荒地，就抽一张牌，然后清除所有荒地。",
   "Houjuu Nue": "封兽鵺",
   "Ability Chimera": "能力奇美拉",
-  "Placed: Choose an ability from three random cards. Briefly take its appearance and use its ability.": "放置时：从三张随机卡牌中选择一个能力。短暂变为该卡牌的外貌，并使用它的能力。",
+  "Placed: Choose an ability from three random cards. Briefly take its appearance and use its ability.": "放置：从三张随机卡牌中选择一个能力。短暂变为该卡牌的外貌，并使用它的能力。",
   "Murasa Minamitu": "村纱水蜜",
   "Bottomless Vortex": "无底漩涡",
-  "Placed: Choose a player. They cannot place cards or trade on their next two turns.": "放置时：选择一名玩家。该玩家在接下来两个回合中不能放置卡牌或交易。",
+  "Placed: Choose a player. They cannot place cards or trade on their next two turns.": "放置：选择一名玩家。该玩家在接下来两个回合中不能放置卡牌或交易。",
   "Kumoi Ichirin": "云居一轮",
-  "Fist Smash": "拳击粉碎",
-  "[Cost II] Placed: Push every non-Myouren Temple card one tile farther from this card. Return cards pushed off the board to the draw pile.": "[代价 II] 放置时：将每张非命莲寺卡牌向远离此卡的方向推一格。被推出棋盘的卡牌放回抽牌堆。",
+  "Fist Smash": "再打一轮！",
+  "[Cost II] Placed: Push every non-Myouren Temple card one tile farther from this card. Return cards pushed off the board to the draw pile.": "[代价 II] 放置：将每张非命莲寺卡牌向远离此卡的方向推一格。被推出棋盘的卡牌放回抽牌堆。",
   "Hong Meiling": "红美铃",
   "Inner Chi": "内劲",
-  "Placed: Move an adjacent card one tile farther away from this card.": "放置时：将一张相邻卡牌向远离此卡的方向移动一格。",
+  "Placed: Move an adjacent card one tile farther away from this card.": "放置：将一张相邻卡牌向远离此卡的方向移动一格。",
   "Inaba Tewi": "因幡帝",
   "Ancient Duper": "远古骗术",
-  "Placed: Put a Trap into every other player’s hand.": "放置时：向其他每名玩家的手牌中加入一张陷阱。",
+  "Placed: Put a Trap into every other player’s hand.": "放置：向其他每名玩家的手牌中加入一张陷阱。",
   "Kawasiro Nitori": "河城荷取",
   "Optical Camouflage": "光学迷彩",
   "Cards in the 3×3 area centred on this card cannot be selected.": "以此卡为中心的 3×3 区域中的卡牌不能被选中。",
   "Hoshiguma Yuugi": "星熊勇仪",
-  "Impossible Strength": "怪力",
-  "[Cost II] Placed: Send one orthogonally adjacent card to your discard pile.": "[代价 II] 放置时：将一张正交相邻的卡牌送入你的弃牌堆。",
+  "Impossible Strength": "怪力乱神",
+  "[Cost II] Placed: Send one orthogonally adjacent card to your discard pile.": "[代价 II] 放置：将一张正交相邻的卡牌送入你的弃牌堆。",
   "Mai and Satono": "丁礼田舞与尔子田里乃",
   "Driving Vitality": "驱动活力",
-  "Placed: Gain an extra turn on your next turn.": "放置时：在你的下个回合获得一个额外回合。",
+  "Placed: Gain an extra turn on your next turn.": "放置：在你的下个回合获得一个额外回合。",
   "Niwatari Kutaka": "庭渡久侘歌",
   "Overseeing Gateway": "门户守望者",
-  "This card can be placed on wasteland.\nPlaced: If this card is on wasteland, take a Hell card from the draw pile into your hand.": "此卡可以放在荒地上。\n放置时：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。",
+  "This card can be placed on wasteland.\nPlaced: If this card is on wasteland, take a Hell card from the draw pile into your hand.": "此卡可以放在荒地上。\n放置：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。",
   "Morichika Rinnosuke": "森近霖之助",
   "Kourindou": "香霖堂",
   "This card and the cards around it cannot move or use abilities.\nSelect a hand card, then click Rinnosuke to trade once per turn without using your turn.": "此卡及其周围的卡牌不能移动或使用能力。\n先选择一张手牌，再点击森近霖之助即可交易。每回合限一次，且不消耗回合。",
   "Trap": "陷阱",
   "Well...Its a trap!": "嗯……这是陷阱！",
-  "This card cannot be traded, discarded or returned to the draw pile from your hand.\nPlaced: Return another hand card to the draw pile.": "此卡在手牌中时，不能交易、弃置或放回抽牌堆。\n放置时：将另一张手牌放回抽牌堆。",
+  "This card cannot be traded, discarded or returned to the draw pile from your hand.\nPlaced: Return another hand card to the draw pile.": "此卡在手牌中时，不能交易、弃置或放回抽牌堆。\n放置：将另一张手牌放回抽牌堆。",
   "Scarlet Devil Mansion": "红魔馆",
   "Hakugyokurou": "白玉楼",
   "Eientei": "永远亭",
@@ -6456,7 +6457,7 @@ Object.assign(ZH_TEXT,{
   'Protected by Rinnosuke — no faction while protected':'受霖之助保护，保护期间不属于任何阵营',
   'This card will be the next card drawn. The other card goes beneath it.':'这张牌将是下一张抽到的牌，另一张放在它下面。',
 });
-const languageTextSources=new WeakMap(),languageAttributeSources=new WeakMap(),ruleTextSources=new Map();
+const languageTextSources=new WeakMap(),languageAttributeSources=new WeakMap(),abilityTitleSources=new WeakMap(),ruleTextSources=new Map();
 function canonicalCardName(value){
   const text=String(value).trim();
   const entry=CARDS.find(card=>card.name.toLowerCase()===text.toLowerCase() || ZH_CARDS[card.id]?.[0]===text);
@@ -6530,7 +6531,7 @@ const ZH_DYNAMIC=[
   [/^(.+) correctly names (.+) in (.+)[’']s hand(!| — Patchouli pulls it into their hand!)$/,(_,p,card,target)=>`${p} 猜对了 ${target} 手中的 ${card}！`],
   [/^(.+) guesses wrong(.*) — Kaguya's game ends\.$/,(_,p,guess)=>`${p} 猜错了${guess}，辉夜的猜测结束。`],
   [/^(.+) chooses not to (use|continue) Kaguya's ability\.$/,(_,p)=>`${p} 结束了辉夜的能力。`],
-  [/^(.+) declines (.+)'s cost — the ability is skipped\.$/,(_,p,card)=>`${p} 没有支付 ${card} 的代价，跳过能力。`],
+  [/^(.+) declines (.+)'s cost — the ability is skipped\.$/,(_,p,card)=>`${p} 没有支付 ${card} 的代价，跳过技能。`],
   [/^(.+) randomly sends (.+) to their discard pile \(Cost ([IVXLCDMN]+)\)\.$/,(_,p,cards,n)=>`${p} 随机将 ${cards} 送入自己的弃牌堆，支付了代价 ${n}。`],
   [/^(.+) marks (\d+) spaces? as wasteland\.$/,(_,p,n)=>`${p} 将 ${n} 个格子变为了荒地。`],
   [/^(.+) Sanae draws (\d+) cards?(.*)\.$/,(_,p,n,extra)=>`${p} 的早苗抽了 ${n} 张牌${extra?'，神奈子在棋盘上':''}。`],
@@ -6565,10 +6566,21 @@ function translateGameText(value){
   const result=original.slice(0,original.length-original.trimStart().length)+output+original.slice(original.trimEnd().length);
   if(localizedTextCache.size>2000)localizedTextCache.clear();localizedTextCache.set(original,result);return result;
 }
+function setCardAbilityTitle(node,cardId){
+  // Pick once for this view; translation and observer updates keep the same title.
+  abilityTitleSources.set(node,{title:CARD_ABILITY_NAMES[cardId] || 'Card Ability',tenshiAlternative:cardId==='heaven_tenshi' && Math.random()<0.2});
+  renderCardAbilityTitle(node);
+}
+function renderCardAbilityTitle(node){
+  const source=abilityTitleSources.get(node);if(!source)return;
+  const title=gameLanguage==='zh-CN' && source.tenshiAlternative ? '全卡牌都飞上天！' : translateGameText(source.title);
+  if(node.textContent!==title)node.textContent=title;
+}
 function languageSkipsNode(node){
   return !node.parentElement || !!node.parentElement.closest('script,style,input,textarea,#menu-language,#game-language,[lang="ja"]');
 }
 function localizeTextNode(node){
+  if(abilityTitleSources.has(node.parentElement)){renderCardAbilityTitle(node.parentElement);return;}
   if(languageSkipsNode(node) || !node.nodeValue?.trim())return;
   let saved=languageTextSources.get(node);
   if(!saved || node.nodeValue!==saved.rendered)saved={source:node.nodeValue,rendered:node.nodeValue};
@@ -6577,6 +6589,7 @@ function localizeTextNode(node){
 }
 function localizeElement(node){
   if(node.matches?.('script,style,#menu-language,#game-language,option'))return;
+  renderCardAbilityTitle(node);
   for(const attribute of ['aria-label','title','placeholder']){
     const value=node.getAttribute?.(attribute);if(!value)continue;
     let saved=languageAttributeSources.get(node);if(!saved){saved={};languageAttributeSources.set(node,saved);}
@@ -6832,7 +6845,7 @@ function openCardDetails(cardId,{followReference=false}={}){
     fallback.textContent = FACTIONS[c.faction].icon;
     portrait.appendChild(fallback);
   }
-  el('card-detail-ability').textContent = CARD_ABILITY_NAMES[c.token ? 'trap_token' : cardId] || 'Card Ability';
+  setCardAbilityTitle(el('card-detail-ability'),c.token ? 'trap_token' : cardId);
   const borrowed=game?.borrowedAbilities?.[cardId];
   setRuleText(el('card-detail-description'),borrowed && game.isOnBoard(cardId) ? `Using ${CARD[borrowed].name}’s ability.\n${CARD[borrowed].desc}` : inHand && c.handDesc ? c.handDesc : c.desc);
   el('card-detail-description').parentElement.scrollTop=0;
@@ -7792,7 +7805,7 @@ const ui = {
         const face=document.createElement('div');face.className='chimera-card';face.innerHTML=cardBoardHtml(id);face.title='Inspect card';face.tabIndex=0;face.setAttribute('role','button');face.setAttribute('aria-label',`Inspect ${CARD[id].name}`);
         face.addEventListener('click',()=>openCardDetails(id));
         face.addEventListener('keydown',event=>{if(event.key==='Enter' || event.key===' '){event.preventDefault();openCardDetails(id);}});
-        const name=document.createElement('h4');name.className='chimera-ability';name.textContent=CARD_ABILITY_NAMES[id];
+        const name=document.createElement('h4');name.className='chimera-ability';setCardAbilityTitle(name,id);
         const description=document.createElement('p');description.className='chimera-description';setRuleText(description,CARD[id].desc);
         const actions=document.createElement('div');actions.className='chimera-actions';
         const inspect=document.createElement('button');inspect.className='modal-opt';inspect.textContent='Inspect';inspect.addEventListener('click',()=>openCardDetails(id));
