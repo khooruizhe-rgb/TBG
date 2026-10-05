@@ -82,6 +82,20 @@ test('Peeking at one card, an empty draw pile or a cancelled view cannot lose ca
 test('The human chooser shows all three discounted Roman costs and allows skipping the ability',async()=>{
  const g=setup({hand:pay.slice(0,2),board:[[1,1,'temple_byakuren']],deck:['sdm_patchouli'],ui:{pickFromList:async(_title,options)=>{assert.deepEqual(Array.from(options.slice(0,3),o=>o.label.match(/^\[([^\]]+)\]/)[1]),['Cost IV','Cost III','Cost II']);assert(options[0].disabled);assert(options[1].disabled);assert(!options[2].disabled);return null;}}});g.players[1].isAI=false;const before=JSON.stringify([g.players[1].hand,g.drawPile]);await g.resolveAbility('temple_byakuren',1,1,1,0);assert.equal(JSON.stringify([g.players[1].hand,g.drawPile]),before);
 });
+test('Byakuren can pay for all three effects in one placement and keeps extra-turn flags',async()=>{
+ const menu=[],costs=[];const g=setup({hand:pay.slice(0,6),board:[[1,1,'temple_byakuren'],[1,2,'temple_nue'],[0,0,'sdm_patchouli'],[0,1,'sdm_flandre'],[0,2,'hourai_mokou']],deck:['sdm_remilia'],ui:{pickFromList:async(_title,options)=>{menu.push(options);return ['turns','return','look'][menu.length-1]??null;},arrangeDrawPileCards:async ids=>({taken:ids[0],order:ids.slice(1).reverse()})}});
+ g.players[1].isAI=false;g.selectCostCards=async(p,n)=>{costs.push(n);return g.payableCards(p).slice(0,n);};g.chooseCells=async(_p,n,cells)=>cells.filter(cell=>g.boardFaction(cell.r,cell.c)!=='temple').slice(0,n);
+ const flags=await g.resolveAbility('temple_byakuren',1,1,1,0);assert.equal(flags.extraTurns,3);assert.deepEqual(costs,[3,2,1]);assert.equal(menu.length,3);assert(menu[1][0].disabled);assert(menu[2][0].disabled&&menu[2][1].disabled);assert.equal(g.templeWasteland().length,3);assert.equal(g.players[1].hand.length,1);assert.equal(g.drawPile.length,9);assert.equal(g.players[1].discard.length,0);
+});
+test('A cancelled cost returns to Byakuren’s effect menu, and each free effect can activate only once',async()=>{
+ let choices=0,payments=0;const g=setup({hand:pay.slice(0,1),board:[[1,1,'temple_byakuren'],[1,2,'temple_nue'],[2,1,'temple_shou'],[2,2,'temple_murasa'],[0,0,'sdm_patchouli']],deck:['sdm_flandre'],ui:{pickFromList:async(_title,options)=>{choices++;return choices===1?'turns':choices===2?'look':choices===3?'turns':null;},arrangeDrawPileCards:async ids=>({taken:ids[0],order:ids.slice(1)})}});g.players[1].isAI=false;g.selectCostCards=async(p,n)=>{payments++;return payments===1?null:g.payableCards(p).slice(0,n);};
+ const flags=await g.resolveAbility('temple_byakuren',1,1,1,0);assert.equal(flags.extraTurns,3);assert.equal(payments,2);assert.equal(choices,4);assert.equal(g.players[1].hand.length,1);assert.equal(g.templeWasteland().length,0);
+});
+test('The combined peek validates all remaining identities and leaves the deck untouched on cancellation',async()=>{
+ for(const arrangement of [null,{taken:'sdm_flandre',order:['sdm_patchouli','sdm_patchouli']},{taken:'medicine',order:['sdm_flandre','hourai_mokou']}]){
+  const deck=['sdm_patchouli','sdm_flandre','hourai_mokou'],g=effect(setup({board:[[1,1,'temple_byakuren'],[1,2,'temple_nue'],[2,1,'temple_shou']],deck,ui:{arrangeDrawPileCards:async()=>arrangement}}),'look');await g.resolveAbility('temple_byakuren',1,1,1,0);assert.deepEqual(Array.from(g.drawPile),deck);assert.equal(g.players[1].hand.length,0);
+ }
+});
 test('Shou counts all wasteland, clears it, and draws past the normal seven-card limit',async()=>{
  const g=setup({hand:pay,board:[[1,1,'temple_shou']],waste:[[0,0],[0,1],[0,2]],deck:['sdm_patchouli','sdm_flandre','hourai_mokou']});await g.resolveAbility('temple_shou',1,1,1,0);assert.equal(g.players[1].hand.length,9);assert.equal(g.templeWasteland().length,0);assert.equal(g.drawPile.length,1);
 });

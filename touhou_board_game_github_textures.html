@@ -2451,6 +2451,35 @@ body.mobile-landscape .board-card,body.mobile-landscape #hand .hand-card{border-
 .temple-fx.byakuren-turns svg{animation:templeMandala 1.15s ease-out both}
 @media(prefers-reduced-motion:reduce){.draw-return-ghost.ability-byakuren{animation:none}}
 
+
+/* Locale controls and Byakuren's physical three-card table. */
+.language-setting{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:-9px 0 15px;color:#735337;font-size:12px}
+.language-setting select,#game-language{font:inherit;color:inherit;border:1px solid #b89d7888;border-radius:5px;padding:5px 7px;background:#fbf1df;cursor:pointer}
+#game-language{max-width:105px;font-size:11px}
+html[lang="zh-CN"]{font-family:'PingFang SC','Microsoft YaHei','Noto Serif JP',sans-serif}
+html[lang="zh-CN"] .menu-intro h1{letter-spacing:.06em}
+#byakuren-peek-overlay{display:none;position:fixed;inset:0;z-index:66;align-items:center;justify-content:center;padding:14px;background:#080510b0}
+#byakuren-peek-overlay.show{display:flex}
+#byakuren-peek-panel{position:relative;width:min(820px,94vw);height:min(680px,92dvh);display:flex;flex-direction:column;gap:10px;padding:20px;border:2px solid #cba66f;border-radius:9px;background:linear-gradient(#ffdba817,#21120822),var(--title-wood);background-size:cover,900px 420px;box-shadow:0 18px 70px #0008;color:#fff1d6}
+#byakuren-peek-panel h3{margin:0;font-size:clamp(16px,2.5vw,24px);color:#fff1d6}
+#byakuren-peek-panel p{margin:0;max-width:650px;font-size:clamp(11px,1.6vw,14px);line-height:1.5}
+#byakuren-peek-table{position:relative;flex:1;min-height:110px;border:1px dashed #fff0c455;border-radius:7px;background:#190d0f18}
+.peek-table-label{position:absolute;top:9px;left:12px;font-size:12px;color:#fff1d6bb}
+#byakuren-peek-hand{position:relative;height:30%;min-height:92px;border:1px solid #fbe6b566;border-radius:7px;background:linear-gradient(125deg,#efe0c343,#faf0d218)}
+#byakuren-peek-hand>span{position:absolute;left:12px;top:9px;font-size:12px}
+#byakuren-peek-cards{position:fixed;inset:0;pointer-events:none}
+#byakuren-peek-overlay .table-scatter-card{display:block!important;position:fixed;z-index:1;width:var(--peek-card-width,140px);animation:none;aspect-ratio:3/4}
+#byakuren-peek-overlay .table-scatter-card .cname{font-size:clamp(10px,1.2vw,16px)}
+#byakuren-peek-overlay .peek-selected{filter:drop-shadow(0 0 5px #ffd46e) drop-shadow(4px 9px 5px #170d0b7a)}
+#byakuren-peek-overlay .peek-taken{--table-angle:0deg!important}
+.peek-order{position:absolute;top:-22px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:11px;font-weight:700;background:#2b1a18de;border:1px solid #d8be84aa;padding:2px 6px;border-radius:4px;pointer-events:none}
+.peek-actions{display:flex;gap:10px;justify-content:flex-end}
+.peek-actions button{font:inherit;font-size:12px;cursor:pointer;border:1px solid #c4a16e;border-radius:5px;padding:8px 12px;background:#f4e4c8;color:#4c3223}
+.peek-actions button:disabled{opacity:.45;cursor:default}
+body.crown-scene-active #game #board-panel,body.crown-scene-active #byakuren-peek-panel{background-image:linear-gradient(rgb(var(--wood-rgb,var(--scene-rgb))),rgb(var(--wood-rgb,var(--scene-rgb)))),var(--title-wood);background-blend-mode:color,normal;background-size:cover,900px 420px}
+body.crown-scene-active #title-table{background-image:linear-gradient(rgb(var(--wood-rgb,var(--scene-rgb))),rgb(var(--wood-rgb,var(--scene-rgb)))),var(--title-wood);background-blend-mode:color,normal;background-size:cover,1100px 520px}
+@media(orientation:landscape) and (max-height:600px){#byakuren-peek-panel{padding:12px;gap:6px}#byakuren-peek-panel p{font-size:11px}#byakuren-peek-hand{min-height:55px;height:26%}#byakuren-peek-overlay .table-scatter-card{width:min(var(--peek-card-width),17dvh)}.peek-order{top:-18px;font-size:9px}.peek-actions button{padding:5px 9px}}
+
 </style>
 </head>
 <body>
@@ -2472,6 +2501,9 @@ body.mobile-landscape .board-card,body.mobile-landscape #hand .hand-card{border-
       <div class="menu-divider" aria-hidden="true"><span>☯</span></div>
       <p class="menu-description">Claim factions. Trade at Kourindou. Make your move.<br>You take the first seat. The other seats are AI.</p>
     </div>
+    <label class="language-setting">Language / 语言
+      <select id="menu-language" aria-label="Language / 语言"><option value="en">English</option><option value="zh-CN">简体中文</option></select>
+    </label>
     <div class="menu-settings">
       <fieldset class="menu-setting"><legend>Players</legend>
         <div class="opts" id="player-count-opts">
@@ -2513,6 +2545,7 @@ body.mobile-landscape .board-card,body.mobile-landscape #hand .hand-card{border-
     <div id="game-toolbar">
       <button id="main-menu-btn" class="pill-btn" type="button">Main Menu</button>
       <button id="fullscreen-btn" class="pill-btn" type="button" aria-pressed="false">Fullscreen</button>
+      <select id="game-language" class="pill-btn" aria-label="Language / 语言"><option value="en">English</option><option value="zh-CN">简体中文</option></select>
       <button id="journal-btn" class="pill-btn" type="button" aria-expanded="false" aria-controls="log-panel">Log</button>
       <span id="mobile-screen-message" role="status"></span>
     </div>
@@ -2597,6 +2630,16 @@ body.mobile-landscape .board-card,body.mobile-landscape #hand .hand-card{border-
       <button type="button" id="look-into-confirm" disabled></button>
     </div>
   </div>
+</div>
+<div id="byakuren-peek-overlay" role="dialog" aria-modal="true" aria-labelledby="byakuren-peek-title">
+  <section id="byakuren-peek-panel">
+    <h3 id="byakuren-peek-title">Makai Fantastica — top three cards</h3>
+    <p>Drag one card into Your Hand. Arrange the rest from left to right in draw order. Double-click or double-tap to inspect.</p>
+    <div id="byakuren-peek-table"><span class="peek-table-label">Draw pile · next card on the left</span></div>
+    <div id="byakuren-peek-hand"><span>Your Hand · take one card</span></div>
+    <div id="byakuren-peek-cards"></div>
+    <div class="peek-actions"><button id="byakuren-peek-take" type="button" disabled>Take selected card</button><button id="byakuren-peek-confirm" type="button" disabled>Confirm order and take card</button></div>
+  </section>
 </div>
 <datalist id="card-name-list"></datalist>
 
@@ -2739,7 +2782,7 @@ const CARDS = [
 
 CARDS.push(
   {id:'temple_byakuren',faction:'temple',name:'Hijiri Byakuren',crown:true,costChoices:true,
-    desc:'Placed: Choose one effect.\n[Cost IV] Take three extra turns.\n[Cost III] Send three other board cards to the draw pile and turn their spaces into wasteland.\n[Cost II] Look at the top three cards of the draw pile. Take one and put the rest back in any order.\nEach other Myouren Temple card on the board reduces each cost by one.'},
+    desc:'Placed: You may use each effect once, in any order.\n[Cost IV] Take three extra turns.\n[Cost III] Send three other board cards to the draw pile and turn their spaces into wasteland.\n[Cost II] Look at the top three cards of the draw pile. Take one and put the rest back in any order.\nEach other Myouren Temple card on the board reduces each cost by one.'},
   {id:'temple_shou',faction:'temple',name:'Toramaru Shou',cost1:true,
     desc:'[Cost I] Placed: Draw a card for each wasteland on the board, then clear all wasteland.'},
   {id:'temple_nue',faction:'temple',name:'Houjuu Nue',
@@ -2930,10 +2973,13 @@ class Game {
     }
     return 1.2-option.cost*.45;
   }
-  async chooseByakurenEffect(p,r,c){
-    const options=this.byakurenOptions(p,r,c),available=options.filter(option=>!option.disabled);
+  async chooseByakurenEffect(p,r,c,used=new Set()){
+    const preserveTemple=this.players[p].isAI && used.has('turns');
+    const spareCost=this.payableCards(p).filter(id=>CARD[id].faction!=='temple').length;
+    const options=this.byakurenOptions(p,r,c).map(option=>({...option,disabled:option.disabled || used.has(option.value)
+      || (preserveTemple && option.cost>spareCost)})),available=options.filter(option=>!option.disabled);
     if(!available.length)return null;
-    if(!this.players[p].isAI)return await this.chooseFromList(p,[...options,{label:'Skip ability',value:null}],'Makai Fantastica — choose one effect');
+    if(!this.players[p].isAI)return await this.chooseFromList(p,[...options,{label:'Finish ability',value:null}],'Makai Fantastica — use effects in any order');
     if(this.aiMakesMistake('target'))return available[Math.floor(Math.random()*available.length)].value;
     available.sort((a,b)=>this.byakurenOptionValue(p,r,c,b)-this.byakurenOptionValue(p,r,c,a));
     return this.byakurenOptionValue(p,r,c,available[0])>0 ? available[0].value : null;
@@ -3855,33 +3901,46 @@ class Game {
     if(CARD[cardId].crown && this.eirinActive() && cardId!=='hourai_eirin')return {};
     switch(CARD[cardId].token ? 'trap_token' : cardId){
       case 'temple_byakuren': {
-        const effect=await self.chooseByakurenEffect(playerIdx,r,c);
+        const used=new Set();let extraTurns=0;
+        while(!self.cancelled && used.size<3){
+        const effect=await self.chooseByakurenEffect(playerIdx,r,c,used);
+        if(used.has(effect))break;
         if(self.cancelled)break;
         const option=self.byakurenOptions(playerIdx,r,c).find(choice=>choice.value===effect && !choice.disabled);
         if(!option)break;
         const cost=option.cost;
-        if(cost && !await self.payCost(playerIdx,cost))break;
+        if(cost && !await self.payCost(playerIdx,cost))continue;
         if(self.cancelled)break;
+        used.add(effect);
         if(effect==='turns'){
           self.presentTemple('byakuren-turns',{r,c,playerIdx});
           self.log(`${me} takes three extra turns with Makai Fantastica${cost ? ` (Cost ${romanNumeral(cost)})` : ' for free'}.`);
-          return {extraTurns:3};
+          extraTurns+=3;self.render();continue;
         }
         if(effect==='look'){
           const peek=self.drawPile.slice(-3).reverse();
-          const chosen=await self.chooseDrawPileCard(playerIdx,peek,'Take selected card');
-          if(self.cancelled || !peek.includes(chosen))break;
-          const remaining=peek.filter(id=>id!==chosen);
-          const top=remaining.length>1 ? await self.chooseDrawPileCard(playerIdx,remaining,'Put selected card on top',true) : remaining[0];
-          if(self.cancelled)break;
-          if(remaining.includes(top)){remaining.splice(remaining.indexOf(top),1);remaining.unshift(top);}
+          let chosen,remaining;
+          if(!self.players[playerIdx].isAI && self.ui?.arrangeDrawPileCards){
+            const arrangement=await self.ui.arrangeDrawPileCards(peek.slice());
+            if(self.cancelled || !arrangement)break;
+            chosen=arrangement.taken;remaining=arrangement.order;
+            if(!peek.includes(chosen) || remaining.length!==peek.length-1 || new Set([chosen,...remaining]).size!==peek.length
+              || remaining.some(id=>!peek.includes(id)))break;
+          }else{
+            chosen=await self.chooseDrawPileCard(playerIdx,peek,'Take selected card');
+            if(self.cancelled || !peek.includes(chosen))break;
+            remaining=peek.filter(id=>id!==chosen);
+            const top=remaining.length>1 ? await self.chooseDrawPileCard(playerIdx,remaining,'Put selected card on top',true) : remaining[0];
+            if(self.cancelled)break;
+            if(remaining.includes(top)){remaining.splice(remaining.indexOf(top),1);remaining.unshift(top);}
+          }
           // The deck's last element is its top. Preserve every untouched card below the peek.
           if(peek.some(id=>!self.drawPile.includes(id)))break;
           self.drawPile.splice(-peek.length,peek.length,...remaining.slice().reverse());
           self.addToHand(playerIdx,chosen);
           try{self.ui?.onDrawCard?.({playerIdx,cardId:chosen,effect:'byakuren-look',source:{r,c}});}catch(_error){}
           self.log(`${me} looks at ${peek.length} draw-pile card${peek.length===1?'':'s'}, takes one and orders the rest.`);
-          self.render();break;
+          self.render();continue;
         }
         const targets=self.templeReturnTargets(r,c);
         const chosen=self.players[playerIdx].isAI && !self.aiMakesMistake('target')
@@ -3902,6 +3961,8 @@ class Game {
         if(strike?.finished)await strike.finished;
         if(self.cancelled)break;
         self.log(`${me} returns ${hit} card${hit===1?'':'s'} to the draw pile and leaves wasteland in their spaces${cost ? ` (Cost ${romanNumeral(cost)})` : ' for free'}.`);
+        }
+        if(extraTurns)return {extraTurns};
         break;
       }
       case 'temple_shou': {
@@ -4871,6 +4932,33 @@ const CROWN_SCENE_BACKGROUND = Object.freeze({
   sage_yukari:'--sage-yukari-bg',sage_matara:'--sage-matara-bg',sage_kasen:'--sage-kasen-bg',
   temple_byakuren:'--temple-bg',yuuka:'--sunflower-bg',hell_hecatia:'--hell-makai-bg',heaven_tenshi:'--heaven-bg'
 });
+const CROWN_WOOD_FALLBACK=Object.freeze({sdm_remilia:'143,54,72',haku_yuyuko:'167,111,153',hourai_kaguya:'62,92,142',mtn_kanako:'85,118,83',palace_satori:'99,91,149',sage_yukari:'122,82,151',sage_matara:'157,127,64',sage_kasen:'125,115,121',temple_byakuren:'99,84,149',yuuka:'177,162,69',hell_hecatia:'117,64,159',heaven_tenshi:'86,153,184'});
+const crownWoodColors=new Map();let crownWoodRevision=0;
+function averageWoodColor(pixels){
+  let r=0,g=0,b=0,total=0;
+  for(let i=0;i<pixels.length;i+=4){
+    const hi=Math.max(pixels[i],pixels[i+1],pixels[i+2]),lo=Math.min(pixels[i],pixels[i+1],pixels[i+2]);
+    if(!pixels[i+3] || hi<20)continue;
+    const weight=pixels[i+3]/255*(1+3*(hi-lo)/Math.max(hi,1));
+    r+=pixels[i]*weight;g+=pixels[i+1]*weight;b+=pixels[i+2]*weight;total+=weight;
+  }
+  return total ? [r,g,b].map(channel=>Math.round(channel/total)).join(',') : null;
+}
+function tintCrownWood(cardId,scene){
+  const revision=++crownWoodRevision;
+  const apply=rgb=>{if(rgb && revision===crownWoodRevision){document.body.style.setProperty('--wood-rgb',rgb);el('game').style.setProperty('--wood-rgb',rgb);}};
+  apply(CROWN_WOOD_FALLBACK[cardId]);
+  if(typeof Image!=='function')return;
+  const raw=getComputedStyle(document.documentElement).getPropertyValue(scene),match=raw.match(/url\(["']?([^"')]+)["']?\)/);
+  if(!match)return;
+  const url=match[1];
+  if(!crownWoodColors.has(url))crownWoodColors.set(url,new Promise(resolve=>{
+    const image=new Image();image.crossOrigin='anonymous';
+    image.onload=()=>{try{const canvas=document.createElement('canvas');canvas.width=canvas.height=24;const context=canvas.getContext('2d',{willReadFrequently:true});context.drawImage(image,0,0,24,24);resolve(averageWoodColor(context.getImageData(0,0,24,24).data));}catch(_error){resolve(null);}};
+    image.onerror=()=>resolve(null);image.src=url;
+  }));
+  crownWoodColors.get(url).then(apply);
+}
 let activeCrownBackdrop=-1;
 function showCrownBackdrop(cardId){
   const scene=CROWN_SCENE_BACKGROUND[cardId];
@@ -4878,6 +4966,8 @@ function showCrownBackdrop(cardId){
   const light=crownLightFor(cardId);
   const view=el('game');
   view.style.setProperty('--scene-rgb',light.rgb);
+  document.body.style.setProperty('--scene-rgb',light.rgb);
+  tintCrownWood(cardId,scene);
   const layers=[el('crown-backdrop-a'),el('crown-backdrop-b')];
   const nextIndex=activeCrownBackdrop===0 ? 1 : 0;
   const next=layers[nextIndex];
@@ -4890,6 +4980,7 @@ function showCrownBackdrop(cardId){
   document.body.classList.add('crown-scene-active');
 }
 function clearCrownBackdrop(){
+  crownWoodRevision++;document.body.style.removeProperty('--wood-rgb');el('game').style.removeProperty('--wood-rgb');
   for(const id of ['crown-backdrop-a','crown-backdrop-b']){
     const layer=el(id);
     layer.classList.remove('active');
@@ -4899,6 +4990,7 @@ function clearCrownBackdrop(){
   document.body.classList.remove('crown-scene-active');
   const view=el('game');
   view.style.removeProperty('--scene-rgb');
+  document.body.style.removeProperty('--scene-rgb');
 }
 
 function triggerPlacementPresentation(cardId, r, c, crownEffectId=null){
@@ -6023,6 +6115,513 @@ const CARD_ABILITY_NAMES = {
   shop_rinnosuke:'Kourindou',trap_token:'Well...Its a trap!',
 };
 
+/* ---------- Language selection: canonical rules stay language-independent. ---------- */
+let gameLanguage='en';
+try{const saved=window.localStorage?.getItem('boundary-language');if(saved==='zh-CN')gameLanguage=saved;}catch(_error){}
+const ZH_CARDS={"sdm_remilia":["蕾米莉亚·斯卡蕾特","命运操纵","放置时：将其他玩家手中的所有红魔馆卡牌加入你的手牌。"],"sdm_flandre":["芙兰朵露·斯卡蕾特","「目」之破坏","放置时：选择任意玩家的一张手牌，将其送入该玩家的弃牌堆。"],"sdm_patchouli":["帕秋莉·诺蕾姬","魔法集会","放置时：猜测另一名玩家手中的一张卡牌。猜对后，将该卡牌加入你的手牌。"],"sdm_sakuya":["十六夜咲夜","世界！","放置时：获得两个额外回合，然后将你的手牌洗入抽牌堆。"],"haku_yuyuko":["西行寺幽幽子","环绕之死","[代价 N] 放置时：将 N 张随机的正交相邻卡牌送入你的弃牌堆。"],"haku_youmu":["魂魄妖梦","先于一切","放置时：放置此卡不消耗你的回合。"],"hourai_kaguya":["蓬莱山辉夜","玩家操作！","放置时：猜测另一名玩家手中的一张永远亭卡牌。每次猜对，你可以将该卡牌放到棋盘上并继续猜测。"],"hourai_eirin":["八意永琳","思兼装置","此卡在棋盘上时，所有王冠卡牌的能力均被禁用。"],"hourai_reisen":["铃仙·优昙华院·因幡","狂气之瞳","放置时：选择另一名玩家的一张手牌。该玩家必须在下个回合放置这张卡牌。"],"hourai_mokou":["藤原妹红","凤凰复生","放置时：你的弃牌堆中每有一张卡牌，就抽一张牌。"],"mtn_kanako":["八坂神奈子","神之威德","此卡可以放在荒地上。此卡在棋盘上时，其他妖怪之山卡牌的放置能力发动两次。\n放置时：将你手中的一张妖怪之山卡牌放到棋盘上。"],"mtn_suwako":["洩矢诹访子","诅咒之地","放置时：将三个棋盘格变为荒地。"],"mtn_sanae":["东风谷早苗","神风","放置时：抽一张牌。如果八坂神奈子在棋盘上，再抽一张牌。"],"mtn_aya":["射命丸文","传闻探寻者","放置时：其他每名玩家展示四张手牌。"],"palace_satori":["古明地觉","恐怖催眠术","[代价 I] 放置时：查看另一名玩家的手牌，并将其中一张加入你的手牌。"],"palace_rin":["火焰猫燐","猫之步伐","放置时：将任意弃牌堆中的一张卡牌加入你的手牌。"],"palace_utsuho":["灵乌路空","核裂变","放置时：将棋盘上的一个 2×2 区域变为荒地。"],"palace_koishi":["古明地恋","无意识","棋盘上有三张地灵殿卡牌时，此卡会自动从你的手牌移到棋盘上。"],"sage_yukari":["八云紫","境界操纵","你可以将此卡放在另一张棋盘卡牌上，并将被覆盖的卡牌加入你的手牌。"],"sage_kasen":["茨木华扇","野性仙人","收取阵营卡牌时，此卡可视为任意阵营的卡牌。"],"sage_matara":["摩多罗隐岐奈","秘神之力 /op","放置时：选择另一张棋盘卡牌，由此卡使用它的放置能力。"],"sage_ran":["八云蓝","式神召回","放置时：抽一张牌。如果八云紫在棋盘上，立即放置抽到的卡牌。"],"reimu":["博丽灵梦","梦想天生","放置时：将棋盘上的一张王冠卡牌加入你的手牌。"],"marisa":["雾雨魔理沙","极限火花","放置时：将棋盘上的一张非王冠卡牌送入你的弃牌堆。"],"yuuka":["风见幽香","花之主宰","放置时：清除一个 3×3 区域中的荒地，然后将你的手牌洗入抽牌堆并抽四张牌。"],"medicine":["梅蒂欣·梅兰可莉","铃兰之毒","放置时：选择一名玩家，将其两张随机手牌放回抽牌堆。"],"hell_hecatia":["赫卡提亚·拉碧斯拉祖利","三位一体狂想曲","此卡计为 3 点弃牌分数。只有弃牌堆已有超过 3 张地狱卡牌时，此卡才能进入该弃牌堆。"],"hell_clownpiece":["克劳恩皮丝","污秽耐受","此卡可以放在荒地上。\n放置时：清除此卡周围的荒地。"],"hell_eiki":["四季映姬","黑与白","[代价 I] 放置时：将棋盘上数量最多的阵营的所有卡牌放回抽牌堆。"],"hell_komachi":["小野塚小町","距离交换","放置时：将此卡与另一张棋盘卡牌交换位置。如果四季映姬在棋盘上，此次放置不消耗你的回合。"],"heaven_tenshi":["比那名居天子","全人类的绯想天！","[代价 II] 放置时：将棋盘上的所有非天界卡牌放回抽牌堆。"],"heaven_iku":["永江衣玖","驾驭雷霆","[代价 III] 放置时：选择一个 2×2 区域，将其中最多两张随机的非天界卡牌送入你的弃牌堆。"],"temple_byakuren":["圣白莲","魔界幻想","放置时：你可以按任意顺序使用每个效果一次。\n[代价 IV] 获得三个额外回合。\n[代价 III] 将另外三张棋盘卡牌放回抽牌堆，并将其所在格变为荒地。\n[代价 II] 查看抽牌堆顶的三张牌，拿取一张，并按任意顺序放回其余卡牌。\n棋盘上每有一张其他命莲寺卡牌，每个效果的代价减少一。"],"temple_shou":["寅丸星","光辉宝藏","[代价 I] 放置时：棋盘上每有一块荒地，就抽一张牌，然后清除所有荒地。"],"temple_nue":["封兽鵺","能力奇美拉","放置时：从三张随机卡牌中选择一个能力。短暂变为该卡牌的外貌，并使用它的能力。"],"temple_murasa":["村纱水蜜","无底漩涡","放置时：选择一名玩家。该玩家在接下来两个回合中不能放置卡牌或交易。"],"temple_ichirin":["云居一轮","拳击粉碎","[代价 II] 放置时：将每张非命莲寺卡牌向远离此卡的方向推一格。被推出棋盘的卡牌放回抽牌堆。"],"sdm_meiling":["红美铃","内劲","放置时：将一张相邻卡牌向远离此卡的方向移动一格。"],"hourai_tewi":["因幡帝","远古骗术","放置时：向其他每名玩家的手牌中加入一张陷阱。"],"mtn_nitori":["河城荷取","光学迷彩","以此卡为中心的 3×3 区域中的卡牌不能被选中。"],"palace_yuugi":["星熊勇仪","怪力","[代价 II] 放置时：将一张正交相邻的卡牌送入你的弃牌堆。"],"sage_mai_satono":["丁礼田舞与尔子田里乃","驱动活力","放置时：在你的下个回合获得一个额外回合。"],"hell_kutaka":["庭渡久侘歌","门户守望者","此卡可以放在荒地上。\n放置时：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。"],"shop_rinnosuke":["森近霖之助","香霖堂","此卡及其周围的卡牌不能移动或使用能力。\n先选择一张手牌，再点击森近霖之助即可交易。每回合限一次，且不消耗回合。"],"trap_token":["陷阱","嗯……这是陷阱！","此卡在手牌中时，不能交易、弃置或放回抽牌堆。\n放置时：将另一张手牌放回抽牌堆。"]};
+const ZH_FACTIONS={"sdm":"红魔馆","hakugyokurou":"白玉楼","hourai":"永远亭","mountain":"妖怪之山","palace":"地灵殿","sage":"贤者","hakurei":"博丽","sunflower":"太阳花田","hell":"地狱","heaven":"天界","temple":"命莲寺","kourindou":"香霖堂","token":"衍生物"};
+const ZH_TEXT={
+  "Boundary of Fates": "命运的境界",
+  "幻想郷 · Boundary of Fates": "幻想乡 · 命运的境界",
+  "A Touhou board game": "东方桌游",
+  "A Touhou faction-claiming board game — play against spellcard-slinging AI opponents.": "一款争夺阵营的东方桌游，与使用符卡的电脑对手切磋。",
+  "Claim factions. Trade at Kourindou. Make your move.": "收取阵营卡牌，在香霖堂交易，开始你的行动。",
+  "You take the first seat. The other seats are AI.": "你坐在第一席，其余席位由电脑控制。",
+  "Players": "玩家人数",
+  "Board size": "棋盘大小",
+  "AI difficulty": "电脑难度",
+  "Easy": "简单",
+  "Normal": "普通",
+  "Hard": "困难",
+  "Begin the Game": "开始游戏",
+  "Learn to Play": "学习玩法",
+  "Customize starting hand": "自选起始手牌",
+  "Drag cards to rearrange them. Double-click or double-tap to inspect.": "拖动卡牌可调整位置，双击或连点两次可查看详情。",
+  "Main Menu": "主菜单",
+  "Fullscreen": "全屏",
+  "Exit Fullscreen": "退出全屏",
+  "Log": "记录",
+  "Close Log": "关闭记录",
+  "Play Again": "再来一局",
+  "Your Hand": "你的手牌",
+  "Draw Pile & Log": "抽牌堆与记录",
+  "Draw pile": "抽牌堆",
+  "Draw Pile": "抽牌堆",
+  "Draw for Everyone": "为所有人抽牌",
+  "Sound On": "声音开启",
+  "Sound Off": "声音关闭",
+  "Mute game sounds": "关闭游戏声音",
+  "Enable game sounds": "开启游戏声音",
+  "🔍 Playtest: reveal hands & discards": "🔍 测试模式：显示手牌与弃牌",
+  "Turn your phone sideways for one-screen play. Tap Fullscreen for more space.": "横置手机可在一屏内游玩，点击全屏可获得更多空间。",
+  "Tap a card in Your Hand below, then tap a highlighted tile. You can also drag the card.": "先点击下方手牌，再点击高亮棋盘格。也可以拖动卡牌。",
+  "Rotate your phone to play sideways.": "请横置手机游玩。",
+  "Rotate your phone for landscape.": "请将手机转为横屏。",
+  "Choose a card from your hand": "选择一张手牌",
+  "Choose card": "选择卡牌",
+  "Choose cost cards": "选择支付代价的卡牌",
+  "Cancel": "取消",
+  "Inspect": "查看详情",
+  "Inspect selected": "查看所选卡牌",
+  "Use ability": "使用能力",
+  "Skip ability": "跳过能力",
+  "Finish ability": "结束能力",
+  "Cancel (skip ability)": "跳过能力",
+  "Guess": "猜测",
+  "Type a card name…": "输入卡牌名称……",
+  "Look into": "查看卡牌",
+  "Crown card": "王冠卡牌",
+  "Rinnosuke says": "霖之助说",
+  "Rinnosuke": "霖之助",
+  "Cost": "代价",
+  "Wasteland": "荒地",
+  "Free": "免费",
+  "empty": "空",
+  "You": "你",
+  "Hand:": "手牌：",
+  "Discard:": "弃牌：",
+  "Select a card, then confirm. Double-click it or press I to inspect its ability.": "选择卡牌后确认。双击或按 I 可查看能力。",
+  "Choose a card to take. Double-click a card to inspect it.": "选择要拿取的卡牌，双击可查看详情。",
+  "Take selected card": "拿取所选卡牌",
+  "Put selected card on top": "将所选卡牌放在牌堆顶",
+  "Choose the next top card": "选择下一张牌堆顶卡牌",
+  "Take this card": "拿取此卡",
+  "Place card": "放置卡牌",
+  "Makai Fantastica — use effects in any order": "魔界幻想 — 按任意顺序使用效果",
+  "Makai Fantastica — top three cards": "魔界幻想 — 牌堆顶的三张牌",
+  "Drag one card into Your Hand. Arrange the rest from left to right in draw order. Double-click or double-tap to inspect.": "将一张牌拖入你的手牌区，其余卡牌从左到右排列，左侧先抽。双击或连点两次可查看详情。",
+  "Draw pile · next card on the left": "抽牌堆 · 左侧卡牌先抽",
+  "Your Hand · take one card": "你的手牌 · 拿取一张牌",
+  "Confirm order and take card": "确认顺序并拿取卡牌",
+  "Next draw": "先抽",
+  "Then draw": "后抽",
+  "Take three extra turns.": "获得三个额外回合。",
+  "Return three other board cards and turn their spaces into wasteland.": "将另外三张棋盘卡牌放回抽牌堆，并将其所在格变为荒地。",
+  "Look at three cards, take one and order the rest.": "查看三张牌，拿取一张并排列其余卡牌。",
+  "Your move — place a card or draw for everyone.": "轮到你了 — 放置卡牌，或为所有人抽牌。",
+  "Your hand is full — place a card.": "你的手牌已满 — 请放置卡牌。",
+  "Your move — place a card (draw pile empty).": "轮到你了 — 请放置卡牌，抽牌堆已空。",
+  "Resolving action...": "正在结算行动……",
+  "Choose merchandise to swap with your selected card.": "选择要与所选手牌交换的商品。",
+  "Your move — place, trade, or draw for everyone.": "轮到你了 — 放置、交易，或为所有人抽牌。",
+  "Your move — place a card or trade at Kourindou.": "轮到你了 — 放置卡牌或在香霖堂交易。",
+  "Murasa blocks placement and trading this turn — draw for everyone.": "村纱水蜜封锁了本回合的放置与交易 — 请为所有人抽牌。",
+  "Murasa blocks placement and trading this turn — no action available.": "村纱水蜜封锁了本回合的放置与交易 — 当前无可执行的行动。",
+  "Choose merchandise.": "选择商品。",
+  "Wasteland is a blocked tile. A card can be placed there only if its ability allows it.": "荒地是被封锁的棋盘格。只有能力允许的卡牌才能放在荒地上。",
+  "Return the shown number of hand cards to the draw pile to use the ability. Cost N lets you choose how many cards to pay. If you do not pay, the ability is skipped.": "使用能力时，将指定数量的手牌放回抽牌堆。代价 N 由你决定支付几张牌。不支付则跳过能力。",
+  "Wait, place me back! You can’t just put me into your hand!": "等等，把我放回去！你可不能就这样把我放进手牌！",
+  "Nue — choose an ability": "鵺 — 选择一个能力",
+  "Byakuren — choose other cards to return to the draw pile": "白莲 — 选择要放回抽牌堆的其他卡牌",
+  "Murasa — choose a player to seal for two turns": "村纱 — 选择要封锁两个回合的玩家",
+  "Meiling: choose an adjacent card to push": "美铃 — 选择要推动的相邻卡牌",
+  "Trap: return a card from your hand to the draw pile": "陷阱 — 选择一张手牌放回抽牌堆",
+  "Yuugi: send an orthogonally adjacent card to your discard pile": "勇仪 — 将一张正交相邻卡牌送入你的弃牌堆",
+  "Kutaka: take a Hell card from the draw pile": "久侘歌 — 从抽牌堆拿取一张地狱卡牌",
+  "Flandre: whose card goes to their discard pile?": "芙兰朵露 — 要弃置哪名玩家的手牌？",
+  "Choose the card to discard": "选择要弃置的卡牌",
+  "Patchouli: choose a player whose hand to search (you may choose yourself)": "帕秋莉 — 选择要猜测手牌的玩家，也可以选择自己",
+  "Reisen: choose a player to look at": "铃仙 — 选择要查看手牌的玩家",
+  "Force this card to be played next turn": "强制下回合放置此卡",
+  "Kanako: choose a Youkai Mountain card to place": "神奈子 — 选择要放置的妖怪之山卡牌",
+  "Suwako: designate wasteland": "诹访子 — 选择要变为荒地的棋盘格",
+  "Satori: whose hand do you peer into?": "觉 — 查看哪名玩家的手牌？",
+  "Rin: take a card from any discard pile": "燐 — 从任意弃牌堆拿取一张牌",
+  "Utsuho: mark a 2x2 wasteland zone": "空 — 选择要变为荒地的 2×2 区域",
+  "Matara Okina: choose a card to trigger again": "隐岐奈 — 选择要再次发动能力的卡牌",
+  "Reimu: take a Crown card": "灵梦 — 拿取一张王冠卡牌",
+  "Marisa: blast a non-Crown card to your discard": "魔理沙 — 将一张非王冠卡牌轰入你的弃牌堆",
+  "Yuuka: clear wasteland in a 3x3 zone": "幽香 — 清除一个 3×3 区域中的荒地",
+  "Medicine: choose a player to return two cards": "梅蒂欣 — 选择要放回两张手牌的玩家",
+  "Eiki: tie — choose the faction to banish": "映姬 — 数量相同，请选择要遣返的阵营",
+  "Komachi: swap positions with this card": "小町 — 选择要交换位置的卡牌",
+  "Iku: choose a 2×2 area": "衣玖 — 选择一个 2×2 区域",
+  "Use ability?": "使用能力？",
+  "Yes": "是",
+  "No": "否",
+  "Continue guessing?": "继续猜测？",
+  "BUNBUNMARU NEWS": "文文新闻",
+  "Hands Revealed Across Gensokyo": "幻想乡手牌公开报道",
+  "EXTRA · EYEWITNESS REPORT": "号外 · 目击报道",
+  "Special Edition": "特别版",
+  "Extended Edition": "增刊",
+  "No cards in hand.": "手牌为空。",
+  "No other hands to report.": "没有其他手牌可供报道。",
+  "Hearsay Finder": "传闻探寻者",
+  "Reisen’s decree · forced play": "铃仙的命令 · 强制放置",
+  "Place a card": "放置卡牌",
+  "Connect a faction": "连接阵营",
+  "Draw for everyone": "为所有人抽牌",
+  "Pay a cost and choose an area": "支付代价并选择区域",
+  "Step inside": "走进香霖堂",
+  "Try a trade": "尝试交易",
+  "Back": "上一步",
+  "Retry": "重试",
+  "Next": "下一步",
+  "Finish": "完成",
+  "Try it on the table. Your match settings stay unchanged.": "直接在棋盘上练习。你的对局设置会保留。",
+  "Select Sanae Kochiya in your hand, then click an empty board tile. You can also drag her there. Her Placed ability draws a card.": "选择手中的东风谷早苗，再点击一个空棋盘格，也可以将她拖过去。她的放置能力会让你抽一张牌。",
+  "Place Sanae Kochiya beside the three Youkai Mountain cards. Four connected cards are claimed into your discard pile. Reach 7 discard points to win. Connections use the four orthogonal directions.": "将东风谷早苗放在三张妖怪之山卡牌旁。四张相连的卡牌会被收进你的弃牌堆。获得 7 点弃牌分数即可获胜。卡牌只沿上下左右四个方向连接。",
+  "Press Draw for Everyone instead of placing a card. Players with fewer than 7 cards draw one each. A full hand skips the draw; abilities can still give you more cards.": "点击为所有人抽牌。手牌少于 7 张的玩家各抽一张牌。手牌已满的玩家跳过抽牌，但能力仍可增加手牌。",
+  "Place Iku Nagae. Pay Cost III by selecting the three remaining hand cards together and confirming. Then choose a 2×2 area containing both board cards. Double-click any card to inspect it.": "放置永江衣玖。同时选中剩余三张手牌并确认，以支付代价 III。然后选择包含两张棋盘卡牌的 2×2 区域。双击任意卡牌可查看详情。",
+  "Select a card in your hand, then click Morichika Rinnosuke at Kourindou, outside the main board.": "选择一张手牌，再点击主棋盘外香霖堂中的森近霖之助。",
+  "Choose one of the three highlighted cards. You can trade once per turn without using your turn. The rest of Kourindou is yours to discover.": "选择三张高亮卡牌中的一张。每回合可以交易一次，且不消耗回合。香霖堂的其他奥妙留待你自行探索。",
+  "Sanae is on the board, and her ability added a card to your hand.": "早苗已进入棋盘，她的能力为你增加了一张手牌。",
+  "You claimed all four cards and gained 4 discard points.": "你收取了四张卡牌，获得 4 点弃牌分数。",
+  "You and AI 2 drew a card. AI 1 already had 7 cards, so their hand stayed full.": "你和电脑 2 各抽了一张牌。电脑 1 已有 7 张手牌，因此没有抽牌。",
+  "Your three cost cards returned to the draw pile, and Iku sent both targets to your discard pile.": "用于支付代价的三张牌已回到抽牌堆，衣玖将两个目标送入了你的弃牌堆。",
+  "The merchandise is now in your hand. The trade used no turn.": "商品已加入你的手牌，交易没有消耗回合。",
+  "Use Draw for Everyone for this step.": "这一步请使用为所有人抽牌。",
+  "Choose a highlighted merchandise card.": "请选择一张高亮商品卡牌。",
+  "Use the highlighted hand card for this step.": "这一步请使用高亮的手牌。",
+  "Try again to complete this step. Retry restores the practice cards.": "请再试一次来完成这一步。点击重试会还原练习卡牌。",
+  "Guided practice — the other players wait while you try this step.": "引导练习 — 其他玩家会等待你完成这一步。",
+  "You have no card to place or draw after trading, so your turn ends.": "交易后没有可放置或可抽取的卡牌，你的回合结束。",
+  "Remilia Scarlet": "蕾米莉亚·斯卡蕾特",
+  "Fate Manipulation": "命运操纵",
+  "Placed: Take all Scarlet Devil Mansion cards from the other players’ hands into your hand.": "放置时：将其他玩家手中的所有红魔馆卡牌加入你的手牌。",
+  "Flandre Scarlet": "芙兰朵露·斯卡蕾特",
+  "“Eye” Destruction": "「目」之破坏",
+  "Placed: Choose a card in any player’s hand and send it to that player’s discard pile.": "放置时：选择任意玩家的一张手牌，将其送入该玩家的弃牌堆。",
+  "Patchouli Knowledge": "帕秋莉·诺蕾姬",
+  "Magical Gathering": "魔法集会",
+  "Placed: Guess a card in another player’s hand. If your guess is correct, take that card into your hand.": "放置时：猜测另一名玩家手中的一张卡牌。猜对后，将该卡牌加入你的手牌。",
+  "Izayoi Sakuya": "十六夜咲夜",
+  "Zawarudo!": "世界！",
+  "Placed: Take two extra turns, then shuffle your hand into the draw pile.": "放置时：获得两个额外回合，然后将你的手牌洗入抽牌堆。",
+  "Yuyuko Saigyouji": "西行寺幽幽子",
+  "Surrounding Death": "环绕之死",
+  "[Cost N] Placed: Send N random orthogonally adjacent cards to your discard pile.": "[代价 N] 放置时：将 N 张随机的正交相邻卡牌送入你的弃牌堆。",
+  "Youmu Konpaku": "魂魄妖梦",
+  "First Before First": "先于一切",
+  "Placed: Placing this card does not use your turn.": "放置时：放置此卡不消耗你的回合。",
+  "Kaguya Houraisan": "蓬莱山辉夜",
+  "Gamer Move!": "玩家操作！",
+  "Placed: Guess an Eientei card in another player’s hand. Each correct guess lets you place that card on the board and guess again.": "放置时：猜测另一名玩家手中的一张永远亭卡牌。每次猜对，你可以将该卡牌放到棋盘上并继续猜测。",
+  "Eirin Yagokoro": "八意永琳",
+  "Omoikane's Device": "思兼装置",
+  "While this card is on the board, all Crown abilities are disabled.": "此卡在棋盘上时，所有王冠卡牌的能力均被禁用。",
+  "Reisen Udongein Inaba": "铃仙·优昙华院·因幡",
+  "Lunatic Eye": "狂气之瞳",
+  "Placed: Choose a card in another player’s hand. They must place that card on their next turn.": "放置时：选择另一名玩家的一张手牌。该玩家必须在下个回合放置这张卡牌。",
+  "Fujiwara no Mokou": "藤原妹红",
+  "Pheonix Resurrection": "凤凰复生",
+  "Placed: Draw a card for each card in your discard pile.": "放置时：你的弃牌堆中每有一张卡牌，就抽一张牌。",
+  "Kanako Yasaka": "八坂神奈子",
+  "Divine Virtues": "神之威德",
+  "This card can be placed on wasteland and doubles other Youkai Mountain cards’ Placed abilities while on the board.\nPlaced: Place one Youkai Mountain card from your hand on the board.": "此卡可以放在荒地上。此卡在棋盘上时，其他妖怪之山卡牌的放置能力发动两次。\n放置时：将你手中的一张妖怪之山卡牌放到棋盘上。",
+  "Suwako Moriya": "洩矢诹访子",
+  "Cursed Land": "诅咒之地",
+  "Placed: Turn three board tiles into wasteland.": "放置时：将三个棋盘格变为荒地。",
+  "Sanae Kochiya": "东风谷早苗",
+  "Divine Wind": "神风",
+  "Placed: Draw a card. If Kanako Yasaka is on the board, draw another card.": "放置时：抽一张牌。如果八坂神奈子在棋盘上，再抽一张牌。",
+  "Aya Shameimaru": "射命丸文",
+  "Placed: Every other player reveals four cards from their hand.": "放置时：其他每名玩家展示四张手牌。",
+  "Satori Komeiji": "古明地觉",
+  "Terrifying Hypnotism": "恐怖催眠术",
+  "[Cost I] Placed: Look at another player’s hand and take one card into your hand.": "[代价 I] 放置时：查看另一名玩家的手牌，并将其中一张加入你的手牌。",
+  "Rin Kaenbyou": "火焰猫燐",
+  "Cat's Walk": "猫之步伐",
+  "Placed: Take one card from any discard pile into your hand.": "放置时：将任意弃牌堆中的一张卡牌加入你的手牌。",
+  "Utsuho Reiuji": "灵乌路空",
+  "Nuclear Fission": "核裂变",
+  "Placed: Turn a 2×2 area of the board into wasteland.": "放置时：将棋盘上的一个 2×2 区域变为荒地。",
+  "Koishi Komeiji": "古明地恋",
+  "Devoid Consciousness": "无意识",
+  "When three Palace of the Earth Spirits cards are on the board, this card automatically moves from your hand onto the board.": "棋盘上有三张地灵殿卡牌时，此卡会自动从你的手牌移到棋盘上。",
+  "Yukari Yakumo": "八云紫",
+  "Boundary Manipulation": "境界操纵",
+  "You can place this card on another board card to take that card into your hand.": "你可以将此卡放在另一张棋盘卡牌上，并将被覆盖的卡牌加入你的手牌。",
+  "Kasen Ibara": "茨木华扇",
+  "Wildest Hermit": "野性仙人",
+  "This card counts as any faction when claiming cards.": "收取阵营卡牌时，此卡可视为任意阵营的卡牌。",
+  "Matara Okina": "摩多罗隐岐奈",
+  "Secret Power: /op": "秘神之力 /op",
+  "Placed: This card uses the Placed ability of another board card you choose.": "放置时：选择另一张棋盘卡牌，由此卡使用它的放置能力。",
+  "Ran Yakumo": "八云蓝",
+  "Shikigami Callback": "式神召回",
+  "Placed: Draw one card. If Yukari Yakumo is on the board, immediately place that card.": "放置时：抽一张牌。如果八云紫在棋盘上，立即放置抽到的卡牌。",
+  "Hakurei Reimu": "博丽灵梦",
+  "Innate Dream": "梦想天生",
+  "Placed: Take a Crown card from the board into your hand.": "放置时：将棋盘上的一张王冠卡牌加入你的手牌。",
+  "Marisa Kirisame": "雾雨魔理沙",
+  "Master Spark": "极限火花",
+  "Placed: Send a non-Crown card from the board to your discard pile.": "放置时：将棋盘上的一张非王冠卡牌送入你的弃牌堆。",
+  "Yuuka Kazami": "风见幽香",
+  "Master of Blossom": "花之主宰",
+  "Placed: Clear wasteland in a 3×3 area, then shuffle your hand into the draw pile and draw four cards.": "放置时：清除一个 3×3 区域中的荒地，然后将你的手牌洗入抽牌堆并抽四张牌。",
+  "Medicine Melancholy": "梅蒂欣·梅兰可莉",
+  "Lily Poisoning": "铃兰之毒",
+  "Placed: Choose a player and return two random cards from their hand to the draw pile.": "放置时：选择一名玩家，将其两张随机手牌放回抽牌堆。",
+  "Hecatia Lapislazuli": "赫卡提亚·拉碧斯拉祖利",
+  "Trinitarian Rhapsody": "三位一体狂想曲",
+  "This card counts as 3 discard points. It can enter a discard pile only if that pile has more than 3 Hell cards.": "此卡计为 3 点弃牌分数。只有弃牌堆已有超过 3 张地狱卡牌时，此卡才能进入该弃牌堆。",
+  "Clownpiece": "克劳恩皮丝",
+  "Impurity Tolerence": "污秽耐受",
+  "This card can be placed on wasteland.\nPlaced: Clear wasteland around this card.": "此卡可以放在荒地上。\n放置时：清除此卡周围的荒地。",
+  "Eiki Shiki": "四季映姬",
+  "Black and White": "黑与白",
+  "[Cost I] Placed: Return all cards from the largest faction on the board to the draw pile.": "[代价 I] 放置时：将棋盘上数量最多的阵营的所有卡牌放回抽牌堆。",
+  "Komachi Onozuka": "小野塚小町",
+  "Distance exchange": "距离交换",
+  "Placed: Swap this card with another board card. If Eiki Shiki is on the board, this placement does not use your turn.": "放置时：将此卡与另一张棋盘卡牌交换位置。如果四季映姬在棋盘上，此次放置不消耗你的回合。",
+  "Tenshi Hinanawi": "比那名居天子",
+  "All Pieces Vermilion High!": "全人类的绯想天！",
+  "[Cost II] Placed: Return every non-Heaven card on the board to the draw pile.": "[代价 II] 放置时：将棋盘上的所有非天界卡牌放回抽牌堆。",
+  "Iku Nagae": "永江衣玖",
+  "Ride the Lightning": "驾驭雷霆",
+  "[Cost III] Placed: Choose a 2×2 area and send up to two random non-Heaven cards in it to your discard pile.": "[代价 III] 放置时：选择一个 2×2 区域，将其中最多两张随机的非天界卡牌送入你的弃牌堆。",
+  "Hijiri Byakuren": "圣白莲",
+  "Makai Fantastica": "魔界幻想",
+  "Placed: You may use each effect once, in any order.\n[Cost IV] Take three extra turns.\n[Cost III] Send three other board cards to the draw pile and turn their spaces into wasteland.\n[Cost II] Look at the top three cards of the draw pile. Take one and put the rest back in any order.\nEach other Myouren Temple card on the board reduces each cost by one.": "放置时：你可以按任意顺序使用每个效果一次。\n[代价 IV] 获得三个额外回合。\n[代价 III] 将另外三张棋盘卡牌放回抽牌堆，并将其所在格变为荒地。\n[代价 II] 查看抽牌堆顶的三张牌，拿取一张，并按任意顺序放回其余卡牌。\n棋盘上每有一张其他命莲寺卡牌，每个效果的代价减少一。",
+  "Toramaru Shou": "寅丸星",
+  "Radiant Treasure": "光辉宝藏",
+  "[Cost I] Placed: Draw a card for each wasteland on the board, then clear all wasteland.": "[代价 I] 放置时：棋盘上每有一块荒地，就抽一张牌，然后清除所有荒地。",
+  "Houjuu Nue": "封兽鵺",
+  "Ability Chimera": "能力奇美拉",
+  "Placed: Choose an ability from three random cards. Briefly take its appearance and use its ability.": "放置时：从三张随机卡牌中选择一个能力。短暂变为该卡牌的外貌，并使用它的能力。",
+  "Murasa Minamitu": "村纱水蜜",
+  "Bottomless Vortex": "无底漩涡",
+  "Placed: Choose a player. They cannot place cards or trade on their next two turns.": "放置时：选择一名玩家。该玩家在接下来两个回合中不能放置卡牌或交易。",
+  "Kumoi Ichirin": "云居一轮",
+  "Fist Smash": "拳击粉碎",
+  "[Cost II] Placed: Push every non-Myouren Temple card one tile farther from this card. Return cards pushed off the board to the draw pile.": "[代价 II] 放置时：将每张非命莲寺卡牌向远离此卡的方向推一格。被推出棋盘的卡牌放回抽牌堆。",
+  "Hong Meiling": "红美铃",
+  "Inner Chi": "内劲",
+  "Placed: Move an adjacent card one tile farther away from this card.": "放置时：将一张相邻卡牌向远离此卡的方向移动一格。",
+  "Inaba Tewi": "因幡帝",
+  "Ancient Duper": "远古骗术",
+  "Placed: Put a Trap into every other player’s hand.": "放置时：向其他每名玩家的手牌中加入一张陷阱。",
+  "Kawasiro Nitori": "河城荷取",
+  "Optical Camouflage": "光学迷彩",
+  "Cards in the 3×3 area centred on this card cannot be selected.": "以此卡为中心的 3×3 区域中的卡牌不能被选中。",
+  "Hoshiguma Yuugi": "星熊勇仪",
+  "Impossible Strength": "怪力",
+  "[Cost II] Placed: Send one orthogonally adjacent card to your discard pile.": "[代价 II] 放置时：将一张正交相邻的卡牌送入你的弃牌堆。",
+  "Mai and Satono": "丁礼田舞与尔子田里乃",
+  "Driving Vitality": "驱动活力",
+  "Placed: Gain an extra turn on your next turn.": "放置时：在你的下个回合获得一个额外回合。",
+  "Niwatari Kutaka": "庭渡久侘歌",
+  "Overseeing Gateway": "门户守望者",
+  "This card can be placed on wasteland.\nPlaced: If this card is on wasteland, take a Hell card from the draw pile into your hand.": "此卡可以放在荒地上。\n放置时：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。",
+  "Morichika Rinnosuke": "森近霖之助",
+  "Kourindou": "香霖堂",
+  "This card and the cards around it cannot move or use abilities.\nSelect a hand card, then click Rinnosuke to trade once per turn without using your turn.": "此卡及其周围的卡牌不能移动或使用能力。\n先选择一张手牌，再点击森近霖之助即可交易。每回合限一次，且不消耗回合。",
+  "Trap": "陷阱",
+  "Well...Its a trap!": "嗯……这是陷阱！",
+  "This card cannot be traded, discarded or returned to the draw pile from your hand.\nPlaced: Return another hand card to the draw pile.": "此卡在手牌中时，不能交易、弃置或放回抽牌堆。\n放置时：将另一张手牌放回抽牌堆。",
+  "Scarlet Devil Mansion": "红魔馆",
+  "Hakugyokurou": "白玉楼",
+  "Eientei": "永远亭",
+  "Youkai Mountain": "妖怪之山",
+  "Palace of the Earth Spirits": "地灵殿",
+  "Sage": "贤者",
+  "Hakurei": "博丽",
+  "Sunflower Field": "太阳花田",
+  "Hell": "地狱",
+  "Heaven": "天界",
+  "Myouren Temple": "命莲寺",
+  "Token": "衍生物",
+  "Welcome. I helped put the rules together; the cards can explain the rest.": "欢迎。我参与制定了规则，其余的可以让卡牌自己说明。",
+  "Come in. The rules are quite sound, if I may say so myself.": "请进。若容我自评，这些规则相当周全。",
+  "The board is ready. I suppose we shall see how my rules hold up.": "棋盘准备好了。就看看我的规则是否经得起推敲吧。",
+  "Welcome to Kourindou. I had a hand in the rules, though I prefer to watch.": "欢迎来到香霖堂。规则中也有我的一份心力，不过我更愿意旁观。",
+  "I keep an ear on the table. Purely to make sure the rules hold.": "我会听听桌上的动静。只是为了确认规则运作正常。",
+  "Those cards have found an interesting arrangement. I haven’t given it much thought.": "这些卡牌的排列挺有意思。我倒没怎么细想。",
+  "Hmm. That position may be worth remembering.": "嗯。这个局面或许值得记住。",
+  "I was only checking the board. Go on.": "我只是看看棋盘。请继续。",
+  "A curious move. I have no opinion on it yet.": "有趣的一步。我暂且不作评价。",
+  "Please, carry on. I can listen while I tend the shop.": "请继续。我照看店铺时也能听着。",
+  "Let me see what you have. An exchange is simple enough.": "让我看看你带了什么。交换并不复杂。",
+  "Ah, a card for the shop? Show me what you brought.": "哦，是要拿来交易的卡牌吗？给我看看吧。",
+  "I can take a look. What did you have in mind?": "我可以看看。你有什么打算？",
+  "An exchange, then. I’ll examine your card.": "那么，交换吧。我先看看你的卡牌。",
+  "You have my attention. Briefly.": "我会稍微留意一下。",
+  "A fair exchange. Your move is still yours.": "公平的交换。接下来还是你的行动。",
+  "Interesting. I’ll put this one aside.": "有意思。我会把这张放在一旁。",
+  "That settles it. You may continue your turn.": "这就办妥了。你可以继续回合。",
+  "I think we have both found something useful.": "看来我们各自找到了有用的东西。",
+  "An unusual choice. I’ll take good care of it.": "不寻常的选择。我会好好保管它。",
+  "The trade is done. I’ll leave the next move to you.": "交易完成了。下一步就由你决定。"
+};
+Object.assign(ZH_TEXT,{
+  'Pay selected cards':'支付所选卡牌','Meiling: choose an adjacent card to push away':'美铃 — 选择要推远的相邻卡牌',
+  'Kaguya: choose a player whose hand to search (you may choose yourself)':'辉夜 — 选择要猜测手牌的玩家，也可以选择自己',
+  "Kaguya: name an Eientei card in a player's hand? (Guess right and place it — guess wrong and the ability ends here.)":'辉夜 — 要猜测玩家手中的永远亭卡牌吗？猜对即可放置，猜错则结束能力。',
+  "Kaguya: press your luck and name another Eientei card in a player's hand?":'辉夜 — 要继续猜测另一张永远亭卡牌吗？',
+  ', or Rinnosuke to trade':'，或点击霖之助交易',
+  'Protected by Rinnosuke — no faction while protected':'受霖之助保护，保护期间不属于任何阵营',
+  'This card will be the next card drawn. The other card goes beneath it.':'这张牌将是下一张抽到的牌，另一张放在它下面。',
+});
+const languageTextSources=new WeakMap(),languageAttributeSources=new WeakMap(),ruleTextSources=new Map();
+function canonicalCardName(value){
+  const text=String(value).trim();
+  const entry=CARDS.find(card=>card.name.toLowerCase()===text.toLowerCase() || ZH_CARDS[card.id]?.[0]===text);
+  return entry?.name || text;
+}
+// Patterns cover changing counts, player names and choices; no game data is translated.
+const ZH_DYNAMIC=[
+  [/^Draw pile: (\d+) cards remaining$/,(_,n)=>`抽牌堆剩余 ${n} 张牌`],
+  [/^Cost ([IVXLCDMN]+): select (\d+) cards? to return to the draw pile$/,(_,cost,n)=>`代价 ${cost} — 选择 ${n} 张手牌放回抽牌堆`],
+  [/^Yuyuko: select 1(?:–(\d+))? cards? to pay Cost ([IVXLCDMN]+)$/,(_,max,cost)=>`幽幽子 — 选择 ${max?'1–'+max:'1'} 张牌，支付代价 ${cost}`],
+  [/^Patchouli: name a card you believe (.+) holds$/,(_,p)=>`帕秋莉 — 猜测 ${p} 手中的一张牌`],
+  [/^Kaguya: name an Eientei card you believe (.+) holds$/,(_,p)=>`辉夜 — 猜测 ${p} 手中的一张永远亭卡牌`],
+  [/^Yukari is on the board — place the drawn (.+) immediately$/,(_,card)=>`八云紫在棋盘上，立即放置抽到的 ${card}`],
+  [/^Drop (.+) on a highlighted space(.*)\.$/,(_,card,extra)=>`将 ${card} 放到高亮位置${translateGameText(extra)}。`],
+  [/^(.+) wanders onto the board — choose where$/,(_,card)=>`${card} 漫步走上棋盘，请选择位置`],
+  [/^(.+) \((.+)[’']s discard\)$/,(_,card,p)=>`${card}（${p} 的弃牌堆）`],
+  [/^(.+) is thinking\.\.\.$/,(_,p)=>`${p} 正在思考……`],
+  [/^(.+) wins with (\d+) discard points!$/,(_,p,n)=>`${p} 以 ${n} 点弃牌分数获胜！`],
+  [/^No one has a legal move left\. (.+) wins by stalemate with (\d+) discard points?!$/,(_,p,n)=>`所有玩家均无合法行动。${p} 以 ${n} 点弃牌分数赢得僵局！`],
+  [/^No one has a legal move left\. Stalemate! (.+) tie with (\d+) discard points? each\.$/,(_,p,n)=>`所有玩家均无合法行动。${p} 各有 ${n} 点弃牌分数，平局！`],
+  [/^Hand: (\d+) · Discard: (\d+)\/7$/,(_,h,d)=>`手牌：${h} · 弃牌：${d}/7`],
+  [/^No placement · (\d+) turns?$/,(_,n)=>`禁止放置 · ${n} 回合`],
+  [/^(Easy|Normal|Hard) AI$/,(_,d)=>`${ZH_TEXT[d]}电脑`],
+  [/^AI (\d+)$/,(_,n)=>`电脑 ${n}`],
+  [/^(.+)'s hand$/,(_,p)=>`${p}的手牌`],
+  [/^(.+)' hand$/,(_,p)=>`${p}的手牌`],
+  [/^Pay (\d+) cards?$/,(_,n)=>`支付 ${n} 张牌`],
+  [/^Select (\d+) more cards?…$/,(_,n)=>`再选 ${n} 张牌……`],
+  [/^Pick exactly 6 cards for your opening hand —$/,()=>`请选择 6 张起始手牌 —`],
+  [/^\/6 selected$/,()=>`/6 已选`],
+  [/^(\d+) revealed$/,(_,n)=>`展示 ${n} 张牌`],
+  [/^Learn to Play · (\d+) \/ (\d+)$/,(_,n,total)=>`学习玩法 · ${n} / ${total}`],
+  [/^Draw pile ·$/,()=>`抽牌堆 ·`],
+  [/^Filed by Aya Shameimaru for (.+)$/,(_,p)=>`射命丸文为 ${p} 撰稿`],
+  [/^(.+) — (\d+)\/(\d+) selected\. Click cards to toggle; double-click to inspect\.$/,(_,t,n,max)=>`${translateGameText(t)} — 已选 ${n}/${max}。点击选择或取消，双击查看详情。`],
+  [/^(.+) — click a highlighted player around the board\.$/,(_,t)=>`${translateGameText(t)} — 点击棋盘周围高亮的玩家。`],
+  [/^(.+) — choose a (\d+)×(\d+) area over the tiles\.$/,(_,t,w,h)=>`${translateGameText(t)} — 在棋盘格上选择一个 ${w}×${h} 区域。`],
+  [/^(.+) — move to preview the area\. Hold and drag to move it; release over the board to choose\.$/,(_,t)=>`${translateGameText(t)} — 移动指针预览区域，按住拖动调整，再松开选择。`],
+  [/^(.+) — choose a highlighted space(.*)\.$/,(_,card,extra)=>`${card} — 选择一个高亮位置${translateGameText(extra)}。`],
+  [/^No legal space for (.+) right now — choose another card or draw\.$/,(_,card)=>`目前没有可放置 ${card} 的位置，请选择其他卡牌或抽牌。`],
+  [/^Trade (.+) — choose a card around Rinnosuke\.$/,(_,card)=>`交易 ${card} — 选择霖之助周围的一张卡牌。`],
+  [/^Correct! Place (.+)$/,(_,card)=>`猜对了！请放置 ${card}`],
+  [/^Place (.+)$/,(_,card)=>`放置 ${card}`],
+  [/^Choose (.+)$/,(_,p)=>`选择 ${p}`],
+  [/^Inspect (.+)$/,(_,card)=>`查看 ${card}`],
+  [/^(.+)\. Drag to move; double-click or double-tap to inspect\.$/,(_,card)=>`${card}。拖动可移动，双击或连点两次可查看详情。`],
+  [/^(.+)\. Select card; double-click to inspect\.$/,(_,card)=>`${card}。点击选择，双击查看详情。`],
+  [/^\[Cost ([IVXLCDMN]+)\] (.+)$/,(_,n,text)=>`[代价 ${n}] ${translateGameText(text)}`],
+  [/^\[Free\] (.+)$/,(_,text)=>`[免费] ${translateGameText(text)}`],
+  [/^(.+) places (.+)\.$/,(_,p,card)=>`${p} 放置了 ${card}。`],
+  [/^(.+) trades (.+) for (.+) at Kourindou\.$/,(_,p,offered,taken)=>`${p} 在香霖堂用 ${offered} 换取了 ${taken}。`],
+  [/^(.+) claims the (.+) faction! \((\d+) cards\)$/,(_,p,f,n)=>`${p} 收取了 ${f} 阵营的 ${n} 张卡牌！`],
+  [/^(.+) draws for (\d+) players? with room in hand\.$/,(_,p,n)=>`${p} 为 ${n} 名手牌未满的玩家抽了牌。`],
+  [/^(.+) has no legal action and (passes|skips their turn)\.$/,(_,p)=>`${p} 无合法行动，跳过回合。`],
+  [/^(.+) has no legal action for this extra turn\.$/,(_,p)=>`${p} 在这个额外回合中无合法行动。`],
+  [/^(.+) has no legal action after the free placement\.$/,(_,p)=>`${p} 免费放置后无合法行动。`],
+  [/^(.+) takes an extra action from Mai and Satono\.$/,(_,p)=>`${p} 获得舞与里乃提供的额外行动。`],
+  [/^(.+) takes three extra turns with Makai Fantastica(.*)\.$/,(_,p,cost)=>`${p} 使用魔界幻想获得三个额外回合${translateGameText(cost)}。`],
+  [/^(.+) looks at (\d+) draw-pile cards?, takes one and orders the rest\.$/,(_,p,n)=>`${p} 查看了抽牌堆的 ${n} 张牌，拿取一张并排列了其余卡牌。`],
+  [/^(.+) returns (\d+) cards? to the draw pile and leaves wasteland in their spaces(.*)\.$/,(_,p,n,cost)=>`${p} 将 ${n} 张牌放回抽牌堆，并将其所在格变为荒地${translateGameText(cost)}。`],
+  [/^(.+) draws (\d+) cards? with Radiant Treasure and clears (\d+) wasteland tiles?\.$/,(_,p,n,w)=>`${p} 使用光辉宝藏抽了 ${n} 张牌，并清除了 ${w} 块荒地。`],
+  [/^(.+) borrows (.+)[’']s ability\.$/,(_,p,card)=>`${p} 借用了 ${card} 的能力。`],
+  [/^(.+) cannot place cards or trade on their next two turns\.$/,(_,p)=>`${p} 在接下来两个回合中不能放置卡牌或交易。`],
+  [/^(.+) pushes (\d+) cards? and returns (\d+) cards? to the draw pile\.$/,(_,p,n,r)=>`${p} 推动了 ${n} 张牌，并将 ${r} 张牌放回抽牌堆。`],
+  [/^(.+) triggers and wanders onto the board!$/,(_,card)=>`${card} 的能力触发，漫步走上了棋盘！`],
+  [/^(.+) is silenced by Rinnosuke\.$/,(_,card)=>`${card} 的能力被霖之助封锁。`],
+  [/^Rinnosuke protects (.+) — the effect fails\.$/,(_,card)=>`霖之助保护着 ${card}，效果未生效。`],
+  [/^(.+) cannot be selected while inside Nitori[’']s camouflage\.$/,(_,card)=>`${card} 位于荷取的迷彩范围内，不能被选中。`],
+  [/^(.+) must place (.+) \(Reisen's decree\)\.$/,(_,p,card)=>`${p} 必须放置 ${card}，这是铃仙的命令。`],
+  [/^(.+) cannot place (.+) anywhere — Reisen's decree forces them to skip their turn entirely\.$/,(_,p,card)=>`${p} 无法在任何位置放置 ${card}，铃仙的命令令其跳过本回合。`],
+  [/^(.+) correctly names (.+) in (.+)[’']s hand(!| — Patchouli pulls it into their hand!)$/,(_,p,card,target)=>`${p} 猜对了 ${target} 手中的 ${card}！`],
+  [/^(.+) guesses wrong(.*) — Kaguya's game ends\.$/,(_,p,guess)=>`${p} 猜错了${guess}，辉夜的猜测结束。`],
+  [/^(.+) chooses not to (use|continue) Kaguya's ability\.$/,(_,p)=>`${p} 结束了辉夜的能力。`],
+  [/^(.+) declines (.+)'s cost — the ability is skipped\.$/,(_,p,card)=>`${p} 没有支付 ${card} 的代价，跳过能力。`],
+  [/^(.+) randomly sends (.+) to their discard pile \(Cost ([IVXLCDMN]+)\)\.$/,(_,p,cards,n)=>`${p} 随机将 ${cards} 送入自己的弃牌堆，支付了代价 ${n}。`],
+  [/^(.+) marks (\d+) spaces? as wasteland\.$/,(_,p,n)=>`${p} 将 ${n} 个格子变为了荒地。`],
+  [/^(.+) Sanae draws (\d+) cards?(.*)\.$/,(_,p,n,extra)=>`${p} 的早苗抽了 ${n} 张牌${extra?'，神奈子在棋盘上':''}。`],
+  [/^(.+) swaps places with (.+)\.$/,(_,p,card)=>`${p} 与 ${card} 交换了位置。`],
+  [/^(.+) sends (.+) (straight )?to (.+)[’']s discard pile\.$/,(_,p,card,_straight,target)=>`${p} 将 ${card} 送入了 ${target} 的弃牌堆。`],
+  [/^(.+) sends (.+) to their discard pile\.$/,(_,p,card)=>`${p} 将 ${card} 送入了自己的弃牌堆。`],
+  [/^(.+) takes (.+) from (.+)[’']s (hand|discard pile)\.$/,(_,p,card,target,pile)=>`${p} 从 ${target} 的${pile==='hand'?'手牌':'弃牌堆'}中拿取了 ${card}。`],
+  [/^(.+) takes (.+) into their hand\.$/,(_,p,card)=>`${p} 将 ${card} 加入了自己的手牌。`],
+  [/^(.+) draws (.+)\.$/,(_,p,card)=>`${p} 抽到了 ${card}。`],
+  [/^(.+) blasts (.+) into their discard pile\.$/,(_,p,card)=>`${p} 将 ${card} 轰入了自己的弃牌堆。`],
+  [/^(.+) returns (\d+) non-Heaven cards? from the board to the draw pile\.$/,(_,p,n)=>`${p} 将棋盘上的 ${n} 张非天界卡牌放回了抽牌堆。`],
+  [/^(.+) clears (\d+) wasteland spaces?, shuffles (\d+) cards? back in, and draws (\d+)\.$/,(_,p,w,h,n)=>`${p} 清除了 ${w} 块荒地，将 ${h} 张手牌洗回抽牌堆，再抽了 ${n} 张牌。`],
+  [/^(.+) finds every discard pile empty\.$/,(_,p)=>`${p} 没有找到任何弃牌。`],
+  [/^(.+) finds the draw pile empty\.$/,(_,p)=>`${p} 发现抽牌堆已空。`],
+  [/^(.+) finds no (valid hand to target|plausible guess|non-Crown card to target|Crown card on the board|empty space left on the board|other card on the board to swap with)\.$/,(_,p,why)=>`${p} ${({'valid hand to target':'没有可选的手牌目标','plausible guess':'没有可用的猜测','non-Crown card to target':'没有可选的非王冠卡牌','Crown card on the board':'没有找到棋盘上的王冠卡牌','empty space left on the board':'没有找到空棋盘格','other card on the board to swap with':'没有可交换位置的其他棋盘卡牌'})[why]}。`],
+];
+const localizedTextCache=new Map();
+const ZH_NAMES=Object.entries(ZH_TEXT).filter(([en])=>CARDS.some(card=>card.name===en) || Object.values(FACTIONS).some(f=>f.name===en))
+  .sort((a,b)=>b[0].length-a[0].length).map(([en,zh])=>[new RegExp('(^|[^A-Za-z])'+en.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=$|[^A-Za-z])','g'),zh]);
+function translateGameText(value){
+  const original=String(value);if(gameLanguage!=='zh-CN')return original;
+  if(localizedTextCache.has(original))return localizedTextCache.get(original);
+  const text=original.trim();let output=ZH_TEXT[text];
+  if(output===undefined){
+    for(const [pattern,render] of ZH_DYNAMIC){if(pattern.test(text)){output=text.replace(pattern,render);break;}}
+  }
+  if(output===undefined && text.includes('\n'))output=text.split('\n').map(translateGameText).join('\n');
+  if(output===undefined)output=text;
+  for(const [pattern,zh] of ZH_NAMES)output=output.replace(pattern,(_m,prefix)=>prefix+zh);
+  output=output.replace(/\bAI (\d+)\b/g,'电脑 $1').replace(/\bYou(?:[’']s|r)?\b/g,'你').replace(/\b(?:Cost|cost) ([IVXLCDMN]+)\b/g,'代价 $1')
+    .replace(/\[Free\]/g,'[免费]').replace(/\bfor free\b/g,'免费').replace(/^(\d+) · (Next draw|Then draw)$/,(m,n,order)=>`${n} · ${order==='Next draw'?'先抽':'后抽'}`);
+  const result=original.slice(0,original.length-original.trimStart().length)+output+original.slice(original.trimEnd().length);
+  if(localizedTextCache.size>2000)localizedTextCache.clear();localizedTextCache.set(original,result);return result;
+}
+function languageSkipsNode(node){
+  return !node.parentElement || !!node.parentElement.closest('script,style,input,textarea,#menu-language,#game-language,[lang="ja"]');
+}
+function localizeTextNode(node){
+  if(languageSkipsNode(node) || !node.nodeValue?.trim())return;
+  let saved=languageTextSources.get(node);
+  if(!saved || node.nodeValue!==saved.rendered)saved={source:node.nodeValue,rendered:node.nodeValue};
+  saved.rendered=translateGameText(saved.source);languageTextSources.set(node,saved);
+  if(node.nodeValue!==saved.rendered)node.nodeValue=saved.rendered;
+}
+function localizeElement(node){
+  if(node.matches?.('script,style,#menu-language,#game-language,option'))return;
+  for(const attribute of ['aria-label','title','placeholder']){
+    const value=node.getAttribute?.(attribute);if(!value)continue;
+    let saved=languageAttributeSources.get(node);if(!saved){saved={};languageAttributeSources.set(node,saved);}
+    const entry=saved[attribute];const source=!entry || value!==entry.rendered ? value : entry.source;
+    const rendered=translateGameText(source);saved[attribute]={source,rendered};
+    if(value!==rendered)node.setAttribute(attribute,rendered);
+  }
+}
+function localizeSubtree(root){
+  if(root.nodeType===3){localizeTextNode(root);return;}
+  if(root.nodeType!==1)return;
+  localizeElement(root);
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_ELEMENT|NodeFilter.SHOW_TEXT);
+  while(walker.nextNode()){if(walker.currentNode.nodeType===3)localizeTextNode(walker.currentNode);else localizeElement(walker.currentNode);}
+}
+function setGameLanguage(language){
+  gameLanguage=language==='zh-CN'?'zh-CN':'en';
+  try{window.localStorage?.setItem('boundary-language',gameLanguage);}catch(_error){}
+  document.documentElement.lang=gameLanguage;
+  document.title=translateGameText('幻想郷 · Boundary of Fates');
+  for(const id of ['menu-language','game-language'])el(id).value=gameLanguage;
+  for(const [node,source] of ruleTextSources){if(node.isConnected)setRuleText(node,source.value,source.options);else ruleTextSources.delete(node);}
+  if(game && !game.cancelled)renderLog();
+  const list=el('card-name-list');list.replaceChildren();
+  for(const card of CARDS){if(card.token && card.id!=='trap_token')continue;const option=document.createElement('option');option.value=translateGameText(card.name);list.appendChild(option);}
+  localizeSubtree(document.body);
+  requestAnimationFrame(()=>{fitCardDetailHeadings();positionRuleTerm();positionRinnosukeBubble();queueMobileViewport();});
+}
+function initializeGameLanguage(){
+  for(const [en,id] of Object.entries(CARD_REFERENCE_ALIASES)){
+    const pattern=new RegExp('(^|[^A-Za-z])'+en+'(?=$|[^A-Za-z])','g');ZH_NAMES.push([pattern,ZH_CARDS[id][0]]);
+  }
+  localizedTextCache.clear();
+  for(const id of ['menu-language','game-language'])el(id).addEventListener('change',event=>setGameLanguage(event.target.value));
+  const observer=new MutationObserver(records=>{
+    const roots=new Set();
+    for(const record of records){
+      if(record.type==='characterData')roots.add(record.target);
+      else if(record.type==='attributes')localizeElement(record.target);
+      else for(const node of record.addedNodes)roots.add(node);
+    }
+    roots.forEach(localizeSubtree);
+  });
+  observer.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['title','aria-label','placeholder']});
+  setGameLanguage(gameLanguage);
+}
+
 /* Only trusted rule text becomes references; arbitrary text is always escaped. */
 const CARD_REFERENCE_ALIASES={
   Remilia:'sdm_remilia',Flandre:'sdm_flandre',Patchouli:'sdm_patchouli',Sakuya:'sdm_sakuya',
@@ -6045,6 +6644,9 @@ for(const card of CARDS) RULE_REFERENCES.set(card.name,{cardId:card.id});
 for(const [name,cardId] of Object.entries(CARD_REFERENCE_ALIASES)) RULE_REFERENCES.set(name,{cardId});
 for(const [faction,f] of Object.entries(FACTIONS)) if(f.size>0) RULE_REFERENCES.set(f.name,{faction});
 RULE_REFERENCES.set('SDM',{faction:'sdm'});
+if(typeof ZH_CARDS!=='undefined')for(const [cardId,entry] of Object.entries(ZH_CARDS))RULE_REFERENCES.set(entry[0],{cardId});
+if(typeof ZH_FACTIONS!=='undefined')for(const [faction,name] of Object.entries(ZH_FACTIONS))if(FACTIONS[faction].size>0)RULE_REFERENCES.set(name,{faction});
+RULE_REFERENCES.set('荒地',{term:'wasteland'});RULE_REFERENCES.set('代价',{term:'cost'});
 for(const [name,term] of Object.entries(RULE_TERMS)){
   RULE_REFERENCES.set(name,{term:name});RULE_REFERENCES.set(term.title,{term:name});
 }
@@ -6055,13 +6657,13 @@ const FACTION_REFERENCE_PATTERN=ruleReferencePattern([...RULE_REFERENCES].filter
 
 function factionReferenceHtml(faction){
   const f=FACTIONS[faction],src=CARD_DETAIL_FACTION_ICONS[faction];
-  const label=escapeLogHtml(f.name);
+  const label=escapeLogHtml(typeof translateGameText==='function'?translateGameText(f.name):f.name);
   return `<span class="faction-reference${src?'':' icon-missing'}" role="img" aria-label="${label}" title="${label}">`
     +(src?`<img src="${escapeLogHtml(src)}" alt="" loading="lazy">`:'')
     +`<span class="faction-icon-fallback" aria-hidden="true">${f.icon}</span></span>`;
 }
 function ruleTextHtml(value,{cards=true}={}){
-  const text=String(value),pattern=cards?RULE_REFERENCE_PATTERN:FACTION_REFERENCE_PATTERN;
+  const text=typeof translateGameText==='function'?translateGameText(value):String(value),pattern=cards?RULE_REFERENCE_PATTERN:FACTION_REFERENCE_PATTERN;
   let html='',end=0;
   pattern.lastIndex=0;
   for(const match of text.matchAll(pattern)){
@@ -6074,9 +6676,9 @@ function ruleTextHtml(value,{cards=true}={}){
   }
   return html+escapeLogHtml(text.slice(end));
 }
-function setRuleText(node,value,options){node.innerHTML=ruleTextHtml(value,options);}
+function setRuleText(node,value,options){if(typeof ruleTextSources!=='undefined')ruleTextSources.set(node,{value,options});node.innerHTML=ruleTextHtml(value,options);}
 function ruleTooltip(value){
-  return String(value).replace(FACTION_REFERENCE_PATTERN,(_match,prefix,name)=>prefix+FACTIONS[RULE_REFERENCES.get(name).faction].icon);
+  return (typeof translateGameText==='function'?translateGameText(value):String(value)).replace(FACTION_REFERENCE_PATTERN,(_match,prefix,name)=>prefix+FACTIONS[RULE_REFERENCES.get(name).faction].icon);
 }
 document.addEventListener('error',event=>{
   const icon=event.target.closest?.('.faction-reference');
@@ -7375,6 +7977,7 @@ const ui = {
       });
     });
   },
+  arrangeDrawPileCards(ids){return openByakurenPeek(ids);},
   /* Hover or drag the whole zone; release to choose it. */
   pickRectByDrag(dim, title, isValid){
     return new Promise(resolve => {
@@ -7441,7 +8044,7 @@ const ui = {
       btnRow.appendChild(guessBtn);
       btnRow.appendChild(cancelBtn);
       box.appendChild(btnRow);
-      const submit = () => { el('modal-overlay').classList.remove('show'); resolve(input.value || null); };
+      const submit = () => { el('modal-overlay').classList.remove('show'); resolve(typeof canonicalCardName==='function' ? canonicalCardName(input.value) || null : input.value || null); };
       const cancel = () => { el('modal-overlay').classList.remove('show'); resolve(null); };
       guessBtn.addEventListener('click', submit);
       cancelBtn.addEventListener('click', cancel);
@@ -7479,7 +8082,7 @@ function waitForVisualEffects(owner){
     check();
   });
 }
-for(const name of ['pickPlayer','pickAbilityCards','pickFromList','pickOwnHandCard','pickOwnHandCards','pickHandCard','pickRectByDrag','pickCell','promptText']){
+for(const name of ['pickPlayer','pickAbilityCards','pickFromList','pickOwnHandCard','pickOwnHandCards','pickHandCard','arrangeDrawPileCards','pickRectByDrag','pickCell','promptText']){
   const openChoice=ui[name];
   ui[name]=async function(...args){
     const owner=game;
@@ -8581,6 +9184,8 @@ el('draw-btn').addEventListener('click', async () => {
 
 /* ---------- Setup screen wiring ---------- */
 let titleCardDrag=null,lastTitleCardTap=null,lastTitleCardIds=[];
+let peekCardSession=null,cancelByakurenPeek=null;
+function movableTableCardEnabled(node){return node?.dataset.peekCard==='true' || !el('game').classList.contains('active');}
 function drawTitlePreviewCards(count=9){
   if(!lastTitleCardIds.length){
     try{const saved=JSON.parse(window.localStorage?.getItem('boundary-title-preview') || '[]');if(Array.isArray(saved))lastTitleCardIds=saved.filter(id=>CARD[id]);}catch(_error){}
@@ -8598,7 +9203,7 @@ function moveTitleCard(node,x,y){
 }
 function liftTitleCard(node){
   const rect=node.getBoundingClientRect(),center={x:rect.left+rect.width/2,y:rect.top+rect.height/2};
-  node.classList.add('table-card-moved');document.body.appendChild(node);
+  node.classList.add('table-card-moved');if(node.dataset.peekCard!=='true')document.body.appendChild(node);
   return moveTitleCard(node,center.x,center.y);
 }
 function finishTitleCardDrag(cancelled=false){
@@ -8608,6 +9213,7 @@ function finishTitleCardDrag(cancelled=false){
   drag.node.style.setProperty('--table-angle',`${drag.angle}deg`);
   if(cancelled && drag.moved)moveTitleCard(drag.node,drag.center.x,drag.center.y);
   try{if(drag.node.hasPointerCapture?.(drag.pointerId))drag.node.releasePointerCapture(drag.pointerId);}catch(_error){}
+  if(drag.node.dataset.peekCard==='true' && !cancelled)peekCardSession?.update(drag.node,drag.moved);
   if(cancelled || drag.moved){
     lastTitleCardTap=null;drag.node.dataset.ignoreClickUntil=String(Date.now()+400);return;
   }
@@ -8620,7 +9226,7 @@ function finishTitleCardDrag(cancelled=false){
   }
 }
 function onTitleCardPointerDown(event){
-  if(event.button>0 || event.isPrimary===false || el('game').classList.contains('active'))return;
+  if(event.button>0 || event.isPrimary===false || !movableTableCardEnabled(event.currentTarget))return;
   event.preventDefault();finishTitleCardDrag(true);
   const node=event.currentTarget,rect=node.getBoundingClientRect(),center={x:rect.left+rect.width/2,y:rect.top+rect.height/2};
   node.focus({preventScroll:true});
@@ -8652,17 +9258,18 @@ function onTitleCardClick(event){
 }
 function onTitleCardDoubleClick(event){
   event.preventDefault();event.stopPropagation();const node=event.currentTarget;
-  if(el('game').classList.contains('active') || Number(node.dataset.ignoreClickUntil || 0)>Date.now())return;
+  if(!movableTableCardEnabled(node) || Number(node.dataset.ignoreClickUntil || 0)>Date.now())return;
   lastTitleCardTap=null;node.dataset.ignoreClickUntil=String(Date.now()+450);openCardDetails(node.dataset.cardId);
 }
 function onTitleCardKeyDown(event){
-  if(el('game').classList.contains('active'))return;
+  if(!movableTableCardEnabled(event.currentTarget))return;
   lastTitleCardTap=null;
   if(event.key==='Enter' || event.key===' '){event.preventDefault();openCardDetails(event.currentTarget.dataset.cardId);return;}
   const directions={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};
   const delta=directions[event.key];if(!delta)return;
   event.preventDefault();const center=liftTitleCard(event.currentTarget),step=event.shiftKey?40:12;
   moveTitleCard(event.currentTarget,center.x+delta[0]*step,center.y+delta[1]*step);
+  if(event.currentTarget.dataset.peekCard==='true')peekCardSession?.update(event.currentTarget,true);
 }
 function renderTitleTableCards(){
   finishTitleCardDrag(true);lastTitleCardTap=null;
@@ -8687,6 +9294,67 @@ window.addEventListener('resize',()=>{
   finishTitleCardDrag(true);lastTitleCardTap=null;
   document.querySelectorAll('.table-card-moved').forEach(node=>{const rect=node.getBoundingClientRect();moveTitleCard(node,rect.left+rect.width/2,rect.top+rect.height/2);});
 });
+function openByakurenPeek(ids){
+  cancelByakurenPeek?.();finishTitleCardDrag(true);lastTitleCardTap=null;
+  return new Promise(resolve=>{
+    const overlay=el('byakuren-peek-overlay'),host=el('byakuren-peek-cards'),tray=el('byakuren-peek-table'),hand=el('byakuren-peek-hand');
+    const take=el('byakuren-peek-take'),confirm=el('byakuren-peek-confirm'),nodes=[];
+    let selected=null,taken=null,settled=false,order=[];
+    const focusBefore=document.activeElement;
+    const center=node=>{const rect=node.getBoundingClientRect();return {x:rect.left+rect.width/2,y:rect.top+rect.height/2};};
+    const inHand=node=>{const point=center(node),rect=hand.getBoundingClientRect();return point.x>=rect.left && point.x<=rect.right && point.y>=rect.top && point.y<=rect.bottom;};
+    const update=(node,moved=false)=>{
+      if(node)selected=node.dataset.cardId;
+      if(moved && node){
+        if(inHand(node)){
+          if(taken && taken!==node.dataset.cardId){
+            const previous=nodes.find(card=>card.dataset.cardId===taken),rect=tray.getBoundingClientRect();
+            moveTitleCard(previous,rect.left+rect.width*.5,rect.top+rect.height*.5);
+          }
+          taken=node.dataset.cardId;
+        }else if(taken===node.dataset.cardId)taken=null;
+      }
+      order=nodes.filter(card=>card.dataset.cardId!==taken).sort((a,b)=>center(a).x-center(b).x).map(card=>card.dataset.cardId);
+      nodes.forEach(card=>{
+        const id=card.dataset.cardId;
+        card.classList.toggle('peek-selected',id===selected);card.classList.toggle('peek-taken',id===taken);
+        card.setAttribute('aria-pressed',String(id===selected));
+        const label=card.querySelector('.peek-order');
+        label.textContent=id===taken ? 'Your Hand' : `${order.indexOf(id)+1} · ${order.indexOf(id)===0?'Next draw':'Then draw'}`;
+      });
+      take.disabled=!selected || selected===taken;confirm.disabled=!taken;
+    };
+    const finish=value=>{
+      if(settled)return;settled=true;finishTitleCardDrag(true);lastTitleCardTap=null;
+      overlay.classList.remove('show');host.replaceChildren();take.onclick=null;confirm.onclick=null;
+      document.removeEventListener('keydown',onKey);window.removeEventListener('resize',layout);
+      peekCardSession=null;cancelByakurenPeek=null;focusBefore?.focus?.({preventScroll:true});resolve(value);
+    };
+    const onKey=event=>{if(event.key==='Escape' && !el('card-detail-overlay').classList.contains('show')){event.preventDefault();finish(null);}};
+    const layout=()=>{
+      finishTitleCardDrag(true);const rect=tray.getBoundingClientRect(),handRect=hand.getBoundingClientRect();
+      const width=Math.min(150,rect.width/(ids.length+1));overlay.style.setProperty('--peek-card-width',`${width}px`);
+      nodes.forEach((node,index)=>{
+        const rank=order.indexOf(node.dataset.cardId),x=rect.left+rect.width*(Math.max(0,rank)+1)/(order.length+1);
+        moveTitleCard(node,node.dataset.cardId===taken ? handRect.left+handRect.width/2 : x,node.dataset.cardId===taken ? handRect.top+handRect.height/2 : rect.top+rect.height/2+8);
+      });update();
+    };
+    host.replaceChildren();
+    ids.forEach((id,index)=>{
+      const node=document.createElement('div');node.className='table-scatter-card byakuren-peek-card table-card-moved';node.dataset.cardId=id;node.dataset.peekCard='true';node.dataset.angle=String((index-1)*4);
+      node.setAttribute('role','button');node.tabIndex=0;node.setAttribute('aria-label',`${CARD[id].name}. Drag to move; double-click or double-tap to inspect.`);
+      node.style.setProperty('--table-angle',`${(index-1)*4}deg`);node.innerHTML=cardBoardHtml(id)+'<span class="peek-order"></span>';
+      node.addEventListener('pointerdown',onTitleCardPointerDown);node.addEventListener('pointermove',onTitleCardPointerMove);node.addEventListener('pointerup',onTitleCardPointerUp);node.addEventListener('pointercancel',onTitleCardPointerCancel);node.addEventListener('lostpointercapture',onTitleCardPointerCancel);
+      node.addEventListener('click',event=>{event.stopPropagation();update(node);});node.addEventListener('dblclick',onTitleCardDoubleClick);node.addEventListener('keydown',onTitleCardKeyDown);
+      host.appendChild(node);nodes.push(node);
+    });
+    peekCardSession={update};cancelByakurenPeek=()=>finish(null);order=ids.slice();
+    take.onclick=()=>{if(!selected)return;const node=nodes.find(card=>card.dataset.cardId===selected),rect=hand.getBoundingClientRect();moveTitleCard(node,rect.left+rect.width/2,rect.top+rect.height/2);update(node,true);};
+    confirm.onclick=()=>{if(taken){playGameCue('select');finish({taken,order:order.slice()});}};
+    document.addEventListener('keydown',onKey);window.addEventListener('resize',layout);overlay.classList.add('show');
+    requestAnimationFrame(()=>{if(!settled){layout();nodes[0]?.focus({preventScroll:true});}});
+  });
+}
 let chosenPlayerCount = 3;
 document.querySelectorAll('#player-count-opts .pill-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -8767,6 +9435,7 @@ el('customize-toggle').addEventListener('click', () => {
 });
 
 function resetGameView(){
+  if(typeof cancelByakurenPeek==='function')cancelByakurenPeek();
   finishTitleCardDrag(true);
   clearTutorialPractice();
   // Retire the old match before clearing its controls, animations, or pending input.
@@ -9090,7 +9759,7 @@ function openTutorial(step=0){
   const t={step,cancel,cancelled,practice:null,complete:false,finishedAction:false,feedback:''};
   tutorialState=t;
   const practiceUI={...ui};
-  for(const name of ['pickPlayer','pickFromList','pickOwnHandCard','pickOwnHandCards','pickHandCard','pickRectByDrag','pickCell','promptText']){
+  for(const name of ['pickPlayer','pickFromList','pickOwnHandCard','pickOwnHandCards','pickHandCard','arrangeDrawPileCards','pickRectByDrag','pickCell','promptText']){
     practiceUI[name]=(...args)=>Promise.race([ui[name](...args),cancelled.then(()=>name==='pickRectByDrag'?[]:null)]);
   }
   game=t.practice=new Game(3,practiceUI,null,{aiDifficulty:'hard'});
@@ -9258,6 +9927,7 @@ el('restart-btn').addEventListener('click', startNewGame);
 el('main-menu-btn').addEventListener('click',returnToMainMenu);
 el('winner-menu-btn').addEventListener('click',returnToMainMenu);
 renderTitleTableCards();
+initializeGameLanguage();
 
 </script>
 </body>

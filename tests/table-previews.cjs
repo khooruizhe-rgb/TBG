@@ -6,23 +6,27 @@ const html=fs.readFileSync(file,'utf8'),js=html.split('<script>')[1].split('</sc
 let now=1000,seed=23;const math=Object.create(Math);math.random=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296);
 class Element{
  constructor(){this.children=[];this.dataset={};this.attributes={};this.events={};this.values=new Map();this.names=new Set();this.captures=new Set();this.style={setProperty:(k,v)=>this.values.set(k,String(v)),removeProperty:k=>this.values.delete(k)};
-  this.classList={add:(...n)=>n.forEach(x=>this.names.add(x)),remove:(...n)=>n.forEach(x=>this.names.delete(x)),contains:n=>this.names.has(n)};}
+  this.classList={add:(...n)=>n.forEach(x=>this.names.add(x)),remove:(...n)=>n.forEach(x=>this.names.delete(x)),contains:n=>this.names.has(n),toggle:(n,on)=>{if(on===undefined)on=!this.names.has(n);on?this.names.add(n):this.names.delete(n);return on;}};}
  set className(s){this.names=new Set(s.split(/\s+/).filter(Boolean));}get className(){return [...this.names].join(' ');}
  appendChild(n){n.remove();n.parentElement=this;this.children.push(n);return n;}
+ removeEventListener(k,fn){this.events[k]=(this.events[k]||[]).filter(f=>f!==fn);}
+ querySelector(s){return this.children.find(node=>node.classList.contains(s.slice(1)))||null;}
+ set innerHTML(markup){this.markup=markup;this.replaceChildren();if(markup.includes('class="peek-order"')){const label=new Element();label.className='peek-order';this.appendChild(label);}}
+ get innerHTML(){return this.markup||'';}
  replaceChildren(){for(const n of this.children)n.parentElement=null;this.children=[];}
  remove(){if(this.parentElement){const list=this.parentElement.children;list.splice(list.indexOf(this),1);this.parentElement=null;this.captures.clear();}}
  setAttribute(k,v){this.attributes[k]=String(v);}addEventListener(k,fn){(this.events[k]??=[]).push(fn);}
  focus(){document.activeElement=this;}
  setPointerCapture(id){this.captures.add(id);}hasPointerCapture(id){return this.captures.has(id);}releasePointerCapture(id){this.captures.delete(id);}
- getBoundingClientRect(){const size={width:144,height:192},parse=(v,total)=>String(v).endsWith('%')?parseFloat(v)*total/100:parseFloat(v)||0;
+ getBoundingClientRect(){if(this.rect)return {...this.rect,right:this.rect.left+this.rect.width,bottom:this.rect.top+this.rect.height};const size={width:144,height:192},parse=(v,total)=>String(v).endsWith('%')?parseFloat(v)*total/100:parseFloat(v)||0;
   return {left:parse(this.values.get('--table-x'),window.innerWidth)-size.width/2,top:parse(this.values.get('--table-y'),window.innerHeight)-size.height/2,...size};}
 }
 const nodes=new Map(),el=id=>{if(!nodes.has(id))nodes.set(id,new Element());return nodes.get(id);};
-const document={body:new Element(),activeElement:null,createElement:()=>new Element(),querySelectorAll(s){const walk=n=>n.children.flatMap(c=>[c,...walk(c)]);return walk(this.body).filter(n=>n.classList.contains(s.slice(1)));}};
+const document={body:new Element(),activeElement:null,addEventListener(){},removeEventListener(){},createElement:()=>new Element(),querySelectorAll(s){const walk=n=>n.children.flatMap(c=>[c,...walk(c)]);return walk(this.body).filter(n=>n.classList.contains(s.slice(1)));}};
 for(const id of ['title-table-cards','game','setup','start-btn','crown-backdrop-a','crown-backdrop-b'])document.body.appendChild(el(id));
 const storage=new Map(),events={},inspected=[];
-const window={innerWidth:1200,innerHeight:800,localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)},addEventListener:(k,fn)=>(events[k]??=[]).push(fn),scrollTo(){}};
-const ctx={console,Math:math,Date:{now:()=>now},document,window,el,openCardDetails:id=>inspected.push(id),cardBoardHtml:id=>`<div class="board-card">${id}</div>`,screen:{orientation:{unlock(){}}},updateStartButtonState(){},queueMobileViewport(){},resetGameView(){ctx.api.finishTitleCardDrag(true);}};
+const window={innerWidth:1200,innerHeight:800,localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)},addEventListener:(k,fn)=>(events[k]??=[]).push(fn),removeEventListener:(k,fn)=>{events[k]=(events[k]||[]).filter(f=>f!==fn);},scrollTo(){}};
+const ctx={console,Math:math,Date:{now:()=>now},document,window,el,openCardDetails:id=>inspected.push(id),cardBoardHtml:id=>`<div class="board-card">${id}</div>`,screen:{orientation:{unlock(){}}},updateStartButtonState(){},queueMobileViewport(){},playGameCue(){},requestAnimationFrame:fn=>fn(),resetGameView(){ctx.api.finishTitleCardDrag(true);}};
 vm.createContext(ctx);
 vm.runInContext(js.slice(js.indexOf('const DIRS4'),js.indexOf('/* ===================== UI layer'))+'\n'+
  js.slice(js.indexOf('let titleCardDrag=null'),js.indexOf('let chosenPlayerCount = 3;'))+'\n'+
@@ -30,7 +34,7 @@ vm.runInContext(js.slice(js.indexOf('const DIRS4'),js.indexOf('/* ==============
  js.slice(js.indexOf('function crownLightFor'),js.indexOf('function discardLightFor'))+'\n'+
  js.slice(js.indexOf('const CROWN_SCENE_BACKGROUND'),js.indexOf('function triggerPlacementPresentation'))+'\n'+
  js.slice(js.indexOf('function returnToMainMenu(){'),js.indexOf('function startNewGame(){'))+
- '\nthis.api={CARD,drawTitlePreviewCards,renderTitleTableCards,finishTitleCardDrag,returnToMainMenu,showCrownBackdrop,clearCrownBackdrop,CROWN_SCENE_BACKGROUND,CROWN_LIGHT_PALETTES,drag:()=>titleCardDrag,resetPrevious:()=>lastTitleCardIds=[]};',ctx);
+ '\nthis.api={CARD,drawTitlePreviewCards,renderTitleTableCards,finishTitleCardDrag,returnToMainMenu,showCrownBackdrop,clearCrownBackdrop,CROWN_SCENE_BACKGROUND,CROWN_LIGHT_PALETTES,openByakurenPeek,averageWoodColor,cancelPeek:()=>cancelByakurenPeek?.(),drag:()=>titleCardDrag,resetPrevious:()=>lastTitleCardIds=[]};',ctx);
 const A=ctx.api,tests=[],test=(n,f)=>tests.push([n,f]);
 function render(){A.finishTitleCardDrag(true);el('game').classList.remove('active');inspected.length=0;now+=500;A.renderTitleTableCards();return el('title-table-cards').children;}
 function dispatch(node,type,extra={}){const event={type,currentTarget:node,pointerId:1,button:0,detail:1,clientX:100,clientY:100,preventDefault(){},stopPropagation(){},...extra};for(const fn of node.events[type]||[])fn(event);return event;}
@@ -115,5 +119,31 @@ test('Every crown switches the active faction scene and matching panel tint',()=
  }
  const background=previousLayer.style.backgroundImage;A.showCrownBackdrop('marisa');assert(previousLayer.classList.contains('active'));assert.equal(previousLayer.style.backgroundImage,background,'ordinary cards leave the last crown scene active');
  A.clearCrownBackdrop();assert(!document.body.classList.contains('crown-scene-active'));assert(!el('game').values.has('--scene-rgb'));assert(!el('crown-backdrop-a').classList.contains('active'));assert(!el('crown-backdrop-b').classList.contains('active'));
+});
+function peek(ids=['sdm_flandre','mtn_aya','hourai_mokou']){
+ el('game').classList.add('active');el('byakuren-peek-table').rect={left:200,top:110,width:760,height:290};el('byakuren-peek-hand').rect={left:200,top:460,width:760,height:240};
+ const promise=A.openByakurenPeek(ids);return {promise,cards:el('byakuren-peek-cards').children.slice()};
+}
+function dragTo(node,x,y,pointerType='mouse'){
+ const rect=node.getBoundingClientRect(),clientX=rect.left+rect.width/2,clientY=rect.top+rect.height/2;
+ dispatch(node,'pointerdown',{clientX,clientY,pointerType});dispatch(node,'pointermove',{clientX:x,clientY:y,pointerType});dispatch(node,'pointerup',{clientX:x,clientY:y,pointerType});
+}
+test('Byakuren uses the same pointer handlers, moves a card into hand, and orders the deck spatially',async()=>{
+ const {promise,cards}=peek();dragTo(cards[0],580,565);assert(cards[0].classList.contains('peek-taken'));assert.equal(cards[0].parentElement,el('byakuren-peek-cards'),'cards stay above the ability table, not underneath its modal');assert(!el('byakuren-peek-confirm').disabled);
+ dragTo(cards[2],300,255);dragTo(cards[1],830,255);el('byakuren-peek-confirm').onclick();assert.deepEqual({...await promise,order:Array.from((await promise).order)},{taken:'sdm_flandre',order:['hourai_mokou','mtn_aya']});assert(!el('byakuren-peek-overlay').classList.contains('show'));assert.equal(A.drag(),null);
+});
+test('Touch double-tap inspects a peek card; touch dragging selects a card without moving game cards',async()=>{
+ const {promise,cards}=peek();inspected.length=0;const card=cards[1],rect=card.getBoundingClientRect(),point={clientX:rect.left+rect.width/2,clientY:rect.top+rect.height/2,pointerType:'touch'};
+ dispatch(card,'pointerdown',point);dispatch(card,'pointerup',point);now+=120;dispatch(card,'pointerdown',point);dispatch(card,'pointerup',point);assert.deepEqual(inspected,['mtn_aya']);now+=600;
+ dragTo(card,580,565,'touch');assert(card.classList.contains('peek-taken'));el('byakuren-peek-confirm').onclick();assert.equal((await promise).taken,'mtn_aya');
+});
+test('The take button supports click/keyboard users, and cards can be exchanged or returned before confirming',async()=>{
+ const {promise,cards}=peek();dispatch(cards[0],'click');el('byakuren-peek-take').onclick();assert(cards[0].classList.contains('peek-taken'));dragTo(cards[1],580,565);assert(!cards[0].classList.contains('peek-taken'));assert(cards[1].classList.contains('peek-taken'));dragTo(cards[1],650,255);assert(el('byakuren-peek-confirm').disabled);dispatch(cards[2],'click');el('byakuren-peek-take').onclick();el('byakuren-peek-confirm').onclick();assert.equal((await promise).taken,'hourai_mokou');
+});
+test('Cancelling a peek clears pointer capture and never commits cards to a new game',async()=>{
+ const {promise,cards}=peek();dispatch(cards[0],'pointerdown');dispatch(cards[0],'pointermove',{clientX:600});A.cancelPeek();assert.equal(await promise,null);assert.equal(A.drag(),null);assert(!cards[0].hasPointerCapture(1));assert.equal(el('byakuren-peek-cards').children.length,0);
+});
+test('Wood follows background hue while the oval mat stays unchanged, and reset clears tint',()=>{
+ A.showCrownBackdrop('hell_hecatia');assert.equal(document.body.values.get('--wood-rgb'),'117,64,159');assert.notEqual(document.body.values.get('--wood-rgb'),A.CROWN_LIGHT_PALETTES.hell_hecatia.rgb);assert(css.includes('background-blend-mode:color,normal'));assert(css.includes('rgb(var(--wood-rgb,var(--scene-rgb)))'));assert.equal(A.averageWoodColor([70,30,190,255,70,30,190,255]),'70,30,190');assert.equal(A.averageWoodColor([0,0,0,0]),null);A.clearCrownBackdrop();assert(!document.body.values.has('--wood-rgb'));assert(!el('game').values.has('--wood-rgb'));
 });
 (async()=>{for(const [name,fn]of tests){await fn();console.log('PASS '+name);}console.log(`${tests.length}/${tests.length} table preview checks passed`);})().catch(e=>{console.error(e);process.exitCode=1;});
