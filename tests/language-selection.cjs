@@ -65,7 +65,12 @@ test('Chinese card guesses normalize to the same canonical names accepted by the
 test('Counts, players, cost prompts, extra effects and tutorial choices are translated',()=>{
  A.setGameLanguage('zh-CN');for(const value of ['Cost III: select 3 cards to return to the draw pile','Patchouli: name a card you believe AI 2 holds','[Cost II] Look at three cards, take one and order the rest.','Makai Fantastica — use effects in any order','Your move — place, trade, or draw for everyone.','Hand: 5 · Discard: 3/7','Learn to Play · 4 / 6','AI 2 is thinking...','AI 1 takes three extra turns with Makai Fantastica (Cost III).']){const out=A.translateGameText(value);assert(!/[A-Za-z]{3,}/.test(out.replace(/\b[IVXLCDMN]+\b/g,'')),out);}
 });
+test('Mobile fullscreen notices and draggable ability destinations have Chinese instructions',()=>{
+ A.setGameLanguage('zh-CN');for(const text of ['Tap anywhere to enter fullscreen.','Fullscreen is unavailable in this browser. Rotate your phone to play sideways.','Fullscreen was blocked. Tap Fullscreen to retry, or rotate your phone.','Drag a card into the highlighted area, or select it and confirm. Double-tap to inspect.','Must play next turn','AI 1 · Discard pile'])assert(!/[A-Za-z]{3,}/.test(A.translateGameText(text)),text);
+ assert.equal(A.translateGameText('Your Hand'),'你的手牌');A.setGameLanguage('en');assert.equal(A.translateGameText('Must play next turn'),'Must play next turn');
+});
 test('Dynamic text updates retain an English source and the observer settles after one rewrite',()=>{
+ A.setGameLanguage('zh-CN');
  const node=text('Draw pile: 6 cards remaining');A.localizeTextNode(node);assert.equal(node.nodeValue,'抽牌堆剩余 6 张牌');observer([{type:'characterData',target:node}]);assert.equal(node.nodeValue,'抽牌堆剩余 6 张牌');node.nodeValue='Draw pile: 2 cards remaining';observer([{type:'characterData',target:node}]);assert.equal(node.nodeValue,'抽牌堆剩余 2 张牌');A.setGameLanguage('en');assert.equal(node.nodeValue,'Draw pile: 2 cards remaining');
 });
 test('Switching language during an ability preserves listeners and entered guess text',()=>{

@@ -600,7 +600,7 @@
   .hand-card.dragging{ opacity:0.35; transform:scale(0.94) rotate(-4deg); cursor:grabbing; }
   #hand .hand-card.touch-drag-ready{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:grab;}
   .touch-drag-ghost{
-    position:fixed;left:0;top:0;z-index:230;pointer-events:none;opacity:1;
+    position:fixed !important;left:0 !important;top:0 !important;z-index:230 !important;pointer-events:none !important;opacity:1;
     margin:0 !important;transition:none !important;animation:none !important;
     transform-origin:center;will-change:transform;box-sizing:border-box;
     box-shadow:0 22px 34px rgba(0,0,0,.52);backface-visibility:hidden;
@@ -1584,6 +1584,15 @@
   .look-into-actions button:not(:disabled):hover{ border-color:var(--gold); }
   .look-into-actions button:disabled{ opacity:.45; cursor:default; }
   #look-into-confirm{ background:var(--gold); color:var(--bg-deep); border-color:var(--gold); font-weight:700; }
+  .ability-drag-ready{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:grab}
+  #look-into-drop{display:flex;align-items:center;justify-content:center;min-height:66px;margin:0 0 12px;padding:10px;border:2px dashed #b48b50;border-radius:7px;background:#c89b3020;color:#684321;font-weight:700;transition:background .15s,border-color .15s}
+  #look-into-drop[hidden]{display:none}
+  #look-into-drop.drag-hover{border-color:#8e6126;background:#d5ab4c55;box-shadow:inset 0 0 15px #d5ab4c40}
+  .look-into-origin{position:absolute;left:3px;right:3px;top:27px;z-index:2;font-size:10px;line-height:1.2;color:#fff8dd;text-shadow:0 1px 3px #000;background:#0007;border-radius:3px;padding:3px}
+  body.mobile-landscape #look-into-drop{min-height:42px;margin-bottom:7px;font-size:12px}
+  #look-into-overlay.transfer-mode #look-into-panel{display:flex;flex-direction:column;height:min(640px,calc(100dvh - 24px));overflow:hidden}
+  #look-into-overlay.transfer-mode #look-into-cards{flex:1;min-height:0;overflow-y:auto;align-content:flex-start;align-items:flex-start;margin:8px 0;padding:8px 6px}
+  #look-into-overlay.transfer-mode #look-into-drop,#look-into-overlay.transfer-mode .look-into-actions{flex-shrink:0}
   @media(max-width:480px){
     #look-into-panel{ padding:12px; }
     #look-into-cards{ gap:8px; padding:14px 6px 20px; }
@@ -2129,6 +2138,9 @@
 .cell.hand-arriving::before,.cell.hand-arriving::after{visibility:hidden;}
 .touch-drag-ghost{min-height:0 !important;min-width:0 !important;}
 #fullscreen-btn,#journal-btn,#mobile-screen-message,#mobile-landscape-hint{display:none;}
+#menu-fullscreen-controls{display:none;align-items:center;justify-content:center;gap:8px;margin:8px 0;color:#72543b;font-size:12px;line-height:1.4}
+body.mobile-device #menu-fullscreen-controls{display:flex}
+body.game-mobile #mobile-screen-message:not(:empty){display:inline;font-size:10px;color:var(--muted);max-width:30vw}
 #mobile-landscape-hint{color:var(--muted);font-size:.78rem;text-align:center;margin:5px 0;}
 body.game-mobile #fullscreen-btn,body.game-mobile #mobile-landscape-hint{display:inline-block;}
 body.game-mobile #game-toolbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;padding-right:100px;}
@@ -2506,6 +2518,7 @@ body.crown-scene-active #title-table{background-image:linear-gradient(rgb(var(--
     <label class="language-setting">Language / 语言
       <select id="menu-language" aria-label="Language / 语言"><option value="en">English</option><option value="zh-CN">简体中文</option></select>
     </label>
+    <div id="menu-fullscreen-controls"><button id="menu-fullscreen-btn" class="pill-btn" type="button" aria-pressed="false">Fullscreen</button><span id="menu-fullscreen-message" role="status"></span></div>
     <div class="menu-settings">
       <fieldset class="menu-setting"><legend>Players</legend>
         <div class="opts" id="player-count-opts">
@@ -2626,6 +2639,7 @@ body.crown-scene-active #title-table{background-image:linear-gradient(rgb(var(--
     <h3 id="look-into-title"></h3>
     <p id="look-into-instruction">Select a card, then confirm. Double-click it or press I to inspect its ability.</p>
     <div id="look-into-cards"></div>
+    <div id="look-into-drop" hidden></div>
     <div class="look-into-actions">
       <button type="button" id="look-into-cancel">Cancel</button>
       <button type="button" id="look-into-inspect" disabled>Inspect selected</button>
@@ -2636,7 +2650,7 @@ body.crown-scene-active #title-table{background-image:linear-gradient(rgb(var(--
 <div id="byakuren-peek-overlay" role="dialog" aria-modal="true" aria-labelledby="byakuren-peek-title">
   <section id="byakuren-peek-panel">
     <h3 id="byakuren-peek-title">Makai Fantastica — top three cards</h3>
-    <p>Drag one card into Your Hand. Arrange the rest from left to right in draw order. Double-click or double-tap to inspect.</p>
+    <p>Drag one card into Your Hand. Arrange the rest left to right, or stack the next card on top. Double-click or double-tap to inspect.</p>
     <div id="byakuren-peek-table"><span class="peek-table-label">Draw pile · next card on the left</span></div>
     <div id="byakuren-peek-hand"><span>Your Hand · take one card</span></div>
     <div id="byakuren-peek-cards"></div>
@@ -3708,7 +3722,10 @@ class Game {
       return await this.chooseFromList(playerIdx, options, title);
     }
     if(targetIdx===playerIdx) return await this.ui.pickOwnHandCard(title, hand.slice());
-    return await this.ui.pickHandCard(title, hand.slice(), this.players[targetIdx].name, {presentation:opts.presentation});
+    return await this.ui.pickHandCard(title, hand.slice(), this.players[targetIdx].name, {
+      presentation:opts.presentation,dragAction:opts.forDiscard?'discard':opts.presentation==='reisen'?'bind':'take',
+      dropLabel:opts.forDiscard ? `${this.players[targetIdx].name} · Discard pile` : opts.presentation==='reisen' ? 'Must play next turn' : 'Your Hand'
+    });
   }
   async confirm(playerIdx, title){
     const player = this.players[playerIdx];
@@ -4082,7 +4099,9 @@ class Game {
       case 'hell_kutaka': {
         const hellCards=self.drawPile.filter(id=>CARD[id].faction==='hell');
         if(!self.wastelandAt(r,c) || !hellCards.length){self.log(`${meS} Kutaka needs wasteland and a Hell card in the draw pile.`);break;}
-        const id=await self.chooseFromList(playerIdx,hellCards.map(id=>({label:CARD[id].name,value:id})),'Kutaka: take a Hell card from the draw pile');
+        const id=!self.players[playerIdx].isAI && self.ui?.pickCardPool
+          ? await self.ui.pickCardPool('Kutaka: take a Hell card from the draw pile',hellCards.map(id=>({id,source:'Draw pile'})))
+          : await self.chooseFromList(playerIdx,hellCards.map(id=>({label:CARD[id].name,value:id})),'Kutaka: take a Hell card from the draw pile');
         if(id && self.drawPile.includes(id)){
           self.drawPile.splice(self.drawPile.indexOf(id),1);
           self.addToHand(playerIdx,id);
@@ -4355,8 +4374,13 @@ class Game {
             pool.sort((a,b)=> self.pointValue(b.id) - self.pointValue(a.id));
             pick = self.aiMakesMistake('target') ? all[Math.floor(Math.random()*all.length)] : pool[0];
           } else {
-            const listOpts = all.map(d=>({label:`${CARD[d.id].name} (${possessive(self.players[d.idx].name)} discard)`, value:d}));
-            pick = await self.chooseFromList(playerIdx, listOpts, 'Rin: take a card from any discard pile');
+            if(self.ui?.pickCardPool){
+              const id=await self.ui.pickCardPool('Rin: take a card from any discard pile',all.map(d=>({id:d.id,source:`${self.players[d.idx].name} · Discard pile`})));
+              pick=all.find(d=>d.id===id);
+            }else{
+              const listOpts = all.map(d=>({label:`${CARD[d.id].name} (${possessive(self.players[d.idx].name)} discard)`, value:d}));
+              pick = await self.chooseFromList(playerIdx, listOpts, 'Rin: take a card from any discard pile');
+            }
           }
           if(pick){
             if(self.ui && self.ui.onRinReturn){
@@ -6142,6 +6166,13 @@ const ZH_TEXT={
   "Main Menu": "主菜单",
   "Fullscreen": "全屏",
   "Exit Fullscreen": "退出全屏",
+  "Tap anywhere to enter fullscreen.": "点击屏幕任意位置即可进入全屏。",
+  "Fullscreen is unavailable in this browser. Rotate your phone to play sideways.": "此浏览器不支持全屏，请横置手机游玩。",
+  "Fullscreen was blocked. Tap Fullscreen to retry, or rotate your phone.": "浏览器阻止了全屏。点击全屏重试，或横置手机游玩。",
+  "Fullscreen exited. Tap Fullscreen to return.": "已退出全屏，点击全屏即可返回。",
+  "The browser could not exit fullscreen.": "浏览器无法退出全屏。",
+  "Must play next turn": "下个回合必须放置",
+  "Drag a card into the highlighted area, or select it and confirm. Double-tap to inspect.": "将卡牌拖入高亮区域，或选中后确认。双击可查看详情。",
   "Log": "记录",
   "Close Log": "关闭记录",
   "Play Again": "再来一局",
@@ -6192,7 +6223,7 @@ const ZH_TEXT={
   "Place card": "放置卡牌",
   "Makai Fantastica — use effects in any order": "魔界幻想 — 按任意顺序使用效果",
   "Makai Fantastica — top three cards": "魔界幻想 — 牌堆顶的三张牌",
-  "Drag one card into Your Hand. Arrange the rest from left to right in draw order. Double-click or double-tap to inspect.": "将一张牌拖入你的手牌区，其余卡牌从左到右排列，左侧先抽。双击或连点两次可查看详情。",
+  "Drag one card into Your Hand. Arrange the rest left to right, or stack the next card on top. Double-click or double-tap to inspect.": "将一张牌拖入你的手牌区，其余卡牌从左到右排列，也可把先抽的牌叠在上面。双击可查看详情。",
   "Draw pile · next card on the left": "抽牌堆 · 左侧卡牌先抽",
   "Your Hand · take one card": "你的手牌 · 拿取一张牌",
   "Confirm order and take card": "确认顺序并拿取卡牌",
@@ -6465,6 +6496,7 @@ function canonicalCardName(value){
 }
 // Patterns cover changing counts, player names and choices; no game data is translated.
 const ZH_DYNAMIC=[
+  [/^(.+) · Discard pile$/,(_,player)=>`${player} · 弃牌堆`],
   [/^Draw pile: (\d+) cards remaining$/,(_,n)=>`抽牌堆剩余 ${n} 张牌`],
   [/^Cost ([IVXLCDMN]+): select (\d+) cards? to return to the draw pile$/,(_,cost,n)=>`代价 ${cost} — 选择 ${n} 张手牌放回抽牌堆`],
   [/^Yuyuko: select 1(?:–(\d+))? cards? to pay Cost ([IVXLCDMN]+)$/,(_,max,cost)=>`幽幽子 — 选择 ${max?'1–'+max:'1'} 张牌，支付代价 ${cost}`],
@@ -7925,6 +7957,7 @@ const ui = {
   pickHandCard(title, cardIds, targetName, opts={}){
     return new Promise(resolve => {
       const overlay = el('look-into-overlay');
+      overlay.classList.toggle('transfer-mode',!!opts.dragAction);
       const reading=['satori','reisen'].includes(opts.presentation)?opts.presentation:null;
       if(reading) overlay.dataset.reading=reading;else delete overlay.dataset.reading;
       el('look-into-emblem').innerHTML=reading?mindEyeSvg(reading):'';
@@ -7932,10 +7965,13 @@ const ui = {
       const confirm = el('look-into-confirm');
       const inspect = el('look-into-inspect');
       const cancel = el('look-into-cancel');
+      const drop=el('look-into-drop');
+      drop.hidden=!opts.dragAction;drop.textContent=opts.dropLabel || 'Your Hand';
+      let dragger=null;
       let selected = null;
       let settled = false;
       el('look-into-title').textContent = opts.heading || `${possessive(targetName)} hand`;
-      el('look-into-instruction').textContent=opts.instruction || 'Select a card, then confirm. Double-click it or press I to inspect its ability.';
+      el('look-into-instruction').textContent=opts.instruction || (opts.dragAction ? 'Drag a card into the highlighted area, or select it and confirm. Double-tap to inspect.' : 'Select a card, then confirm. Double-click it or press I to inspect its ability.');
       confirm.textContent = title;
       confirm.disabled = true;
       inspect.disabled = true;
@@ -7944,18 +7980,17 @@ const ui = {
         if(settled) return;
         if(value!==null) playGameCue('select');
         settled = true;
+        dragger?.cancel();cancelLookIntoView=null;
         overlay.classList.remove('show');
+        overlay.classList.remove('transfer-mode');
         delete overlay.dataset.reading;el('look-into-emblem').replaceChildren();
         overlay.removeEventListener('click', onBackdrop);
         document.removeEventListener('keydown', onEscape);
         cardsEl.replaceChildren();
+        confirm.onclick=null;inspect.onclick=null;cancel.onclick=null;drop.hidden=true;
         resolve(value);
       };
-      cancelLookIntoView=()=>{
-        delete overlay.dataset.reading;el('look-into-emblem').replaceChildren();
-        settled=true;overlay.removeEventListener('click',onBackdrop);document.removeEventListener('keydown',onEscape);
-        confirm.onclick=null;inspect.onclick=null;cancel.onclick=null;cardsEl.replaceChildren();cancelLookIntoView=null;
-      };
+      cancelLookIntoView=()=>finish(null);
       const onBackdrop = event => { if(event.target===overlay) finish(null); };
       const onEscape = event => {
         if(event.key!=='Escape' || !overlay.classList.contains('show')) return;
@@ -7964,6 +7999,7 @@ const ui = {
         finish(null);
       };
       const tiles = [];
+      if(opts.dragAction)dragger=createAbilityCardDragger(drop,cardId=>finish(cardId));
       cardIds.forEach(cardId => {
         const card = CARD[cardId];
         const tile = document.createElement('button');
@@ -7975,6 +8011,7 @@ const ui = {
         tile.setAttribute('aria-pressed', 'false');
         tile.innerHTML = `<div class="icon-row"><span>${FACTIONS[card.faction].icon}</span>${card.crown?'<span class="crown-mark">👑</span>':''}</div><div class="cname">${card.name}</div>`;
         tile.addEventListener('click', () => {
+          if(Number(tile.dataset.ignoreClickUntil || 0)>Date.now())return;
           selected = cardId;
           tiles.forEach(node => {
             const isSelected = node===tile;
@@ -7986,6 +8023,7 @@ const ui = {
         });
         tile.addEventListener('dblclick', event => {
           event.preventDefault();
+          if(Number(tile.dataset.ignoreClickUntil || 0)>Date.now())return;
           openCardDetails(cardId);
         });
         tile.addEventListener('keydown', event => {
@@ -7994,6 +8032,10 @@ const ui = {
             openCardDetails(cardId);
           }
         });
+        if(opts.sourceLabels?.[cardId]){
+          const origin=document.createElement('span');origin.className='look-into-origin';origin.textContent=opts.sourceLabels[cardId];tile.appendChild(origin);
+        }
+        dragger?.bind(tile);
         cardsEl.appendChild(tile);
         tiles.push(tile);
       });
@@ -8006,6 +8048,11 @@ const ui = {
       requestAnimationFrame(() => {
         if(overlay.classList.contains('show') && tiles[0]) tiles[0].focus();
       });
+    });
+  },
+  pickCardPool(title,entries){
+    return this.pickHandCard(title,entries.map(entry=>entry.id),'Draw pile',{
+      heading:title,dragAction:'take',dropLabel:'Your Hand',sourceLabels:Object.fromEntries(entries.map(entry=>[entry.id,entry.source]))
     });
   },
   arrangeDrawPileCards(ids){return openByakurenPeek(ids);},
@@ -8113,7 +8160,7 @@ function waitForVisualEffects(owner){
     check();
   });
 }
-for(const name of ['pickPlayer','pickAbilityCards','pickFromList','pickOwnHandCard','pickOwnHandCards','pickHandCard','arrangeDrawPileCards','pickRectByDrag','pickCell','promptText']){
+for(const name of ['pickPlayer','pickAbilityCards','pickFromList','pickOwnHandCard','pickOwnHandCards','pickHandCard','pickCardPool','arrangeDrawPileCards','pickRectByDrag','pickCell','promptText']){
   const openChoice=ui[name];
   ui[name]=async function(...args){
     const owner=game;
@@ -9063,18 +9110,19 @@ function paintHandDrag(drag){
   drag.ghost.style.boxShadow=`${shadowX}px 22px 34px rgba(0,0,0,.52),0 2px 8px rgba(232,200,116,.22)`;
 }
 
-function startHandDragPhysics(drag){
+function runPhysicalCardDrag(drag,isActive){
   drag.body={x:drag.origin.left+drag.origin.width/2,y:drag.origin.top+drag.origin.height/2,vx:0,vy:0,angle:0,tilt:0,scale:1};
   drag.goal={x:drag.body.x,y:drag.body.y};
   drag.reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let previous=performance.now();
   const tick=now=>{
-    if(touchHandDrag!==drag || !drag.ghost?.isConnected)return;
+    if(!isActive() || !drag.ghost?.isConnected)return;
     stepHandDragPhysics(drag.body,drag.goal,(now-previous)/1000,drag.reduced);previous=now;
     paintHandDrag(drag);drag.frame=requestAnimationFrame(tick);
   };
   paintHandDrag(drag);drag.frame=requestAnimationFrame(tick);
 }
+function startHandDragPhysics(drag){runPhysicalCardDrag(drag,()=>touchHandDrag===drag);}
 
 function moveHandDrag(x,y){
   const drag=touchHandDrag;if(!drag?.started)return;
@@ -9083,11 +9131,11 @@ function moveHandDrag(x,y){
   if(drag.target!==target){drag.target?.classList.remove('drag-hover');drag.target=target;target?.classList.add('drag-hover');}
 }
 
-async function settleHandDrag(drag,tile){
+async function settleHandDrag(drag,tile,{keepSize=false}={}){
   if(!drag.ghost)return false;
   const rect=tile?.getBoundingClientRect() || (drag.source.isConnected?drag.source.getBoundingClientRect():drag.origin);
   const end={x:rect.left+rect.width/2,y:rect.top+rect.height/2,angle:0,tilt:0,scale:1};
-  const width=tile?rect.width-2:rect.width,height=tile?rect.height-2:rect.height;
+  const width=keepSize?drag.origin.width:tile?rect.width-2:rect.width,height=keepSize?drag.origin.height:tile?rect.height-2:rect.height;
   const entry={ghost:drag.ghost,animation:null};handDragSettlers.add(entry);
   let completed=true;
   try{
@@ -9097,14 +9145,69 @@ async function settleHandDrag(drag,tile){
         {transform:handDragTransform(drag.body),width:`${drag.origin.width}px`,height:`${drag.origin.height}px`,opacity:1},
         {transform:handDragTransform(end),width:`${width}px`,height:`${height}px`,opacity:1}
       ],{duration,easing:'cubic-bezier(.2,.8,.25,1)',fill:'forwards'});
+      drag.settleAnimation=entry.animation;
       await entry.animation.finished;
     }
     drag.ghost.style.transform=handDragTransform(end);
     drag.ghost.style.width=`${width}px`;drag.ghost.style.height=`${height}px`;
     entry.animation?.cancel();
   }catch(_error){completed=false;}
-  finally{if(!completed || !tile)drag.ghost.remove();handDragSettlers.delete(entry);}
+  finally{if(!completed || !tile)drag.ghost.remove();handDragSettlers.delete(entry);drag.settleAnimation=null;}
   return completed;
+}
+
+/* Ability cards use the same spring and landing motion as the real hand. */
+function createAbilityCardDragger(dropZone,onDrop){
+  let active=null,settling=null,closed=false;
+  const inside=(x,y)=>{const rect=dropZone.getBoundingClientRect();return x>=rect.left && x<=rect.left+rect.width && y>=rect.top && y<=rect.top+rect.height;};
+  const release=drag=>{
+    cancelAnimationFrame(drag.frame);drag.source.classList.remove('dragging');dropZone.classList.remove('drag-hover');
+    try{if(drag.source.hasPointerCapture(drag.id))drag.source.releasePointerCapture(drag.id);}catch(_error){}
+  };
+  const move=event=>{
+    const drag=active;if(!drag || drag.id!==event.pointerId)return;
+    if(!drag.started){
+      if(Math.hypot(event.clientX-drag.x,event.clientY-drag.y)<(event.pointerType==='mouse'?6:12))return;
+      drag.started=true;drag.source.classList.add('dragging');
+      drag.ghost=drag.source.cloneNode(true);drag.ghost.draggable=false;drag.ghost.tabIndex=-1;
+      drag.ghost.classList.remove('dragging','selected');drag.ghost.classList.add('touch-drag-ghost');drag.ghost.setAttribute('aria-hidden','true');drag.ghost.removeAttribute('id');
+      drag.ghost.style.width=`${drag.origin.width}px`;drag.ghost.style.height=`${drag.origin.height}px`;
+      document.body.appendChild(drag.ghost);runPhysicalCardDrag(drag,()=>active===drag && !closed);
+    }
+    if(event.cancelable)event.preventDefault();
+    drag.goal.x=event.clientX-drag.grabX;drag.goal.y=event.clientY-drag.grabY;
+    dropZone.classList.toggle('drag-hover',inside(event.clientX,event.clientY));
+  };
+  const finish=(event,cancelled=false)=>{
+    const drag=active;if(!drag || drag.id!==event.pointerId)return;
+    if(!cancelled)move(event);
+    active=null;release(drag);if(!drag.started)return;
+    if(event.cancelable)event.preventDefault();drag.source.dataset.ignoreClickUntil=String(Date.now()+450);
+    const valid=!cancelled && inside(event.clientX,event.clientY);settling=drag;
+    settleHandDrag(drag,valid?dropZone:null,{keepSize:true}).then(landed=>{
+      if(landed && valid && !closed)onDrop(drag.cardId);
+    }).finally(()=>{drag.ghost?.remove();if(settling===drag)settling=null;});
+  };
+  return {
+    bind(node){
+      node.classList.add('ability-drag-ready');
+      node.addEventListener('pointerdown',event=>{
+        if(closed || active || settling || event.button>0 || event.isPrimary===false)return;
+        const rect=node.getBoundingClientRect();
+        active={id:event.pointerId,cardId:node.dataset.cardId,source:node,x:event.clientX,y:event.clientY,
+          grabX:event.clientX-rect.left-rect.width/2,grabY:event.clientY-rect.top-rect.height/2,origin:rect,started:false,frame:null,ghost:null};
+        try{node.setPointerCapture(event.pointerId);}catch(_error){}
+      });
+      node.addEventListener('pointermove',move);node.addEventListener('pointerup',event=>finish(event));
+      node.addEventListener('pointercancel',event=>finish(event,true));node.addEventListener('lostpointercapture',event=>finish(event,true));
+    },
+    cancel(){
+      closed=true;
+      if(active){const drag=active;active=null;release(drag);drag.ghost?.remove();}
+      if(settling){settling.settleAnimation?.cancel();settling.ghost?.remove();settling=null;}
+      dropZone.classList.remove('drag-hover');
+    }
+  };
 }
 
 async function finishHandDrag(cancelled=false,x=0,y=0){
@@ -9216,6 +9319,7 @@ el('draw-btn').addEventListener('click', async () => {
 /* ---------- Setup screen wiring ---------- */
 let titleCardDrag=null,lastTitleCardTap=null,lastTitleCardIds=[];
 let peekCardSession=null,cancelByakurenPeek=null;
+let peekCardLayer=1;
 function movableTableCardEnabled(node){return node?.dataset.peekCard==='true' || !el('game').classList.contains('active');}
 function drawTitlePreviewCards(count=9){
   if(!lastTitleCardIds.length){
@@ -9234,7 +9338,8 @@ function moveTitleCard(node,x,y){
 }
 function liftTitleCard(node){
   const rect=node.getBoundingClientRect(),center={x:rect.left+rect.width/2,y:rect.top+rect.height/2};
-  node.classList.add('table-card-moved');if(node.dataset.peekCard!=='true')document.body.appendChild(node);
+  node.classList.add('table-card-moved');
+  if(node.dataset.peekCard==='true')node.style.zIndex=String(++peekCardLayer);else document.body.appendChild(node);
   return moveTitleCard(node,center.x,center.y);
 }
 function finishTitleCardDrag(cancelled=false){
@@ -9242,7 +9347,7 @@ function finishTitleCardDrag(cancelled=false){
   titleCardDrag=null;
   drag.node.classList.remove('table-card-dragging');
   drag.node.style.setProperty('--table-angle',`${drag.angle}deg`);
-  if(cancelled && drag.moved)moveTitleCard(drag.node,drag.center.x,drag.center.y);
+  if(cancelled && drag.moved){moveTitleCard(drag.node,drag.center.x,drag.center.y);drag.node.style.zIndex=drag.layer;}
   try{if(drag.node.hasPointerCapture?.(drag.pointerId))drag.node.releasePointerCapture(drag.pointerId);}catch(_error){}
   if(drag.node.dataset.peekCard==='true' && !cancelled)peekCardSession?.update(drag.node,drag.moved);
   if(cancelled || drag.moved){
@@ -9261,7 +9366,7 @@ function onTitleCardPointerDown(event){
   event.preventDefault();finishTitleCardDrag(true);
   const node=event.currentTarget,rect=node.getBoundingClientRect(),center={x:rect.left+rect.width/2,y:rect.top+rect.height/2};
   node.focus({preventScroll:true});
-  titleCardDrag={node,center,pointerId:event.pointerId,pointerType:event.pointerType || 'mouse',startX:event.clientX,startY:event.clientY,offsetX:event.clientX-center.x,offsetY:event.clientY-center.y,angle:Number(node.dataset.angle),moved:false};
+  titleCardDrag={node,center,layer:node.style.zIndex || '',pointerId:event.pointerId,pointerType:event.pointerType || 'mouse',startX:event.clientX,startY:event.clientY,offsetX:event.clientX-center.x,offsetY:event.clientY-center.y,angle:Number(node.dataset.angle),moved:false};
   try{node.setPointerCapture(event.pointerId);}catch(_error){}
 }
 function onTitleCardPointerMove(event){
@@ -9345,7 +9450,11 @@ function openByakurenPeek(ids){
           taken=node.dataset.cardId;
         }else if(taken===node.dataset.cardId)taken=null;
       }
-      order=nodes.filter(card=>card.dataset.cardId!==taken).sort((a,b)=>center(a).x-center(b).x).map(card=>card.dataset.cardId);
+      order=nodes.filter(card=>card.dataset.cardId!==taken).sort((a,b)=>{
+        const dx=center(a).x-center(b).x;
+        // Overlapping cards form a real stack: the card on top is the next draw.
+        return Math.abs(dx)<24 ? Number(b.style.zIndex||1)-Number(a.style.zIndex||1) : dx;
+      }).map(card=>card.dataset.cardId);
       nodes.forEach(card=>{
         const id=card.dataset.cardId;
         card.classList.toggle('peek-selected',id===selected);card.classList.toggle('peek-taken',id===taken);
@@ -9790,7 +9899,7 @@ function openTutorial(step=0){
   const t={step,cancel,cancelled,practice:null,complete:false,finishedAction:false,feedback:''};
   tutorialState=t;
   const practiceUI={...ui};
-  for(const name of ['pickPlayer','pickFromList','pickOwnHandCard','pickOwnHandCards','pickHandCard','arrangeDrawPileCards','pickRectByDrag','pickCell','promptText']){
+  for(const name of ['pickPlayer','pickFromList','pickOwnHandCard','pickOwnHandCards','pickHandCard','pickCardPool','arrangeDrawPileCards','pickRectByDrag','pickCell','promptText']){
     practiceUI[name]=(...args)=>Promise.race([ui[name](...args),cancelled.then(()=>name==='pickRectByDrag'?[]:null)]);
   }
   game=t.practice=new Game(3,practiceUI,null,{aiDifficulty:'hard'});
@@ -9878,6 +9987,7 @@ function syncMobileViewport(){
   const width=window.innerWidth,height=window.visualViewport?.height || window.innerHeight;
   const mobile=active && (window.matchMedia('(any-pointer: coarse)').matches || width<=980) && Math.max(width,height)<=1400;
   const landscape=mobile && width>height;
+  document.body.classList.toggle('mobile-device',mobileFullscreenWanted());
   dockTutorialCoach(mobile);
   document.body.classList.toggle('game-mobile',mobile);
   document.body.classList.toggle('mobile-landscape',landscape);
@@ -9913,27 +10023,83 @@ function queueMobileViewport(){
 }
 function closeMobileJournal(){document.body.classList.remove('mobile-log-open');el('journal-btn').setAttribute('aria-expanded','false');el('journal-btn').textContent='Log';}
 function fullscreenElement(){return document.fullscreenElement || document.webkitFullscreenElement;}
-async function toggleGameFullscreen(){
-  const message=el('mobile-screen-message');message.textContent='';
+let mobileFullscreenArmed=true,mobileFullscreenPending=false;
+function mobileFullscreenWanted(){
+  return window.matchMedia('(any-pointer: coarse)').matches || (typeof navigator!=='undefined' && navigator.maxTouchPoints>0 && Math.max(window.innerWidth,window.innerHeight)<=1400);
+}
+function fullscreenRequest(){return document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen;}
+function fullscreenAvailable(){return !!fullscreenRequest() && (document.fullscreenEnabled!==false || document.webkitFullscreenEnabled===true);}
+function waitForFullscreenEntry(result){
+  if(result?.then)return result;
+  if(fullscreenElement())return Promise.resolve();
+  return new Promise((resolve,reject)=>{
+    const finish=failed=>{
+      clearTimeout(timer);
+      for(const name of ['fullscreenchange','webkitfullscreenchange'])document.removeEventListener(name,change);
+      for(const name of ['fullscreenerror','webkitfullscreenerror'])document.removeEventListener(name,error);
+      failed?reject(new Error('Fullscreen was blocked')):resolve();
+    };
+    const change=()=>{if(fullscreenElement())finish(false);},error=()=>finish(true);
+    const timer=setTimeout(error,1200);
+    for(const name of ['fullscreenchange','webkitfullscreenchange'])document.addEventListener(name,change);
+    for(const name of ['fullscreenerror','webkitfullscreenerror'])document.addEventListener(name,error);
+  });
+}
+function setFullscreenMessage(text){
+  for(const id of ['mobile-screen-message','menu-fullscreen-message'])el(id).textContent=text;
+}
+async function requestGameFullscreen(){
+  if(fullscreenElement())return true;
+  if(mobileFullscreenPending)return false;
+  if(!fullscreenAvailable()){
+    mobileFullscreenArmed=false;setFullscreenMessage('Fullscreen is unavailable in this browser. Rotate your phone to play sideways.');return false;
+  }
+  mobileFullscreenPending=true;setFullscreenMessage('');
   try{
-    if(fullscreenElement()){
-      const exit=document.exitFullscreen || document.webkitExitFullscreen;if(exit)await exit.call(document);
-      try{screen.orientation?.unlock();}catch(_error){}
-    }else{
-      const root=document.documentElement,request=root.requestFullscreen || root.webkitRequestFullscreen;
-      if(request)await request.call(root);else{message.textContent='Rotate your phone to play sideways.';return;}
-      if(screen.orientation?.lock){try{await screen.orientation.lock('landscape');}catch(_error){message.textContent='Rotate your phone for landscape.';}}
-    }
-  }catch(_error){message.textContent='Rotate your phone to play sideways.';}
-  finally{queueMobileViewport();}
+    await waitForFullscreenEntry(fullscreenRequest().call(document.documentElement));
+    if(!fullscreenElement())throw new Error('Fullscreen was not entered');
+    if(screen.orientation?.lock){try{await screen.orientation.lock('landscape');}catch(_error){setFullscreenMessage('Rotate your phone for landscape.');}}
+    return true;
+  }catch(_error){
+    setFullscreenMessage('Fullscreen was blocked. Tap Fullscreen to retry, or rotate your phone.');return false;
+  }finally{mobileFullscreenPending=false;onGameFullscreenChange();}
+}
+async function toggleGameFullscreen(){
+  mobileFullscreenArmed=false;
+  if(!fullscreenElement()){await requestGameFullscreen();return;}
+  try{
+    const exit=document.exitFullscreen || document.webkitExitFullscreen;if(exit)await exit.call(document);
+    try{screen.orientation?.unlock();}catch(_error){}
+    setFullscreenMessage('Fullscreen exited. Tap Fullscreen to return.');
+  }catch(_error){setFullscreenMessage('The browser could not exit fullscreen.');}
+  finally{onGameFullscreenChange();}
 }
 function onGameFullscreenChange(){
-  const full=!!fullscreenElement();el('fullscreen-btn').textContent=full?'Exit Fullscreen':'Fullscreen';
-  el('fullscreen-btn').setAttribute('aria-pressed',String(full));
+  const full=!!fullscreenElement();
+  for(const id of ['fullscreen-btn','menu-fullscreen-btn']){el(id).textContent=full?'Exit Fullscreen':'Fullscreen';el(id).setAttribute('aria-pressed',String(full));}
   if(!full){try{screen.orientation?.unlock();}catch(_error){}}
   queueMobileViewport();
 }
+function onAutomaticMobileFullscreen(event){
+  if(!mobileFullscreenArmed || !mobileFullscreenWanted() || fullscreenElement() || event.isTrusted===false)return;
+  if(event.target?.closest?.('#fullscreen-btn,#menu-fullscreen-btn,input,select,textarea'))return;
+  if(event.type==='keydown' && !['Enter',' '].includes(event.key))return;
+  if((typeof titleCardDrag!=='undefined' && titleCardDrag?.moved) || touchHandDrag?.started)return;
+  mobileFullscreenArmed=false;void requestGameFullscreen();
+}
+function initializeMobileFullscreen(){
+  queueMobileViewport();onGameFullscreenChange();
+  if(!mobileFullscreenWanted() || fullscreenElement())return;
+  if(!fullscreenAvailable()){mobileFullscreenArmed=false;setFullscreenMessage('Fullscreen is unavailable in this browser. Rotate your phone to play sideways.');return;}
+  setFullscreenMessage('Tap anywhere to enter fullscreen.');
+  // Modern browsers require a trusted tap. Reuse existing activation when available.
+  if(typeof navigator!=='undefined' && navigator.userActivation?.isActive)void requestGameFullscreen();
+}
 el('fullscreen-btn').addEventListener('click',toggleGameFullscreen);
+el('menu-fullscreen-btn').addEventListener('click',toggleGameFullscreen);
+document.addEventListener('pointerup',onAutomaticMobileFullscreen,true);
+document.addEventListener('click',onAutomaticMobileFullscreen,true);
+document.addEventListener('keydown',onAutomaticMobileFullscreen,true);
 el('journal-btn').addEventListener('click',()=>{
   const open=document.body.classList.toggle('mobile-log-open');
   el('journal-btn').setAttribute('aria-expanded',String(open));el('journal-btn').textContent=open?'Close Log':'Log';
@@ -9959,6 +10125,7 @@ el('main-menu-btn').addEventListener('click',returnToMainMenu);
 el('winner-menu-btn').addEventListener('click',returnToMainMenu);
 renderTitleTableCards();
 initializeGameLanguage();
+initializeMobileFullscreen();
 
 </script>
 </body>

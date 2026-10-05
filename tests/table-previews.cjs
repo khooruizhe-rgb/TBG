@@ -137,6 +137,11 @@ test('Touch double-tap inspects a peek card; touch dragging selects a card witho
  dispatch(card,'pointerdown',point);dispatch(card,'pointerup',point);now+=120;dispatch(card,'pointerdown',point);dispatch(card,'pointerup',point);assert.deepEqual(inspected,['mtn_aya']);now+=600;
  dragTo(card,580,565,'touch');assert(card.classList.contains('peek-taken'));el('byakuren-peek-confirm').onclick();assert.equal((await promise).taken,'mtn_aya');
 });
+test('On a phone, the first peek card can overlap the later card and becomes the next draw on top',async()=>{
+ const {promise,cards}=peek();dragTo(cards[2],580,565,'touch');const other=cards[1].getBoundingClientRect(),x=other.left+other.width/2,y=other.top+other.height/2;
+ dragTo(cards[0],x,y,'touch');assert(Number(cards[0].style.zIndex)>Number(cards[1].style.zIndex||1));assert(cards[0].querySelector('.peek-order').textContent.includes('Next draw'));
+ el('byakuren-peek-confirm').onclick();const result=await promise;assert.equal(result.taken,'hourai_mokou');assert.deepEqual(Array.from(result.order),['sdm_flandre','mtn_aya']);
+});
 test('The take button supports click/keyboard users, and cards can be exchanged or returned before confirming',async()=>{
  const {promise,cards}=peek();dispatch(cards[0],'click');el('byakuren-peek-take').onclick();assert(cards[0].classList.contains('peek-taken'));dragTo(cards[1],580,565);assert(!cards[0].classList.contains('peek-taken'));assert(cards[1].classList.contains('peek-taken'));dragTo(cards[1],650,255);assert(el('byakuren-peek-confirm').disabled);dispatch(cards[2],'click');el('byakuren-peek-take').onclick();el('byakuren-peek-confirm').onclick();assert.equal((await promise).taken,'hourai_mokou');
 });

@@ -54,6 +54,7 @@ vm.runInContext(slice('const DIRS4','/* ===================== UI layer')+`
  const koishiArrivalUntil=new Map(),mindEffectTimers=new Set(),mindArrivals=new Map();let mindEffectsUntil=0,playtestMode=false;
 `+slice('const CARD_ABILITY_NAMES =','/* Only trusted rule text')+
  slice('function escapeLogHtml(','function renderLog(')+
+ slice('function mindEyeSvg(','function finishMindEffect(')+
  slice('function finishMindEffect(','function mindSeal(')+
  slice('function cardBoardHtml(','const yuukaSunflowerUntil')+
  slice('function tileElement(','function seatRect(')+
@@ -64,6 +65,7 @@ vm.runInContext(slice('const DIRS4','/* ===================== UI layer')+`
  slice('function humanActionCells(cardId){','/* Dragging a hand card')+
  slice('function renderPlayers(','function escapeLogHtml(')+
  slice('function showCardExit(','function showDiscardVanish(')+`
+`+slice('function createAbilityCardDragger(','async function finishHandDrag(')+`
  const choiceUI={
 `+slice('  pickAbilityCards(title,ids){','  pickFromList(title, options){')+slice('  pickHandCard(title, cardIds, targetName, opts={}){','  /* Hover or drag the whole zone; release to choose it. */')+`};
  this.api={Game,CARD,renderShop,renderBoard,renderPlayers,onHandCardClick,beginShopTrade,showNueBodyIllusion,showShouGoldLasers,showMurasaPlayerVortex,showByakurenStrikes,showTempleEffect,
@@ -77,6 +79,25 @@ function setup(size=5){A.clearMindEffects();timers.clear();now=1000;reduced=fals
  A.renderPlayers();for(const [i,s]of el('seats').children.entries()){s.rect={left:i===1?930:50,top:i===2?650:45,width:190,height:110};s.children.forEach(n=>n.rect={...s.rect});}return g;}
 function place(g,r,c,id){g.setCardAt(r,c,id);const tile=el('board').children[r*g.board.length+c];tile.dataset.cardId=id;tile.innerHTML=A.cardBoardHtml(id);return tile.querySelector('.board-card');}
 const tests=[],test=(n,f)=>tests.push([n,f]);
+test('Rin shows draggable discard cards with their owners and takes only the confirmed card',async()=>{
+ const g=setup();g.ui=A.choiceUI;g.players[0].isAI=false;g.players[1].discard=['sdm_flandre'];g.players[2].discard=['mtn_aya'];
+ const action=g.resolveAbility('palace_rin',1,1,0,0);await flush();const cards=el('look-into-cards').children;
+ assert.equal(cards.length,2);assert(cards.every(card=>card.classList.contains('ability-drag-ready')));assert.equal(el('look-into-drop').textContent,'Your Hand');assert(!el('look-into-drop').hidden);
+ assert(cards[0].querySelector('.look-into-origin').textContent.includes(g.players[1].name));assert.deepEqual(g.players[0].hand,[]);
+ cards[0].click();el('look-into-confirm').onclick();await action;assert.deepEqual(Array.from(g.players[0].hand),['sdm_flandre']);assert.deepEqual(g.players[1].discard,[]);assert.deepEqual(g.players[2].discard,['mtn_aya']);assert(el('look-into-drop').hidden);
+});
+test('Kutaka uses draggable draw-pile choices without drawing the unchosen cards',async()=>{
+ const g=setup();g.ui=A.choiceUI;g.players[0].isAI=false;g.wasteland[1][1]=true;g.drawPile=['hell_clownpiece','hell_eiki','mtn_aya'];
+ const action=g.resolveAbility('hell_kutaka',1,1,0,0);await flush();const cards=el('look-into-cards').children;assert.equal(cards.length,2);assert(cards[1].classList.contains('ability-drag-ready'));assert.equal(cards[1].querySelector('.look-into-origin').textContent,'Draw pile');
+ cards[1].click();el('look-into-confirm').onclick();await action;assert.deepEqual(Array.from(g.players[0].hand),['hell_eiki']);assert.deepEqual(g.drawPile,['hell_clownpiece','mtn_aya']);
+});
+test('Satori, Reisen and Flandre use the appropriate drag destination and retain tap-to-confirm',async()=>{
+ for(const [opts,label] of [[{presentation:'satori'},'Your Hand'],[{presentation:'reisen'},'Must play next turn'],[{forPile:true,forDiscard:true},'AI 1 · Discard pile']]){
+  const g=setup();g.ui=A.choiceUI;g.players[0].isAI=false;g.players[1].hand=['sdm_patchouli'];
+  const choice=g.chooseHandCard(0,1,'Take this card',opts);await flush();const card=el('look-into-cards').children[0];assert(card.classList.contains('ability-drag-ready'));assert.equal(el('look-into-drop').textContent,label);
+  card.click();assert(!el('look-into-confirm').disabled);el('look-into-confirm').onclick();assert.equal(await choice,'sdm_patchouli');assert.deepEqual(g.players[1].hand,['sdm_patchouli']);assert(!el('look-into-overlay').classList.contains('transfer-mode'));
+ }
+});
 test('Hand placement selection keeps every shop card visible while highlighting Rinnosuke',()=>{
  const g=setup();g.shopCards=['shop_rinnosuke','sdm_meiling','hourai_tewi','hell_kutaka'];A.renderShop();const tiles=el('kourindou').children;
  assert(tiles.every(t=>!t.classList.contains('koishi-arriving')),'normal shop cards must never enter Koishi’s hidden arrival state');
