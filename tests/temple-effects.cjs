@@ -29,11 +29,12 @@ class Element{
  querySelector(s){return this.querySelectorAll(s)[0]||null;}
  getBoundingClientRect(){const r={...this.rect};for(const k of ['left','top','width','height'])if(this.style[k])r[k]=parseFloat(this.style[k]);return {...r,right:r.left+r.width,bottom:r.top+r.height};}
  setAttribute(k,v){this.attributes[k]=String(v);}addEventListener(k,fn){(this.events[k]??=[]).push(fn);}
+ removeEventListener(k,fn){this.events[k]=(this.events[k]||[]).filter(listener=>listener!==fn);}focus(){document.activeElement=this;}
  click(){(this.events.click||[]).forEach(fn=>fn({target:this}));}
  cloneNode(deep){const n=new Element(this.tagName,this.getBoundingClientRect());n.className=this.className;n.dataset={...this.dataset};n.style={...this.style,setProperty:(k,v)=>n.values.set(k,String(v)),removeProperty:k=>n.values.delete(k)};n.values=new Map(this.values);if(deep)n.append(...this.children.map(c=>c.cloneNode(true)));return n;}
 }
 const el=id=>{if(!controls.has(id))controls.set(id,new Element());return controls.get(id);};
-const document={body:new Element('body'),createElement:tag=>new Element(tag),querySelectorAll:s=>document.body.querySelectorAll(s)};
+const document={body:new Element('body'),createElement:tag=>new Element(tag),querySelectorAll:s=>document.body.querySelectorAll(s),addEventListener(){},removeEventListener(){}};
 for(const id of ['board','seats','kourindou','shop-panel','shop-status','modal-box','modal-options','modal-overlay','modal-title','look-into-overlay','look-into-emblem'])document.body.appendChild(el(id));
 const context={console,Math,document,el,window:{innerWidth:1200,innerHeight:800,matchMedia:()=>({matches:reduced}),addEventListener(){},__resolveHumanTurn(){}},Date:{now:()=>now},
  setTimeout:(fn,delay=0)=>{const id=nextTimer++;timers.set(id,{fn,due:now+delay});return id;},clearTimeout:id=>timers.delete(id),requestAnimationFrame:fn=>fn(),
@@ -49,6 +50,7 @@ vm.runInContext(slice('const DIRS4','/* ===================== UI layer')+`
  SIZE=5;
  let game=null,pendingCellChoice=null,pendingRectChoice=null,pendingPlayerChoice=null,lastPlacedCell=null;
  let pendingHandChoice=null,selectedHandCard=null,humanActionResolving=false,handDragSettling=false;
+ let cancelLookIntoView=null;
  const koishiArrivalUntil=new Map(),mindEffectTimers=new Set(),mindArrivals=new Map();let mindEffectsUntil=0,playtestMode=false;
 `+slice('const CARD_ABILITY_NAMES =','/* Only trusted rule text')+
  slice('function escapeLogHtml(','function renderLog(')+
@@ -63,7 +65,7 @@ vm.runInContext(slice('const DIRS4','/* ===================== UI layer')+`
  slice('function renderPlayers(','function escapeLogHtml(')+
  slice('function showCardExit(','function showDiscardVanish(')+`
  const choiceUI={
-`+slice('  pickAbilityCards(title,ids){','  pickFromList(title, options){')+`};
+`+slice('  pickAbilityCards(title,ids){','  pickFromList(title, options){')+slice('  pickHandCard(title, cardIds, targetName, opts={}){','  /* Hover or drag the whole zone; release to choose it. */')+`};
  this.api={Game,CARD,renderShop,renderBoard,renderPlayers,onHandCardClick,beginShopTrade,showNueBodyIllusion,showShouGoldLasers,showMurasaPlayerVortex,showByakurenStrikes,showTempleEffect,
  clearMindEffects,syncIllusionFace,illusionCardStyle,cardBoardHtml,showCardExit,choiceUI,
  setGame:g=>game=g,setSize:n=>SIZE=n,setPending:c=>pendingCellChoice=c,clearSelection:()=>{selectedHandCard=null;pendingCellChoice=null;},deadline:()=>mindEffectsUntil,activeEffects:()=>templeAnimationCancels.size};`,context);
@@ -142,10 +144,16 @@ test('Cancelling Murasa removes every vortex and its appearance cannot leak into
  const g=setup();g.placementBlockTurns[0]=2;A.showMurasaPlayerVortex({playerIdx:0});A.renderPlayers();A.clearMindEffects();assert(!el('seats').querySelector('.seat-0').classList.contains('murasa-caught'));assert.equal(document.querySelectorAll('.murasa-restriction-vortex').length,0);assert.equal(A.deadline(),0);
  setup();await advance(20000);assert.equal(document.querySelectorAll('.murasa-restriction-vortex').length,0);
 });
-test('Byakuren fists strike before card removal, and the intact card flies toward the discard owner',async()=>{
+test('Byakuren fists strike before card removal, and the intact card flies toward the draw pile',async()=>{
  const g=setup();place(g,1,1,'temple_byakuren');place(g,0,0,'sdm_patchouli');place(g,2,1,'hourai_mokou');const targets=[{r:0,c:0},{r:2,c:1}],animation=A.showByakurenStrikes({r:1,c:1,targets,playerIdx:1});
  assert.equal(document.querySelectorAll('.byakuren-fist-flight').length,2);let struck=false;animation.ready.then(v=>struck=v);await advance(359);assert(!struck);assert.equal(document.querySelectorAll('.byakuren-impact').length,0);await advance(1);assert(struck);assert.equal(document.querySelectorAll('.byakuren-impact').length,2);
- A.showCardExit({cardId:'sdm_patchouli',playerIdx:1,source:{r:0,c:0,effect:'byakuren'}},'discard');const flight=document.querySelectorAll('.ability-byakuren')[0];assert(flight.querySelector('.board-card'));assert(Number.parseFloat(flight.values.get('--hit-fly-x'))>0);assert.equal(flight.style.animationDelay,'0ms');await advance(1040);assert.equal(await animation.finished,true);assert.equal(document.querySelectorAll('.byakuren-fist-flight').length,0);
+ el('draw-pile-face').rect={left:550,top:25,width:52,height:65};A.showCardExit({cardId:'sdm_patchouli',source:{r:0,c:0,effect:'byakuren'}},'draw');const flight=document.querySelectorAll('.ability-byakuren')[0];assert(flight.classList.contains('draw-return-ghost'));assert(flight.querySelector('.board-card'));assert(Number.parseFloat(flight.values.get('--hit-fly-x'))>0);assert(Number.parseFloat(flight.values.get('--hit-fly-y'))<0);assert.equal(flight.style.animationDelay,'0ms');await advance(1040);assert.equal(await animation.finished,true);assert.equal(document.querySelectorAll('.byakuren-fist-flight').length,0);
+});
+test('The actual look-into controls let Byakuren take a card and choose which remaining card goes on top',async()=>{
+ const g=setup();place(g,1,1,'temple_byakuren');place(g,1,2,'temple_nue');place(g,2,1,'temple_shou');g.players[1].isAI=false;g.drawPile=['medicine','mtn_aya','sdm_flandre','hourai_mokou'];g.chooseByakurenEffect=async()=> 'look';g.ui.pickHandCard=A.choiceUI.pickHandCard;
+ const action=g.resolveAbility('temple_byakuren',1,1,1,0);await flush();assert.equal(el('look-into-title').textContent,'Makai Fantastica — top three cards');assert.equal(el('look-into-cards').children.length,3);assert.equal(g.players[1].hand.length,0);
+ el('look-into-cards').children.find(card=>card.dataset.cardId==='sdm_flandre').click();el('look-into-confirm').onclick();await flush();assert.equal(el('look-into-title').textContent,'Choose the next top card');assert.equal(el('look-into-cards').children.length,2);assert(el('look-into-instruction').textContent.includes('next card drawn'));
+ el('look-into-cards').children.find(card=>card.dataset.cardId==='mtn_aya').click();el('look-into-confirm').onclick();await action;assert.deepEqual(Array.from(g.players[1].hand),['sdm_flandre']);assert.deepEqual(Array.from(g.drawPile),['medicine','hourai_mokou','mtn_aya']);assert(!el('look-into-overlay').classList.contains('show'));
 });
 test('Cancelled Byakuren cannot fire delayed impact callbacks',async()=>{
  const owner=setup();place(owner,1,1,'temple_byakuren');place(owner,0,0,'sdm_patchouli');const animation=A.showByakurenStrikes({r:1,c:1,targets:[{r:0,c:0}],playerIdx:1});A.clearMindEffects();assert.equal(await animation.ready,false);await advance(1500);assert.equal(document.querySelectorAll('.byakuren-impact').length,0);assert.equal(A.activeEffects(),0);

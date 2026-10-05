@@ -10,6 +10,7 @@ vm.runInContext(slice('const DIRS4','/* ===================== UI layer')+'\nlet 
 `\nthis.api={Game,CARD,CARDS,FACTIONS,romanNumeral,aiCostCanResolve,aiEvaluateCard,canAct,doPlayerAction,resolveFollowups,setGame:g=>game=g,setSize:n=>SIZE=n};`,ctx);
 const A=ctx.api,tests=[];const test=(n,f)=>tests.push([n,f]);
 const pay=['mtn_suwako','mtn_aya','palace_utsuho','palace_rin','sage_ran','medicine','hourai_reisen'];
+function effect(g,value){g.chooseByakurenEffect=async()=>value;g.players[1].isAI=false;g.selectCostCards=async(p,n)=>g.payableCards(p).slice(0,n);return g;}
 function setup({hand=[],board=[],waste=[],deck=[],ui={},size=4}={}){
  A.setSize(size);const g=new A.Game(3,ui);g.players.forEach(p=>{p.hand=[];p.discard=[];});g.players[1].hand=hand.slice();g.currentPlayerIdx=1;g.board=Array.from({length:size},()=>Array(size).fill(null));g.wasteland=Array.from({length:size},()=>Array(size).fill(false));g.drawPile=deck.slice();g.shopCards=['shop_rinnosuke','sdm_meiling','hourai_tewi','hell_kutaka'];
  for(const [r,c,id]of board)g.setCardAt(r,c,id);for(const [r,c]of waste)g.setWastelandAt(r,c,true);A.setGame(g);return g;
@@ -21,43 +22,65 @@ test('Temple has four starting cards, a crown, and one shop-only fifth card',()=
 test('Kourindou starts as four normal tiles and its menu option is removed',()=>{
  const g=setup();assert.equal(g.shopTiles.length,4);assert(g.shopTiles.every(t=>!g.wastelandAt(t.r,t.c)));assert(!html.includes('shop-option'));assert(!html.includes('Cost X'));assert(A.CARD.haku_yuyuko.costN);assert(A.CARD.haku_yuyuko.desc.includes('Send N random'));assert.equal(A.romanNumeral(7),'VII');
 });
-test('Byakuren discount includes herself and physical Temple members, excludes protected merchandise and wild Kasen',()=>{
- const g=setup({board:[[1,1,'temple_byakuren'],[1,2,'temple_nue'],[1,3,'sage_kasen']]});assert.equal(g.byakurenCost(),5);g.setCardAt(7,0,'temple_shou');assert.equal(g.byakurenCost(),5);g.setCardAt(1,1,null);assert.equal(g.byakurenCost({r:1,c:1}),5);
+test('Byakuren discounts all three options using other physical Temple cards, excluding herself, protected stock and wild Kasen',()=>{
+ const g=setup({board:[[1,1,'temple_byakuren'],[1,2,'temple_nue'],[1,3,'sage_kasen']]});assert.equal(g.byakurenCost(),3);assert.equal(g.byakurenCost({r:1,c:1},3),2);assert.equal(g.byakurenCost({r:1,c:1},2),1);
+ g.setCardAt(7,0,'temple_shou');assert.equal(g.byakurenCost(),3);g.setCardAt(1,1,null);assert.equal(g.byakurenCost({r:1,c:1}),3);
+ g.setCardAt(0,0,'temple_shou');g.setCardAt(0,1,'temple_ichirin');assert.equal(g.byakurenCost({r:1,c:1},2),0);assert.equal(g.byakurenCost({r:1,c:1},3),0);assert.equal(g.byakurenCost({r:1,c:1},4),1);
 });
-test('Byakuren discards three other cards and leaves wasteland on exactly their spaces',async()=>{
- const events=[];const g=setup({hand:pay.slice(0,6),board:[[1,1,'temple_byakuren'],[0,0,'sdm_patchouli'],[0,1,'sdm_flandre'],[0,2,'hourai_mokou']],ui:{onTempleEffect:e=>events.push(e),onDiscard:e=>events.push(e),render(){}}});
+test('Cost IV gives only three extra turns, and the other effects do not activate',async()=>{
+ const g=effect(setup({hand:pay.slice(0,4),board:[[1,1,'temple_byakuren'],[0,0,'sdm_patchouli']]}),'turns');
+ const flags=await g.resolveAbility('temple_byakuren',1,1,1,0);assert.equal(flags.extraTurns,3);assert.equal(g.players[1].hand.length,0);assert.equal(g.drawPile.length,4);assert.equal(g.cardAt(0,0),'sdm_patchouli');assert.equal(g.templeWasteland().length,0);assert.equal(g.players[1].discard.length,0);
+});
+test('Cost III returns three other cards and leaves wasteland on exactly their spaces without points or extra turns',async()=>{
+ const events=[];const g=effect(setup({hand:pay.slice(0,3),board:[[1,1,'temple_byakuren'],[0,0,'sdm_patchouli'],[0,1,'sdm_flandre'],[0,2,'hourai_mokou']],ui:{onTempleEffect:e=>events.push(e),onDrawPileReturn:e=>events.push(e),render(){}}}),'return');
  let choices=0;g.chooseCells=async(_p,count,cells)=>{choices++;assert(!cells.some(t=>t.r===1&&t.c===1));return cells.slice(0,count);};
- const flags=await g.resolveAbility('temple_byakuren',1,1,1,0);assert.equal(flags.extraTurns,3);assert.equal(g.players[1].hand.length,0);assert.equal(g.players[1].discard.length,3);assert.equal(g.drawPile.length,6);
+ const flags=await g.resolveAbility('temple_byakuren',1,1,1,0);assert.deepEqual({...flags},{});assert.equal(g.players[1].hand.length,0);assert.equal(g.players[1].discard.length,0);assert.equal(g.drawPile.length,6);
  assert.deepEqual(Array.from(g.templeWasteland(),t=>[t.r,t.c]),[[0,0],[0,1],[0,2]]);assert.equal(g.cardAt(1,1),'temple_byakuren');assert.equal(choices,1);
  assert.equal(events.filter(e=>e.effect==='byakuren'&&e.targets).length,1);assert.equal(events.filter(e=>e.source?.effect==='byakuren').length,3);
 });
 test('Copied Byakuren strikes exclude the casting card, including Matara and Nue',async()=>{
  for(const actor of ['sage_matara','temple_nue']){
-  const g=setup({hand:pay,board:[[1,1,actor],[0,0,'sdm_patchouli']]});g.borrowedAbilities[actor]='temple_byakuren';
+  const g=effect(setup({hand:pay,board:[[1,1,actor],[0,0,'sdm_patchouli']]}),'return');g.borrowedAbilities[actor]='temple_byakuren';
   g.chooseCells=async(_p,count,cells)=>{assert(!cells.some(t=>t.r===1&&t.c===1));return cells.slice(0,count);};
-  const flags=await g.resolveAbility('temple_byakuren',1,1,1,1);assert.equal(flags.extraTurns,3);assert.equal(g.cardAt(1,1),actor);assert(!g.wastelandAt(1,1));assert(g.wastelandAt(0,0));
+  const flags=await g.resolveAbility('temple_byakuren',1,1,1,1);assert.deepEqual({...flags},{});assert.equal(g.cardAt(1,1),actor);assert(!g.wastelandAt(1,1));assert(g.wastelandAt(0,0));assert(g.drawPile.includes('sdm_patchouli'));
  }
 });
-test('Byakuren creates no wasteland where a protected or ineligible card cannot be discarded',async()=>{
- const g=setup({hand:pay.slice(0,6),board:[[1,1,'temple_byakuren'],[0,0,'hell_hecatia']]});g.setCardAt(7,0,'sdm_patchouli');
- assert(!g.templeDiscardTargets(1,1,1).some(t=>t.r===0&&t.c===0));assert(!g.templeDiscardTargets(1,1,1).some(t=>t.r===7&&t.c===0));
+test('Byakuren may return Hecatia but cannot hit herself, protected stock or cards hidden by Nitori',async()=>{
+ const g=effect(setup({hand:pay.slice(0,3),board:[[1,1,'temple_byakuren'],[0,0,'hell_hecatia'],[3,3,'mtn_nitori'],[2,3,'sdm_flandre']]}),'return');g.setCardAt(7,0,'sdm_patchouli');
+ assert(g.templeReturnTargets(1,1).some(t=>t.r===0&&t.c===0));assert(!g.templeReturnTargets(1,1).some(t=>t.r===7&&t.c===0));assert(!g.templeReturnTargets(1,1).some(t=>t.r===2&&t.c===3));
  // Re-check at the moment of impact, even if the chooser or state changed.
- g.chooseCells=async()=>[{r:1,c:1},{r:0,c:0},{r:7,c:0}];await g.resolveAbility('temple_byakuren',1,1,1,0);
- assert.equal(g.players[1].discard.length,0);assert.equal(g.templeWasteland().length,0);assert.equal(g.cardAt(1,1),'temple_byakuren');
+ g.chooseCells=async()=>[{r:1,c:1},{r:0,c:0},{r:7,c:0},{r:2,c:3}];await g.resolveAbility('temple_byakuren',1,1,1,0);
+ assert.equal(g.players[1].discard.length,0);assert.equal(g.templeWasteland().length,1);assert.equal(g.cardAt(1,1),'temple_byakuren');assert(g.drawPile.includes('hell_hecatia'));assert.equal(g.cardAt(2,3),'sdm_flandre');assert.equal(g.cardAt(7,0),'sdm_patchouli');
 });
 test('Byakuren waits for physical impact before removal and cancellation prevents a late strike',async()=>{
  for(const cancel of [false,true]){
   let hit,finish;const ready=new Promise(resolve=>hit=resolve),finished=new Promise(resolve=>finish=resolve);
-  const g=setup({hand:pay.slice(0,6),board:[[1,1,'temple_byakuren'],[0,0,'sdm_patchouli']],ui:{onTempleEffect:()=>({ready,finished}),render(){}}});g.chooseCells=async(_p,n,cells)=>cells.slice(0,n);
+  const g=effect(setup({hand:pay.slice(0,3),board:[[1,1,'temple_byakuren'],[0,0,'sdm_patchouli']],ui:{onTempleEffect:()=>({ready,finished}),render(){}}}),'return');g.chooseCells=async(_p,n,cells)=>cells.slice(0,n);
   let resolved=false;const action=g.resolveAbility('temple_byakuren',1,1,1,0).then(flags=>{resolved=true;return flags;});
   for(let i=0;i<30;i++)await Promise.resolve();assert.equal(g.cardAt(0,0),'sdm_patchouli');assert(!g.wastelandAt(0,0));assert(!resolved);
   if(cancel)g.cancelled=true;hit(!cancel);for(let i=0;i<30;i++)await Promise.resolve();
   if(cancel){assert.deepEqual({...await action},{});assert.equal(g.cardAt(0,0),'sdm_patchouli');assert(!g.wastelandAt(0,0));}
-  else{assert.equal(g.cardAt(0,0),null);assert(g.wastelandAt(0,0));assert(!resolved);finish(true);assert.equal((await action).extraTurns,3);}
+  else{assert.equal(g.cardAt(0,0),null);assert(g.wastelandAt(0,0));assert(!resolved);finish(true);assert.deepEqual({...await action},{});assert(g.drawPile.includes('sdm_patchouli'));}
  }
 });
 test('Byakuren can skip an unaffordable cost and is suppressed by Eirin',async()=>{
- for(const board of [[],[[3,3,'hourai_eirin']]]){const g=setup({hand:pay.slice(0,5),board:[[1,1,'temple_byakuren'],...board]});assert.deepEqual({...await g.resolveAbility('temple_byakuren',1,1,1,0)},{});assert.equal(g.templeWasteland().length,0);assert.equal(g.players[1].hand.length,5);}
+ for(const board of [[],[[3,3,'hourai_eirin']]]){const hand=board.length?pay:pay.slice(0,1),g=setup({hand,board:[[1,1,'temple_byakuren'],...board]});assert.deepEqual({...await g.resolveAbility('temple_byakuren',1,1,1,0)},{});assert.equal(g.templeWasteland().length,0);assert.equal(g.players[1].hand.length,hand.length);}
+});
+test('A free peek takes any of the top three and returns both other cards in the chosen order',async()=>{
+ const choices=[],draws=[];const g=effect(setup({board:[[1,1,'temple_byakuren'],[1,2,'temple_nue'],[2,1,'temple_shou']],deck:['medicine','mtn_aya','sdm_flandre','hourai_mokou'],ui:{pickHandCard:async(_title,ids,_source,opts)=>{choices.push({ids:Array.from(ids),opts});return choices.length===1?'sdm_flandre':'mtn_aya';},onDrawCard:e=>draws.push(e)}}),'look');
+ const flags=await g.resolveAbility('temple_byakuren',1,1,1,0);assert.deepEqual({...flags},{});assert.deepEqual(Array.from(g.players[1].hand),['sdm_flandre']);assert.deepEqual(Array.from(g.drawPile),['medicine','hourai_mokou','mtn_aya']);assert.deepEqual(choices.map(c=>c.ids),[['hourai_mokou','sdm_flandre','mtn_aya'],['hourai_mokou','mtn_aya']]);assert.equal(draws.length,1);assert(choices[1].opts.instruction.includes('next card drawn'));
+});
+test('The paid peek costs two cards together, uses the resulting draw pile and can exceed seven hand cards',async()=>{
+ const g=effect(setup({hand:pay,board:[[1,1,'temple_byakuren']],deck:['sdm_patchouli']}),'look');g.chooseDrawPileCard=async(_p,ids)=>ids[0];let costCount=0;const select=g.selectCostCards;g.selectCostCards=async(...args)=>{costCount++;assert.equal(args[1],2);return select(...args);};
+ await g.resolveAbility('temple_byakuren',1,1,1,0);assert.equal(costCount,1);assert.equal(g.players[1].hand.length,6);assert.equal(g.drawPile.length,2);
+ const free=effect(setup({hand:pay,board:[[1,1,'temple_byakuren'],[1,2,'temple_nue'],[2,1,'temple_shou']],deck:['sdm_patchouli']}),'look');free.chooseDrawPileCard=async(_p,ids)=>ids[0];await free.resolveAbility('temple_byakuren',1,1,1,0);assert.equal(free.players[1].hand.length,8);assert.equal(free.drawPile.length,0);
+});
+test('Peeking at one card, an empty draw pile or a cancelled view cannot lose cards or soft-lock',async()=>{
+ for(const count of [0,1]){let picks=0;const g=effect(setup({board:[[1,1,'temple_byakuren'],[1,2,'temple_nue'],[2,1,'temple_shou']],deck:count?['sdm_patchouli']:[],ui:{pickHandCard:async(_t,ids)=>{picks++;return ids[0];}}}),'look');await g.resolveAbility('temple_byakuren',1,1,1,0);assert.equal(picks,count);assert.equal(g.players[1].hand.length,count);}
+ for(const at of ['take','order']){let picks=0;const deck=['sdm_patchouli','sdm_flandre','hourai_mokou'];const g=effect(setup({board:[[1,1,'temple_byakuren'],[1,2,'temple_nue'],[2,1,'temple_shou']],deck}),'look');g.chooseDrawPileCard=async(_p,ids)=>{picks++;if((at==='take'&&picks===1)||(at==='order'&&picks===2))g.cancelled=true;return ids[0];};await g.resolveAbility('temple_byakuren',1,1,1,0);assert.deepEqual(Array.from(g.drawPile),deck);assert.equal(g.players[1].hand.length,0);}
+});
+test('The human chooser shows all three discounted Roman costs and allows skipping the ability',async()=>{
+ const g=setup({hand:pay.slice(0,2),board:[[1,1,'temple_byakuren']],deck:['sdm_patchouli'],ui:{pickFromList:async(_title,options)=>{assert.deepEqual(Array.from(options.slice(0,3),o=>o.label.match(/^\[([^\]]+)\]/)[1]),['Cost IV','Cost III','Cost II']);assert(options[0].disabled);assert(options[1].disabled);assert(!options[2].disabled);return null;}}});g.players[1].isAI=false;const before=JSON.stringify([g.players[1].hand,g.drawPile]);await g.resolveAbility('temple_byakuren',1,1,1,0);assert.equal(JSON.stringify([g.players[1].hand,g.drawPile]),before);
 });
 test('Shou counts all wasteland, clears it, and draws past the normal seven-card limit',async()=>{
  const g=setup({hand:pay,board:[[1,1,'temple_shou']],waste:[[0,0],[0,1],[0,2]],deck:['sdm_patchouli','sdm_flandre','hourai_mokou']});await g.resolveAbility('temple_shou',1,1,1,0);assert.equal(g.players[1].hand.length,9);assert.equal(g.templeWasteland().length,0);assert.equal(g.drawPile.length,1);
@@ -129,7 +152,19 @@ test('Four connected Temple cards claim exactly four, and Ichirin substitutes fo
  const g=setup({board:[[0,0,'temple_byakuren'],[0,1,'temple_shou'],[1,0,'temple_nue'],[1,1,'temple_ichirin']]});g.checkClaims(1);assert.equal(g.players[1].discard.length,4);assert.equal(g.mainBoardCells().length,0);
 });
 test('AI understands Byakuren’s discount, Shou’s wasteland gain and Murasa’s denial',()=>{
- const g=setup({hand:['temple_byakuren',...pay.slice(0,6)],board:[[0,0,'temple_nue']],waste:[[0,1],[1,0],[2,0]]});assert(A.aiCostCanResolve(1,'temple_byakuren',1,1));assert.equal(g.abilityCost('temple_byakuren',{r:1,c:1}),5);assert.equal(g.estimateHandGain(1,'temple_shou'),1);assert(A.aiEvaluateCard(1,'temple_murasa').rate>=1);
+ const g=setup({hand:['temple_byakuren',...pay.slice(0,6)],board:[[0,0,'temple_nue']],waste:[[0,1],[1,0],[2,0]]});assert(A.aiCostCanResolve(1,'temple_byakuren',1,1));assert.equal(g.abilityCost('temple_byakuren',{r:1,c:1}),1);assert.equal(g.estimateDirectDiscardPoints(1,'temple_byakuren',1,1),0);assert.equal(g.estimateHandGain(1,'temple_shou'),1);assert(A.aiEvaluateCard(1,'temple_murasa').rate>=1);
+});
+test('Hard AI chooses Byakuren’s extra turns and pays with cards outside its Temple completion',async()=>{
+ const g=setup({hand:['temple_shou','temple_murasa',...pay.slice(0,3)],board:[[1,1,'temple_byakuren'],[1,2,'temple_nue']]});
+ assert.equal(await g.chooseByakurenEffect(1,1,1),'turns');const flags=await g.resolveAbility('temple_byakuren',1,1,1,0);assert.equal(flags.extraTurns,3);assert(g.players[1].hand.includes('temple_shou'));assert(g.players[1].hand.includes('temple_murasa'));assert.equal(g.drawPile.length,3);assert.equal(g.templeWasteland().length,0);
+});
+test('Hard AI can use the return option and rank real card identities without scoring discard points',async()=>{
+ const g=setup({hand:pay.slice(0,3),board:[[1,1,'temple_byakuren'],[0,0,'hell_hecatia'],[0,1,'mtn_kanako'],[0,2,'sdm_flandre']]});
+ assert.equal(await g.chooseByakurenEffect(1,1,1),'return');assert(g.templeReturnTargets(1,1).every(cell=>A.CARD[cell.id]));await g.resolveAbility('temple_byakuren',1,1,1,0);assert.equal(g.players[1].discard.length,0);assert.equal(g.templeWasteland().length,3);assert.equal(g.drawPile.length,6);assert.equal(g.cardAt(1,1),'temple_byakuren');
+});
+test('Hard AI takes a revealed Temple completion from a free peek without reading unrevealed cards',async()=>{
+ const g=setup({board:[[1,1,'temple_byakuren'],[1,2,'temple_nue'],[2,1,'temple_shou']],deck:['sdm_patchouli','sage_ran','temple_murasa']});
+ assert.equal(await g.chooseByakurenEffect(1,1,1),'look');await g.resolveAbility('temple_byakuren',1,1,1,0);assert.deepEqual(Array.from(g.players[1].hand),['temple_murasa']);assert.equal(g.drawPile.length,2);assert(!g.players[0].hand.includes('temple_murasa'));
 });
 test('Temporary Murasa seals cannot end a full-board match before the seals expire',async()=>{
  vm.runInContext(slice('async function afterAction','/* Wire human hand-card')+'\nthis.api.runNextTurn=runNextTurn;',ctx);

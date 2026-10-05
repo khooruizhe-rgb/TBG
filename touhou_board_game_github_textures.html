@@ -579,7 +579,7 @@
     display:flex; flex-direction:column; justify-content:space-between; transition: transform .12s ease, opacity .12s ease;
   }
   .hand-card:hover{ transform:translateY(-4px); }
-  .hand-card.selected{ border-color:var(--gold); box-shadow:0 0 14px rgba(232,200,116,0.6); }
+  .hand-card.selected{ border-color:var(--faction-edge,var(--gold)); box-shadow:0 0 0 1px var(--gold),0 0 14px rgba(232,200,116,0.6); }
   .hand-card.disabled{ opacity:0.4; cursor:not-allowed; }
   #hand-area.choosing-card .hand-card.hand-choice-eligible{ cursor:pointer; }
   #hand-area.choosing-card .hand-card.hand-choice-eligible:hover{ transform:translateY(-7px); }
@@ -2339,7 +2339,7 @@ body:not(:has(#game.active)) #setup{pointer-events:auto}
 .table-scatter-card.table-card-moved{position:fixed;z-index:3;animation:none}
 .table-scatter-card.table-card-dragging{cursor:grabbing;filter:drop-shadow(7px 15px 9px #170d0b8a)}
 .table-scatter-card:focus-visible{outline:3px solid #f3d7a3;outline-offset:4px;border-radius:8px}
-.table-scatter-card .board-card{width:100%;height:100%;padding:9px;border:3px solid #e7d6b8;border-radius:8px;box-shadow:inset 0 0 0 1px #fff5df66,1px 2px 0 #aa8b65;pointer-events:none}
+.table-scatter-card .board-card{width:100%;height:100%;padding:9px;border:3px solid var(--faction-edge,#e7d6b8);border-radius:8px;box-shadow:inset 0 0 0 1px #fff5df66,1px 2px 0 #aa8b65;pointer-events:none}
 .table-scatter-card .board-card .cname{font-size:clamp(13px,1.25vw,18px);text-shadow:0 2px 3px #080510}
 .table-scatter-card .board-card .icon-row{font-size:20px}
 .table-scatter-card .board-card .icon-row img{width:30px;height:30px;object-fit:contain}
@@ -2424,12 +2424,32 @@ body.crown-scene-active #hand-area{background:linear-gradient(115deg,rgba(var(--
 /* Cream paper edges, a light bevel and stacked stock match the title cards. */
 .board-card,.hand-card{
   --card-relief:inset 0 0 0 1px #fff5df66,1px 2px 0 #aa8b65,3px 5px 5px #170d0b45;
-  border:2px solid #e7d6b8;border-radius:8px;
+  border:2px solid var(--faction-edge,#e7d6b8);border-radius:8px;
   background-origin:padding-box;background-clip:padding-box;
   box-shadow:var(--card-relief);
 }
 #hand{padding-bottom:5px}
 body.mobile-landscape .board-card,body.mobile-landscape #hand .hand-card{border-width:1px;border-radius:5px}
+.custom-card-tile{border-color:var(--faction-edge,#e7d6b8)}
+#card-detail[class*="card-faction-"]{border-color:var(--faction-edge,var(--gold))}
+.look-into-card.hand-card.selected{border-color:var(--faction-edge,var(--gold))}
+.card-faction-sdm{--faction-edge:#c62148}
+.card-faction-hakugyokurou{--faction-edge:#f2a6c1}
+.card-faction-hourai{--faction-edge:#90ccec}
+.card-faction-mountain{--faction-edge:#7fb37f}
+.card-faction-palace{--faction-edge:#8a6bbf}
+.card-faction-sage{--faction-edge:#cfcfcf}
+.card-faction-hakurei{--faction-edge:#e0483f}
+.card-faction-sunflower{--faction-edge:#f2c14e}
+.card-faction-hell{--faction-edge:#ff6a3d}
+.card-faction-heaven{--faction-edge:#79ceff}
+.card-faction-temple{--faction-edge:#d7a449}
+.card-faction-kourindou{--faction-edge:#c69e64}
+.card-faction-token{--faction-edge:#aa80c9}
+.draw-return-ghost.ability-byakuren{animation:byakurenDiscardFlight .95s cubic-bezier(.2,.75,.3,1) both}
+.draw-return-ghost.ability-byakuren::before,.draw-return-ghost.ability-byakuren::after{display:none}
+.temple-fx.byakuren-turns svg{animation:templeMandala 1.15s ease-out both}
+@media(prefers-reduced-motion:reduce){.draw-return-ghost.ability-byakuren{animation:none}}
 
 </style>
 </head>
@@ -2718,8 +2738,8 @@ const CARDS = [
 ];
 
 CARDS.push(
-  {id:'temple_byakuren',faction:'temple',name:'Hijiri Byakuren',crown:true,cost7:true,
-    desc:'[Cost VII] Placed: Send three other board cards to your discard pile, turn their spaces into wasteland and take three extra turns. Each Myouren Temple card on the board reduces the cost by one.'},
+  {id:'temple_byakuren',faction:'temple',name:'Hijiri Byakuren',crown:true,costChoices:true,
+    desc:'Placed: Choose one effect.\n[Cost IV] Take three extra turns.\n[Cost III] Send three other board cards to the draw pile and turn their spaces into wasteland.\n[Cost II] Look at the top three cards of the draw pile. Take one and put the rest back in any order.\nEach other Myouren Temple card on the board reduces each cost by one.'},
   {id:'temple_shou',faction:'temple',name:'Toramaru Shou',cost1:true,
     desc:'[Cost I] Placed: Draw a card for each wasteland on the board, then clear all wasteland.'},
   {id:'temple_nue',faction:'temple',name:'Houjuu Nue',
@@ -2868,17 +2888,70 @@ class Game {
     if(this.placementBlockedForTurn[p]) this.placementBlockTurns[p]--;
   }
   endPlayerTurn(p){this.placementBlockedForTurn[p]=false;}
-  byakurenCost(placement=null){
-    const count=this.boardCells(cell=>this.boardFaction(cell.r,cell.c)==='temple').length;
-    const added=placement && this.boardFaction(placement.r,placement.c)!=='temple' ? 1 : 0;
-    return Math.max(0,7-count-added);
+  byakurenCost(placement=null,baseCost=4){
+    const caster=placement || this.boardCells(cell=>cell.id==='temple_byakuren')[0];
+    const count=this.boardCells(cell=>this.boardFaction(cell.r,cell.c)==='temple'
+      && !(caster && cell.r===caster.r && cell.c===caster.c)).length;
+    return Math.max(0,baseCost-count);
   }
   abilityCost(id,placement=null){
     const card=CARD[id];
-    return id==='temple_byakuren' ? this.byakurenCost(placement) : card.cost3?3:card.cost2?2:card.cost1?1:0;
+    return id==='temple_byakuren' ? this.byakurenCost(placement,2) : card.cost3?3:card.cost2?2:card.cost1?1:0;
   }
-  templeDiscardTargets(p,r=null,c=null){return this.boardCells(cell=>!(cell.r===r && cell.c===c) && this.canMoveBoardCard(cell.r,cell.c)
-    && this.canSelectBoardCard(cell.r,cell.c) && this.canEnterDiscard(p,cell.id));}
+  templeReturnTargets(r,c){return this.boardCells(cell=>!(cell.r===r && cell.c===c)
+    && this.canReturnBoardToDraw(cell.r,cell.c) && this.canSelectBoardCard(cell.r,cell.c))
+      .map(cell=>({...cell,id:this.cardAt(cell.r,cell.c)}));}
+  byakurenOptions(p,r,c){
+    const actor=this.cardAt(r,c) || 'temple_byakuren',payable=this.payableCards(p).filter(id=>id!==actor).length;
+    return [
+      {value:'turns',base:4,text:'Take three extra turns.'},
+      {value:'return',base:3,text:'Return three other board cards and turn their spaces into wasteland.'},
+      {value:'look',base:2,text:'Look at three cards, take one and order the rest.'}
+    ].map(option=>{
+      const cost=this.byakurenCost({r,c},option.base);
+      const available=option.value==='return' ? this.templeReturnTargets(r,c).length>0
+        : option.value==='look' ? this.drawPile.length+cost>0 : true;
+      return {...option,cost,label:`${cost ? `[Cost ${romanNumeral(cost)}]` : '[Free]'} ${option.text}`,
+        disabled:payable<cost || !available};
+    });
+  }
+  byakurenOptionValue(p,r,c,option){
+    const held=this.players[p].hand.filter(id=>id!==(this.cardAt(r,c)||'temple_byakuren'));
+    if(option.value==='turns'){
+      const templeHeld=held.filter(id=>CARD[id].faction==='temple').length;
+      const otherPayable=held.filter(id=>this.canHandEnterPile(id) && CARD[id].faction!=='temple').length;
+      const retainedTemple=Math.max(0,templeHeld-Math.max(0,option.cost-otherPayable));
+      const actions=Math.min(3,Math.max(0,held.length-option.cost)+this.drawPile.length+option.cost);
+      return actions*.8+Math.min(3,retainedTemple)*1.5-option.cost*.45;
+    }
+    if(option.value==='return'){
+      const targets=this.templeReturnTargets(r,c).slice().sort((a,b)=>(this.boardFaction(a.r,a.c)==='temple')-(this.boardFaction(b.r,b.c)==='temple')).slice(0,3);
+      return targets.reduce((n,cell)=>n+(this.boardFaction(cell.r,cell.c)==='temple' ? -3 : .65+(CARD[cell.id].crown ? .35 : 0)),0)-option.cost*.3;
+    }
+    return 1.2-option.cost*.45;
+  }
+  async chooseByakurenEffect(p,r,c){
+    const options=this.byakurenOptions(p,r,c),available=options.filter(option=>!option.disabled);
+    if(!available.length)return null;
+    if(!this.players[p].isAI)return await this.chooseFromList(p,[...options,{label:'Skip ability',value:null}],'Makai Fantastica — choose one effect');
+    if(this.aiMakesMistake('target'))return available[Math.floor(Math.random()*available.length)].value;
+    available.sort((a,b)=>this.byakurenOptionValue(p,r,c,b)-this.byakurenOptionValue(p,r,c,a));
+    return this.byakurenOptionValue(p,r,c,available[0])>0 ? available[0].value : null;
+  }
+  async chooseDrawPileCard(p,ids,title,ordering=false){
+    if(!ids.length)return null;
+    if(!this.players[p].isAI)return this.ui?.pickHandCard
+      ? await this.ui.pickHandCard(title,ids.slice(),'Draw pile',{heading:ordering?'Choose the next top card':'Makai Fantastica — top three cards',
+        instruction:ordering?'This card will be the next card drawn. The other card goes beneath it.':'Choose a card to take. Double-click a card to inspect it.'})
+      : await this.chooseFromList(p,ids.map(id=>({label:CARD[id].name,value:id})),title);
+    if(this.aiMakesMistake('target'))return ids[Math.floor(Math.random()*ids.length)];
+    const value=id=>{
+      const faction=CARD[id].faction,size=FACTIONS[faction]?.size||0;
+      const progress=this.factionCells(faction).length+this.players[p].hand.filter(card=>CARD[card].faction===faction).length;
+      return (this.isWildActive(id)?12:0)+(size && progress+1>=size?10:0)+progress*2+(CARD[id].crown?1:0)+(faction==='sage'?1:0);
+    };
+    return ids.slice().sort((a,b)=>ordering ? value(a)-value(b) : value(b)-value(a))[0];
+  }
   templeWasteland(){return this.allTiles().filter(cell=>this.wastelandAt(cell.r,cell.c));}
   presentTemple(effect,details){
     if(this.cancelled)return;
@@ -2896,9 +2969,9 @@ class Game {
       : await this.chooseFromList(p,ids.map(id=>({label:CARD[id].name,value:id})),'Nue — choose an ability');
     if(this.aiMakesMistake('target'))return ids[Math.floor(Math.random()*ids.length)];
     const score=id=>{
-      const cost=this.abilityCost(id);
+      const cost=this.abilityCost(id,{r,c});
       if(this.payableCards(p).length<cost || (CARD[id].crown && this.eirinActive()))return -10;
-      if(id==='temple_byakuren')return Math.min(3,this.templeDiscardTargets(p,r,c).length)+3;
+      if(id==='temple_byakuren')return Math.max(0,...this.byakurenOptions(p,r,c).filter(option=>!option.disabled).map(option=>this.byakurenOptionValue(p,r,c,option)));
       if(id==='temple_shou')return Math.min(this.drawPile.length+cost,this.templeWasteland().length);
       if(id==='temple_murasa')return 2;
       if(id==='sage_kasen')return 2;
@@ -3198,7 +3271,7 @@ class Game {
   estimateDirectDiscardPoints(playerIdx, cardId, r, c){
     if(this.isProtected(r,c)) return 0;
     switch(cardId){
-      case 'temple_byakuren': return this.payableCards(playerIdx).filter(id=>id!==cardId).length>=this.byakurenCost({r,c}) ? Math.min(3,this.templeDiscardTargets(playerIdx,r,c).length) : 0;
+      case 'temple_byakuren': return 0;
       case 'palace_yuugi': return this.payableCards(playerIdx).filter(id=>id!==cardId).length>=2 && this.yuugiTargets(r,c).length ? 1 : 0;
       case 'haku_yuyuko': {
         if(this.payableCards(playerIdx).filter(id=>id!==cardId).length===0) return 0;
@@ -3246,6 +3319,10 @@ class Game {
         return Math.min(4,this.drawPile.length+returned)-returned;
       }
       case 'temple_shou': return Math.min(this.drawPile.length+1,this.templeWasteland().length);
+      case 'temple_byakuren': {
+        const caster=this.boardCells(cell=>cell.id===cardId)[0] || {r:-1,c:-1};
+        return !this.eirinActive() && this.byakurenOptions(playerIdx,caster.r,caster.c).some(option=>option.value==='look' && !option.disabled) ? 1 : 0;
+      }
       case 'mtn_sanae': return this.sanaeDrawCount();
       case 'hourai_mokou': return player.discard.length;
       case 'sage_ran': return this.isActiveOnBoard('sage_yukari') ? 0 : 1;
@@ -3778,27 +3855,54 @@ class Game {
     if(CARD[cardId].crown && this.eirinActive() && cardId!=='hourai_eirin')return {};
     switch(CARD[cardId].token ? 'trap_token' : cardId){
       case 'temple_byakuren': {
-        const cost=self.byakurenCost();
+        const effect=await self.chooseByakurenEffect(playerIdx,r,c);
+        if(self.cancelled)break;
+        const option=self.byakurenOptions(playerIdx,r,c).find(choice=>choice.value===effect && !choice.disabled);
+        if(!option)break;
+        const cost=option.cost;
         if(cost && !await self.payCost(playerIdx,cost))break;
         if(self.cancelled)break;
-        const targets=self.templeDiscardTargets(playerIdx,r,c);
-        const chosen=await self.chooseCells(playerIdx,Math.min(3,targets.length),targets,'Byakuren — choose other cards for your discard pile');
+        if(effect==='turns'){
+          self.presentTemple('byakuren-turns',{r,c,playerIdx});
+          self.log(`${me} takes three extra turns with Makai Fantastica${cost ? ` (Cost ${romanNumeral(cost)})` : ' for free'}.`);
+          return {extraTurns:3};
+        }
+        if(effect==='look'){
+          const peek=self.drawPile.slice(-3).reverse();
+          const chosen=await self.chooseDrawPileCard(playerIdx,peek,'Take selected card');
+          if(self.cancelled || !peek.includes(chosen))break;
+          const remaining=peek.filter(id=>id!==chosen);
+          const top=remaining.length>1 ? await self.chooseDrawPileCard(playerIdx,remaining,'Put selected card on top',true) : remaining[0];
+          if(self.cancelled)break;
+          if(remaining.includes(top)){remaining.splice(remaining.indexOf(top),1);remaining.unshift(top);}
+          // The deck's last element is its top. Preserve every untouched card below the peek.
+          if(peek.some(id=>!self.drawPile.includes(id)))break;
+          self.drawPile.splice(-peek.length,peek.length,...remaining.slice().reverse());
+          self.addToHand(playerIdx,chosen);
+          try{self.ui?.onDrawCard?.({playerIdx,cardId:chosen,effect:'byakuren-look',source:{r,c}});}catch(_error){}
+          self.log(`${me} looks at ${peek.length} draw-pile card${peek.length===1?'':'s'}, takes one and orders the rest.`);
+          self.render();break;
+        }
+        const targets=self.templeReturnTargets(r,c);
+        const chosen=self.players[playerIdx].isAI && !self.aiMakesMistake('target')
+          ? targets.slice().sort((a,b)=>(self.boardFaction(a.r,a.c)==='temple')-(self.boardFaction(b.r,b.c)==='temple') || self.pointValue(b.id)-self.pointValue(a.id)).slice(0,3)
+          : await self.chooseCells(playerIdx,Math.min(3,targets.length),targets,'Byakuren — choose other cards to return to the draw pile');
         if(self.cancelled)break;
         const strike=self.presentTemple('byakuren',{r,c,targets:chosen,playerIdx});
         if(strike?.ready && await strike.ready===false)break;
         if(self.cancelled)break;
         let hit=0;
-        for(const cell of chosen){
+        for(const cell of chosen.slice(0,3)){
           if(cell.r===r && cell.c===c)continue;
-          if(self.moveBoardToDiscard(cell.r,cell.c,playerIdx,'byakuren')){
+          if(self.canSelectBoardCard(cell.r,cell.c) && self.moveBoardToDraw(cell.r,cell.c,'byakuren')){
             self.setWastelandAt(cell.r,cell.c,true);hit++;
           }
         }
-        self.render();
+        self.shuffleDrawPile();self.render();
         if(strike?.finished)await strike.finished;
         if(self.cancelled)break;
-        self.log(`${me} strikes ${hit} card${hit===1?'':'s'} into their discard pile, leaves wasteland in their spaces and gains three extra turns (Cost ${romanNumeral(cost)}).`);
-        return {extraTurns:3};
+        self.log(`${me} returns ${hit} card${hit===1?'':'s'} to the draw pile and leaves wasteland in their spaces${cost ? ` (Cost ${romanNumeral(cost)})` : ' for free'}.`);
+        break;
       }
       case 'temple_shou': {
         if(!await self.payCost1(playerIdx) || self.cancelled)break;
@@ -5015,7 +5119,8 @@ function showCardExit({cardId, playerIdx, source}, destination){
   ghost.style.height = `${height}px`;
   if(effect==='byakuren'){
     const seat=el('seats').querySelector(`.seat-${playerIdx}`);
-    const end=(seat?.querySelector('.lanterns') || seat)?.getBoundingClientRect() || handOrSeatRect(playerIdx);
+    const end=destination==='draw' ? el('draw-pile-face').getBoundingClientRect()
+      : (seat?.querySelector('.lanterns') || seat)?.getBoundingClientRect() || handOrSeatRect(playerIdx);
     if(end){ghost.style.setProperty('--hit-fly-x',`${end.left+end.width/2-left-width/2}px`);ghost.style.setProperty('--hit-fly-y',`${end.top+end.height/2-top-height/2}px`);}
   }
   if(effect==='ichirin' && Number.isInteger(source.r)){
@@ -5644,6 +5749,7 @@ function showTempleEffect(details){
     const petals=Array.from({length:8},(_,i)=>`<path d="M50 50Q18 13 50 4Q82 13 50 50Z" transform="rotate(${i*45} 50 50)"/>`).join('');
     const art={
       byakuren:`<circle cx="50" cy="50" r="42"/><circle cx="50" cy="50" r="28"/>${petals}<path d="M50 8L86 71H14Z"/>`,
+      'byakuren-turns':`<circle cx="50" cy="50" r="42"/><path d="M50 17V50L72 63 M35 30V69 M50 30V69 M65 30V69"/>${petals}`,
       strength:'<circle cx="50" cy="50" r="34"/><path d="M50 0L44 36 16 8 37 43 0 50 37 57 16 92 44 64 50 100 56 64 84 92 63 57 100 50 63 43 84 8 56 36Z"/>',
       shou:'<circle cx="50" cy="50" r="34"/><path d="M50 12L78 40 50 88 22 40Z M22 40H78 M50 12L38 40 50 88 62 40Z"/>'+petals,
       nue:'<path d="M10 50Q30 0 55 22T88 50Q64 98 44 74T10 50Z M20 40L80 60 M20 60L80 40"/><circle cx="50" cy="50" r="9"/>',
@@ -5788,7 +5894,7 @@ const CARD_ART_CLASS = {
   heaven_tenshi: 'card-art-tenshi',
   heaven_iku: 'card-art-iku',
 }; // per-card portrait art, takes priority over the faction-level background
-function cardBgClass(c, cardId){ return CARD_ART_CLASS[cardId] || FACTION_BG_CLASS[c.faction] || ''; }
+function cardBgClass(c, cardId){ return `${CARD_ART_CLASS[cardId] || FACTION_BG_CLASS[c.faction] || ''} card-faction-${c.faction}`.trim(); }
 
 const CARD_DETAIL_FACTION_ICONS = {
   sdm: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/icons/scarlet_devil_mansion.png",
@@ -5879,7 +5985,7 @@ Object.assign(CARD_DETAIL_PORTRAITS,{
 Object.assign(CARD_DETAIL_PORTRAITS,{"temple_byakuren": "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/myouren_temple/hijiri_byakuren.webp", "temple_shou": "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/myouren_temple/toramaru_shou.webp", "temple_nue": "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/myouren_temple/houjuu_nue.webp", "temple_murasa": "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/myouren_temple/murasa_minamitu.webp", "temple_ichirin": "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/myouren_temple/kumoi_ichirin.webp"});
 const TEMPLE_UNZAN_PORTRAIT="https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/myouren_temple/unzan.webp";
 const CARD_ABILITY_NAMES = {
-  temple_byakuren:'Superhuman Strength',temple_shou:'Radiant Treasure',temple_nue:'Ability Chimera',temple_murasa:'Bottomless Vortex',temple_ichirin:'Fist Smash',
+  temple_byakuren:'Makai Fantastica',temple_shou:'Radiant Treasure',temple_nue:'Ability Chimera',temple_murasa:'Bottomless Vortex',temple_ichirin:'Fist Smash',
   sdm_remilia: 'Fate Manipulation',
   sdm_flandre: '“Eye” Destruction',
   sdm_patchouli: 'Magical Gathering',
@@ -6058,6 +6164,7 @@ function openCardDetails(cardId,{followReference=false}={}){
   detail.className = ['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower','hell','heaven','temple'].includes(c.faction)
     ? `${c.faction} detail-card-${cardId}`
     : `other-faction detail-card-${cardId}`;
+  detail.classList.add(`card-faction-${c.faction}`);
   if(c.crown && game && game.eirinActive()) detail.classList.add('eirin-muted');
   const factionIcon = CARD_DETAIL_FACTION_ICONS[c.faction];
   const iconHost = el('card-detail-icon');
@@ -7087,6 +7194,7 @@ const ui = {
       options.forEach(opt => {
         const btn = document.createElement('button');
         btn.className = 'modal-opt';
+        btn.disabled=!!opt.disabled;
         setRuleText(btn,opt.label,{cards:false});
         btn.addEventListener('click', () => {
           playGameCue('select');
@@ -7193,7 +7301,8 @@ const ui = {
       const cancel = el('look-into-cancel');
       let selected = null;
       let settled = false;
-      el('look-into-title').textContent = `${possessive(targetName)} hand`;
+      el('look-into-title').textContent = opts.heading || `${possessive(targetName)} hand`;
+      el('look-into-instruction').textContent=opts.instruction || 'Select a card, then confirm. Double-click it or press I to inspect its ability.';
       confirm.textContent = title;
       confirm.disabled = true;
       inspect.disabled = true;
@@ -7464,7 +7573,7 @@ function aiCostCanResolve(playerIdx, cardId, r, c){
     && game.yuyukoTargets(r,c).length>0 && !game.eirinActive();
   const cost=game.abilityCost(cardId,{r,c});
   if(cardId==='temple_shou' && !game.templeWasteland().length)return false;
-  if(cardId==='temple_byakuren' && !game.templeDiscardTargets(playerIdx,r,c).length)return false;
+  if(cardId==='temple_byakuren')return !game.eirinActive() && game.byakurenOptions(playerIdx,r,c).some(option=>!option.disabled);
   if(cardId==='temple_ichirin' && !game.ichirinPushes(r,c).length)return false;
   if(!cost) return true;
   if(game.payableCards(playerIdx).filter(id=>id!==cardId).length<cost || (card.crown && game.eirinActive())) return false;
@@ -7635,7 +7744,10 @@ function aiFactionForecast(playerIdx,cardId){
     const held=hand.filter(id=>CARD[id].faction===faction || game.isWildActive(id));
     let available=held.length,bonus=0;
     const active=!game.eirinActive() || !card.crown;
-    if(active && cardId==='temple_byakuren' && game.payableCards(playerIdx).filter(id=>id!==cardId).length>=game.byakurenCost())bonus=Math.min(3,held.length);
+    if(active && cardId==='temple_byakuren'){
+      const cost=game.byakurenCost(),otherPayable=game.payableCards(playerIdx).filter(id=>id!==cardId && CARD[id].faction!==faction).length;
+      if(game.payableCards(playerIdx).filter(id=>id!==cardId).length>=cost)bonus=Math.min(3,Math.max(0,held.length-Math.max(0,cost-otherPayable)));
+    }
     if(active && cardId==='sdm_sakuya')bonus=Math.min(2,held.length);
     if(active && cardId==='mtn_kanako' && held.some(id=>CARD[id].faction==='mountain'))bonus=1;
     if(cardId==='hell_komachi' && game.isActiveOnBoard('hell_eiki'))bonus=1;
@@ -8778,7 +8890,7 @@ const RINNOSUKE_LINES={
     'The trade is done. I’ll leave the next move to you.'
   ]
 };
-let rinnosukeBubbleTimer=null,rinnosukeOpeningTimer=null;
+let rinnosukeBubbleTimer=null,rinnosukeOpeningTimer=null,rinnosukeBubbleRevision=0;
 let rinnosukeLastSpoke=0;
 const rinnosukeLastLineByKind=new Map();
 function dockRinnosukeBubble(){
@@ -8790,6 +8902,7 @@ function dockRinnosukeBubble(){
   bubble.style.removeProperty('--bubble-tail-y');
 }
 function clearRinnosukeBubble(){
+  rinnosukeBubbleRevision++;
   if(rinnosukeBubbleTimer) clearTimeout(rinnosukeBubbleTimer);
   if(rinnosukeOpeningTimer) clearTimeout(rinnosukeOpeningTimer);
   rinnosukeBubbleTimer=null;rinnosukeOpeningTimer=null;
@@ -8828,8 +8941,10 @@ function positionRinnosukeBubble(){
   bubble.style.setProperty('--bubble-tail-x',`${clamp(x-left,18,w-18)}px`);
   bubble.style.setProperty('--bubble-tail-y',`${clamp(y-top,18,h-18)}px`);
 }
+function rinnosukeTradeSelection(){return !!selectedHandCard || !!pendingCellChoice?.dragOnly || !!pendingCellChoice?.shopTrade;}
 function speakRinnosuke(kind,{force=false}={}){
   if(!game || game.cancelled || !game.shopkeeperAvailable()) return false;
+  if(rinnosukeTradeSelection() && kind!=='exchange')return false;
   const now=Date.now();
   if(!force && rinnosukeLastSpoke && now-rinnosukeLastSpoke<(kind==='observe'?9000:2500)) return false;
   const lines=RINNOSUKE_LINES[kind];
@@ -8844,13 +8959,14 @@ function speakRinnosuke(kind,{force=false}={}){
   rinnosukeLastSpoke=now;
   positionRinnosukeBubble();
   if(rinnosukeBubbleTimer) clearTimeout(rinnosukeBubbleTimer);
-  const match=game;
-  const timer=setTimeout(()=>{
-    if(rinnosukeBubbleTimer!==timer) return;
-    if(game===match) bubble.hidden=true;
-    rinnosukeBubbleTimer=null;
-  },kind==='welcome'?4200:3400);
-  rinnosukeBubbleTimer=timer;
+  const match=game,revision=++rinnosukeBubbleRevision;
+  const hideWhenIdle=()=>{
+    if(rinnosukeBubbleRevision!==revision)return;
+    if(game!==match || game.cancelled){rinnosukeBubbleTimer=null;return;}
+    if(rinnosukeTradeSelection()){rinnosukeBubbleTimer=setTimeout(hideWhenIdle,400);return;}
+    bubble.hidden=true;rinnosukeBubbleTimer=null;
+  };
+  rinnosukeBubbleTimer=setTimeout(hideWhenIdle,kind==='welcome'?4200:3400);
   return true;
 }
 function onRinnosukeApproach(e){
