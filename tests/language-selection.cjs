@@ -21,7 +21,7 @@ const ctx={console,Math,window:{localStorage:{getItem:k=>storage.get(k),setItem:
 vm.createContext(ctx);
 vm.runInContext(slice('const DIRS4','/* ===================== UI layer')+'\nlet game=null;\n'+slice('const CARD_ABILITY_NAMES =','/* Only trusted rule text')+
 slice('/* Only trusted rule text becomes references','let detailReturnFocus')+slice('function escapeLogHtml(','function renderLog(')+
-'this.api={CARD,CARDS,FACTIONS,ZH_CARDS,ZH_TEXT,canonicalCardName,translateGameText,setGameLanguage,initializeGameLanguage,localizeTextNode,ruleTextHtml,setRuleText,openRuleTerm,closeRuleTerm,language:()=>gameLanguage,setGame:g=>game=g};',ctx);
+'this.api={CARD,CARDS,FACTIONS,CARD_ABILITY_NAMES,ZH_CARDS,ZH_TEXT,canonicalCardName,translateGameText,setGameLanguage,initializeGameLanguage,localizeTextNode,ruleTextHtml,setRuleText,openRuleTerm,closeRuleTerm,language:()=>gameLanguage,setGame:g=>game=g};',ctx);
 const A=ctx.api,tests=[],test=(name,fn)=>tests.push([name,fn]);
 test('Both selectors offer English and Chinese, and preference is saved without restarting',()=>{
  for(const id of ['menu-language','game-language'])assert(html.includes(`id="${id}"`));
@@ -30,7 +30,7 @@ test('Both selectors offer English and Chinese, and preference is saved without 
 });
 test('Every real card has a Chinese name, ability title and complete rules without changing engine data',()=>{
  A.setGameLanguage('zh-CN');assert.equal(Object.keys(A.ZH_CARDS).length,A.CARDS.length);
- for(const card of A.CARDS){const [name,ability,description]=A.ZH_CARDS[card.id];assert.equal(A.translateGameText(card.name),name);assert.equal(A.translateGameText(card.desc),description);assert(ability);assert(!/[A-Za-z]{3,}/.test(description.replace(/\b[IVXLCDMN]+\b/g,'')),card.id);assert.notEqual(card.name,name);}
+ for(const card of A.CARDS){const [name,ability,description]=A.ZH_CARDS[card.id];assert.equal(A.translateGameText(card.name),name);assert.equal(A.translateGameText(card.desc),description);assert.equal(A.translateGameText(A.CARD_ABILITY_NAMES[card.id]),ability);assert(ability);assert(!/[A-Za-z]{3,}/.test(description.replace(/\b[IVXLCDMN]+\b/g,'')),card.id);assert.notEqual(card.name,name);}
 });
 test('Chinese faction icons, clickable card references and Cost/Wasteland help survive localization',()=>{
  const rule=A.ruleTextHtml(A.CARD.mtn_sanae.desc);assert(rule.includes('data-inspect-card="mtn_kanako"'));assert(rule.includes('八坂神奈子'));
@@ -64,5 +64,13 @@ test('Clicked term popups are Chinese immediately and switch languages without l
   const anchor=el('term-'+term);A.openRuleTerm(term,anchor);assert.equal(el('rule-term-title').textContent,title);assert(!/[A-Za-z]{3,}/.test(el('rule-term-copy').textContent));assert.equal(el('rule-term-popover').hidden,false);assert.equal(anchor.attributes['aria-expanded'],'true');
   A.setGameLanguage('en');assert.equal(el('rule-term-title').textContent,term==='cost'?'Cost':'Wasteland');assert.equal(anchor.attributes['aria-expanded'],'true');A.setGameLanguage('zh-CN');assert.equal(el('rule-term-title').textContent,title);A.closeRuleTerm();assert.equal(el('rule-term-popover').hidden,true);
  }
+});
+test('Crown references become images with a language-aware label and preserve non-Crown wording',()=>{
+ A.setGameLanguage('zh-CN');
+ for(const id of ['hourai_eirin','reimu','marisa']){const rule=A.ruleTextHtml(A.CARD[id].desc);assert(rule.includes('class="crown-reference"'));assert(rule.includes('aria-label="领主"'));assert(rule.includes('<svg'));assert(!rule.includes('王冠'));}
+ assert(A.ruleTextHtml(A.CARD.marisa.desc).includes('非<span class="crown-reference"'));assert.equal(A.translateGameText('Crown card'),'领主卡牌');assert.equal(A.translateGameText('crown'),'领主');
+ assert(A.ruleTextHtml('Crown cards',{cards:false}).includes('class="crown-reference"'));
+ assert(!A.ruleTextHtml('crowned').includes('crown-reference'));
+ A.setGameLanguage('en');assert(A.ruleTextHtml(A.CARD.marisa.desc).includes('non-<span class="crown-reference"'));assert(A.ruleTextHtml('Crown').includes('aria-label="Crown"'));assert.equal(A.translateGameText('Crown card'),'Crown card');
 });
 (async()=>{for(const [name,fn] of tests){await fn();console.log('PASS '+name);}console.log(`${tests.length}/${tests.length} language selection checks passed`);})().catch(error=>{console.error(error);process.exitCode=1;});
