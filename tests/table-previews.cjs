@@ -31,12 +31,12 @@ const storage=new Map(),events={},inspected=[];
 const window={innerWidth:1200,innerHeight:800,matchMedia:()=>({matches:reduced}),localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)},addEventListener:(k,fn)=>(events[k]??=[]).push(fn),removeEventListener:(k,fn)=>{events[k]=(events[k]||[]).filter(f=>f!==fn);},scrollTo(){}};
 const ctx={console,Math:math,Date:{now:()=>now},performance:{now:()=>now},document,window,el,openCardDetails:id=>inspected.push(id),cardBoardHtml:id=>`<div class="board-card">${id}</div>`,screen:{orientation:{unlock(){}}},updateStartButtonState(){},queueMobileViewport(){},setRuleText:(node,text)=>node.textContent=text,playGameCue(){},requestAnimationFrame:fn=>{frames.set(++nextFrame,fn);return nextFrame;},cancelAnimationFrame:id=>frames.delete(id),resetGameView(){ctx.api.finishTitleCardDrag(true);}};
 vm.createContext(ctx);
-vm.runInContext(js.slice(js.indexOf('const DIRS4'),js.indexOf('/* ===================== UI layer'))+'\n'+
+vm.runInContext(js.slice(js.indexOf('const DIRS4'),js.indexOf('/* ===================== UI layer'))+'\nlet game=null;\n'+
  js.slice(js.indexOf('let titleCardDrag=null'),js.indexOf('let chosenPlayerCount = 3;'))+'\n'+
  js.slice(js.indexOf('const DEFAULT_CROWN_LIGHT'),js.indexOf('const FACTION_CROWN_LIGHT'))+'\n'+
  js.slice(js.indexOf('function crownLightFor'),js.indexOf('function discardLightFor'))+'\n'+
  js.slice(js.indexOf('const CROWN_SCENE_BACKGROUND'),js.indexOf('function triggerPlacementPresentation'))+'\n'+
- js.slice(js.indexOf('function returnToMainMenu(){'),js.indexOf('function startNewGame(){'))+
+ js.slice(js.indexOf('function returnToMainMenu(){'),js.indexOf('function startNewGame({'))+
  '\nthis.api={CARD,drawTitlePreviewCards,renderTitleTableCards,finishTitleCardDrag,returnToMainMenu,showCrownBackdrop,clearCrownBackdrop,CROWN_SCENE_BACKGROUND,CROWN_LIGHT_PALETTES,openByakurenPeek,cardChoiceGroupRect,stepTableCardSlide,clearTableCardSlides,slideCount:()=>tableCardSlides.size,averageWoodColor,cancelPeek:()=>cancelByakurenPeek?.(),drag:()=>titleCardDrag,resetPrevious:()=>lastTitleCardIds=[]};',ctx);
 const A=ctx.api,tests=[],test=(n,f)=>tests.push([n,f]);
 function frame(dt=16){now+=dt;const callbacks=[...frames.values()];frames.clear();callbacks.forEach(fn=>fn(now));}

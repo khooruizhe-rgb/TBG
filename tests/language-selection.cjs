@@ -73,6 +73,12 @@ test('Mobile fullscreen notices and draggable ability destinations have Chinese 
  A.setGameLanguage('zh-CN');for(const text of ['Tap anywhere to enter fullscreen.','Fullscreen is unavailable in this browser. Rotate your phone to play sideways.','Fullscreen was blocked. Tap Fullscreen to retry, or rotate your phone.','Drag a card into the highlighted area, or select it and confirm. Double-tap to inspect.','Must play next turn','AI 1 · Discard pile'])assert(!/[A-Za-z]{3,}/.test(A.translateGameText(text)),text);
  assert.equal(A.translateGameText('Your Hand'),'你的手牌');A.setGameLanguage('en');assert.equal(A.translateGameText('Must play next turn'),'Must play next turn');
 });
+test('AI testing controls, statistics and rate definitions have Chinese labels without changing exported IDs',()=>{
+ A.setGameLanguage('zh-CN');
+ const values=['AI test','Start AI test','Fast test (skip effects)','AI test data','Pause test','Resume test','Completed games','Faction claims','Card usage','Games in hand','Use rate','Claim rate','Placement share','Seat results','Average turns','Runtime errors','Only completed games count toward rates. Aborted games are excluded.','Use rate = games where the card was placed ÷ games where it entered a hand.'];
+ for(const value of values){const out=A.translateGameText(value);assert.notEqual(out,value);assert(!/[A-Za-z]{3,}/.test(out),out);}
+ assert.equal(A.CARD.medicine.id,'medicine');A.setGameLanguage('en');for(const value of values)assert.equal(A.translateGameText(value),value);
+});
 test('Physical card table instructions, discard regions and changing card counts are localized',()=>{
  A.setGameLanguage('zh-CN');
  for(const text of ['Move and stack cards freely. Drag one into the target area, then confirm. Double-tap to inspect.',"Each area is one player's discard pile. Move cards freely, then drag one into Your Hand and confirm.",'Confirm card choice','Place selected card here','Empty discard pile','Discard pile'])assert(!/[A-Za-z]{3,}/.test(A.translateGameText(text)),text);

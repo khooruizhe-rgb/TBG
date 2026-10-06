@@ -30,7 +30,7 @@ const context={console,Math,Set,Map,Promise,document,el,window:{scrollTo(){}},sc
   triggerPlacementPresentation(){},speakRinnosuke(){},captureHandPlacementArrival(){},syncHandSelection(){},
   clearHandDragPhysics(){},clearHandPlacementArrivals(){},closeMobileJournal(){},clearRinnosukeBubble(){},clearCrownBackdrop(){},clearMindEffects(){},
   removeYuukaBloom(){},releaseRectPointer(){},clearExpansionEffects(){},closeCardDetails(){},updateStartButtonState(){},
-  finishTitleCardDrag(){},clearTableCardSlides(){},renderTitleTableCards(){},
+  finishTitleCardDrag(){},clearTableCardSlides(){},renderTitleTableCards(){},cancelAITestAutomation(){},updateAITestControls(){},closeAITestDashboard(){},
   playGameCue(){},canAct:()=>true,requestAnimationFrame:fn=>fn(),clearRectPreview(){},renderStatus(){},renderBoard(){},
   tileElement:(r,c)=>{const key=r+','+c;if(!tiles.has(key)){const n=new Element();n.dataset={r,c};tiles.set(key,n);}return tiles.get(key);},
   waitForVisualEffects:()=>holdEffects?holdEffects.promise:Promise.resolve(true),runNextTurn:()=>normalStarts++,
@@ -49,7 +49,7 @@ vm.runInContext(slice('const DIRS4','/* ===================== UI layer')+`
   let humanActionResolving=false,handDragSettling=false,draggingCardId=null,lastPlacedCell=null,stuckStreak=0,timeStopDepth=0;
   let suppressTouchDropClick=null,announcedGameResult=null,cancelLookIntoView=null,cancelKoishiWalk=null,activeTenshiUpdraft=null,cancelRemiliaGather=null;
   const presentationWaiters=new Set(),sanaeArrivalUntil=new Map(),mokouArrivalUntil=new Map(),yukariArrivalUntil=new Map(),yuukaSunflowerUntil=new Map(),yuukaSunflowerBlooms=new Map(),wastelandCreationUntil=new Map(),remiliaArrivals=new Map(),koishiArrivalUntil=new Map();
-  let chosenBoardSize=5,chosenPlayerCount=4,chosenAIDifficulty='easy',customizeOn=false;
+  let chosenBoardSize=5,chosenPlayerCount=4,chosenAIDifficulty='easy',customizeOn=false,chosenAITestMode=false,chosenFastAITest=true,aiTestPaused=false;
   let rinnosukeOpeningTimer=null,rinnosukeLastSpoke=0;
   const customSelected=new Set();
   function cancelHandSelection(){selectedHandCard=null;pendingCellChoice=null;}
