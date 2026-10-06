@@ -2539,6 +2539,18 @@ body.tutorial-practice #debug-menu-btn{display:none}
 .ai-test-snapshot .ai-test-snapshot-board td{white-space:normal;min-width:90px;text-align:center;font-size:10px;vertical-align:top}
 .ai-test-snapshot .snapshot-wasteland{background:#9e806b33}
 
+#ai-lab-overlay{position:fixed;inset:0;z-index:400;isolation:isolate;display:none;align-items:center;justify-content:center;padding:2dvh 2vw;background:#0c080bcc}
+#ai-lab-overlay.show{display:flex}
+#ai-lab-panel{width:min(1100px,96vw);max-height:94dvh;overflow:auto;padding:20px;background:#f4e5cd;color:#4c3223;border:1px solid #c4a16e;border-radius:7px;box-shadow:0 18px 60px #120a08aa}
+#ai-lab-panel h2{margin:0;font-size:21px}#ai-lab-panel h3{color:#654331;font-size:16px;margin:18px 0 8px}
+#ai-lab-panel>.ai-test-note{line-height:1.5}#ai-lab-panel details{margin:14px 0}#ai-lab-panel summary{cursor:pointer;font-weight:700}
+#ai-lab-panel .pill-btn{color:#5c3f29;background:#f9eedb;border-color:#b4936a;font-size:12px}
+.ai-lab-settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:14px 0}
+.ai-lab-settings label{display:flex;flex-direction:column;gap:5px;font-size:12px}
+.ai-lab-settings input,.ai-lab-settings select{width:100%;min-width:0;padding:8px;color:#4c3223;background:#fff7e9;border:1px solid #b99d74;border-radius:4px;font:inherit}
+#ai-lab-progress{width:min(460px,70%);accent-color:#84623a}.ai-lab-verdict{font-weight:700;padding:12px;background:#dcc39d66;border-radius:5px}
+#ai-lab-errors{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px}#ai-lab-position table td{white-space:normal;min-width:80px;text-align:center;font-size:11px}
+
 </style>
 </head>
 <body>
@@ -2604,6 +2616,7 @@ body.tutorial-practice #debug-menu-btn{display:none}
       <label><input id="menu-ai-test-fast" type="checkbox" checked> <span>Fast test (skip effects)</span></label>
       <p>Finished games restart automatically. Open Test data to pause or export the results.</p>
     </div>
+      <button id="menu-ai-lab" class="pill-btn" type="button">AI evaluation lab</button>
     </details>
     <div id="custom-hand-picker" style="display:none; text-align:left; margin-top:14px;">
       <p style="color:var(--sakura); font-size:0.85rem; text-align:center;">
@@ -2689,12 +2702,52 @@ body.tutorial-practice #debug-menu-btn{display:none}
           <input type="checkbox" id="playtest-toggle">
           <span>🔍 Playtest: reveal hands &amp; discards</span>
         </label>
+      <button id="debug-ai-lab" class="pill-btn" type="button">AI evaluation lab</button>
       <button id="ai-test-stats-btn" class="pill-btn" type="button" hidden>Test data</button>
       <button id="ai-test-pause-btn" class="pill-btn" type="button" hidden>Pause test</button>
       <label id="ai-test-fast-label" hidden><input id="ai-test-fast" type="checkbox"> <span>Fast test</span></label>
     </div>
   </section>
 </div>
+<div id="ai-lab-overlay" role="dialog" aria-modal="true" aria-labelledby="ai-lab-title">
+ <section id="ai-lab-panel">
+  <div class="ai-test-heading"><h2 id="ai-lab-title">AI evaluation lab</h2><button class="pill-btn" id="ai-lab-close" type="button">Back to game</button></div>
+  <p class="ai-test-note">Both policies use the current rules. Each opening tests every mixed seat lineup. Unknown hands are never used as clues.</p>
+  <details open><summary>Version comparison</summary>
+   <div class="ai-lab-settings">
+    <label>Comparison policy <select id="ai-lab-opponent">
+     <option value="baseline">Previous AI</option><option value="no-assembly">Without cost preservation</option><option value="no-kanako">Without Kanako reserve</option>
+     <option value="no-nitori">Without Nitori setup</option><option value="no-hecatia">Without Hecatia setup</option><option value="no-yukari">Without Yukari rework</option><option value="no-matara">Without Matara rework</option>
+    </select></label>
+    <label>Opening groups <input id="ai-lab-blocks" type="number" min="1" max="1000" value="40"></label>
+    <label>Players <select id="ai-lab-players"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option></select></label>
+    <label>Board size <select id="ai-lab-size"><option value="both">Both sizes</option><option value="4">4 × 4</option><option value="5">5 × 5</option></select></label>
+    <label>AI difficulty <select id="ai-lab-difficulty"><option value="hard">Hard</option><option value="normal">Normal</option><option value="easy">Easy</option></select></label>
+    <label>Seed <input id="ai-lab-seed" type="text" maxlength="80" value="TBG-2026-10-06"></label>
+    <label>Opening set <select id="ai-lab-phase"><option value="development">Development set</option><option value="holdout">Reserved validation set</option></select></label>
+   </div>
+   <p class="ai-test-note">Three-player tests play six games per opening group. At least 20 complete groups are needed for a conclusion. Keep the validation set unused while tuning.</p>
+   <button class="pill-btn" id="ai-lab-start" type="button">Start comparison</button>
+  </details>
+  <details><summary>Position fork</summary>
+   <p class="ai-test-note">The saved position is the start of the latest regular turn, before its action. It does not capture an unfinished extra-turn chain.</p>
+   <div class="ai-test-actions"><button class="pill-btn" id="ai-lab-load-position" type="button">Use latest turn-start position</button><button class="pill-btn" id="ai-lab-import" type="button">Import position</button><button class="pill-btn" id="ai-lab-save-position" type="button" disabled>Save position</button><input id="ai-lab-file" type="file" accept=".json,application/json" hidden></div>
+   <div id="ai-lab-position"></div>
+   <div class="ai-lab-settings"><label>Action A <select id="ai-lab-action-a"></select></label><label>Action B <select id="ai-lab-action-b"></select></label>
+    <label>Trials per continuation <input id="ai-lab-trials" type="number" min="1" max="500" value="20"></label>
+    <label>Continuation policy <select id="ai-lab-continuation"><option value="both">Both policies</option><option value="current">Current AI</option><option value="baseline">Previous AI</option></select></label>
+   </div>
+   <p class="ai-test-note">A and B share the same sampled hidden cards and rule seed in each trial. Rival private clue memories are omitted. These are estimates under the chosen continuations, not optimal-play proofs.</p>
+   <p class="ai-test-note">First moves can be placements, draws or trades. Ability targets and payments are resolved by the continuation AI.</p>
+   <button class="pill-btn" id="ai-lab-fork" type="button" disabled>Run position fork</button>
+  </details>
+  <div class="ai-test-actions"><button class="pill-btn" id="ai-lab-pause" type="button" disabled>Pause test</button><button class="pill-btn" id="ai-lab-stop" type="button" disabled>Stop test</button><button class="pill-btn" id="ai-lab-export" type="button" disabled>Export JSON</button><button class="pill-btn" id="ai-lab-export-csv" type="button" disabled>Export CSV</button></div>
+  <p id="ai-lab-state" role="status">Ready to evaluate.</p><progress id="ai-lab-progress" value="0" max="1"></progress> <span id="ai-lab-count"></span>
+  <p class="ai-test-note">Score rate awards one point to the winner. Stalemates award it to the highest score, shared on ties. Error and turn-limit games exclude their entire opening group. Intervals resample whole opening groups.</p>
+  <div id="ai-lab-report"></div><details><summary>Runtime errors</summary><pre id="ai-lab-errors"></pre></details>
+ </section>
+</div>
+
 <div id="ai-test-overlay" role="dialog" aria-modal="true" aria-labelledby="ai-test-title">
   <section id="ai-test-panel">
     <div class="ai-test-heading"><h2 id="ai-test-title">AI test data</h2><button id="ai-test-close" class="pill-btn" type="button">Back to game</button></div>
@@ -2796,6 +2849,34 @@ const AI_DIFFICULTIES=Object.freeze({
   normal:Object.freeze({name:'Normal',action:.18,target:.22,cost:.18,guess:.18}),
   hard:Object.freeze({name:'Hard',action:0,target:0,cost:0,guess:0})
 });
+
+// Strategy versions share this Game's rules; only decision policies vary.
+const AI_POLICY_PROFILES=Object.freeze({
+  current:{label:'Current AI'},baseline:{label:'Previous AI'},
+  'no-assembly':{label:'Without cost preservation',disabled:'assembly'},
+  'no-kanako':{label:'Without Kanako reserve',disabled:'kanako'},
+  'no-nitori':{label:'Without Nitori setup',disabled:'nitori'},
+  'no-hecatia':{label:'Without Hecatia setup',disabled:'hecatia'},
+  'no-yukari':{label:'Without Yukari rework',disabled:'yukari'},
+  'no-matara':{label:'Without Matara rework',disabled:'matara'}
+});
+function aiPolicyHas(p,feature,match=game){
+  const profile=AI_POLICY_PROFILES[match?.players[p]?.aiPolicy] || AI_POLICY_PROFILES.current;
+  return profile!==AI_POLICY_PROFILES.baseline && profile.disabled!==feature;
+}
+function captureAIEvaluationSnapshot(match,scheduledExtra=0){
+  const state={};
+  for(const [key,value] of Object.entries(match)){
+    if(['ui','testMetrics','testAbilityFrames','evaluationSnapshot'].includes(key))continue;
+    if(value===undefined || typeof value==='function')continue;
+    if(key==='handKnowledge')state[key]=value.map(memory=>[...memory]);
+    else if(key==='startingCardIds')state[key]=[...value];
+    else state[key]=JSON.parse(JSON.stringify(value));
+  }
+  return {format:'tbg-ai-position',version:1,boundary:'regular-turn-start',size:match.board.length,
+    scheduledExtra,state,tokenCounter:nextTrapToken,tokens:Object.values(CARD).filter(c=>c.token && c.id!=='trap_token')};
+}
+
 let SIZE = 4; // board is SIZE x SIZE; changeable at setup time before a game starts
 
 const FACTIONS = {
@@ -2964,7 +3045,7 @@ function possessive(name){ return name === 'You' ? 'Your' : `${name}'s`; }
 const AI_TEST_SNAPSHOT_LIMIT=30;
 function testCardId(id){return CARD[id]?.token ? 'trap_token' : id;}
 function newTestCardActions(){return {abilityCalls:0,abilityEffective:0,costPaid:0,paidAsCost:0,tradedAway:0,returnedFromHand:0,heldAtEnd:0,heldGames:0,claimMembers:0,ownPoints:0,opponentPoints:0,deniedPoints:0};}
-function createAITestMetrics(){return {turns:0,drawActions:0,trades:0,placements:{},claims:{},substituteClaims:{},substituteMembers:{},cardActions:{},abilityDetails:{},scoreSources:{},seen:new Set(),recorded:false};}
+function createAITestMetrics(){return {bySeat:{},turns:0,drawActions:0,trades:0,placements:{},claims:{},substituteClaims:{},substituteMembers:{},cardActions:{},abilityDetails:{},scoreSources:{},seen:new Set(),recorded:false};}
 function createAITestStats(){return {games:0,wins:0,stalemates:0,aborted:0,errors:0,turns:0,drawActions:0,trades:0,placements:0,factions:{},cards:{},seats:{},configurations:{},abilityDetails:{},scoreSources:{},endings:[],lastResult:null};}
 function addTestFields(target,source){for(const [key,value] of Object.entries(source))if(typeof value==='number')target[key]=(target[key]||0)+value;}
 function testAbilitySignature(state,paidIds){
@@ -3044,6 +3125,7 @@ class Game {
         idx:i,
         name: this.aiTestMode ? `AI ${i+1}` : i===0 ? 'You' : `AI ${i}`,
         isAI: this.aiTestMode || i!==0,
+        aiPolicy: options.aiPolicies?.[i] || 'current',
         hand: [],
         discard: [],
       });
@@ -3072,14 +3154,16 @@ class Game {
         }
       }
     }
-    for(const player of this.players)for(const id of player.hand)this.recordTestSeen(id);
+    for(const player of this.players)for(const id of player.hand)this.recordTestSeen(id,player.idx);
   }
 
-  recordTestSeen(cardId){if(this.testMetrics && CARD[cardId])this.testMetrics.seen.add(CARD[cardId].token ? 'trap_token' : cardId);}
-  recordTestPlacement(cardId){
+  testSeatMetrics(p){return this.testMetrics && ((this.testMetrics.bySeat ||= {})[p] ||= {seen:new Set(),placements:{},claims:{},handTurns:{}});}
+  recordTestSeen(cardId,p=this.currentPlayerIdx){if(this.testMetrics && CARD[cardId]){this.testMetrics.seen.add(testCardId(cardId));this.testSeatMetrics(p).seen.add(testCardId(cardId));}}
+  recordTestPlacement(cardId,p=this.currentPlayerIdx){
     if(!this.testMetrics)return;
-    this.recordTestSeen(cardId);const id=CARD[cardId].token ? 'trap_token' : cardId;
+    this.recordTestSeen(cardId,p);const id=CARD[cardId].token ? 'trap_token' : cardId;
     this.testMetrics.placements[id]=(this.testMetrics.placements[id] || 0)+1;
+    const seat=this.testSeatMetrics(p);seat.placements[id]=(seat.placements[id]||0)+1;
   }
   testCardActions(id){return this.testMetrics && (this.testMetrics.cardActions[testCardId(id)] ||= newTestCardActions());}
   activeTestAbility(){return this.testAbilityFrames?.at(-1);}
@@ -3145,7 +3229,7 @@ class Game {
   eirinActive(){return this.boardCells(cell=>this.abilityId(cell.id)==='hourai_eirin' && !this.isProtected(cell.r,cell.c)).length>0;}
   isPlacementBlocked(p=this.currentPlayerIdx){return !!this.placementBlockedForTurn[p] || (p!==this.currentPlayerIdx && this.placementBlockTurns[p]>0);}
   beginPlayerTurn(p){
-    if(this.testMetrics)this.testMetrics.turns++;
+    if(this.testMetrics){this.testMetrics.turns++;const seat=this.testSeatMetrics(p);for(const id of this.players[p].hand){const key=testCardId(id);seat.handTurns[key]=(seat.handTurns[key]||0)+1;}}
     this.placementBlockedForTurn[p]=this.placementBlockTurns[p]>0;
     if(this.placementBlockedForTurn[p]) this.placementBlockTurns[p]--;
   }
@@ -3197,7 +3281,7 @@ class Game {
     const spareCost=this.payableCards(p).filter(id=>CARD[id].faction!=='temple').length;
     const options=this.byakurenOptions(p,r,c).map(option=>({...option,disabled:option.disabled || used.has(option.value)
       || (preserveTemple && option.cost>spareCost)})),available=options.filter(option=>!option.disabled
-        && (!this.players[p].isAI || typeof aiPaymentBreaksAssembly!=='function'
+        && (!this.players[p].isAI || !aiPolicyHas(p,'assembly',this) || typeof aiPaymentBreaksAssembly!=='function'
           || !aiPaymentBreaksAssembly(p,aiProposedPayment(p,option.cost))));
     if(!available.length)return null;
     if(!this.players[p].isAI)return await this.chooseFromList(p,[...options,{label:'Finish ability',value:null}],'Makai Fantastica — use effects in any order');
@@ -3708,7 +3792,7 @@ class Game {
     if(i>=0){pl.hand.splice(i,1);this.forgetHandCard(cardId);}
   }
   addToHand(p, cardId,isPublic=false){
-    this.recordTestSeen(cardId);
+    this.recordTestSeen(cardId,p);
     this.players[p].hand.push(cardId);
     this.revealHand(p,[cardId],isPublic ? null : [p]);
   }
@@ -4026,6 +4110,7 @@ class Game {
       if(cells.length){
         if(this.testMetrics){
           this.testMetrics.claims[fk]=(this.testMetrics.claims[fk] || 0)+1;
+          const seat=this.testSeatMetrics(placerIdx);seat.claims[fk]=(seat.claims[fk]||0)+1;
           const substitutes=cells.filter(cell=>this.isWildActive(this.cardAt(cell.r,cell.c)) && CARD[this.cardAt(cell.r,cell.c)].faction!==fk).length;
           if(substitutes){this.testMetrics.substituteClaims[fk]=(this.testMetrics.substituteClaims[fk]||0)+1;this.testMetrics.substituteMembers[fk]=(this.testMetrics.substituteMembers[fk]||0)+substitutes;}
           for(const cell of cells)this.testCardActions(this.cardAt(cell.r,cell.c)).claimMembers++;
@@ -4077,7 +4162,7 @@ class Game {
       const cell = koishi.cellCandidates.length===1 ? koishi.cellCandidates[0]
         : (this.players[koishi.ownerIdx].isAI ? aiFactionPlacement(koishi.ownerIdx,koishi.cardId,koishi.cellCandidates,CARD[koishi.cardId].faction) : await this.chooseCell(koishi.ownerIdx, koishi.cellCandidates, `${CARD[koishi.cardId].name} wanders onto the board — choose where`));
       this.setCardAt(cell.r,cell.c,koishi.cardId);
-      this.recordTestPlacement(koishi.cardId);
+      this.recordTestPlacement(koishi.cardId,koishi.ownerIdx);
       this.recordTestAbility(koishi.cardId,'palace_koishi',true);
       this.log(`${CARD[koishi.cardId].name} triggers and wanders onto the board!`);
       lastPlacedCell = null;
@@ -4102,7 +4187,7 @@ class Game {
     } else if(!occupied && this.wastelandAt(r,c) && !this.canPlaceOnWasteland(CARD[cardId])) return {};
     delete this.borrowedAbilities[cardId];
     this.setCardAt(r,c,cardId);
-    this.recordTestPlacement(cardId);
+    this.recordTestPlacement(cardId,playerIdx);
     this.log(`${this.players[playerIdx].name} places ${CARD[cardId].name}.`);
     const handArrival=this.ui?.onPlacementArrival?.({cardId,r,c,playerIdx,crownEffectId});
     lastPlacedCell = {r, c, crownEffectId, handArrival:!!handArrival};
@@ -4148,7 +4233,7 @@ class Game {
     cardId=this.abilityId(cardId);
     if(this.isProtected(r,c) && cardId!=='sage_yukari'){ this.log(`${CARD[cardId].name} is silenced by Rinnosuke.`); return {}; }
     if(CARD[cardId].crown && this.eirinActive() && cardId!=='hourai_eirin')return {};
-    if(this.players[playerIdx].isAI && typeof aiAbilityPlan==='function' && AI_OPTIONAL_COST_ABILITIES.has(cardId)){
+    if(this.players[playerIdx].isAI && typeof aiAbilityPlan==='function' && AI_OPTIONAL_COST_ABILITIES.has(cardId) && aiPolicyHas(playerIdx,'assembly',this)){
       const policy=aiAbilityPlan(playerIdx,cardId,r,c);
       if(policy.skip){
         this.log(me+' skips '+CARD[cardId].name+"'s ability to preserve cards and faction progress.");
@@ -4648,7 +4733,7 @@ class Game {
       case 'sage_matara': {
         const cells = self.selectableBoardCells(playerIdx,cell=>!(cell.r===r && cell.c===c));
         if(cells.length){
-          const best=self.players[playerIdx].isAI && !self.aiMakesMistake('target') ? aiBestChannel(playerIdx,r,c) : null;
+          const best=self.players[playerIdx].isAI && aiPolicyHas(playerIdx,'matara',self) && !self.aiMakesMistake('target') ? aiBestChannel(playerIdx,r,c) : null;
           const target = await self.chooseBoardCell(playerIdx, best?[best.cell]:cells, 'Matara Okina: choose a card to trigger again');
           if(target){
             if(self.isProtected(target.r,target.c)){self.reportBlocked(target.r,target.c);break;}
@@ -4698,7 +4783,7 @@ class Game {
       case 'reimu': {
         const crownCells = self.selectableBoardCells(playerIdx,cell=>CARD[cell.id].crown);
         if(crownCells.length){
-          const best=self.players[playerIdx].isAI && !self.aiMakesMistake('target') ? aiAbilityPlan(playerIdx,'reimu',r,c).target : null;
+          const best=self.players[playerIdx].isAI && aiPolicyHas(playerIdx,'targets',self) && !self.aiMakesMistake('target') ? aiAbilityPlan(playerIdx,'reimu',r,c).target : null;
           const targetCells = best?[best]:self.preferSageCells(playerIdx, crownCells, cell=>self.cardAt(cell.r,cell.c));
           const pick = await self.chooseBoardCell(playerIdx, targetCells, 'Reimu: take a Crown card');
           if(pick){
@@ -4713,7 +4798,7 @@ class Game {
       case 'marisa': {
         const cells = self.marisaTargets(r,c,self.players[playerIdx].isAI,!self.players[playerIdx].isAI);
         if(cells.length){
-          const best=self.players[playerIdx].isAI && !self.aiMakesMistake('target') ? aiBestDiscardTarget(playerIdx,cells) : null;
+          const best=self.players[playerIdx].isAI && aiPolicyHas(playerIdx,'targets',self) && !self.aiMakesMistake('target') ? aiBestDiscardTarget(playerIdx,cells) : null;
           const pick = await self.chooseBoardCell(playerIdx, best?[best.cell]:cells, 'Marisa: blast a non-Crown card to your discard');
           if(pick){
             if(!self.canMoveBoardCard(pick.r,pick.c)){self.reportBlocked(pick.r,pick.c);break;}
@@ -4789,7 +4874,7 @@ class Game {
         if(counts.length){
           const max = Math.max(...counts.map(x=>x.cells.length));
           const candidates = counts.filter(x=>x.cells.length===max);
-          const preferred=self.players[playerIdx].isAI && !self.aiMakesMistake('target') ? aiBestEikiFaction(playerIdx) : null;
+          const preferred=self.players[playerIdx].isAI && aiPolicyHas(playerIdx,'targets',self) && !self.aiMakesMistake('target') ? aiBestEikiFaction(playerIdx) : null;
           let chosen = candidates.find(option=>option.fk===preferred?.faction) || candidates[0];
           if(candidates.length>1 && !preferred){
             const listOpts = candidates.map(x=>({label:FACTIONS[x.fk].name, value:x}));
@@ -4865,7 +4950,7 @@ class Game {
           self.log(`${meS} Iku waits for an area with ${minTargets} eligible card${minTargets===1?'':'s'}.`);
           break;
         }
-        const plannedZone=self.players[playerIdx].isAI && !self.aiMakesMistake('target') ? aiAbilityPlan(playerIdx,'heaven_iku',r,c).target : null;
+        const plannedZone=self.players[playerIdx].isAI && aiPolicyHas(playerIdx,'targets',self) && !self.aiMakesMistake('target') ? aiAbilityPlan(playerIdx,'heaven_iku',r,c).target : null;
         if(!await self.payCost3(playerIdx)){
           self.log(`${me} declines Iku's cost — the ability is skipped.`);
           break;
@@ -6760,6 +6845,9 @@ function canonicalCardName(value){
   return entry?.name || text;
 }
 // Patterns cover changing counts, player names and choices; no game data is translated.
+Object.assign(ZH_TEXT,{"AI evaluation lab": "AI 评估实验室", "Current AI": "当前 AI", "Previous AI": "旧版 AI", "Without cost preservation": "关闭代价保牌策略", "Without Kanako reserve": "关闭神奈子收尾策略", "Without Nitori setup": "关闭荷取铺场评分", "Without Hecatia setup": "关闭赫卡提亚铺场评分", "Without Yukari rework": "关闭紫的新评估", "Without Matara rework": "关闭隐岐奈的新评估", "Both policies use the current rules. Each opening tests every mixed seat lineup. Unknown hands are never used as clues.": "新旧策略共用当前规则。每组开局测试所有混合座位组合，未知手牌不作为判断线索。", "Version comparison": "版本对战", "Comparison policy": "对照策略", "Opening groups": "开局组数", "Both sizes": "两种棋盘", "Seed": "随机种子", "Opening set": "开局集合", "Development set": "开发组", "Reserved validation set": "保留验证组", "Three-player tests play six games per opening group. At least 20 complete groups are needed for a conclusion. Keep the validation set unused while tuning.": "三人测试每组开局进行六局，至少完成二十组才给出结论。调参时请保留验证组，最后再用。", "Start comparison": "开始对照", "Position fork": "局面分叉", "The saved position is the start of the latest regular turn, before its action. It does not capture an unfinished extra-turn chain.": "保存的是最近一个普通回合开始、尚未行动的局面，不截取未结束的额外回合连锁。", "Use latest turn-start position": "使用最近回合局面", "Import position": "导入局面", "Save position": "保存局面", "Turn-start position": "回合开始局面", "Action A": "行动 A", "Action B": "行动 B", "Trials per continuation": "每种后续策略的试验次数", "Continuation policy": "后续策略", "Both policies": "两种策略", "A and B share the same sampled hidden cards and rule seed in each trial. Rival private clue memories are omitted. These are estimates under the chosen continuations, not optimal-play proofs.": "每次试验的 A、B 使用相同的抽样手牌与规则随机种子。省略对手的私有线索记忆，结果是所选后续策略下的估计。", "Run position fork": "开始局面分叉", "Stop test": "停止测试", "Ready to evaluate.": "等待开始评估。", "Score rate awards one point to the winner. Stalemates award it to the highest score, shared on ties. Error and turn-limit games exclude their entire opening group. Intervals resample whole opening groups.": "比赛得分率按获胜记一分；僵局由最高分者得分，并列时平分。错误或回合超限会排除整组开局，误差区间以完整开局组为单位重采样。", "Evaluation complete.": "评估完成。", "Position ready.": "局面已准备好。", "Evaluation running in the background.": "评估正在后台运行。", "Reading the turn-start position.": "正在读取回合开始局面。", "Start a game to capture a turn-start position.": "先开始游戏，才能保存回合开始局面。", "Choose two different legal actions.": "请选择两个不同的合法行动。", "Stopped. Only complete opening groups are compared.": "已停止，仅比较完整开局组。", "Position file is too large.": "局面文件过大。", "Evaluation worker failed.": "后台评估运行失败。", "Not enough completed opening groups yet.": "完整试验数量不足，暂不判断。", "The difference is not established.": "暂时无法确认差异。", "Current AI performs better in this test.": "当前 AI 在本批对照中表现更好。", "The comparison policy performs better in this test.": "对照策略在本批测试中表现更好。", "Action A performs better across the tested continuations.": "行动 A 在所测试的后续策略中表现更好。", "Action B performs better across the tested continuations.": "行动 B 在所测试的后续策略中表现更好。", "Interim results only. The planned batch has not finished.": "这只是中途结果，预定批次尚未完成。", "Score-rate difference": "比赛得分率差异", "95% interval": "95% 误差区间", "Independent opening groups": "独立开局组", "Excluded groups": "排除组数", "Aborted games": "中止对局", "Policy": "策略", "Player games": "玩家局数", "Score rate": "比赛得分率", "Current use rate": "当前使用率", "Comparison use rate": "对照使用率", "Current hand turns": "当前持牌回合数", "Comparison hand turns": "对照持牌回合数", "Paired trials": "成对试验数", "Action A score": "行动 A 得分率", "Action B score": "行动 B 得分率", "Difference": "差异", "Excluded paired trials": "排除的成对试验", "Trade": "交易", "Pass turn": "跳过回合", "Runtime errors": "运行错误", "This browser does not support background evaluation.": "此浏览器不支持后台评估。", "Game source is unavailable.": "无法读取游戏程序。", "Evaluation source section missing.": "评估所需的程序片段缺失。", "Import a regular-turn position exported by this game.": "请导入本游戏导出的普通回合开始局面。", "Invalid position dimensions.": "局面尺寸不合法。", "Invalid board.": "棋盘数据不合法。", "Invalid tokens.": "衍生牌数据不合法。", "Unknown or duplicated card in position.": "局面包含未知或重复卡牌。", "Invalid terrain.": "地形数据不合法。", "Choose an unfinished position.": "请选择尚未结束的局面。", "Fork action is not legal in this position.": "分叉行动在此局面中不合法。", "An evaluation is already running.": "已有评估正在运行。", "Evaluation cancelled.": "评估已停止。"});
+Object.assign(ZH_TEXT,{'Invalid evaluation settings.':'评估设置不合法。','Card inventory does not match the position.':'卡牌清单与局面不一致。'});
+Object.assign(ZH_TEXT,{'First moves can be placements, draws or trades. Ability targets and payments are resolved by the continuation AI.':'首步可比较放置、抽牌或交易；技能目标与代价由所选后续 AI 决定。'});
 const ZH_DYNAMIC=[
   [/^(.+) skips (.+)'s ability to preserve cards and faction progress\.$/,(_,player,card)=>player+' 跳过了 '+card+' 的技能，以保留手牌和阵营组合。'],
   [/^(.+) Komachi's placement costs no turn while another Hell card is on the board\.$/,(_,player)=>player+' 小町的放置不消耗回合，因为棋盘上有另一张地狱卡牌。'],
@@ -8538,7 +8626,7 @@ function aiCostCanResolve(playerIdx, cardId, r, c){
 
 /* A trade must improve this AI's hand, so idle players never swap the same cards back
    and forth. Connected-faction progress matters more than an isolated crown. */
-function aiBestTrade(playerIdx){
+function aiCurrentBestTrade(playerIdx){
   const player=game.players[playerIdx];
   if(!game.kourindouEnabled || !player.hand.some(id=>game.canTrade(playerIdx,id))) return null;
   const handValue=hand=>{
@@ -8577,7 +8665,7 @@ function aiBestTrade(playerIdx){
   return best;
 }
 
-function aiKanakoTrade(playerIdx,placement){
+function aiCurrentKanakoTrade(playerIdx,placement){
   const player=game.players[playerIdx];
   if(!player.hand.includes('mtn_kanako') || !game.kourindouEnabled) return null;
   const stock=game.tradeCells().filter(cell=>{
@@ -8600,7 +8688,7 @@ function aiKanakoTrade(playerIdx,placement){
   return best;
 }
 
-function aiTwoCardFactionTrade(playerIdx,placement){
+function aiCurrentTwoCardFactionTrade(playerIdx,placement){
   if(placement?.type!=='place')return null;
   const player=game.players[playerIdx],faction=CARD[placement.cardId]?.faction;
   if(FACTIONS[faction]?.size!==2 || !player.hand.includes(placement.cardId))return null;
@@ -8816,7 +8904,7 @@ function aiAbilityPlan(playerIdx,abilityId,r,c){
       bonus=Math.min(3,known.length);utility=bonus*.85+(bonus?0:.15)+(game.planKaguyaClaim(null,playerIdx)?4:0);break;
     }
     case 'temple_byakuren': {
-      const options=game.byakurenOptions(playerIdx,r,c).filter(option=>!option.disabled && !aiPaymentBreaksAssembly(playerIdx,aiProposedPayment(playerIdx,option.cost)));
+      const options=game.byakurenOptions(playerIdx,r,c).filter(option=>!option.disabled && (!aiPolicyHas(playerIdx,'assembly') || !aiPaymentBreaksAssembly(playerIdx,aiProposedPayment(playerIdx,option.cost))));
       const best=options.sort((a,b)=>game.byakurenOptionValue(playerIdx,r,c,b)-game.byakurenOptionValue(playerIdx,r,c,a))[0];
       if(!best)return none;
       cost=best.cost;payment=aiProposedPayment(playerIdx,cost);
@@ -8865,7 +8953,7 @@ function aiAbilityPlan(playerIdx,abilityId,r,c){
   }
   const wins=game.winCount(game.players[playerIdx])+direct>=7;
   return {abilityId,utility:wins?Math.max(utility,direct):utility,direct,handGain,bonus,target,payment,
-    skip:!wins && (utility<=0 || aiPaymentBreaksAssembly(playerIdx,payment))};
+    skip:aiPolicyHas(playerIdx,'assembly') && !wins && (utility<=0 || aiPaymentBreaksAssembly(playerIdx,payment))};
 }
 
 function aiBestChannel(playerIdx,r,c){
@@ -8882,6 +8970,8 @@ function aiBestChannel(playerIdx,r,c){
 }
 
 function aiSetupValue(playerIdx,cardId,r,c){
+  if(cardId==='mtn_nitori' && !aiPolicyHas(playerIdx,'nitori'))return 0;
+  if(cardId==='hell_hecatia' && !aiPolicyHas(playerIdx,'hecatia'))return 0;
   if(game.isProtected(r,c) || game.isCrownAbilityDisabled(cardId))return 0;
   const player=game.players[playerIdx],faction=CARD[cardId].faction;
   const held=player.hand.filter(id=>CARD[id].faction===faction || game.isWildActive(id)),members=game.factionCells(faction);
@@ -9050,7 +9140,10 @@ function aiBetterCandidate(a,b){
   return a.position>b.position;
 }
 
-function aiEvaluateCard(playerIdx,cardId){
+function aiCurrentEvaluateCard(playerIdx,cardId){
+  if((cardId==='mtn_kanako' && !aiPolicyHas(playerIdx,'kanako'))
+    || (cardId==='sage_yukari' && !aiPolicyHas(playerIdx,'yukari'))
+    || (cardId==='sage_matara' && !aiPolicyHas(playerIdx,'matara')))return AI_FROZEN_POLICY.aiEvaluateCard(playerIdx,cardId);
   const card=CARD[cardId],cells=aiPlacementCells(game,cardId,game.emptyOrWastelandForCard(card,playerIdx));
   const priorPlan=cardId==='sage_yukari'?aiBoardPlanValue(playerIdx):0,priorThreat=cardId==='sage_yukari'?aiPublicThreatValue(playerIdx):0;
   let best=null;
@@ -9061,7 +9154,7 @@ function aiEvaluateCard(playerIdx,cardId){
       const muted=game.isCrownAbilityDisabled(cardId);
       let works=aiCostCanResolve(playerIdx,cardId,cell.r,cell.c);
       const copy=cardId==='sage_matara' && !muted ? aiBestChannel(playerIdx,cell.r,cell.c) : null;
-      const optional=AI_OPTIONAL_COST_ABILITIES.has(cardId) ? aiAbilityPlan(playerIdx,cardId,cell.r,cell.c) : null;
+      const optional=aiPolicyHas(playerIdx,'assembly') && AI_OPTIONAL_COST_ABILITIES.has(cardId) ? aiAbilityPlan(playerIdx,cardId,cell.r,cell.c) : null;
       const willSkip=!!optional?.skip;
       if(cardId==='sage_matara')works=!!copy && copy.utility>0;
       let direct=muted || willSkip ? 0 : copy ? copy.direct : game.estimateDirectDiscardPoints(playerIdx,cardId,cell.r,cell.c);
@@ -9103,10 +9196,401 @@ function aiEvaluateCard(playerIdx,cardId){
         || (!game.drawPile.length && DRAW_ABILITY_CARDS.has(cardId) && !((cardId==='yuuka' || cardId==='temple_shou') && game.payableCards(playerIdx).length)));
       const position=DIRS4.reduce((n,[dr,dc])=>n+(game.boardMatchesFaction(cell.r+dr,cell.c+dc,forecast.faction||card.faction)?1:0),0);
       return {cardId,cell,rate:Math.max(0,direct+points+denial+sealValue+abilityValue+setupValue,forecast.rate+setupValue),handGain,
-        noAbility:NO_PLACED_ABILITY.has(cardId),lowPriority,suppressedCrown,winsNow,losesNow,
+        noAbility:NO_PLACED_ABILITY.has(cardId) || (cardId==='mtn_nitori' && !aiPolicyHas(playerIdx,'nitori')) || (cardId==='hell_hecatia' && !aiPolicyHas(playerIdx,'hecatia')),lowPriority,suppressedCrown,winsNow,losesNow,
         claimSize:Math.max(0,...claims.map(claim=>claim.size),forecast.size),claimsNow,reserveCombo,position,setupValue,
         copiedAbility:copy?.abilityId||null,copyTarget:copy?.cell||null,skipAbility:willSkip};
     },playerIdx);
+    if(aiBetterCandidate(candidate,best))best=candidate;
+  }
+  return best;
+}
+
+function aiRetentionValue(playerIdx,cardId){
+  const candidate=aiEvaluateCard(playerIdx,cardId);
+  const card=CARD[cardId];
+  let value=candidate ? candidate.rate*20+candidate.handGain*2+candidate.claimSize*5 : 0;
+  if(candidate?.winsNow)value+=1000;
+  if(candidate?.claimsNow)value+=200;
+  if(candidate?.reserveCombo)value+=60;
+  if(game.isWildActive(cardId))value+=25;
+  // Include faction material even when this card currently has no legal destination.
+  for(const faction of game.isWildActive(cardId)?game.claimFactionOrder():[card.faction]){
+    const size=FACTIONS[faction]?.size||0;if(!size)continue;
+    const count=game.factionCells(faction).length+game.players[playerIdx].hand.filter(id=>CARD[id].faction===faction || game.isWildActive(id)).length;
+    value+=Math.min(size,count)*2+(count>=size?20:0);
+  }
+  return value;
+}
+
+function aiCurrentChooseCostCards(playerIdx,eligible,count){
+  if(game.aiMakesMistake('cost'))return shuffle(eligible.slice()).slice(0,count);
+  const player=game.players[playerIdx],original=player.hand,chosen=[];
+  try{
+    player.hand=original.slice();
+    while(chosen.length<count){
+      let pick=null,value=Infinity;
+      for(const id of eligible){
+        if(chosen.includes(id))continue;
+        const next=aiRetentionValue(playerIdx,id);
+        if(next<value){pick=id;value=next;}
+      }
+      if(!pick)break;
+      chosen.push(pick);player.hand=player.hand.filter(id=>id!==pick);
+    }
+  }finally{player.hand=original;}
+  return chosen;
+}
+
+function aiCurrentFactionPlacement(playerIdx,cardId,cells,faction=CARD[cardId].faction){
+  if(game.aiMakesMistake('target'))return cells[Math.floor(Math.random()*cells.length)];
+  let best=null,bestScore=-Infinity;
+  for(const cell of cells){
+    const score=aiWithPlacement(cardId,cell,()=>{
+      if(game.isProtected(cell.r,cell.c))return -10000;
+      const claim=game.findFactionClaim(faction);
+      const neighbors=DIRS4.filter(([dr,dc])=>game.boardMatchesFaction(cell.r+dr,cell.c+dc,faction)).length;
+      const others=game.factionCells(faction).filter(t=>t.r!==cell.r || t.c!==cell.c);
+      const distance=others.length?Math.min(...others.map(t=>Math.abs(t.r-cell.r)+Math.abs(t.c-cell.c))):0;
+      const liberties=DIRS4.filter(([dr,dc])=>game.hasTile(cell.r+dr,cell.c+dc) && !game.cardAt(cell.r+dr,cell.c+dc)
+        && !game.wastelandAt(cell.r+dr,cell.c+dc) && !game.isProtected(cell.r+dr,cell.c+dc)).length;
+      return (claim.length?1000+aiClaimValue(faction,claim,playerIdx)*100:0)+neighbors*20-distance*3+liberties;
+    });
+    if(score>bestScore){best=cell;bestScore=score;}
+  }
+  return best;
+}
+
+function aiCurrentKomachiTarget(playerIdx,r,c,cells,allowMistake=true){
+  if(allowMistake && game.aiMakesMistake('target'))return cells[Math.floor(Math.random()*cells.length)];
+  const caster=game.cardAt(r,c);let best=null,bestValue=-Infinity;
+  for(const cell of cells){
+    const other=game.cardAt(cell.r,cell.c);let value;
+    try{
+      game.setCardAt(r,c,other);game.setCardAt(cell.r,cell.c,caster);
+      const claims=aiCurrentClaims(playerIdx);
+      value=claims.reduce((sum,claim)=>sum+claim.points*100+claim.size*10,0)
+        +(game.hasOtherHellCard(caster)?20:0);
+    }finally{game.setCardAt(r,c,caster);game.setCardAt(cell.r,cell.c,other);}
+    if(value>bestValue){best=cell;bestValue=value;}
+  }
+  return best;
+}
+
+async function aiCurrentDecideHardAction(playerIdx,allowTrade=true){
+  const player=game.players[playerIdx];let best=null;
+  if(game.isPlacementBlocked(playerIdx)){
+    return game.canDrawNormally(playerIdx)?{type:'draw'}:{type:'pass'};
+  }
+  for(const cardId of player.hand){const candidate=aiEvaluateCard(playerIdx,cardId);if(candidate && aiBetterCandidate(candidate,best))best=candidate;}
+  const canDraw=game.canDrawNormally(playerIdx),drawHandGain=aiDrawValue(playerIdx);
+  const willPlace=best && ((best.rate>0 && !best.lowPriority)
+    || !(canDraw && (best.lowPriority || drawHandGain>=best.handGain)));
+  if(allowTrade && willPlace){
+    const placement={type:'place',cardId:best.cardId,r:best.cell.r,c:best.cell.c};
+    const trade=aiTwoCardFactionTrade(playerIdx,placement)
+      || (best.cardId==='mtn_kanako' ? aiKanakoTrade(playerIdx,placement) : null);
+    if(trade)return trade;
+  }
+  const trade=allowTrade?aiBestTrade(playerIdx):null;
+  if(!best?.winsNow && trade && (!best || best.lowPriority || trade.rate>best.rate || (best.rate===0 && trade.gain>=.8)))return trade;
+  if(best && best.rate>0 && !best.lowPriority)return {type:'place',cardId:best.cardId,r:best.cell.r,c:best.cell.c};
+  if(canDraw && (!best || best.lowPriority || drawHandGain>=best.handGain))return {type:'draw'};
+  if(best)return {type:'place',cardId:best.cardId,r:best.cell.r,c:best.cell.c};
+  return trade || {type:'place-fallback',placeable:[]};
+}
+
+async function aiCurrentDecideAction(playerIdx,allowTrade=true){
+  const best=await aiDecideHardAction(playerIdx,allowTrade);
+  if(!game.aiMakesMistake('action'))return (allowTrade && aiTwoCardFactionTrade(playerIdx,best)) || best;
+  // Mistakes remain legal: preserve forced-play, protection, and character safety restrictions.
+  const alternatives=[];
+  for(const cardId of game.players[playerIdx].hand){
+    const cells=aiPlacementCells(game,cardId,game.emptyOrWastelandForCard(CARD[cardId]));
+    const other=cells.filter(cell=>best.type!=='place' || best.cardId!==cardId || best.r!==cell.r || best.c!==cell.c);
+    if(other.length){const cell=other[Math.floor(Math.random()*other.length)];alternatives.push({type:'place',cardId,r:cell.r,c:cell.c});}
+  }
+  if(game.canDrawNormally(playerIdx) && best.type!=='draw')alternatives.push({type:'draw'});
+  const chosen=alternatives.length ? alternatives[Math.floor(Math.random()*alternatives.length)] : best;
+  return (allowTrade && aiTwoCardFactionTrade(playerIdx,chosen)) || chosen;
+}
+
+
+/* Frozen baseline: 2b07010 decision policy, Komachi forecast adapted to the shared current rule. */
+const AI_BASELINE_DIGEST='6cb355e34159ae1924c00578c6180626e9c152feebf505330021200a21a76e1b';
+const AI_FROZEN_POLICY=(()=>{
+const NO_PLACED_ABILITY = new Set(['sage_yukari', 'sage_kasen', 'hourai_eirin','mtn_nitori','hell_hecatia']);
+const DRAW_ABILITY_CARDS = new Set(['hourai_mokou','mtn_sanae','sage_ran','yuuka','hell_kutaka','temple_shou']);
+
+function aiPlacementCells(currentGame, cardId, spaces){
+  if(currentGame.abilityId(cardId)==='sage_yukari') return spaces.filter(cell=>currentGame.cardAt(cell.r,cell.c)!=='shop_rinnosuke');
+  if(cardId==='haku_yuyuko') return spaces.filter(cell=>currentGame.adjacentOccupiedCount(cell.r,cell.c)>=2);
+  if(cardId==='marisa') return spaces.filter(cell=>currentGame.safeMarisaPlacement(cell.r,cell.c));
+  if(cardId==='reimu' && !currentGame.movableBoardCells(cell=>CARD[cell.id].crown && currentGame.canSelectBoardCard(cell.r,cell.c)).length) return [];
+  return spaces;
+}
+
+function aiCostCanResolve(playerIdx, cardId, r, c){
+  const card=CARD[cardId];
+  if(game.isProtected(r,c) && cardId!=='sage_yukari') return false;
+  if(cardId==='palace_yuugi') return game.payableCards(playerIdx).filter(id=>id!==cardId).length>=2 && game.yuugiTargets(r,c).length>0;
+  if(cardId==='hell_kutaka') return game.wastelandAt(r,c) && game.drawPile.some(id=>CARD[id].faction==='hell');
+  if(cardId==='sdm_meiling') return game.meilingPushes(r,c).length>0;
+  // Kaguya herself leaves the hand before her ability checks for targets.
+  if(cardId==='hourai_kaguya') return !game.eirinActive()
+    && game.emptyCells().length>1
+    && (game.knownHandCards(playerIdx,'hourai').some(c=>c.id!==cardId)
+      || game.players.some(p=>p.idx!==playerIdx && p.hand.length>0));
+  if(cardId==='haku_yuyuko') return game.payableCards(playerIdx).filter(id=>id!==cardId).length>0
+    && game.yuyukoTargets(r,c).length>0 && !game.eirinActive();
+  const cost=game.abilityCost(cardId,{r,c});
+  if(cardId==='temple_shou' && !game.templeWasteland().length)return false;
+  if(cardId==='temple_byakuren')return !game.eirinActive() && game.byakurenOptions(playerIdx,r,c).some(option=>!option.disabled);
+  if(cardId==='temple_ichirin' && !game.ichirinPushes(r,c).length)return false;
+  if(!cost) return true;
+  if(game.payableCards(playerIdx).filter(id=>id!==cardId).length<cost || (card.crown && game.eirinActive())) return false;
+  if(cardId==='palace_satori') return game.players.some(pl=>pl.idx!==playerIdx && pl.hand.length>0);
+  if(cardId==='heaven_tenshi') return game.tenshiOccupiedCount({r,c}) >= Math.ceil(SIZE*SIZE/2)
+    && game.boardCells(cell=>game.boardFaction(cell.r,cell.c)!=='heaven' && game.canReturnBoardToDraw(cell.r,cell.c)).length>0;
+  if(cardId==='heaven_iku') return game.estimateDirectDiscardPoints(playerIdx,cardId,r,c)>=(game.winCount(game.players[playerIdx])>=6?1:2);
+  return true;
+}
+
+/* A trade must improve this AI's hand, so idle players never swap the same cards back
+   and forth. Connected-faction progress matters more than an isolated crown. */
+function aiBestTrade(playerIdx){
+  const player=game.players[playerIdx];
+  if(!game.kourindouEnabled || !player.hand.some(id=>game.canTrade(playerIdx,id))) return null;
+  const handValue=hand=>{
+    let value=hand.reduce((sum,id)=>sum+(CARD[id].token ? -2 : 1+(CARD[id].crown ? .4 : 0)),0);
+    for(const [faction,fac] of Object.entries(FACTIONS)){
+      if(!fac.size) continue;
+      const onBoard=game.factionCells(faction).length;
+      const inHand=hand.filter(id=>CARD[id].faction===faction || game.isWildActive(id)).length;
+      value+=.35*(Math.min(fac.size,onBoard+inHand)**2-Math.min(fac.size,onBoard)**2);
+    }
+    return value;
+  };
+  const before=handValue(player.hand);
+  let best=null;
+  for(const offeredId of player.hand){
+    if(!game.canTrade(playerIdx,offeredId)) continue;
+    for(const target of game.tradeCells()){
+      const boughtId=game.cardAt(target.r,target.c);
+      if(!boughtId || CARD[boughtId].shopkeeper || CARD[boughtId].token) continue;
+      const next=player.hand.slice();next[next.indexOf(offeredId)]=boughtId;
+      const gain=handValue(next)-before;
+      if(gain<.2) continue;
+      const spaces=aiPlacementCells(game,boughtId,game.emptyOrWastelandForCard(CARD[boughtId]));
+      const stored=game.cardAt(target.r,target.c);
+      let rate=0;
+      try{
+        game.setCardAt(target.r,target.c,offeredId);
+        if(!game.isPlacementBlocked(playerIdx) && !game.canDrawNormally(playerIdx)
+          && !next.some(id=>aiPlacementCells(game,id,game.emptyOrWastelandForCard(CARD[id])).length>0)) continue;
+        for(const space of spaces) rate=Math.max(rate,aiWithPlacement(boughtId,space,()=>aiCurrentClaims(playerIdx).reduce((n,claim)=>n+claim.points,0)));
+      }finally{game.setCardAt(target.r,target.c,stored);}
+      if(!best || rate>best.rate || (rate===best.rate && gain>best.gain))
+        best={type:'trade',cardId:offeredId,target,rate,gain};
+    }
+  }
+  return best;
+}
+
+function aiKanakoTrade(playerIdx,placement){
+  const player=game.players[playerIdx];
+  if(!player.hand.includes('mtn_kanako') || !game.kourindouEnabled) return null;
+  const stock=game.tradeCells().filter(cell=>{
+    const id=game.cardAt(cell.r,cell.c);
+    return id && id!=='mtn_kanako' && CARD[id].faction==='mountain';
+  });
+  let best=null;
+  for(const offeredId of player.hand){
+    if(offeredId==='mtn_kanako' || !game.canTrade(playerIdx,offeredId))continue;
+    const offered=CARD[offeredId],faction=FACTIONS[offered.faction];
+    const progress=game.factionCells(offered.faction).length+player.hand.filter(id=>CARD[id].faction===offered.faction).length;
+    const keepValue=(offered.crown?3:0)+(game.isWildActive(offeredId)?4:0)
+      +(offered.faction==='mountain'?8:0)+(faction?.size && progress>=faction.size?5:progress*.4);
+    for(const target of stock){
+      const boughtId=game.cardAt(target.r,target.c);
+      const gain=(boughtId==='mtn_sanae' && game.drawPile.length?3:1)-keepValue;
+      if(!best || gain>best.gain)best={type:'trade',cardId:offeredId,target,gain,thenPlace:placement};
+    }
+  }
+  return best;
+}
+
+function aiTwoCardFactionTrade(playerIdx,placement){
+  if(placement?.type!=='place')return null;
+  const player=game.players[playerIdx],faction=CARD[placement.cardId]?.faction;
+  if(FACTIONS[faction]?.size!==2 || !player.hand.includes(placement.cardId))return null;
+  const isPartner=id=>id!==placement.cardId && (CARD[id]?.faction===faction || game.isWildActive(id));
+  // An existing partner already supplies the pair; protected merchandise does not.
+  if(game.factionCells(faction).length || player.hand.some(isPartner))return null;
+  const stock=game.tradeCells().filter(cell=>isPartner(game.cardAt(cell.r,cell.c)));
+  if(!stock.length)return null;
+  let offeredId=null,keepValue=Infinity;
+  for(const id of player.hand){
+    if(id===placement.cardId || !game.canTrade(playerIdx,id))continue;
+    const value=aiRetentionValue(playerIdx,id);
+    if(value<keepValue){offeredId=id;keepValue=value;}
+  }
+  if(!offeredId)return null;
+  // Prefer the actual faction member so Kasen remains available for a larger claim.
+  const target=stock.find(cell=>CARD[game.cardAt(cell.r,cell.c)].faction===faction) || stock[0];
+  return {type:'trade',cardId:offeredId,target,thenPlace:placement};
+}
+
+// Shared placement evaluation: also used in reverse when deciding which cards to pay.
+const AI_ONE_MORE = new Set(['sdm_sakuya','hourai_kaguya','mtn_kanako','hell_komachi','temple_byakuren']);
+
+function aiWithPlacement(cardId,cell,callback){
+  const previous=game.cardAt(cell.r,cell.c);
+  game.setCardAt(cell.r,cell.c,cardId);
+  try{return callback();}finally{game.setCardAt(cell.r,cell.c,previous);}
+}
+
+function aiClaimValue(faction,cells,playerIdx){
+  const hellCount=game.players[playerIdx].discard.filter(id=>CARD[id].faction==='hell').length
+    +cells.filter(cell=>game.boardFaction(cell.r,cell.c)==='hell').length;
+  return cells.reduce((sum,cell)=>{
+    const id=game.cardAt(cell.r,cell.c);
+    return sum+(id==='hell_hecatia' && !game.isCrownAbilityDisabled(id) && hellCount<=3 ? 0 : game.pointValue(id));
+  },0);
+}
+
+function aiCurrentClaims(playerIdx){
+  // Match real claim order, including removal of Kasen before checking a second faction.
+  const removed=[],claims=[];
+  try{
+    for(const faction of game.claimFactionOrder()){
+      const cells=game.findFactionClaim(faction);
+      if(!cells.length)continue;
+      claims.push({faction,size:FACTIONS[faction].size,points:aiClaimValue(faction,cells,playerIdx)});
+      for(const cell of cells){removed.push({...cell,id:game.cardAt(cell.r,cell.c)});game.setCardAt(cell.r,cell.c,null);}
+    }
+  }finally{for(const cell of removed)game.setCardAt(cell.r,cell.c,cell.id);}
+  return claims;
+}
+
+function aiCanConnectFaction(faction,missing){
+  const members=game.factionCells(faction);
+  if(!members.length)return false;
+  if(missing===0)return game.findFactionClaim(faction).length>0;
+  const empty=game.emptyCells().filter(cell=>!game.isProtected(cell.r,cell.c));
+  if(empty.length<missing)return false;
+  const seen=new Set();let budget=1500;
+  const search=added=>{
+    if(--budget<0)return false;
+    const key=added.map(cell=>`${cell.r},${cell.c}`).sort().join('|');
+    if(seen.has(key))return false;seen.add(key);
+    const group=members.concat(added);
+    if(added.length===missing)return game.isConnected(group);
+    for(const cell of empty){
+      if(added.some(t=>t.r===cell.r && t.c===cell.c))continue;
+      if(group.some(t=>Math.abs(t.r-cell.r)+Math.abs(t.c-cell.c)===1) && search([...added,cell]))return true;
+    }
+    return false;
+  };
+  return search([]);
+}
+
+function aiFactionStillPossible(faction){
+  const size=FACTIONS[faction]?.size||0;
+  if(!size)return false;
+  // Starting stock is public; never inspect the identities of hidden opponent hands/deck cards.
+  const removed=new Set(game.players.flatMap(player=>player.discard));
+  const pool=game.startingCardIds || new Set(CARDS.filter(card=>!card.shopExpansion && !card.token && !card.shopkeeper).map(card=>card.id));
+  const members=[...pool].filter(id=>!removed.has(id) && (CARD[id].faction===faction || game.isWildActive(id)));
+  return members.length>=size;
+}
+
+function aiFactionForecast(playerIdx,cardId){
+  const card=CARD[cardId],hand=game.players[playerIdx].hand.filter(id=>id!==cardId);
+  const factions=game.isWildActive(cardId) ? game.claimFactionOrder() : [card.faction];
+  let best={rate:0,size:0,faction:null,bonus:0,missing:0};
+  for(const faction of factions){
+    const size=FACTIONS[faction]?.size||0;if(!size)continue;
+    const members=game.factionCells(faction),missing=Math.max(0,size-members.length);
+    if(!missing || !members.some(cell=>game.cardAt(cell.r,cell.c)===cardId))continue;
+    const held=hand.filter(id=>CARD[id].faction===faction || game.isWildActive(id));
+    let available=held.length,bonus=0;
+    const active=!game.eirinActive() || !card.crown;
+    if(active && cardId==='temple_byakuren'){
+      const cost=game.byakurenCost(),otherPayable=game.payableCards(playerIdx).filter(id=>id!==cardId && CARD[id].faction!==faction).length;
+      if(game.payableCards(playerIdx).filter(id=>id!==cardId).length>=cost)bonus=Math.min(3,Math.max(0,held.length-Math.max(0,cost-otherPayable)));
+    }
+    if(active && cardId==='sdm_sakuya')bonus=Math.min(2,held.length);
+    if(active && cardId==='mtn_kanako' && held.some(id=>CARD[id].faction==='mountain'))bonus=1;
+    if(cardId==='hell_komachi' && game.hasOtherHellCard(cardId))bonus=1;
+    if(active && cardId==='hourai_kaguya'){
+      const known=game.knownHandCards(playerIdx,'hourai').filter(t=>t.id!==cardId);
+      available=new Set([...held,...known.map(t=>t.id)]).size;bonus=known.length;
+    }
+    // Koishi triggers from the hand; spending her as an ordinary early placement loses that action.
+    if(faction==='palace' && cardId!=='palace_koishi' && hand.includes('palace_koishi'))bonus=Math.max(bonus,1);
+    if(available<missing || !aiCanConnectFaction(faction,missing))continue;
+    const rate=game.factionTotalPoints(faction)/(1+Math.max(0,missing-bonus));
+    if(size>best.size || (size===best.size && rate>best.rate))best={rate,size,faction,bonus,missing};
+  }
+  return best;
+}
+
+function aiDrawValue(playerIdx){
+  if(!game.canDrawNormally(playerIdx))return 0;
+  const others=game.players.filter(p=>p.idx!==playerIdx);
+  // The acting player receives the first card; rivals unable to receive one impose no shared-draw cost.
+  const recipients=Math.min(Math.max(0,game.drawPile.length-1),others.filter(p=>p.hand.length<NORMAL_HAND_LIMIT).length);
+  return others.length ? 1-recipients/others.length : 1;
+}
+
+function aiBetterCandidate(a,b){
+  if(!b)return true;
+  if(a.winsNow!==b.winsNow)return a.winsNow;
+  if(a.suppressedCrown!==b.suppressedCrown)return !a.suppressedCrown;
+  if(a.lowPriority!==b.lowPriority)return !a.lowPriority;
+  if(a.claimSize!==b.claimSize && a.claimSize && b.claimSize)return a.claimSize>b.claimSize;
+  if(a.rate!==b.rate)return a.rate>b.rate;
+  if(a.handGain!==b.handGain)return a.handGain>b.handGain;
+  if(a.noAbility!==b.noAbility)return !a.noAbility;
+  return a.position>b.position;
+}
+
+function aiEvaluateCard(playerIdx,cardId){
+  const card=CARD[cardId],cells=aiPlacementCells(game,cardId,game.emptyOrWastelandForCard(card));
+  let best=null;
+  for(const cell of cells){
+    const works=aiCostCanResolve(playerIdx,cardId,cell.r,cell.c);
+    const muted=!!card.crown && game.eirinActive();
+    let direct=muted ? 0 : game.estimateDirectDiscardPoints(playerIdx,cardId,cell.r,cell.c);
+    if((cardId==='haku_yuyuko' || cardId==='heaven_iku') && direct<=1 && game.winCount(game.players[playerIdx])<6)direct=0;
+    const evaluated=aiWithPlacement(cardId,cell,()=>{
+      const claims=aiCurrentClaims(playerIdx);
+      const points=claims.reduce((n,claim)=>n+claim.points,0);
+      const forecast=aiFactionForecast(playerIdx,cardId);
+      const claimSize=Math.max(0,...claims.map(claim=>claim.size),forecast.size);
+      const ownMembers=game.factionCells(card.faction);
+      const position=DIRS4.reduce((n,[dr,dc])=>n+(game.boardMatchesFaction(cell.r+dr,cell.c+dc,forecast.faction||card.faction)?1:0),0);
+      const isCombo=AI_ONE_MORE.has(cardId) || cardId==='palace_koishi';
+      const comboReady=forecast.bonus>0 && forecast.missing<=forecast.bonus;
+      const futureSpace=game.emptyCells().some(t=>!game.isProtected(t.r,t.c));
+      const reserveCombo=isCombo && !points && !comboReady && futureSpace && ownMembers.length<FACTIONS[card.faction].size
+        && aiFactionStillPossible(card.faction);
+      return {claims,points,forecast,claimSize,position,reserveCombo};
+    });
+    const claimsNow=evaluated.points>0;
+    const suppressedCrown=muted && !claimsNow;
+    const kaguyaKnown=cardId==='hourai_kaguya' && works ? game.knownHandCards(playerIdx,'hourai').filter(t=>t.id!==cardId).length : 0;
+    const handGain=suppressedCrown || !works ? 0 : Math.max(game.estimateHandGain(playerIdx,cardId),kaguyaKnown?Math.min(3,kaguyaKnown+1):-Infinity,
+      cardId==='hell_komachi' && game.isActiveOnBoard('hell_eiki') ? 1.1 : -Infinity);
+    // Rin's denial helps our position, but cannot itself deliver our seventh discard point.
+    const sealValue=cardId==='temple_murasa' && works ? 1 : cardId==='temple_nue' && works ? .5 : 0;
+    const denial=cardId==='palace_rin' && works && game.players.some(p=>p.idx!==playerIdx && p.discard.length) ? 1 : 0;
+    const winsNow=game.winCount(game.players[playerIdx])+direct+evaluated.points>=7;
+    const lowPriority=!claimsNow && !winsNow && (suppressedCrown || !works || (cardId==='marisa' && !game.marisaTargets(cell.r,cell.c,true).length) || evaluated.reserveCombo
+      || (!game.drawPile.length && DRAW_ABILITY_CARDS.has(cardId) && !((cardId==='yuuka' || cardId==='temple_shou') && game.payableCards(playerIdx).some(id=>id!==cardId))));
+    const candidate={cardId,cell,rate:Math.max(direct+evaluated.points+denial+sealValue,evaluated.forecast.rate),handGain,
+      noAbility:NO_PLACED_ABILITY.has(cardId),lowPriority,suppressedCrown,winsNow,claimSize:evaluated.claimSize,
+      claimsNow,reserveCombo:evaluated.reserveCombo,position:evaluated.position};
     if(aiBetterCandidate(candidate,best))best=candidate;
   }
   return best;
@@ -9167,8 +9651,8 @@ function aiFactionPlacement(playerIdx,cardId,cells,faction=CARD[cardId].faction)
   return best;
 }
 
-function aiKomachiTarget(playerIdx,r,c,cells,allowMistake=true){
-  if(allowMistake && game.aiMakesMistake('target'))return cells[Math.floor(Math.random()*cells.length)];
+function aiKomachiTarget(playerIdx,r,c,cells){
+  if(game.aiMakesMistake('target'))return cells[Math.floor(Math.random()*cells.length)];
   const caster=game.cardAt(r,c);let best=null,bestValue=-Infinity;
   for(const cell of cells){
     const other=game.cardAt(cell.r,cell.c);let value;
@@ -9220,6 +9704,19 @@ async function aiDecideAction(playerIdx,allowTrade=true){
   const chosen=alternatives.length ? alternatives[Math.floor(Math.random()*alternatives.length)] : best;
   return (allowTrade && aiTwoCardFactionTrade(playerIdx,chosen)) || chosen;
 }
+
+
+return {aiEvaluateCard,aiChooseCostCards,aiFactionPlacement,aiKomachiTarget,aiDecideHardAction,aiDecideAction,aiBestTrade,aiTwoCardFactionTrade,aiKanakoTrade};
+})();
+function aiEvaluateCard(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiEvaluateCard(playerIdx,...args) : aiCurrentEvaluateCard(playerIdx,...args);}
+function aiChooseCostCards(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiChooseCostCards(playerIdx,...args) : aiCurrentChooseCostCards(playerIdx,...args);}
+function aiFactionPlacement(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiFactionPlacement(playerIdx,...args) : aiCurrentFactionPlacement(playerIdx,...args);}
+function aiKomachiTarget(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiKomachiTarget(playerIdx,...args) : aiCurrentKomachiTarget(playerIdx,...args);}
+function aiDecideHardAction(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiDecideHardAction(playerIdx,...args) : aiCurrentDecideHardAction(playerIdx,...args);}
+function aiDecideAction(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiDecideAction(playerIdx,...args) : aiCurrentDecideAction(playerIdx,...args);}
+function aiBestTrade(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiBestTrade(playerIdx,...args) : aiCurrentBestTrade(playerIdx,...args);}
+function aiTwoCardFactionTrade(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiTwoCardFactionTrade(playerIdx,...args) : aiCurrentTwoCardFactionTrade(playerIdx,...args);}
+function aiKanakoTrade(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiKanakoTrade(playerIdx,...args) : aiCurrentKanakoTrade(playerIdx,...args);}
 
 async function doPlayerAction(playerIdx){
   const activeGame=game;
@@ -9417,6 +9914,7 @@ async function runNextTurn(){
   game.beginPlayerTurn(p);
   game.tradedThisTurn[p]=false;
   const scheduledExtra=game.takeScheduledExtraTurns(p);
+  game.evaluationSnapshot=captureAIEvaluationSnapshot(game,scheduledExtra);
   if(!canAct(p)){
     game.log(`${game.players[p].name} has no legal action and skips their turn.`);
     renderAll();
@@ -10326,6 +10824,413 @@ el('ai-test-overlay').addEventListener('click',event=>{if(event.target===el('ai-
 el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'));
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
+/* AI evaluation engine start */
+const AI_EVALUATION_RULES_DIGEST='d559a72a34f121c858ab924525afd36ac9160a42f800a20195bcd3c9234ae8eb';
+const AI_EVALUATION_POLICY_DIGEST='2a1ffa1ce21f3afbace378af645ab233332b41b5542102130693e59cb85133d7';
+function buildAIEvaluationWorkerSource(scriptText){
+  const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
+  if(!source)throw new Error('Game source is unavailable.');
+  const section=(start,end)=>{const a=source.indexOf(start),b=source.indexOf('\n'+end,a);if(a<0||b<a)throw new Error('Evaluation source section missing.');return source.slice(a,b);};
+  const turns=section('async function doPlayerAction','/* Wire human hand-card').replace('cell = cells[Math.floor(Math.random()*cells.length)];','cell = evalForcedCell(playerIdx,cardId,cells);');
+  return `'use strict';\n${section('const DIRS4','/* ===================== UI layer')}
+    let game=null,lastPlacedCell=null,humanActionResolving=false;
+    const ui={};function renderAll(){} function triggerPlacementPresentation(){} function speakRinnosuke(){} function logOverride(){}
+    async function waitAITestReady(){return true;} async function finishAITestRound(){}
+    ${section('function canTakeTurnAction','/* Cards with no "Placed:')}
+    ${section('const NO_PLACED_ABILITY','async function doPlayerAction')}
+    ${turns}
+    ${section('/* AI evaluation engine start */','/* AI evaluation engine end */')}
+    sleep=()=>Promise.resolve();
+    advanceTurn=()=>{game.endPlayerTurn(game.currentPlayerIdx);game.currentPlayerIdx=(game.currentPlayerIdx+1)%game.numPlayers;};
+    runNextTurn=async()=>{};
+    installAIEvaluationWorker();`;
+}
+
+function evalHashSeed(...values){
+  let value=2166136261;for(const char of values.join('|')){value^=char.charCodeAt(0);value=Math.imul(value,16777619);}return value>>>0;
+}
+function evalPRNG(seed){
+  let state=seed>>>0;return ()=>{state=(state+0x6D2B79F5)>>>0;let n=state;n=Math.imul(n^(n>>>15),n|1);n^=n+Math.imul(n^(n>>>7),n|61);return ((n^(n>>>14))>>>0)/4294967296;};
+}
+function evalMixedLineups(n,opponent){
+  const rows=[];for(let mask=1;mask<(1<<n)-1;mask++)rows.push(Array.from({length:n},(_,i)=>mask&(1<<i)?'current':opponent));return rows;
+}
+function evalInterval(values,seed=9106,samples=1600){
+  if(!values.length)return null;
+  const random=evalPRNG(seed),means=[];
+  for(let i=0;i<samples;i++){let sum=0;for(let j=0;j<values.length;j++)sum+=values[Math.floor(random()*values.length)];means.push(sum/values.length);}
+  means.sort((a,b)=>a-b);return {low:means[Math.floor(samples*.025)],high:means[Math.min(samples-1,Math.floor(samples*.975))]};
+}
+function evalScoreShares(result){
+  if(result.reason==='win')return result.points.map((_,i)=>i===result.winner?1:0);
+  if(result.reason!=='stalemate')return null;
+  const best=Math.max(...result.points),tied=result.points.filter(n=>n===best).length;return result.points.map(n=>n===best?1/tied:0);
+}
+function evalCompareSummary(report){
+  const rows={current:{label:'current',seats:0,score:0,wins:0,points:0,factions:{},cards:{}},opponent:{label:report.config.opponent,seats:0,score:0,wins:0,points:0,factions:{},cards:{}}};
+  const differences=[];let excludedBlocks=0;
+  for(const block of report.blocks){
+    if(block.matches.length!==block.expected || block.matches.some(match=>!evalScoreShares(match))){excludedBlocks++;continue;}
+    let scoreA=0,scoreB=0,seatsA=0,seatsB=0;
+    for(const match of block.matches){
+      const shares=evalScoreShares(match);
+      match.roster.forEach((policy,i)=>{
+        const side=policy==='current'?'current':'opponent',row=rows[side],seat=match.seats[i];
+        row.seats++;row.score+=shares[i];row.wins+=match.reason==='win' && match.winner===i;row.points+=match.points[i];
+        if(side==='current'){scoreA+=shares[i];seatsA++;}else{scoreB+=shares[i];seatsB++;}
+        for(const [faction,count] of Object.entries(seat.claims)){const f=row.factions[faction] ||= {claims:0,claimedSeats:0};f.claims+=count;f.claimedSeats++;}
+        for(const id of new Set([...seat.seen,...Object.keys(seat.placements),...Object.keys(seat.handTurns)])){
+          const card=row.cards[id] ||= {seenSeats:0,usedSeats:0,placements:0,handTurns:0,heldAtEnd:0};
+          card.seenSeats+=seat.seen.includes(id);card.usedSeats+=!!seat.placements[id];card.placements+=seat.placements[id]||0;
+          card.handTurns+=seat.handTurns[id]||0;card.heldAtEnd+=seat.held.filter(other=>testCardId(other)===id).length;
+        }
+      });
+    }
+    differences.push(scoreA/seatsA-scoreB/seatsB);
+  }
+  const difference=differences.length?differences.reduce((n,v)=>n+v,0)/differences.length:null;
+  const interval=evalInterval(differences,evalHashSeed(report.config.seed,'comparison-ci'));
+  let conclusion='insufficient';
+  if(report.finished && differences.length>=20 && interval)conclusion=interval.low>0?'current-better':interval.high<0?'opponent-better':'uncertain';
+  return {rows,difference,interval,validBlocks:differences.length,excludedBlocks,conclusion,
+    completedMatches:report.blocks.reduce((n,b)=>n+b.matches.length,0),abortedMatches:report.blocks.flatMap(b=>b.matches).filter(m=>!evalScoreShares(m)).length};
+}
+function evalForkSummary(report){
+  const groups={};let invalidPairs=0;
+  for(const pair of report.pairs){
+    const a=evalScoreShares(pair.a),b=evalScoreShares(pair.b);if(!a||!b){invalidPairs++;continue;}
+    const group=groups[pair.continuation] ||= {pairs:0,aScore:0,bScore:0,aWins:0,bWins:0,aPoints:0,bPoints:0,differences:[]};
+    const p=report.config.actor;group.pairs++;group.aScore+=a[p];group.bScore+=b[p];group.aWins+=pair.a.reason==='win' && pair.a.winner===p;group.bWins+=pair.b.reason==='win' && pair.b.winner===p;
+    group.aPoints+=pair.a.points[p];group.bPoints+=pair.b.points[p];group.differences.push(a[p]-b[p]);
+  }
+  const all=[];for(const [policy,g] of Object.entries(groups)){g.difference=g.differences.reduce((n,v)=>n+v,0)/g.pairs;g.interval=evalInterval(g.differences,evalHashSeed(report.config.seed,policy,'fork-ci'));all.push(g);delete g.differences;}
+  const enough=report.finished && all.length>0 && all.every(g=>g.pairs>=20);
+  const conclusion=!enough?'insufficient':all.every(g=>g.interval.low>0)?'a-better':all.every(g=>g.interval.high<0)?'b-better':'uncertain';
+  return {groups,invalidPairs,conclusion,completedPairs:report.pairs.length};
+}
+function evalValidateSnapshot(snapshot){
+  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==1 || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
+  const state=snapshot.state,n=state?.players?.length,size=snapshot.size;
+  if(![4,5].includes(size) || ![2,3,4].includes(n) || !Number.isInteger(state.currentPlayerIdx) || state.currentPlayerIdx<0 || state.currentPlayerIdx>=n)throw new Error('Invalid position dimensions.');
+  if(state.numPlayers!==n || state.players.some((p,i)=>p.idx!==i || !Array.isArray(p.hand) || !Array.isArray(p.discard)))throw new Error('Invalid position dimensions.');
+  if(!Array.isArray(state.board) || state.board.length!==size || state.board.some(row=>!Array.isArray(row)||row.length!==size))throw new Error('Invalid board.');
+  const tokens=snapshot.tokens||[];if(tokens.length>1000 || tokens.some(token=>!/^trap_token_\d+$/.test(token.id)))throw new Error('Invalid tokens.');
+  const allowed=new Set([...CARDS.map(c=>c.id),...tokens.map(t=>t.id)]);
+  const ids=[...state.board.flat(),...(state.shopCards||[]),...(state.drawPile||[]),...state.players.flatMap(p=>[...(p.hand||[]),...(p.discard||[])])].filter(Boolean);
+  if(ids.some(id=>!allowed.has(id)) || new Set(ids).size!==ids.length || ids.length>1100)throw new Error('Unknown or duplicated card in position.');
+  if(!Array.isArray(state.startingCardIds) || state.startingCardIds.length!==ids.length || new Set(state.startingCardIds).size!==ids.length || ids.some(id=>!state.startingCardIds.includes(id)))throw new Error('Card inventory does not match the position.');
+  if(!Array.isArray(state.wasteland) || state.wasteland.length!==size || state.wasteland.some(row=>row.length!==size))throw new Error('Invalid terrain.');
+  if(state.winner || state.stalemateMessage || state.cancelled)throw new Error('Choose an unfinished position.');
+  return snapshot;
+}
+function evalValidateConfig(config,type='comparison'){
+  if(typeof config.seed!=='string' || config.seed.length>80)throw new Error('Invalid evaluation settings.');
+  if(type==='comparison'){
+    if(!AI_POLICY_PROFILES[config.opponent] || config.opponent==='current' || ![2,3,4].includes(config.players) || !['both','4','5',4,5].includes(config.size)
+      || !Number.isInteger(config.blocks) || config.blocks<1 || config.blocks>1000 || !AI_DIFFICULTIES[config.difficulty] || !['development','holdout'].includes(config.phase))throw new Error('Invalid evaluation settings.');
+  }else if(!Number.isInteger(config.trials) || config.trials<1 || config.trials>500 || !Array.isArray(config.continuations) || !config.continuations.length || config.continuations.some(p=>!['current','baseline'].includes(p)))throw new Error('Invalid evaluation settings.');
+  return config;
+}
+
+// Everything below runs in a dedicated worker; it never replaces the live game's RNG or state.
+let evalRandomPhase='rules',evalRuleRNG=null,evalDecisionRNG=null,evalForcedAction=null,evalPaused=false,evalCancelled=false;
+function evalSetSeed(seed){evalRuleRNG=evalPRNG(evalHashSeed(seed,'rules'));evalDecisionRNG=evalPRNG(evalHashSeed(seed,'decisions'));}
+function evalForcedCell(p,id,cells){
+  const forced=evalForcedAction;
+  if(forced && forced.seat===p && forced.action.cardId===id){evalForcedAction=null;return cells.find(c=>c.r===forced.action.r && c.c===forced.action.c)||cells[0];}
+  return cells[Math.floor(evalDecisionRNG()*cells.length)];
+}
+function evalResetTokens(snapshot){
+  for(const id of Object.keys(CARD))if(CARD[id].token && id!=='trap_token')delete CARD[id];
+  nextTrapToken=snapshot?.tokenCounter||0;
+  for(const token of snapshot?.tokens||[])CARD[token.id]={...CARD.trap_token,id:token.id};
+}
+function evalRestore(snapshot,roster){
+  evalValidateSnapshot(snapshot);SIZE=snapshot.size;evalResetTokens(snapshot);
+  const match=new Game(snapshot.state.players.length,{},null,{aiOnly:true,fastTest:true,aiDifficulty:snapshot.state.aiDifficulty||'hard'});
+  const allowed=new Set(Object.keys(match));
+  for(const [key,value] of Object.entries(snapshot.state)){
+    if(!allowed.has(key) || ['ui','testMetrics','testAbilityFrames','evaluationSnapshot','cancelled'].includes(key))continue;
+    if(key==='handKnowledge')match[key]=value.map(entries=>new Map(entries));
+    else if(key==='startingCardIds')match[key]=new Set(value);
+    else match[key]=JSON.parse(JSON.stringify(value));
+  }
+  match.aiTestMode=true;match.fastAITest=true;match.ui={};match.cancelled=false;match.testMetrics=createAITestMetrics();
+  match.players.forEach((p,i)=>{p.isAI=true;p.aiPolicy=roster?.[i]||'current';p.name=`AI ${i+1}`;for(const id of p.hand)match.recordTestSeen(id,i);});
+  match.testMetrics.turns=1;
+  const openingSeat=match.testSeatMetrics(match.currentPlayerIdx);
+  for(const id of match.players[match.currentPlayerIdx].hand){const key=testCardId(id);openingSeat.handTurns[key]=(openingSeat.handTurns[key]||0)+1;}
+  game=match;stuckStreak=0;evalForcedAction=null;return match;
+}
+function evalLegalActions(match,actor=match.currentPlayerIdx){
+  const forced=match.isPlacementBlocked(actor)?null:match.forcedPlay[actor],hand=forced && match.players[actor].hand.includes(forced)?[forced]:match.players[actor].hand;
+  const actions=[];
+  if(!match.isPlacementBlocked(actor))for(const cardId of hand)for(const cell of match.emptyOrWastelandForCard(CARD[cardId],actor))actions.push({type:'place',cardId,r:cell.r,c:cell.c});
+  if(!forced || !match.players[actor].hand.includes(forced)){
+    if(match.canDrawNormally(actor))actions.push({type:'draw'});
+    for(const cardId of hand)if(match.canTrade(actor,cardId))for(const target of match.tradeCells())actions.push({type:'trade',cardId,target:{r:target.r,c:target.c}});
+  }
+  return actions.length?actions:[{type:'pass'}];
+}
+function evalCanonicalAction(action){
+  if(action.type==='place')return {type:'place',cardId:action.cardId,r:action.r,c:action.c};
+  if(action.type==='trade')return {type:'trade',cardId:action.cardId,target:{r:action.target.r,c:action.target.c}};
+  return {type:action.type};
+}
+function evalPublicActions(match,actor=match.currentPlayerIdx){
+  // Worker planning uses a sampled hidden state; recommendations cannot inspect actual rival hands.
+  const random=evalPRNG(8016),sample=evalSampleHidden(captureAIEvaluationSnapshot(match),actor,random);
+  return sample;
+}
+function evalSampleHidden(snapshot,actor,random){
+  const sampled=JSON.parse(JSON.stringify(snapshot)),state=sampled.state;
+  const memory=new Map(state.handKnowledge?.[actor]||[]),known=Array.from({length:state.players.length},()=>[]);
+  for(const [owner,id] of Object.entries(state.forcedPlay||{}))if(id)memory.set(id,Number(owner));
+  const pool=[...state.drawPile,...state.players.flatMap((p,i)=>i===actor?[]:p.hand)].slice().sort();
+  for(const [id,owner] of memory){
+    if(!Number.isInteger(owner) || owner===actor || !state.players[owner])continue;
+    const index=pool.indexOf(id);if(index<0)continue;pool.splice(index,1);known[owner].push(id);
+  }
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  for(let i=0;i<state.players.length;i++)if(i!==actor){const count=state.players[i].hand.length-known[i].length;state.players[i].hand=known[i].concat(pool.splice(0,count));}
+  state.drawPile=pool;
+  state.handKnowledge=state.players.map((p,i)=>i===actor?[...memory].filter(([id,owner])=>state.players[owner]?.hand.includes(id)):[]);
+  return sampled;
+}
+function evalConservation(match){
+  const ids=[...match.drawPile,...match.board.flat(),...match.shopCards,...match.players.flatMap(p=>[...p.hand,...p.discard])].filter(Boolean);
+  if(ids.length!==match.startingCardIds.size || new Set(ids).size!==ids.length || ids.some(id=>!match.startingCardIds.has(id)))throw new Error('Card conservation failed.');
+}
+async function evalYield(){
+  await new Promise(resolve=>setTimeout(resolve,0));
+  while(evalPaused && !evalCancelled)await new Promise(resolve=>setTimeout(resolve,25));
+  if(evalCancelled)throw new Error('Evaluation cancelled.');
+}
+async function evalRunMatch(snapshot,roster,seed,forced=null){
+  evalSetSeed(seed);const match=evalRestore(snapshot,roster);evalSetSeed(seed);match.evaluationRun=true;
+  if(forced)evalForcedAction={seat:match.currentPlayerIdx,action:JSON.parse(JSON.stringify(forced))};
+  let initial=true,regularTurns=0;
+  try{
+    while(!match.winner && !match.stalemateMessage && !match.testAbortReason){
+      if(++regularTurns>600 || match.testMetrics.turns>600){match.testAbortReason='turn-limit';break;}
+      const p=match.currentPlayerIdx;
+      let scheduled=0;
+      if(initial){scheduled=snapshot.scheduledExtra||0;initial=false;}
+      else{match.beginPlayerTurn(p);match.tradedThisTurn[p]=false;scheduled=match.takeScheduledExtraTurns(p);}
+      const requested=evalForcedAction?.seat===p && evalLegalActions(match,p).some(action=>JSON.stringify(action)===JSON.stringify(evalCanonicalAction(evalForcedAction.action)));
+      if(!requested && !canAct(p)){
+        stuckStreak=match.isPlacementBlocked(p) || match.placementBlockTurns.some(n=>n>0)?0:stuckStreak+1;
+        if(stuckStreak>=match.numPlayers){endStalemate();break;}
+        advanceTurn();
+      }else{stuckStreak=0;const flags=await doPlayerAction(p);await afterAction(p,flags,scheduled);}
+      evalConservation(match);
+      if(regularTurns%5===0)await evalYield();
+    }
+  }catch(error){if(evalCancelled)throw error;match.testAbortReason='error';match.testError=String(error?.stack||error);}
+  evalConservation(match);
+  return {seed,roster:roster.slice(),reason:match.testAbortReason||(match.winner?'win':'stalemate'),winner:match.winner?.idx??null,
+    points:match.players.map(p=>match.winCount(p)),turns:match.testMetrics.turns,error:match.testError||null,
+    seats:match.players.map(p=>{const seat=match.testSeatMetrics(p.idx);return {seen:[...seat.seen],placements:seat.placements,claims:seat.claims,handTurns:seat.handTurns,held:p.hand.slice()};})};
+}
+function evalNewOpening(seed,n,size,difficulty){
+  SIZE=size;evalResetTokens();evalSetSeed(seed);const match=new Game(n,{},null,{aiOnly:true,fastTest:true,aiDifficulty:difficulty});
+  game=match;match.beginPlayerTurn(0);match.tradedThisTurn[0]=false;return captureAIEvaluationSnapshot(match,match.takeScheduledExtraTurns(0));
+}
+async function evalCompare(config,send){
+  evalValidateConfig(config);
+  const report={format:'tbg-ai-evaluation',version:1,type:'comparison',baselineCommit:'2b07010618c21eee6dfc6ffd4092c8b4bbb42e9b',baselineDigest:AI_BASELINE_DIGEST,
+    currentPolicy:'59a9e6c9bf35941d19a957b3eb250acd9b766c1c',rules:'Shared current Game engine',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,startedAt:new Date().toISOString(),finished:false,blocks:[]};
+  const lineups=evalMixedLineups(config.players,config.opponent);
+  for(let i=0;i<config.blocks;i++){
+    await evalYield();const seed=evalHashSeed(config.seed,config.phase||'development',i),size=config.size==='both'?(i%2?5:4):Number(config.size);
+    const opening=evalNewOpening(seed,config.players,size,config.difficulty),block={index:i,seed,size,expected:lineups.length,matches:[]};
+    for(const roster of lineups){await evalYield();block.matches.push(await evalRunMatch(opening,roster,evalHashSeed(seed,'play')));send({type:'progress',completed:report.blocks.length*lineups.length+block.matches.length,total:config.blocks*lineups.length});}
+    report.blocks.push(block);report.summary=evalCompareSummary(report);send({type:'report',report});
+  }
+  report.finished=true;report.finishedAt=new Date().toISOString();report.summary=evalCompareSummary(report);send({type:'complete',report});return report;
+}
+async function evalFork(snapshot,config,send){
+  evalValidateSnapshot(snapshot);evalValidateConfig(config,'fork');const actor=snapshot.state.currentPlayerIdx;config={...config,actor};
+  const continuations=config.continuations||['current','baseline'];
+  const report={format:'tbg-ai-evaluation',version:1,type:'fork',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,snapshot,startedAt:new Date().toISOString(),finished:false,pairs:[],
+    assumptions:'Unknown rival cards and deck order are re-sampled from the acting player information. Rival private clue memories are omitted. Continuations are finite AI policies, not optimal play.'};
+  for(let i=0;i<config.trials;i++){
+    const seed=evalHashSeed(config.seed,'fork',i),sample=evalSampleHidden(snapshot,actor,evalPRNG(seed));
+    for(const continuation of continuations){
+      await evalYield();const roster=sample.state.players.map(()=>continuation),legal=evalLegalActions(evalRestore(sample,roster),actor);
+      for(const action of [config.a,config.b])if(!legal.some(option=>JSON.stringify(option)===JSON.stringify(evalCanonicalAction(action))))throw new Error('Fork action is not legal in this position.');
+      const pair={seed,continuation,a:await evalRunMatch(sample,roster,seed,config.a),b:await evalRunMatch(sample,roster,seed,config.b)};
+      report.pairs.push(pair);report.summary=evalForkSummary(report);send({type:'report',report});
+      send({type:'progress',completed:report.pairs.length,total:config.trials*continuations.length});
+    }
+  }
+  report.finished=true;report.finishedAt=new Date().toISOString();report.summary=evalForkSummary(report);send({type:'complete',report});return report;
+}
+function installAIEvaluationWorker(){
+  Math.random=()=>evalRandomPhase==='decisions'?evalDecisionRNG():evalRuleRNG();evalSetSeed(1);
+  const decisionWrapper=original=>function(...args){
+    const before=evalRandomPhase;evalRandomPhase='decisions';let result;
+    try{result=original.apply(this,args);}catch(error){evalRandomPhase=before;throw error;}
+    if(result?.then)return result.finally(()=>evalRandomPhase=before);evalRandomPhase=before;return result;
+  };
+  const wrapDecision=method=>{
+    const original=Game.prototype[method];if(!original)return;
+    Game.prototype[method]=decisionWrapper(original);
+  };
+  for(const method of ['aiMakesMistake','chooseFromList','chooseCell','chooseCells','chooseBoardCell','choosePlayer','chooseRectArea','chooseOccupiedRectArea','guessCardName','chooseByakurenEffect','chooseDrawPileCard','chooseChimeraAbility','selectCostCards','chooseHandCard','confirm','blindHandGuess','patchouliGuess','kaguyaBlindGuess'])wrapDecision(method);
+  aiChooseCostCards=decisionWrapper(aiChooseCostCards);aiFactionPlacement=decisionWrapper(aiFactionPlacement);aiKomachiTarget=decisionWrapper(aiKomachiTarget);aiBestTrade=decisionWrapper(aiBestTrade);
+  const decide=aiDecideAction;
+  aiDecideAction=async(p,allowTrade=true)=>{
+    if(game.testMetrics.turns>600){game.testAbortReason='turn-limit';return {type:'pass'};}
+    if(evalForcedAction?.seat===p){const action=evalForcedAction.action;evalForcedAction=null;return action;}
+    const before=evalRandomPhase;evalRandomPhase='decisions';try{return await decide(p,allowTrade);}finally{evalRandomPhase=before;}
+  };
+  let busy=false;
+  self.onmessage=async({data})=>{
+    if(data.type==='pause'){evalPaused=true;return;}if(data.type==='resume'){evalPaused=false;return;}if(data.type==='cancel'){evalCancelled=true;evalPaused=false;return;}
+    if(busy){self.postMessage({type:'error',message:'An evaluation is already running.'});return;}
+    busy=true;evalCancelled=false;evalPaused=false;
+    try{
+      if(data.type==='comparison')await evalCompare(data.config,message=>self.postMessage(message));
+      else if(data.type==='fork')await evalFork(data.snapshot,data.config,message=>self.postMessage(message));
+      else if(data.type==='inspect'){
+        const snapshot=evalValidateSnapshot(data.snapshot),sample=evalPublicActions(evalRestore(snapshot),snapshot.state.currentPlayerIdx),match=evalRestore(sample),p=match.currentPlayerIdx;
+        const actions=evalLegalActions(match,p),recommendations={};
+        for(const policy of ['current','baseline']){match.players[p].aiPolicy=policy;recommendations[policy]=await aiDecideAction(p);}
+        self.postMessage({type:'position',snapshot,actions,recommendations});
+      }else throw new Error('Unknown evaluation request.');
+    }catch(error){self.postMessage({type:evalCancelled?'cancelled':'error',message:String(error?.message||error)});}
+    finally{busy=false;}
+  };
+}
+/* AI evaluation engine end */
+
+/* AI evaluation lab UI start */
+let aiLabWorker=null,aiLabReport=null,aiLabPosition=null,aiLabActions=[],aiLabBusy=false,aiLabPaused=false;
+function aiLabText(node,text){setRuleText(node,text);}
+function aiLabWorkerReady(){
+  if(aiLabWorker)return aiLabWorker;
+  if(typeof Worker==='undefined')throw new Error('This browser does not support background evaluation.');
+  const url=URL.createObjectURL(new Blob([buildAIEvaluationWorkerSource()],{type:'text/javascript'}));
+  aiLabWorker=new Worker(url);URL.revokeObjectURL(url);
+  aiLabWorker.onmessage=({data})=>{
+    if(data.type==='progress'){el('ai-lab-progress').max=data.total;el('ai-lab-progress').value=data.completed;el('ai-lab-count').textContent=`${data.completed} / ${data.total}`;}
+    else if(data.type==='position'){aiLabPosition=data.snapshot;aiLabActions=data.actions;renderAILabPosition(data.recommendations);aiLabBusy=false;aiLabText(el('ai-lab-state'),'Position ready.');}
+    else if(data.type==='report'||data.type==='complete'){aiLabReport=data.report;renderAILabReport();if(data.type==='complete'){aiLabBusy=false;aiLabPaused=false;aiLabText(el('ai-lab-state'),'Evaluation complete.');}}
+    else if(data.type==='error'||data.type==='cancelled'){aiLabBusy=false;aiLabPaused=false;el('ai-lab-state').textContent=translateGameText(data.message);}
+    updateAILabButtons();
+  };
+  aiLabWorker.onerror=event=>{aiLabBusy=false;aiLabWorker?.terminate();aiLabWorker=null;aiLabText(el('ai-lab-state'),'Evaluation worker failed.');el('ai-lab-errors').textContent=event.message||'';updateAILabButtons();};
+  return aiLabWorker;
+}
+function openAILab(){closeDebugControls();el('ai-lab-overlay').classList.add('show');updateAILabButtons();el('ai-lab-close').focus({preventScroll:true});}
+function closeAILab(){el('ai-lab-overlay').classList.remove('show');}
+function updateAILabButtons(){
+  for(const id of ['ai-lab-start','ai-lab-load-position','ai-lab-import','ai-lab-fork'])el(id).disabled=aiLabBusy || (id==='ai-lab-fork' && !aiLabPosition);
+  el('ai-lab-stop').disabled=!aiLabBusy;el('ai-lab-pause').disabled=!aiLabBusy;
+  aiLabText(el('ai-lab-pause'),aiLabPaused?'Resume test':'Pause test');
+  el('ai-lab-export').disabled=!aiLabReport;el('ai-lab-export-csv').disabled=!aiLabReport;el('ai-lab-save-position').disabled=!aiLabPosition;
+}
+function aiLabStartComparison(){
+  try{
+    const blocks=Math.min(1000,Math.max(1,Math.floor(Number(el('ai-lab-blocks').value)||40)));
+    const config={opponent:el('ai-lab-opponent').value,blocks,players:Number(el('ai-lab-players').value),size:el('ai-lab-size').value,
+      difficulty:el('ai-lab-difficulty').value,seed:el('ai-lab-seed').value||'TBG-2026-10-06',phase:el('ai-lab-phase').value};
+    aiLabReport=null;aiLabBusy=true;aiLabPaused=false;el('ai-lab-report').replaceChildren();el('ai-lab-errors').textContent='';
+    el('ai-lab-progress').value=0;aiLabWorkerReady().postMessage({type:'comparison',config});aiLabText(el('ai-lab-state'),'Evaluation running in the background.');updateAILabButtons();
+  }catch(error){aiLabBusy=false;el('ai-lab-state').textContent=error.message;updateAILabButtons();}
+}
+function aiLabInspectPosition(snapshot){
+  try{evalValidateSnapshot(snapshot);aiLabBusy=true;aiLabWorkerReady().postMessage({type:'inspect',snapshot});aiLabText(el('ai-lab-state'),'Reading the turn-start position.');updateAILabButtons();}
+  catch(error){aiLabBusy=false;el('ai-lab-state').textContent=translateGameText(error.message);updateAILabButtons();}
+}
+function aiLabLoadPosition(){
+  if(!game?.evaluationSnapshot){aiLabText(el('ai-lab-state'),'Start a game to capture a turn-start position.');return;}
+  aiLabInspectPosition(JSON.parse(JSON.stringify(game.evaluationSnapshot)));
+}
+function aiLabActionLabel(action){
+  if(action.type==='place')return `${translateGameText(CARD[action.cardId].name)} → ${action.r<aiLabPosition.size?`(${action.r+1}, ${action.c+1})`:translateGameText('Kourindou')}`;
+  if(action.type==='trade'){const id=aiLabPosition.state.shopTiles?.find(tile=>tile.r===action.target.r && tile.c===action.target.c)?.slot;
+    const target=action.target.r<aiLabPosition.size?aiLabPosition.state.board[action.target.r][action.target.c]:aiLabPosition.state.shopCards[id];
+    return `${translateGameText('Trade')} · ${translateGameText(CARD[action.cardId].name)} → ${translateGameText(CARD[target]?.name||'Card')}`;}
+  return translateGameText(action.type==='draw'?'Draw for Everyone':'Pass turn');
+}
+function renderAILabPosition(recommendations={}){
+  const s=aiLabPosition.state,p=s.currentPlayerIdx;
+  const board=s.board.map((row,r)=>`<tr><th>${r+1}</th>${row.map((id,c)=>`<td>${id?ruleTextHtml(CARD[id].name):'—'}${s.wasteland[r][c]?`<br>${ruleTextHtml('Wasteland')}`:''}</td>`).join('')}</tr>`).join('');
+  el('ai-lab-position').innerHTML=`<p>${ruleTextHtml('Turn-start position')} · ${ruleTextHtml('Seat')} ${p+1} · ${s.drawPile.length} ${ruleTextHtml('Draw pile')}</p><div class="ai-test-table"><table><thead><tr><th></th>${s.board[0].map((_,c)=>`<th>${c+1}</th>`).join('')}</tr></thead><tbody>${board}</tbody></table></div><p>${s.players[p].hand.map(id=>ruleTextHtml(CARD[id].name)).join(' · ')}</p><p>${ruleTextHtml('Kourindou')} · ${s.shopCards.map(id=>ruleTextHtml(CARD[id].name)).join(' · ')}</p>`;
+  for(const id of ['ai-lab-action-a','ai-lab-action-b']){
+    const select=el(id);select.replaceChildren();aiLabActions.forEach((action,index)=>{const option=document.createElement('option');option.value=index;option.textContent=aiLabActionLabel(action);select.appendChild(option);});
+  }
+  for(const [policy,id] of [['current','ai-lab-action-a'],['baseline','ai-lab-action-b']]){
+    const action=recommendations[policy],key=action?JSON.stringify(evalCanonicalAction(action)):'';
+    const index=aiLabActions.findIndex(option=>JSON.stringify(option)===key);if(index>=0)el(id).value=index;
+  }
+  if(el('ai-lab-action-a').value===el('ai-lab-action-b').value && aiLabActions.length>1)el('ai-lab-action-b').value=el('ai-lab-action-a').value==='0'?'1':'0';
+}
+function aiLabStartFork(){
+  const a=aiLabActions[Number(el('ai-lab-action-a').value)],b=aiLabActions[Number(el('ai-lab-action-b').value)];
+  if(!a||!b||JSON.stringify(a)===JSON.stringify(b)){aiLabText(el('ai-lab-state'),'Choose two different legal actions.');return;}
+  const trials=Math.min(500,Math.max(1,Math.floor(Number(el('ai-lab-trials').value)||20)));
+  const continuation=el('ai-lab-continuation').value,continuations=continuation==='both'?['current','baseline']:[continuation];
+  try{
+    aiLabReport=null;aiLabBusy=true;aiLabPaused=false;el('ai-lab-report').replaceChildren();el('ai-lab-errors').textContent='';el('ai-lab-progress').value=0;
+    aiLabWorkerReady().postMessage({type:'fork',snapshot:aiLabPosition,config:{a,b,trials,continuations,seed:el('ai-lab-seed').value||'TBG-2026-10-06'}});
+    aiLabText(el('ai-lab-state'),'Evaluation running in the background.');updateAILabButtons();
+  }catch(error){aiLabBusy=false;el('ai-lab-state').textContent=error.message;updateAILabButtons();}
+}
+function aiLabPercent(n,d=1){return d?`${(n/d*100).toFixed(1)}%`:'—';}
+function aiLabInterval(interval){return interval?`${aiLabPercent(interval.low)} … ${aiLabPercent(interval.high)}`:'—';}
+function aiLabPolicyName(policy){return ruleTextHtml(AI_POLICY_PROFILES[policy]?.label||policy);}
+function renderAILabReport(){
+  const r=aiLabReport;if(!r)return;const s=r.summary;
+  const messages={insufficient:'Not enough completed opening groups yet.',uncertain:'The difference is not established.',
+    'current-better':'Current AI performs better in this test.','opponent-better':'The comparison policy performs better in this test.',
+    'a-better':'Action A performs better across the tested continuations.','b-better':'Action B performs better across the tested continuations.'};
+  let html=`<p class="ai-lab-verdict">${ruleTextHtml(messages[s.conclusion])}</p>`;
+  if(!r.finished)html+=`<p>${ruleTextHtml('Interim results only. The planned batch has not finished.')}</p>`;
+  if(r.type==='comparison'){
+    html+=`<p>${ruleTextHtml('Score-rate difference')} · ${s.difference===null?'—':aiLabPercent(s.difference)} · ${ruleTextHtml('95% interval')} ${aiLabInterval(s.interval)}<br>${ruleTextHtml('Independent opening groups')} ${s.validBlocks} · ${ruleTextHtml('Excluded groups')} ${s.excludedBlocks} · ${ruleTextHtml('Aborted games')} ${s.abortedMatches}</p>`;
+    html+=aiTestTable(['Policy','Player games','Score rate','Win rate','Average points'],Object.values(s.rows).map(row=>[aiLabPolicyName(row.label),row.seats,aiLabPercent(row.score,row.seats),aiLabPercent(row.wins,row.seats),row.seats?(row.points/row.seats).toFixed(2):'—']));
+    const a=s.rows.current,b=s.rows.opponent;
+    html+=`<h3>${ruleTextHtml('Faction claims')}</h3>`+aiTestTable(['Faction','Current AI','Comparison policy'],Object.entries(FACTIONS).filter(([,f])=>f.size).map(([id,f])=>[f.icon,aiLabPercent(a.factions[id]?.claimedSeats||0,a.seats),aiLabPercent(b.factions[id]?.claimedSeats||0,b.seats)]));
+    html+=`<h3>${ruleTextHtml('Card usage')}</h3>`+aiTestTable(['Card','Current use rate','Comparison use rate','Current hand turns','Comparison hand turns'],CARDS.filter(c=>!c.token).map(c=>{
+      const x=a.cards[c.id]||{},y=b.cards[c.id]||{};return [ruleTextHtml(c.name),aiLabPercent(x.usedSeats||0,x.seenSeats||0),aiLabPercent(y.usedSeats||0,y.seenSeats||0),x.handTurns||0,y.handTurns||0];
+    }));
+  }else{
+    html+=`<p>${ruleTextHtml('Action A')} · ${escapeLogHtml(aiLabActionLabel(r.config.a))}<br>${ruleTextHtml('Action B')} · ${escapeLogHtml(aiLabActionLabel(r.config.b))}</p>`;
+    html+=aiTestTable(['Continuation policy','Paired trials','Action A score','Action B score','Difference','95% interval'],Object.entries(s.groups).map(([policy,g])=>[aiLabPolicyName(policy),g.pairs,aiLabPercent(g.aScore,g.pairs),aiLabPercent(g.bScore,g.pairs),aiLabPercent(g.difference),aiLabInterval(g.interval)]));
+    html+=`<p>${ruleTextHtml('Excluded paired trials')} ${s.invalidPairs}</p>`;
+  }
+  el('ai-lab-report').innerHTML=html;
+  const matches=r.type==='comparison'?r.blocks.flatMap(block=>block.matches):r.pairs.flatMap(pair=>[pair.a,pair.b]);
+  el('ai-lab-errors').textContent=matches.filter(m=>m.error).map(m=>`${m.seed}: ${m.error}`).join('\n');
+  updateAILabButtons();
+}
+function aiLabDownload(content,name,type='application/json'){
+  const url=URL.createObjectURL(new Blob([content],{type})),link=document.createElement('a');link.href=url;link.download=name;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function aiLabExportCSV(report){
+  const rows=[['test','seed','opening_size','continuation','branch','seat','policy','ending','winner','score_share','points','turns','seen','placements','claims','hand_turns','held']];
+  const add=(m,seed,size,continuation='',branch='')=>{const shares=evalScoreShares(m);m.roster.forEach((policy,i)=>{const s=m.seats[i];rows.push([report.type,seed,size,continuation,branch,i+1,policy,m.reason,m.winner===null?'':m.winner+1,shares?.[i]??'',m.points[i],m.turns,JSON.stringify(s.seen),JSON.stringify(s.placements),JSON.stringify(s.claims),JSON.stringify(s.handTurns),JSON.stringify(s.held)]);});};
+  if(report.type==='comparison')for(const block of report.blocks)for(const m of block.matches)add(m,block.seed,block.size);
+  else for(const pair of report.pairs){add(pair.a,pair.seed,report.snapshot.size,pair.continuation,'A');add(pair.b,pair.seed,report.snapshot.size,pair.continuation,'B');}
+  return '\ufeff'+rows.map(row=>row.map(value=>'"'+String(value).replaceAll('"','""')+'"').join(',')).join('\r\n');
+}
+el('menu-ai-lab').addEventListener('click',openAILab);el('debug-ai-lab').addEventListener('click',openAILab);
+el('ai-lab-close').addEventListener('click',closeAILab);el('ai-lab-overlay').addEventListener('click',e=>{if(e.target===el('ai-lab-overlay'))closeAILab();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape' && el('ai-lab-overlay').classList.contains('show'))closeAILab();});
+el('ai-lab-start').addEventListener('click',aiLabStartComparison);
+el('ai-lab-pause').addEventListener('click',()=>{aiLabPaused=!aiLabPaused;aiLabWorker?.postMessage({type:aiLabPaused?'pause':'resume'});updateAILabButtons();});
+el('ai-lab-stop').addEventListener('click',()=>{aiLabWorker?.terminate();aiLabWorker=null;aiLabBusy=false;aiLabPaused=false;aiLabText(el('ai-lab-state'),'Stopped. Only complete opening groups are compared.');updateAILabButtons();});
+el('ai-lab-load-position').addEventListener('click',aiLabLoadPosition);el('ai-lab-fork').addEventListener('click',aiLabStartFork);
+el('ai-lab-import').addEventListener('click',()=>el('ai-lab-file').click());
+el('ai-lab-file').addEventListener('change',async event=>{const file=event.target.files[0];if(file){if(file.size>2000000){aiLabText(el('ai-lab-state'),'Position file is too large.');return;}try{aiLabInspectPosition(JSON.parse(await file.text()));}catch(error){el('ai-lab-state').textContent=error.message;}}event.target.value='';});
+el('ai-lab-save-position').addEventListener('click',()=>aiLabDownload(JSON.stringify(aiLabPosition,null,2),'tbg-ai-position.json'));
+el('ai-lab-export').addEventListener('click',()=>aiLabDownload(JSON.stringify(aiLabReport,null,2),`tbg-ai-${aiLabReport.type}-${new Date().toISOString().slice(0,10)}.json`));
+el('ai-lab-export-csv').addEventListener('click',()=>aiLabDownload(aiLabExportCSV(aiLabReport),`tbg-ai-${aiLabReport.type}-${new Date().toISOString().slice(0,10)}.csv`,'text/csv;charset=utf-8'));
+/* AI evaluation lab UI end */
+
 
 let chosenPlayerCount = 3;
 document.querySelectorAll('#player-count-opts .pill-btn').forEach(btn => {
