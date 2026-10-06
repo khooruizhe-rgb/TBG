@@ -32,6 +32,10 @@ test('Every real card has a Chinese name, ability title and complete rules witho
  A.setGameLanguage('zh-CN');assert.equal(Object.keys(A.ZH_CARDS).length,A.CARDS.length);
  for(const card of A.CARDS){const [name,ability,description]=A.ZH_CARDS[card.id];assert.equal(A.translateGameText(card.name),name);assert.equal(A.translateGameText(card.desc),description);assert.equal(A.translateGameText(A.CARD_ABILITY_NAMES[card.id]),ability);assert(ability);assert(!/[A-Za-z]{3,}/.test(description.replace(/\b[IVXLCDMN]+\b/g,'')),card.id);assert.notEqual(card.name,name);}
 });
+test('Kutaka uses 异界的护卫 in card details and direct ability text without changing the English title',()=>{
+ A.setGameLanguage('zh-CN');assert.equal(A.ZH_CARDS.hell_kutaka[1],'异界的护卫');assert.equal(A.translateGameText('Overseeing Gateway'),'异界的护卫');
+ const title=el('kutaka-title');A.setCardAbilityTitle(title,'hell_kutaka');assert.equal(title.textContent,'异界的护卫');A.setGameLanguage('en');assert.equal(title.textContent,'Overseeing Gateway');A.setGameLanguage('zh-CN');assert.equal(title.textContent,'异界的护卫');
+});
 test('Placed and Skip Ability use the requested Chinese wording while English remains intact',()=>{
  A.setGameLanguage('zh-CN');for(const label of ['Skip ability','Skip Ability','Cancel (skip ability)'])assert.equal(A.translateGameText(label),'跳过技能');
  for(const card of A.CARDS){const description=A.translateGameText(card.desc);assert(!description.includes('放置时：'),card.id);if(card.desc.includes('Placed:'))assert(description.includes('放置：'),card.id);}

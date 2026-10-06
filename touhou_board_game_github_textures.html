@@ -214,16 +214,7 @@
   .playtest-reveal b{ color:var(--sakura); }
   .playtest-reveal .empty-pile{ font-style:italic; opacity:0.7; }
 
-  #table-wrap{ position:relative; width:100%; max-width:620px; margin:10px auto 76px; padding:96px 90px 76px; }
-  #table-surface{
-    position:relative; border-radius:50%/38%;
-    background:
-      radial-gradient(ellipse at 50% 40%, #2f2350 0%, #1c1533 65%, #140f26 100%);
-    border:10px solid #4a3320;
-    box-shadow: 0 14px 34px rgba(0,0,0,0.55), inset 0 0 50px rgba(0,0,0,0.5), inset 0 0 0 2px rgba(232,200,116,0.15);
-    display:flex; align-items:center; justify-content:center;
-    padding:32px;
-  }
+  #table-wrap{ position:relative; display:flex; align-items:center; justify-content:center; width:100%; max-width:620px; margin:10px auto 76px; padding:96px 90px 76px; }
   #seats{ position:absolute; inset:0; z-index:3; pointer-events:none; }
   .seat{
     position:absolute; pointer-events:auto;
@@ -313,7 +304,6 @@
 
   @media (max-width: 640px){
     #table-wrap{ padding:92px 8px 56px; margin-bottom:96px; }
-    #table-surface{ padding:8px; border-width:6px; }
     #board{ width:100%; max-width:420px; gap:clamp(4px,1.5vw,8px); }
     #draw-pile{ top:10px; }
     .seat{ width:80px; }
@@ -1882,7 +1872,6 @@
       flex:1; min-height:0; width:100%; max-width:580px; margin:0 auto;
       padding:88px 64px 40px; display:flex; align-items:center; justify-content:center;
     }
-    #table-surface{ flex:none; padding:10px; border-width:6px; }
     #board{
       width:min(360px, calc(80dvh - 392px - var(--fit-ui-extra, 0px)), calc(55vw - 231px));
     }
@@ -2162,7 +2151,6 @@ body.mobile-landscape #hand .hand-card .icon-row{font-size:11px;}
 body.mobile-landscape #hand .hand-card .cname{font-size:inherit;line-height:1.12;}
 body.mobile-landscape #hand .hand-card:hover{transform:none;}
 body.mobile-landscape #table-wrap{flex:1;min-height:0;width:100%;max-width:none;padding:40px 0 0;margin:0;display:flex;align-items:center;justify-content:center;}
-body.mobile-landscape #table-surface{flex:none;padding:4px;border-width:4px;}
 body.mobile-landscape #board{width:var(--mobile-board-width,180px);max-width:none;gap:3px;}
 body.mobile-landscape #board .cell{border-radius:6px;}
 body.mobile-landscape .board-card{padding:2px 1px;border-radius:5px;font-size:clamp(6px,var(--mobile-board-font,8px),10px);}
@@ -2343,6 +2331,7 @@ body:not(:has(#game.active)) #setup{pointer-events:auto}
 .table-scatter-card{position:absolute;left:var(--table-x);top:var(--table-y);width:clamp(132px,13vw,188px);aspect-ratio:3/4;transform:translate(-50%,-50%) rotate(var(--table-angle));filter:drop-shadow(4px 9px 5px #170d0b7a);animation:tableCardSettle .65s ease-out both;animation-delay:var(--table-delay,0s);pointer-events:auto;cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .table-scatter-card.table-card-moved{position:fixed;z-index:3;animation:none}
 .table-scatter-card.table-card-dragging{cursor:grabbing;filter:drop-shadow(7px 15px 9px #170d0b8a)}
+.table-scatter-card.table-card-sliding{filter:drop-shadow(3px 5px 3px #170d0b7a);will-change:left,top,transform}
 .table-scatter-card:focus-visible{outline:3px solid #f3d7a3;outline-offset:4px;border-radius:8px}
 .table-scatter-card .board-card{width:100%;height:100%;padding:9px;border:3px solid var(--faction-edge,#e7d6b8);border-radius:8px;box-shadow:inset 0 0 0 1px #fff5df66,1px 2px 0 #aa8b65;pointer-events:none}
 .table-scatter-card .board-card .cname{font-size:clamp(13px,1.25vw,18px);text-shadow:0 2px 3px #080510}
@@ -2400,7 +2389,6 @@ body.crown-scene-active #game .panel{background:linear-gradient(135deg,rgba(var(
 body.crown-scene-active #game #board-panel{background:linear-gradient(135deg,rgba(var(--scene-rgb),.27),rgba(var(--scene-rgb),.05) 75%),var(--title-wood);background-size:cover,900px 420px}
 body.crown-scene-active #board-wrap{background:linear-gradient(145deg,rgba(var(--scene-rgb),.21),rgba(var(--scene-rgb),.05)),#eddfc322;box-shadow:inset 0 0 25px rgba(var(--scene-rgb),.13)}
 body.crown-scene-active #hand-area{background:linear-gradient(115deg,rgba(var(--scene-rgb),.23),rgba(var(--scene-rgb),.07)),#f0e3cc;box-shadow:inset 0 0 18px rgba(var(--scene-rgb),.12)}
-#table-surface{background:radial-gradient(ellipse at 45% 35%,#405348,#2b3e34 62%,#1c2b25);border-color:#624229;box-shadow:0 12px 25px #29160c55,inset 0 0 32px #0e1d1466,inset 0 0 0 2px #d3b98a45}
 #board .cell:not(.wasteland),#kourindou .cell:not(.wasteland),.cell.wasteland.wasteland-mishaguji{background:#e4d2af20;border-color:#bda78299}
 .seat .avatar{background:linear-gradient(135deg,#fff2d5,#d8bd95);border-color:#a27c52;color:#533826}
 .seat .sname{color:#fff0d0;text-shadow:0 1px 3px #39220d}
@@ -2587,9 +2575,7 @@ body.crown-scene-active #title-table{background-image:linear-gradient(rgb(var(--
               <div id="draw-pile-face" class="pile-card-face" aria-hidden="true">✦</div>
               <span id="draw-pile-label">Draw pile · <span id="draw-pile-count">0</span></span>
             </div>
-            <div id="table-surface">
-              <div id="board"></div>
-            </div>
+            <div id="board"></div>
           </div>
           <div id="status-line"></div>
           <div id="controls">
@@ -6153,7 +6139,7 @@ const CARD_ABILITY_NAMES = {
 /* ---------- Language selection: canonical rules stay language-independent. ---------- */
 let gameLanguage='en';
 try{const saved=window.localStorage?.getItem('boundary-language');if(saved==='zh-CN')gameLanguage=saved;}catch(_error){}
-const ZH_CARDS={"sdm_remilia":["蕾米莉亚·斯卡蕾特","命运操纵","放置：将其他玩家手中的所有红魔馆卡牌加入你的手牌。"],"sdm_flandre":["芙兰朵露·斯卡蕾特","「目」之破坏","放置：选择任意玩家的一张手牌，将其送入该玩家的弃牌堆。"],"sdm_patchouli":["帕秋莉·诺蕾姬","魔法风云","放置：猜测另一名玩家手中的一张卡牌。猜对后，将该卡牌加入你的手牌。"],"sdm_sakuya":["十六夜咲夜","Zawarudo","放置：获得两个额外回合，然后将你的手牌洗入抽牌堆。"],"haku_yuyuko":["西行寺幽幽子","幽冥缠身","[代价 N] 放置：将 N 张随机的正交相邻卡牌送入你的弃牌堆。"],"haku_youmu":["魂魄妖梦","先之先","放置：放置此卡不消耗你的回合。"],"hourai_kaguya":["蓬莱山辉夜","看我操作！","放置：猜测另一名玩家手中的一张永远亭卡牌。每次猜对，你可以将该卡牌放到棋盘上并继续猜测。"],"hourai_eirin":["八意永琳","思兼装置","此卡在棋盘上时，所有领主卡牌的能力均被禁用。"],"hourai_reisen":["铃仙·优昙华院·因幡","狂气之瞳","放置：选择另一名玩家的一张手牌。该玩家必须在下个回合放置这张卡牌。"],"hourai_mokou":["藤原妹红","凤凰复生","放置：你的弃牌堆中每有一张卡牌，就抽一张牌。"],"mtn_kanako":["八坂神奈子","风神之神德","此卡可以放在荒地上。此卡在棋盘上时，其他妖怪之山卡牌的放置能力发动两次。\n放置：将你手中的一张妖怪之山卡牌放到棋盘上。"],"mtn_suwako":["洩矢诹访子","诅咒之地","放置：将三个棋盘格变为荒地。"],"mtn_sanae":["东风谷早苗","八坂之神风","放置：抽一张牌。如果八坂神奈子在棋盘上，再抽一张牌。"],"mtn_aya":["射命丸文","才不是道听途说呢！","放置：其他每名玩家展示四张手牌。"],"palace_satori":["古明地觉","恐怖催眠术","[代价 I] 放置：查看另一名玩家的手牌，并将其中一张加入你的手牌。"],"palace_rin":["火焰猫燐","猫之步伐","放置：将任意弃牌堆中的一张卡牌加入你的手牌。"],"palace_utsuho":["灵乌路空","核裂变","放置：将棋盘上的一个 2×2 区域变为荒地。"],"palace_koishi":["古明地恋","无意识的哲学","棋盘上有三张地灵殿卡牌时，此卡会自动从你的手牌移到棋盘上。"],"sage_yukari":["八云紫","境界操纵","你可以将此卡放在另一张棋盘卡牌上，并将被覆盖的卡牌加入你的手牌。"],"sage_kasen":["茨木华扇","无拘无束","收取阵营卡牌时，此卡可视为任意阵营的卡牌。"],"sage_matara":["摩多罗隐岐奈","/op","放置：选择另一张棋盘卡牌，由此卡使用它的放置能力。"],"sage_ran":["八云蓝","式神召回","放置：抽一张牌。如果八云紫在棋盘上，立即放置抽到的卡牌。"],"reimu":["博丽灵梦","梦想天生","放置：将棋盘上的一张领主卡牌加入你的手牌。"],"marisa":["雾雨魔理沙","极限火花","放置：将棋盘上的一张非领主卡牌送入你的弃牌堆。"],"yuuka":["风见幽香","花之主宰","放置：清除一个 3×3 区域中的荒地，然后将你的手牌洗入抽牌堆并抽四张牌。"],"medicine":["梅蒂欣·梅兰可莉","铃兰中毒","放置：选择一名玩家，将其两张随机手牌放回抽牌堆。"],"hell_hecatia":["赫卡提亚·拉碧斯拉祖利","三位一体狂想曲","此卡计为 3 点弃牌分数。只有弃牌堆已有超过 3 张地狱卡牌时，此卡才能进入该弃牌堆。"],"hell_clownpiece":["克劳恩皮丝","污秽耐受","此卡可以放在荒地上。\n放置：清除此卡周围的荒地。"],"hell_eiki":["四季映姬","黑白的判决","[代价 I] 放置：将棋盘上数量最多的阵营的所有卡牌放回抽牌堆。"],"hell_komachi":["小野塚小町","距离操控","放置：将此卡与另一张棋盘卡牌交换位置。如果四季映姬在棋盘上，此次放置不消耗你的回合。"],"heaven_tenshi":["比那名居天子","全卡牌的绯想天！","[代价 II] 放置：将棋盘上的所有非天界卡牌放回抽牌堆。"],"heaven_iku":["永江衣玖","驾驭雷云","[代价 III] 放置：选择一个 2×2 区域，将其中最多两张随机的非天界卡牌送入你的弃牌堆。"],"temple_byakuren":["圣白莲","魔界幻想","放置：你可以按任意顺序使用每个效果一次。\n[代价 IV] 获得三个额外回合。\n[代价 III] 将另外三张棋盘卡牌放回抽牌堆，并将其所在格变为荒地。\n[代价 II] 查看抽牌堆顶的三张牌，拿取一张，并按任意顺序放回其余卡牌。\n棋盘上每有一张其他命莲寺卡牌，每个效果的代价减少一。"],"temple_shou":["寅丸星","光辉宝藏","[代价 I] 放置：棋盘上每有一块荒地，就抽一张牌，然后清除所有荒地。"],"temple_nue":["封兽鵺","能力奇美拉","放置：从三张随机卡牌中选择一个能力。短暂变为该卡牌的外貌，并使用它的能力。"],"temple_murasa":["村纱水蜜","无底漩涡","放置：选择一名玩家。该玩家在接下来两个回合中不能放置卡牌或交易。"],"temple_ichirin":["云居一轮","再打一轮！","[代价 II] 放置：将每张非命莲寺卡牌向远离此卡的方向推一格。被推出棋盘的卡牌放回抽牌堆。"],"sdm_meiling":["红美铃","内劲","放置：将一张相邻卡牌向远离此卡的方向移动一格。"],"hourai_tewi":["因幡帝","远古骗术","放置：向其他每名玩家的手牌中加入一张陷阱。"],"mtn_nitori":["河城荷取","光学迷彩","以此卡为中心的 3×3 区域中的卡牌不能被选中。"],"palace_yuugi":["星熊勇仪","怪力乱神","[代价 II] 放置：将一张正交相邻的卡牌送入你的弃牌堆。"],"sage_mai_satono":["丁礼田舞与尔子田里乃","驱动活力","放置：在你的下个回合获得一个额外回合。"],"hell_kutaka":["庭渡久侘歌","门户守望者","此卡可以放在荒地上。\n放置：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。"],"shop_rinnosuke":["森近霖之助","香霖堂","此卡及其周围的卡牌不能移动或使用能力。\n先选择一张手牌，再点击森近霖之助即可交易。每回合限一次，且不消耗回合。"],"trap_token":["陷阱","嗯……这是陷阱！","此卡在手牌中时，不能交易、弃置或放回抽牌堆。\n放置：将另一张手牌放回抽牌堆。"]};
+const ZH_CARDS={"sdm_remilia":["蕾米莉亚·斯卡蕾特","命运操纵","放置：将其他玩家手中的所有红魔馆卡牌加入你的手牌。"],"sdm_flandre":["芙兰朵露·斯卡蕾特","「目」之破坏","放置：选择任意玩家的一张手牌，将其送入该玩家的弃牌堆。"],"sdm_patchouli":["帕秋莉·诺蕾姬","魔法风云","放置：猜测另一名玩家手中的一张卡牌。猜对后，将该卡牌加入你的手牌。"],"sdm_sakuya":["十六夜咲夜","Zawarudo","放置：获得两个额外回合，然后将你的手牌洗入抽牌堆。"],"haku_yuyuko":["西行寺幽幽子","幽冥缠身","[代价 N] 放置：将 N 张随机的正交相邻卡牌送入你的弃牌堆。"],"haku_youmu":["魂魄妖梦","先之先","放置：放置此卡不消耗你的回合。"],"hourai_kaguya":["蓬莱山辉夜","看我操作！","放置：猜测另一名玩家手中的一张永远亭卡牌。每次猜对，你可以将该卡牌放到棋盘上并继续猜测。"],"hourai_eirin":["八意永琳","思兼装置","此卡在棋盘上时，所有领主卡牌的能力均被禁用。"],"hourai_reisen":["铃仙·优昙华院·因幡","狂气之瞳","放置：选择另一名玩家的一张手牌。该玩家必须在下个回合放置这张卡牌。"],"hourai_mokou":["藤原妹红","凤凰复生","放置：你的弃牌堆中每有一张卡牌，就抽一张牌。"],"mtn_kanako":["八坂神奈子","风神之神德","此卡可以放在荒地上。此卡在棋盘上时，其他妖怪之山卡牌的放置能力发动两次。\n放置：将你手中的一张妖怪之山卡牌放到棋盘上。"],"mtn_suwako":["洩矢诹访子","诅咒之地","放置：将三个棋盘格变为荒地。"],"mtn_sanae":["东风谷早苗","八坂之神风","放置：抽一张牌。如果八坂神奈子在棋盘上，再抽一张牌。"],"mtn_aya":["射命丸文","才不是道听途说呢！","放置：其他每名玩家展示四张手牌。"],"palace_satori":["古明地觉","恐怖催眠术","[代价 I] 放置：查看另一名玩家的手牌，并将其中一张加入你的手牌。"],"palace_rin":["火焰猫燐","猫之步伐","放置：将任意弃牌堆中的一张卡牌加入你的手牌。"],"palace_utsuho":["灵乌路空","核裂变","放置：将棋盘上的一个 2×2 区域变为荒地。"],"palace_koishi":["古明地恋","无意识的哲学","棋盘上有三张地灵殿卡牌时，此卡会自动从你的手牌移到棋盘上。"],"sage_yukari":["八云紫","境界操纵","你可以将此卡放在另一张棋盘卡牌上，并将被覆盖的卡牌加入你的手牌。"],"sage_kasen":["茨木华扇","无拘无束","收取阵营卡牌时，此卡可视为任意阵营的卡牌。"],"sage_matara":["摩多罗隐岐奈","/op","放置：选择另一张棋盘卡牌，由此卡使用它的放置能力。"],"sage_ran":["八云蓝","式神召回","放置：抽一张牌。如果八云紫在棋盘上，立即放置抽到的卡牌。"],"reimu":["博丽灵梦","梦想天生","放置：将棋盘上的一张领主卡牌加入你的手牌。"],"marisa":["雾雨魔理沙","极限火花","放置：将棋盘上的一张非领主卡牌送入你的弃牌堆。"],"yuuka":["风见幽香","花之主宰","放置：清除一个 3×3 区域中的荒地，然后将你的手牌洗入抽牌堆并抽四张牌。"],"medicine":["梅蒂欣·梅兰可莉","铃兰中毒","放置：选择一名玩家，将其两张随机手牌放回抽牌堆。"],"hell_hecatia":["赫卡提亚·拉碧斯拉祖利","三位一体狂想曲","此卡计为 3 点弃牌分数。只有弃牌堆已有超过 3 张地狱卡牌时，此卡才能进入该弃牌堆。"],"hell_clownpiece":["克劳恩皮丝","污秽耐受","此卡可以放在荒地上。\n放置：清除此卡周围的荒地。"],"hell_eiki":["四季映姬","黑白的判决","[代价 I] 放置：将棋盘上数量最多的阵营的所有卡牌放回抽牌堆。"],"hell_komachi":["小野塚小町","距离操控","放置：将此卡与另一张棋盘卡牌交换位置。如果四季映姬在棋盘上，此次放置不消耗你的回合。"],"heaven_tenshi":["比那名居天子","全卡牌的绯想天！","[代价 II] 放置：将棋盘上的所有非天界卡牌放回抽牌堆。"],"heaven_iku":["永江衣玖","驾驭雷云","[代价 III] 放置：选择一个 2×2 区域，将其中最多两张随机的非天界卡牌送入你的弃牌堆。"],"temple_byakuren":["圣白莲","魔界幻想","放置：你可以按任意顺序使用每个效果一次。\n[代价 IV] 获得三个额外回合。\n[代价 III] 将另外三张棋盘卡牌放回抽牌堆，并将其所在格变为荒地。\n[代价 II] 查看抽牌堆顶的三张牌，拿取一张，并按任意顺序放回其余卡牌。\n棋盘上每有一张其他命莲寺卡牌，每个效果的代价减少一。"],"temple_shou":["寅丸星","光辉宝藏","[代价 I] 放置：棋盘上每有一块荒地，就抽一张牌，然后清除所有荒地。"],"temple_nue":["封兽鵺","能力奇美拉","放置：从三张随机卡牌中选择一个能力。短暂变为该卡牌的外貌，并使用它的能力。"],"temple_murasa":["村纱水蜜","无底漩涡","放置：选择一名玩家。该玩家在接下来两个回合中不能放置卡牌或交易。"],"temple_ichirin":["云居一轮","再打一轮！","[代价 II] 放置：将每张非命莲寺卡牌向远离此卡的方向推一格。被推出棋盘的卡牌放回抽牌堆。"],"sdm_meiling":["红美铃","内劲","放置：将一张相邻卡牌向远离此卡的方向移动一格。"],"hourai_tewi":["因幡帝","远古骗术","放置：向其他每名玩家的手牌中加入一张陷阱。"],"mtn_nitori":["河城荷取","光学迷彩","以此卡为中心的 3×3 区域中的卡牌不能被选中。"],"palace_yuugi":["星熊勇仪","怪力乱神","[代价 II] 放置：将一张正交相邻的卡牌送入你的弃牌堆。"],"sage_mai_satono":["丁礼田舞与尔子田里乃","驱动活力","放置：在你的下个回合获得一个额外回合。"],"hell_kutaka":["庭渡久侘歌","异界的护卫","此卡可以放在荒地上。\n放置：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。"],"shop_rinnosuke":["森近霖之助","香霖堂","此卡及其周围的卡牌不能移动或使用能力。\n先选择一张手牌，再点击森近霖之助即可交易。每回合限一次，且不消耗回合。"],"trap_token":["陷阱","嗯……这是陷阱！","此卡在手牌中时，不能交易、弃置或放回抽牌堆。\n放置：将另一张手牌放回抽牌堆。"]};
 const ZH_FACTIONS={"sdm":"红魔馆","hakugyokurou":"白玉楼","hourai":"永远亭","mountain":"妖怪之山","palace":"地灵殿","sage":"贤者","hakurei":"博丽","sunflower":"太阳花田","hell":"地狱","heaven":"天界","temple":"命莲寺","kourindou":"香霖堂","token":"衍生物"};
 const ZH_TEXT={
   "Boundary of Fates": "命运的境界",
@@ -6452,7 +6438,7 @@ const ZH_TEXT={
   "Driving Vitality": "驱动活力",
   "Placed: Gain an extra turn on your next turn.": "放置：在你的下个回合获得一个额外回合。",
   "Niwatari Kutaka": "庭渡久侘歌",
-  "Overseeing Gateway": "门户守望者",
+  "Overseeing Gateway": "异界的护卫",
   "This card can be placed on wasteland.\nPlaced: If this card is on wasteland, take a Hell card from the draw pile into your hand.": "此卡可以放在荒地上。\n放置：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。",
   "Morichika Rinnosuke": "森近霖之助",
   "Kourindou": "香霖堂",
@@ -9279,6 +9265,51 @@ el('draw-btn').addEventListener('click', async () => {
 let titleCardDrag=null,lastTitleCardTap=null,lastTitleCardIds=[];
 let peekCardSession=null,cancelByakurenPeek=null;
 let peekCardLayer=1;
+const tableCardSlides=new Map();
+function tableCardEventTime(event){return Number.isFinite(event?.timeStamp) ? event.timeStamp : performance.now();}
+function stepTableCardSlide(body,dt,bounds){
+  const speed=Math.hypot(body.vx,body.vy),friction=2400;
+  if(speed>0){
+    const elapsed=Math.min(Math.max(0,dt),speed/friction),distance=speed*elapsed-friction*elapsed*elapsed/2;
+    body.x+=body.vx/speed*distance;body.y+=body.vy/speed*distance;
+    const remaining=Math.max(0,speed-friction*elapsed)/speed;body.vx*=remaining;body.vy*=remaining;
+  }
+  const spinDecay=Math.exp(-9*Math.max(0,dt));body.angle+=body.spin*(1-spinDecay)/9;body.spin*=spinDecay;
+  const x=Math.max(bounds.left,Math.min(bounds.right,body.x)),y=Math.max(bounds.top,Math.min(bounds.bottom,body.y));
+  if(x!==body.x)body.vx=0;if(y!==body.y)body.vy=0;body.x=x;body.y=y;
+  return body;
+}
+function stopTableCardSlide(node,notify=true){
+  const slide=tableCardSlides.get(node);if(!slide)return;
+  cancelAnimationFrame(slide.frame);tableCardSlides.delete(node);node.classList.remove('table-card-sliding');
+  node.dataset.angle=String(slide.body.angle);node.style.setProperty('--table-angle',`${slide.body.angle}deg`);
+  if(notify && node.dataset.peekCard==='true')peekCardSession?.update(node,true,true);
+}
+function clearTableCardSlides(notify=true){for(const node of [...tableCardSlides.keys()])stopTableCardSlide(node,notify);}
+function startTableCardSlide(drag,releasedAt){
+  if(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches || drag.node.classList.contains('peek-taken'))return;
+  const age=Math.max(0,releasedAt-drag.lastMotionAt),decay=Math.exp(-age/65),speed=Math.hypot(drag.vx,drag.vy)*decay;
+  if(age>100 || speed<45)return;
+  const node=drag.node,rect=node.getBoundingClientRect(),maxTravel=Math.max(32,Math.min(140,rect.width*.9));
+  const limited=Math.min(speed,Math.sqrt(2*2400*maxTravel)),ratio=limited/Math.hypot(drag.vx,drag.vy);
+  const body={x:rect.left+rect.width/2,y:rect.top+rect.height/2,vx:drag.vx*ratio,vy:drag.vy*ratio,
+    angle:drag.rotation,spin:Math.max(-28,Math.min(28,(drag.vx*drag.offsetY-drag.vy*drag.offsetX)*.0007))};
+  const slide={body,frame:null,previous:performance.now()};tableCardSlides.set(node,slide);node.classList.add('table-card-sliding');
+  node.style.setProperty('--table-angle',`${body.angle}deg`);
+  const tick=now=>{
+    if(tableCardSlides.get(node)!==slide)return;
+    if(node.isConnected===false || !movableTableCardEnabled(node)){stopTableCardSlide(node,false);return;}
+    const dt=(now-slide.previous)/1000;slide.previous=now;
+    // A backgrounded tab must not resume an old throw when it becomes visible again.
+    if(dt>.12){stopTableCardSlide(node);return;}
+    stepTableCardSlide(body,dt,{left:24,top:24,right:window.innerWidth-24,bottom:window.innerHeight-24});
+    moveTitleCard(node,body.x,body.y);node.style.setProperty('--table-angle',`${body.angle}deg`);
+    node.dataset.ignoreClickUntil=String(Date.now()+100);
+    if(Math.hypot(body.vx,body.vy)<8 && Math.abs(body.spin)<1){stopTableCardSlide(node);return;}
+    slide.frame=requestAnimationFrame(tick);
+  };
+  slide.frame=requestAnimationFrame(tick);
+}
 function movableTableCardEnabled(node){return node?.dataset.peekCard==='true' || !el('game').classList.contains('active');}
 function drawTitlePreviewCards(count=9){
   if(!lastTitleCardIds.length){
@@ -9301,7 +9332,7 @@ function liftTitleCard(node){
   if(node.dataset.peekCard==='true')node.style.zIndex=String(++peekCardLayer);else document.body.appendChild(node);
   return moveTitleCard(node,center.x,center.y);
 }
-function finishTitleCardDrag(cancelled=false){
+function finishTitleCardDrag(cancelled=false,releasedAt=performance.now()){
   const drag=titleCardDrag;if(!drag)return;
   titleCardDrag=null;
   drag.node.classList.remove('table-card-dragging');
@@ -9309,6 +9340,7 @@ function finishTitleCardDrag(cancelled=false){
   if(cancelled && drag.moved){moveTitleCard(drag.node,drag.center.x,drag.center.y);drag.node.style.zIndex=drag.layer;}
   try{if(drag.node.hasPointerCapture?.(drag.pointerId))drag.node.releasePointerCapture(drag.pointerId);}catch(_error){}
   if(drag.node.dataset.peekCard==='true' && !cancelled)peekCardSession?.update(drag.node,drag.moved);
+  if(drag.moved && !cancelled)startTableCardSlide(drag,releasedAt);
   if(cancelled || drag.moved){
     lastTitleCardTap=null;drag.node.dataset.ignoreClickUntil=String(Date.now()+400);return;
   }
@@ -9323,9 +9355,11 @@ function finishTitleCardDrag(cancelled=false){
 function onTitleCardPointerDown(event){
   if(event.button>0 || event.isPrimary===false || !movableTableCardEnabled(event.currentTarget))return;
   event.preventDefault();finishTitleCardDrag(true);
-  const node=event.currentTarget,rect=node.getBoundingClientRect(),center={x:rect.left+rect.width/2,y:rect.top+rect.height/2};
+  const node=event.currentTarget;stopTableCardSlide(node);
+  const rect=node.getBoundingClientRect(),center={x:rect.left+rect.width/2,y:rect.top+rect.height/2},time=tableCardEventTime(event);
   node.focus({preventScroll:true});
-  titleCardDrag={node,center,layer:node.style.zIndex || '',pointerId:event.pointerId,pointerType:event.pointerType || 'mouse',startX:event.clientX,startY:event.clientY,offsetX:event.clientX-center.x,offsetY:event.clientY-center.y,angle:Number(node.dataset.angle),moved:false};
+  titleCardDrag={node,center,layer:node.style.zIndex || '',pointerId:event.pointerId,pointerType:event.pointerType || 'mouse',startX:event.clientX,startY:event.clientY,offsetX:event.clientX-center.x,offsetY:event.clientY-center.y,angle:Number(node.dataset.angle)||0,moved:false,
+    sampleTime:time,lastMotionAt:time,samplePoint:center,vx:0,vy:0,rotation:Number(node.dataset.angle)||0};
   try{node.setPointerCapture(event.pointerId);}catch(_error){}
 }
 function onTitleCardPointerMove(event){
@@ -9336,11 +9370,19 @@ function onTitleCardPointerMove(event){
   }
   if(!drag.moved)return;
   drag.node.classList.add('table-card-dragging');
-  moveTitleCard(drag.node,event.clientX-drag.offsetX,event.clientY-drag.offsetY);
+  const point=moveTitleCard(drag.node,event.clientX-drag.offsetX,event.clientY-drag.offsetY),time=tableCardEventTime(event),dt=(time-drag.sampleTime)/1000;
+  if(dt>0){
+    const dx=point.x-drag.samplePoint.x,dy=point.y-drag.samplePoint.y,blend=1-Math.exp(-dt/.035);
+    drag.vx+=(dx/dt-drag.vx)*blend;drag.vy+=(dy/dt-drag.vy)*blend;
+    if(Math.hypot(dx,dy)>.2)drag.lastMotionAt=time;
+    drag.samplePoint=point;drag.sampleTime=time;
+  }
+  const twist=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ? 0 : Math.max(-7,Math.min(7,(drag.vx*drag.offsetY-drag.vy*drag.offsetX)*.0005));
+  drag.rotation=drag.angle+twist;drag.node.style.setProperty('--table-angle',`${drag.rotation}deg`);
 }
 function onTitleCardPointerUp(event){
   if(titleCardDrag?.pointerId!==event.pointerId)return;
-  onTitleCardPointerMove(event);finishTitleCardDrag(false);
+  onTitleCardPointerMove(event);finishTitleCardDrag(false,tableCardEventTime(event));
 }
 function onTitleCardPointerCancel(event){
   if(titleCardDrag?.pointerId!==event.pointerId)return;
@@ -9354,10 +9396,12 @@ function onTitleCardClick(event){
 function onTitleCardDoubleClick(event){
   event.preventDefault();event.stopPropagation();const node=event.currentTarget;
   if(!movableTableCardEnabled(node) || Number(node.dataset.ignoreClickUntil || 0)>Date.now())return;
+  stopTableCardSlide(node);
   lastTitleCardTap=null;node.dataset.ignoreClickUntil=String(Date.now()+450);openCardDetails(node.dataset.cardId);
 }
 function onTitleCardKeyDown(event){
   if(!movableTableCardEnabled(event.currentTarget))return;
+  stopTableCardSlide(event.currentTarget);
   lastTitleCardTap=null;
   if(event.key==='Enter' || event.key===' '){event.preventDefault();openCardDetails(event.currentTarget.dataset.cardId);return;}
   const directions={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};
@@ -9367,6 +9411,7 @@ function onTitleCardKeyDown(event){
   if(event.currentTarget.dataset.peekCard==='true')peekCardSession?.update(event.currentTarget,true);
 }
 function renderTitleTableCards(){
+  clearTableCardSlides(false);
   finishTitleCardDrag(true);lastTitleCardTap=null;
   document.querySelectorAll('.table-scatter-card').forEach(node=>node.remove());
   const host=el('title-table-cards');host.replaceChildren();
@@ -9384,9 +9429,9 @@ function renderTitleTableCards(){
     host.appendChild(card);
   });
 }
-window.addEventListener('blur',()=>{finishTitleCardDrag(true);lastTitleCardTap=null;});
+window.addEventListener('blur',()=>{finishTitleCardDrag(true);clearTableCardSlides();lastTitleCardTap=null;});
 window.addEventListener('resize',()=>{
-  finishTitleCardDrag(true);lastTitleCardTap=null;
+  finishTitleCardDrag(true);clearTableCardSlides();lastTitleCardTap=null;
   document.querySelectorAll('.table-card-moved').forEach(node=>{const rect=node.getBoundingClientRect();moveTitleCard(node,rect.left+rect.width/2,rect.top+rect.height/2);});
 });
 function cardChoiceGroupSeat(index,count){
@@ -9400,7 +9445,7 @@ function cardChoiceGroupRect(rect,index,count){
 }
 /* All revealed-card choices share the physical table used to reorder Byakuren's cards. */
 function openByakurenPeek(ids,opts={}){
-  cancelByakurenPeek?.();finishTitleCardDrag(true);lastTitleCardTap=null;
+  cancelByakurenPeek?.();finishTitleCardDrag(true);clearTableCardSlides(false);lastTitleCardTap=null;
   return new Promise(resolve=>{
     const overlay=el('byakuren-peek-overlay'),host=el('byakuren-peek-cards'),tray=el('byakuren-peek-table'),hand=el('byakuren-peek-hand');
     const take=el('byakuren-peek-take'),confirm=el('byakuren-peek-confirm'),groupHost=el('byakuren-peek-groups'),nodes=[];
@@ -9434,17 +9479,17 @@ function openByakurenPeek(ids,opts={}){
     });
     const center=node=>{const rect=node.getBoundingClientRect();return {x:rect.left+rect.width/2,y:rect.top+rect.height/2};};
     const inHand=node=>{const point=center(node),rect=hand.getBoundingClientRect();return point.x>=rect.left && point.x<=rect.right && point.y>=rect.top && point.y<=rect.bottom;};
-    const update=(node,moved=false)=>{
+    const update=(node,moved=false,sliding=false)=>{
       if(node)selected=node.dataset.cardId;
       if(moved && node){
-        if(inHand(node)){
+        if(!sliding && inHand(node)){
           if(taken && taken!==node.dataset.cardId){
             const previous=nodes.find(card=>card.dataset.cardId===taken),rect=tray.getBoundingClientRect(),point=parked.get(taken) || {x:rect.left+rect.width/2,y:rect.top+rect.height/2};
             moveTitleCard(previous,point.x,point.y);
           }
           taken=node.dataset.cardId;
         }else{
-          if(taken===node.dataset.cardId)taken=null;
+          if(!sliding && taken===node.dataset.cardId)taken=null;
           parked.set(node.dataset.cardId,center(node));freelyMoved.add(node.dataset.cardId);
         }
       }
@@ -9465,7 +9510,7 @@ function openByakurenPeek(ids,opts={}){
       take.disabled=!selected || selected===taken;confirm.disabled=!taken;
     };
     const finish=value=>{
-      if(settled)return;settled=true;finishTitleCardDrag(true);lastTitleCardTap=null;
+      if(settled)return;settled=true;finishTitleCardDrag(true);clearTableCardSlides(false);lastTitleCardTap=null;
       overlay.classList.remove('show','card-choice','peek-grouped');delete overlay.dataset.reading;
       host.replaceChildren();groupHost.replaceChildren();groupHost.hidden=true;el('byakuren-peek-emblem').replaceChildren();el('byakuren-peek-emblem').hidden=true;take.onclick=null;confirm.onclick=null;
       document.removeEventListener('keydown',onKey);window.removeEventListener('resize',layout);
@@ -9473,7 +9518,7 @@ function openByakurenPeek(ids,opts={}){
     };
     const onKey=event=>{if(event.key==='Escape' && !el('card-detail-overlay').classList.contains('show')){event.preventDefault();finish(null);}};
     const layout=()=>{
-      finishTitleCardDrag(true);const rect=tray.getBoundingClientRect(),handRect=hand.getBoundingClientRect();
+      finishTitleCardDrag(true);clearTableCardSlides();const rect=tray.getBoundingClientRect(),handRect=hand.getBoundingClientRect();
       const width=opts.choice
         ? Math.max(36,Math.min(150,(rect.height/(groups.length ? 2 : 1)-44)*.75,rect.width/(groups.length ? 4 : Math.min(ids.length,5)+1)))
         : Math.min(150,rect.width/(ids.length+1));
@@ -9507,8 +9552,8 @@ function openByakurenPeek(ids,opts={}){
       host.appendChild(node);nodes.push(node);
     });
     peekCardSession={update};cancelByakurenPeek=()=>finish(null);order=ids.slice();
-    take.onclick=()=>{if(!selected)return;const node=nodes.find(card=>card.dataset.cardId===selected),rect=hand.getBoundingClientRect();moveTitleCard(node,rect.left+rect.width/2,rect.top+rect.height/2);update(node,true);};
-    confirm.onclick=()=>{if(taken){playGameCue('select');finish({taken,order:order.slice()});}};
+    take.onclick=()=>{if(!selected)return;const node=nodes.find(card=>card.dataset.cardId===selected),rect=hand.getBoundingClientRect();stopTableCardSlide(node);moveTitleCard(node,rect.left+rect.width/2,rect.top+rect.height/2);update(node,true);};
+    confirm.onclick=()=>{clearTableCardSlides();if(taken){playGameCue('select');finish({taken,order:order.slice()});}};
     document.addEventListener('keydown',onKey);window.addEventListener('resize',layout);overlay.classList.add('show');
     requestAnimationFrame(()=>{if(!settled){layout();nodes[0]?.focus({preventScroll:true});}});
   });
@@ -9595,6 +9640,7 @@ el('customize-toggle').addEventListener('click', () => {
 function resetGameView(){
   if(typeof cancelByakurenPeek==='function')cancelByakurenPeek();
   finishTitleCardDrag(true);
+  clearTableCardSlides(false);
   clearTutorialPractice();
   // Retire the old match before clearing its controls, animations, or pending input.
   if(game) game.cancelled=true;

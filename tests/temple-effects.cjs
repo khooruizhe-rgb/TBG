@@ -36,7 +36,7 @@ class Element{
 const el=id=>{if(!controls.has(id))controls.set(id,new Element());return controls.get(id);};
 const document={body:new Element('body'),createElement:tag=>new Element(tag),querySelectorAll:s=>document.body.querySelectorAll(s),addEventListener(){},removeEventListener(){}};
 for(const id of ['board','seats','kourindou','shop-panel','shop-status','modal-box','modal-options','modal-overlay','modal-title','look-into-overlay','look-into-emblem'])document.body.appendChild(el(id));
-const context={console,Math,document,el,window:{innerWidth:1200,innerHeight:800,matchMedia:()=>({matches:reduced}),addEventListener(){},removeEventListener(){},__resolveHumanTurn(){}},Date:{now:()=>now},
+const context={console,Math,document,el,window:{innerWidth:1200,innerHeight:800,matchMedia:()=>({matches:reduced}),addEventListener(){},removeEventListener(){},__resolveHumanTurn(){}},Date:{now:()=>now},performance:{now:()=>now},
  setTimeout:(fn,delay=0)=>{const id=nextTimer++;timers.set(id,{fn,due:now+delay});return id;},clearTimeout:id=>timers.delete(id),requestAnimationFrame:fn=>fn(),
  getComputedStyle:()=>({backgroundImage:'url(original-portrait)'}),setRuleText:(node,text)=>node.textContent=text,fitSingleLineText(){},
  cardBgClass:(c,id)=>'card-art-'+id,crownLightFor:()=>({main:'#fff',rgb:'255,255,255'}),applyCrownLight(){},discardLightFor:()=>({}),handExitAnimationDelay:()=>0,
