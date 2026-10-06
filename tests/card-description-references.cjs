@@ -108,8 +108,10 @@ test('Descriptions keep Roman costs and leave Yuyuko exclusions to discovery',()
   assert.ok(A.CARDS.every(c=>!c.desc.includes('excluding')&&!c.desc.includes('checked after')));
 });
 test('Every remaining named-card mention resolves to the correct inspect link',()=>{
-  const expected={mtn_sanae:'mtn_kanako',sage_ran:'sage_yukari',hell_komachi:'hell_eiki',hourai_tewi:'trap_token',shop_rinnosuke:'shop_rinnosuke'};
+  const expected={mtn_sanae:'mtn_kanako',sage_ran:'sage_yukari',hourai_tewi:'trap_token',shop_rinnosuke:'shop_rinnosuke'};
   for(const [card,target] of Object.entries(expected))assert.ok(A.ruleTextHtml(A.CARD[card].desc).includes(`data-inspect-card="${target}"`));
+  assert.match(A.ruleTextHtml(A.CARD.hell_komachi.desc),/faction-reference/);
+  assert.ok(!A.ruleTextHtml(A.CARD.hell_komachi.desc).includes('data-inspect-card="hell_eiki"'));
 });
 test('Selection options can show faction icons without nested inspect buttons',()=>{
   assert.match(A.ruleTextHtml('Heaven',{cards:false}),/faction-reference/);

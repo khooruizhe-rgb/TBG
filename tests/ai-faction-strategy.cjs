@@ -271,7 +271,7 @@ test('Kaguya places a partial known guess adjacent even without a complete claim
   const tile=g.boardCells(t=>t.id==='hourai_mokou')[0];assert.equal(Math.abs(tile.r-2)+Math.abs(tile.c-2),1);
 });
 test('Tenshi counts wasteland plus cards without double-counting and excludes shop from threshold',async()=>{
-  const g=setup({hand:['heaven_tenshi','mtn_aya','sage_ran'],board:[[0,0,'sdm_patchouli']],waste:[[0,0],[0,1],[0,2],[0,3],[1,0],[1,1],[1,2]],shop:true});
+  const g=setup({hand:['heaven_tenshi','mtn_aya','sage_ran'],board:[[0,0,'sdm_patchouli'],[0,1,'sdm_sakuya']],waste:[[0,0],[0,1],[0,2],[0,3],[1,0],[1,1],[1,2]],shop:true});
   assert.equal(g.tenshiOccupiedCount(),7);assert.equal(g.tenshiOccupiedCount({r:1,c:3}),8);
   assert.equal(A.aiCostCanResolve(1,'heaven_tenshi',1,3),true);
   g.removeFromHand(1,'heaven_tenshi');g.setCardAt(1,3,'heaven_tenshi');await g.resolveAbility('heaven_tenshi',1,3,1,0);

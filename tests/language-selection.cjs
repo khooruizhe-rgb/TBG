@@ -123,4 +123,11 @@ test('Crown references become images with a language-aware label and preserve no
  assert(!A.ruleTextHtml('crowned').includes('crown-reference'));
  A.setGameLanguage('en');assert(A.ruleTextHtml(A.CARD.marisa.desc).includes('non-<span class="crown-reference"'));assert(A.ruleTextHtml('Crown').includes('aria-label="Crown"'));assert.equal(A.translateGameText('Crown card'),'Crown card');
 });
+test('Faction-preserving AI skips and the new Komachi condition have translated logs',()=>{
+ A.setGameLanguage('zh-CN');
+ const skipped=A.translateGameText("AI skips Eiki Shiki's ability to preserve cards and faction progress.");
+ assert.match(skipped,/跳过了/);assert.match(skipped,/四季映姬/);assert.ok(!skipped.includes('preserve cards'));
+ const free=A.translateGameText("AI Komachi's placement costs no turn while another Hell card is on the board.");
+ assert.match(free,/小町的放置不消耗回合/);assert.match(free,/另一张地狱卡牌/);
+});
 (async()=>{for(const [name,fn] of tests){await fn();console.log('PASS '+name);}console.log(`${tests.length}/${tests.length} language selection checks passed`);})().catch(error=>{console.error(error);process.exitCode=1;});
