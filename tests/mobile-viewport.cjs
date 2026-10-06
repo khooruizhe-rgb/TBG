@@ -35,7 +35,7 @@ function reset({w=844,h=390,isShop=false,hand=7,insets={},choice=0,isCoarse=true
   context.game={kourindouEnabled:shop,players:[{hand:Array(count).fill('card')}],cancelled:false};
   el('game').classList.add('active');document.fullscreenElement=null;document.fullscreenEnabled=undefined;document.webkitFullscreenElement=null;root.requestFullscreen=undefined;root.webkitRequestFullscreen=undefined;context.screen.orientation={};A.resetFullscreen();
   el('mobile-screen-message').textContent=el('menu-fullscreen-message').textContent='';
-  el('board-panel').appendChild(el('playtest-toggle-wrap'));A.syncMobileViewport();
+  el('debug-controls').appendChild(el('playtest-toggle-wrap'));A.syncMobileViewport();
 }
 const tests=[];const test=(n,f)=>tests.push([n,f]);
 test('Board, seven hand cards, corner-seat gutters, and shop fit common landscape sizes',()=>{
@@ -51,11 +51,11 @@ test('Notches, browser chrome, and bottom safe areas reduce the available table'
   reset({w:844,h:342,isShop:true,insets:{left:44,right:44,bottom:21}});const table=el('table-wrap').getBoundingClientRect();
   const board=Number.parseFloat(body.values.get('--mobile-board-width'));assert(board/.8+52<=table.height+1);assert(board+132<=table.width+1);
 });
-test('Rotating back to portrait restores the normal layout and debug control',()=>{
-  reset({isShop:true});assert.equal(el('playtest-toggle-wrap').parentElement,el('log-panel'));
+test('Rotating back to portrait restores the normal layout and leaves reveal hidden in its debug panel',()=>{
+  reset({isShop:true});assert.equal(el('playtest-toggle-wrap').parentElement,el('debug-controls'));
   body.classList.add('mobile-log-open');width=390;height=844;A.syncMobileViewport();
   assert(!root.classList.contains('mobile-landscape'));assert(body.classList.contains('game-mobile'));assert(!body.classList.contains('mobile-log-open'));
-  assert.equal(el('playtest-toggle-wrap').parentElement,el('board-panel'));
+  assert.equal(el('playtest-toggle-wrap').parentElement,el('debug-controls'));
 });
 test('Desktop and main-menu screens keep their original layout',()=>{
   reset({w:1440,h:900,isCoarse:false});assert(!body.classList.contains('mobile-landscape'));assert(!body.classList.contains('game-mobile'));

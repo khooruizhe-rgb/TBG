@@ -79,6 +79,13 @@ test('AI testing controls, statistics and rate definitions have Chinese labels w
  for(const value of values){const out=A.translateGameText(value);assert.notEqual(out,value);assert(!/[A-Za-z]{3,}/.test(out),out);}
  assert.equal(A.CARD.medicine.id,'medicine');A.setGameLanguage('en');for(const value of values)assert.equal(A.translateGameText(value),value);
 });
+test('Hidden debug controls, payment diagnostics, copied abilities and ending snapshots are bilingual',()=>{
+ const values=['Debug tools','Close','Ability results','Resolutions','Effective','Effective rate','Cost paid','Own points','Opponent points','Points denied','Copied ability details','Caster','Used ability','Card destinations','Paid as cost','Traded away','Returned from hand','Held at end','Held games','Claim member count','Score sources','Source','Entries','Points gained','Points lost','Claims with substitutes','Substitution rate','Stalemate and error snapshots','No stalemates or errors recorded.','Restrictions','Can draw','Cannot draw','Can place','Placement blocked','Legal placements','Forced card',
+ 'Effective means a rule change or information reveal. Cost payment alone does not count. Passive cards have no active resolution rate.',
+ 'The latest 30 snapshots retain the board, hands, draw pile, restrictions and recent log. Full details are in JSON.'];
+ A.setGameLanguage('zh-CN');for(const value of values){const out=A.translateGameText(value);assert.notEqual(out,value);assert(!/[A-Za-z]{3,}/.test(out.replace('JSON','')),out);}
+ A.setGameLanguage('en');for(const value of values)assert.equal(A.translateGameText(value),value);
+});
 test('Physical card table instructions, discard regions and changing card counts are localized',()=>{
  A.setGameLanguage('zh-CN');
  for(const text of ['Move and stack cards freely. Drag one into the target area, then confirm. Double-tap to inspect.',"Each area is one player's discard pile. Move cards freely, then drag one into Your Hand and confirm.",'Confirm card choice','Place selected card here','Empty discard pile','Discard pile'])assert(!/[A-Za-z]{3,}/.test(A.translateGameText(text)),text);

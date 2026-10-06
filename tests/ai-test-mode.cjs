@@ -9,7 +9,7 @@ class Element{
 }
 const nodes=new Map(),el=id=>{if(!nodes.has(id))nodes.set(id,new Element());return nodes.get(id);};
 const modeButtons=['play','ai-test'].map(mode=>Object.assign(new Element(),{dataset:{mode}}));
-const document={body:new Element(),querySelectorAll:s=>s==='#game-mode-opts .pill-btn'?modeButtons:[],createElement:()=>new Element()};
+const document={body:new Element(),events:{},addEventListener(type,fn){(this.events[type]??=[]).push(fn);},querySelectorAll:s=>s==='#game-mode-opts .pill-btn'?modeButtons:[],createElement:()=>new Element()};
 let seed=73,nextTimer=0,restarts=0;const timers=new Map(),frames=new Map();const math=Object.create(Math);math.random=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296);
 const ctx={console,Math:math,Date,document,el,window:{},setTimeout:(fn,ms)=>{if(ms===80||ms===900){timers.set(++nextTimer,fn);return nextTimer;}fn();return 0;},clearTimeout:id=>timers.delete(id),requestAnimationFrame:fn=>{frames.set(++nextTimer,fn);return nextTimer;},cancelAnimationFrame:id=>frames.delete(id),
  triggerPlacementPresentation(){},speakRinnosuke(){},logOverride(){},lastPlacedCell:null,renderAll(){},humanActionResolving:false,playGameCue(){},
@@ -20,9 +20,10 @@ vm.runInContext(slice('const DIRS4','/* ===================== UI layer')+'\nvar 
  slice('const NO_PLACED_ABILITY','async function doPlayerAction')+
  slice('function canTakeTurnAction','/* Cards with no "Placed:')+
  slice('async function doPlayerAction','/* Wire human hand-card')+
- slice('/* AI-only testing keeps','let chosenPlayerCount = 3;')+`
+ slice('const CARD_ABILITY_NAMES','/* ---------- Language selection')+
+ slice('function openDebugControls','let chosenPlayerCount = 3;')+`
 this.api={Game,CARD,CARDS,FACTIONS,createAITestStats,recordCompletedAITest,doPlayerAction,resolveFollowups,canAct,runNextTurn,endStalemate,aiDecideAction,
- waitAITestReady,toggleAITestPause,cancelAITestAutomation,finishAITestRound,renderAITestStats,openAITestDashboard,aiTestExportData,aiTestCSV,
+ waitAITestReady,toggleAITestPause,cancelAITestAutomation,finishAITestRound,renderAITestStats,openAITestDashboard,openDebugControls,closeDebugControls,aiTestExportData,aiTestCSV,
  setGame:g=>game=g,setSize:n=>SIZE=n,stats:()=>aiTestStats,resetStats:()=>aiTestStats=createAITestStats(),paused:()=>aiTestPaused,
  mode:()=>chosenAITestMode,setPaused:v=>aiTestPaused=v,choices:()=>({chosenAITestMode,chosenFastAITest})};`,ctx);
 const A=ctx.api,tests=[],test=(name,fn)=>tests.push([name,fn]);
@@ -31,7 +32,7 @@ function blank(players=3,options={}){
  A.cancelAITestAutomation();A.setPaused(false);A.setSize(4);const g=new A.Game(players,{},null,{aiOnly:true,fastTest:true,...options});A.setGame(g);
  for(const p of g.players){p.hand=[];p.discard=[];}g.drawPile=[];g.shopCards=['shop_rinnosuke','sdm_meiling','hourai_tewi','hell_kutaka'];g.testMetrics.seen.clear();return g;
 }
-function snapshot(g){return JSON.stringify([g.board,g.players,g.drawPile,g.shopCards,g.testMetrics.placements,[...g.testMetrics.seen],g.testMetrics.claims]);}
+function snapshot(g){return JSON.stringify([g.board,g.players,g.drawPile,g.shopCards,{...g.testMetrics,seen:[...g.testMetrics.seen]}]);}
 function cssValue(selector,property){let value;for(const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)){const selectors=m[1].replace(/\/\*[\s\S]*?\*\//g,'').split(',').map(s=>s.trim());if(!selectors.includes(selector))continue;for(const declaration of m[2].split(';')){const i=declaration.indexOf(':');if(declaration.slice(0,i).trim()===property)value=declaration.slice(i+1).trim();}}return value;}
 test('Every selection overlay, inspector, glossary and winner stays above all global effect layers',()=>{
  const effects=['.mind-fx.temple-fx','.touch-drag-ghost','html.time-stopped::after','.master-spark','.gap-rift','.ability-flight','.discard-vanish','.draw-flight-card'];
@@ -53,6 +54,7 @@ test('Actual draw, trade, hand entry, placement and faction claim mutations are 
 test('Invalid placements and AI forecasts cannot change placement or opportunity statistics',async()=>{
  const g=blank();g.players[0].hand=['medicine','sdm_meiling'];g.setCardAt(0,0,'hourai_eirin');await g.internalPlace('medicine',0,0,0,0);assert.deepEqual(Object.keys(g.testMetrics.placements),[]);
  const before=snapshot(g);await A.aiDecideAction(0);assert.equal(snapshot(g),before);
+ await g.internalPlace('sage_yukari',0,0,0,0);assert.equal(g.testMetrics.cardActions.sage_yukari.abilityCalls,1);assert.equal(g.testMetrics.cardActions.sage_yukari.abilityEffective,1);assert(g.players[0].hand.includes('hourai_eirin'));
 });
 test('Generated Trap tokens aggregate as one card type rather than disappearing from totals',async()=>{
  const g=blank();const token=g.makeTrap();g.addToHand(0,token,true);assert(g.testMetrics.seen.has('trap_token'));await g.internalPlace(token,0,0,0,0);assert.equal(g.testMetrics.placements.trap_token,1);
@@ -62,6 +64,7 @@ test('Koishi self-placement counts as real card usage, including the triggered P
  const g=blank();g.players[1].hand=['palace_koishi'];g.recordTestSeen('palace_koishi');
  for(const [r,c,id] of [[1,1,'palace_satori'],[1,2,'palace_rin'],[2,1,'palace_utsuho']])g.setCardAt(r,c,id);
  await g.resolveKoishiCascade(0);assert.equal(g.testMetrics.placements.palace_koishi,1);assert.equal(g.testMetrics.claims.palace,1);assert.equal(g.players[1].discard.length,4);
+ assert.equal(g.testMetrics.cardActions.palace_koishi.abilityCalls,1);assert.equal(g.testMetrics.cardActions.palace_koishi.abilityEffective,1);
 });
 test('Only completed matches contribute and a finished match cannot be recorded twice',()=>{
  const g=blank(),s=A.createAITestStats();g.testMetrics.turns=12;g.testMetrics.seen.add('medicine');g.testMetrics.placements.medicine=2;g.testMetrics.claims.sunflower=2;
@@ -103,6 +106,81 @@ test('Dashboard and CSV/JSON use completed real counts and show definitions and 
 test('Mode selection exposes all-AI settings and returns to ordinary play without altering other options',()=>{
  for(const button of modeButtons){for(const handler of button.events.click)handler();assert.equal(A.mode(),button.dataset.mode==='ai-test');assert.equal(el('menu-ai-test-settings').hidden,button.dataset.mode!=='ai-test');}
  assert(html.includes('id="hand-title"'));assert(html.includes('id="ai-test-export-csv"'));assert(html.includes('id="ai-test-export-json"'));
+});
+test('Debug modes stay in a collapsed menu and reveal/test buttons only open in the corner panel',()=>{
+ const debug=html.match(/<details id="menu-debug-options">([\s\S]*?)<\/details>/)[1];assert(debug.includes('id="game-mode-opts"'));assert(debug.includes('id="menu-ai-test-settings"'));
+ const toolbar=html.match(/<div id="game-toolbar">([\s\S]*?)<\/div>/)[1];assert(toolbar.includes('id="debug-menu-btn"'));assert(!toolbar.includes('ai-test-stats-btn'));assert(!toolbar.includes('playtest-toggle'));
+ const panel=html.match(/<div id="debug-overlay">([\s\S]*?)<\/section>/)[1];assert(panel.includes('id="playtest-toggle"'));assert(panel.includes('id="ai-test-stats-btn"'));assert.equal(cssValue('#debug-overlay','display'),'none');
+ A.openDebugControls();assert(el('debug-overlay').classList.contains('show'));for(const handler of document.events.keydown)handler({key:'Escape'});assert(!el('debug-overlay').classList.contains('show'));
+ A.openDebugControls();A.openAITestDashboard();assert(!el('debug-overlay').classList.contains('show'));
+});
+test('Yuugi counts one actual resolution, two paid cards and one point, with separate payment destinations',async()=>{
+ const g=blank();g.setCardAt(1,1,'palace_yuugi');g.setCardAt(1,2,'sdm_patchouli');g.players[0].hand=['medicine','sage_ran'];g.selectCostCards=async()=>['medicine','sage_ran'];g.chooseBoardCell=async()=>({r:1,c:2});
+ await g.resolveAbility('palace_yuugi',1,1,0,0);const row=g.testMetrics.cardActions.palace_yuugi;
+ assert.equal(row.abilityCalls,1);assert.equal(row.abilityEffective,1);assert.equal(row.costPaid,2);assert.equal(row.ownPoints,1);assert.equal(row.opponentPoints,0);
+ for(const id of ['medicine','sage_ran']){assert.equal(g.testMetrics.cardActions[id].paidAsCost,1);assert.equal(g.testMetrics.cardActions[id].returnedFromHand,0);assert(g.drawPile.includes(id));}
+ assert.equal(g.testMetrics.scoreSources['ability:palace_yuugi'].points,1);assert.equal(g.testMetrics.abilityDetails['palace_yuugi:palace_yuugi'].costPaid,2);assert.equal(g.players[0].discard[0],'sdm_patchouli');
+});
+test('Payment and shuffling alone cannot turn a failed ability into an effective resolution',async()=>{
+ const g=blank();g.setCardAt(1,1,'palace_yuugi');g.setCardAt(1,2,'sdm_patchouli');g.players[0].hand=['medicine','sage_ran'];g.drawPile=['mtn_sanae','hourai_mokou'];g.selectCostCards=async()=>['medicine','sage_ran'];g.chooseBoardCell=async()=>null;
+ await g.resolveAbility('palace_yuugi',1,1,0,0);assert.equal(g.testMetrics.cardActions.palace_yuugi.abilityCalls,1);assert.equal(g.testMetrics.cardActions.palace_yuugi.abilityEffective,0);assert.equal(g.testMetrics.cardActions.palace_yuugi.costPaid,2);assert.equal(g.players[0].discard.length,0);
+ assert.equal(g.commitCostCards(0,['missing'],1,1),0);assert.equal(g.testMetrics.cardActions.missing,undefined);
+});
+test('Declined costs are resolutions without paid cards, while protected and Eirin-disabled abilities are excluded',async()=>{
+ let g=blank();g.setCardAt(1,1,'palace_yuugi');g.setCardAt(1,2,'sdm_patchouli');g.players[0].hand=['medicine','sage_ran'];g.selectCostCards=async()=>null;await g.resolveAbility('palace_yuugi',1,1,0,0);
+ assert.equal(g.testMetrics.cardActions.palace_yuugi.abilityEffective,0);assert.equal(g.testMetrics.cardActions.palace_yuugi.costPaid,0);assert.equal(g.players[0].hand.length,2);
+ g=blank();g.setCardAt(1,1,'mtn_kanako');g.setCardAt(3,3,'hourai_eirin');await g.resolveAbility('mtn_kanako',1,1,0,0);assert.equal(g.testMetrics.cardActions.mtn_kanako,undefined);
+ const tile=g.shopTiles[1];await g.resolveAbility('sdm_meiling',tile.r,tile.c,0,0);assert.equal(g.testMetrics.cardActions.sdm_meiling,undefined);
+ for(const id of ['sage_kasen','hourai_eirin','mtn_nitori','hell_hecatia','palace_koishi']){await g.resolveAbility(id,0,0,0,0);assert.equal(g.testMetrics.cardActions[id],undefined);}
+});
+test('Known information reveals and free-turn flags count as effects without requiring score changes',async()=>{
+ let g=blank();g.setCardAt(1,1,'mtn_aya');g.players[1].hand=['medicine'];g.players[2].hand=['sage_ran'];g.revealHand(1,g.players[1].hand);g.revealHand(2,g.players[2].hand);
+ await g.resolveAbility('mtn_aya',1,1,0,0);assert.equal(g.testMetrics.cardActions.mtn_aya.abilityEffective,1);g.players[1].hand=[];g.players[2].hand=[];await g.resolveAbility('mtn_aya',1,1,0,0);assert.equal(g.testMetrics.cardActions.mtn_aya.abilityCalls,2);assert.equal(g.testMetrics.cardActions.mtn_aya.abilityEffective,1);
+ g=blank();g.setCardAt(1,1,'haku_youmu');const flags=await g.resolveAbility('haku_youmu',1,1,0,0);assert(flags.skipAdvance);assert.equal(g.testMetrics.cardActions.haku_youmu.abilityEffective,1);
+});
+test('Matara borrowed effects and payments belong to Matara once, with the used ability in a separate row',async()=>{
+ const g=blank();g.setCardAt(1,1,'sage_matara');g.setCardAt(1,2,'palace_yuugi');g.players[0].hand=['medicine','sage_ran'];g.selectCostCards=async()=>['medicine','sage_ran'];let picks=0;g.chooseBoardCell=async()=>++picks===1?{r:1,c:2}:{r:1,c:2};
+ await g.resolveAbility('sage_matara',1,1,0,0);const row=g.testMetrics.cardActions.sage_matara;
+ assert.equal(row.abilityCalls,1);assert.equal(row.abilityEffective,1);assert.equal(row.costPaid,2);assert.equal(row.ownPoints,1);assert.equal(g.testMetrics.cardActions.palace_yuugi,undefined);
+ assert.equal(g.testMetrics.abilityDetails['sage_matara:palace_yuugi'].calls,1);assert.equal(g.testMetrics.abilityDetails['sage_matara:palace_yuugi'].costPaid,2);assert.equal(g.testMetrics.abilityDetails['sage_matara:sage_matara'].calls,1);
+});
+test('Copied information is propagated to the physical caster even when all cards were already known',async()=>{
+ const g=blank();g.setCardAt(1,1,'sage_matara');g.setCardAt(1,2,'mtn_aya');g.players[1].hand=['medicine'];g.revealHand(1,g.players[1].hand);g.chooseBoardCell=async()=>({r:1,c:2});
+ await g.resolveAbility('sage_matara',1,1,0,0);assert.equal(g.testMetrics.cardActions.sage_matara.abilityEffective,1);assert.equal(g.testMetrics.cardActions.sage_matara.abilityCalls,1);assert.equal(g.testMetrics.abilityDetails['sage_matara:mtn_aya'].effective,1);
+});
+test('Nue borrowing an active ability counts a single physical caster and preserves both ability records',async()=>{
+ const g=blank();g.setCardAt(1,1,'temple_nue');g.drawPile=['medicine'];let borrowed;g.chooseChimeraAbility=async(_p,choices)=>borrowed=choices.find(id=>!['sage_yukari','sage_kasen','hourai_eirin','mtn_nitori','hell_hecatia','palace_koishi'].includes(id));
+  const oldRandom=ctx.Math.random;ctx.Math.random=()=>.999999;
+  try{await g.resolveAbility('temple_nue',1,1,0,0);}finally{ctx.Math.random=oldRandom;}
+ assert.equal(g.testMetrics.cardActions.temple_nue.abilityCalls,1);assert.equal(g.testMetrics.cardActions.temple_nue.abilityEffective,1);assert(g.testMetrics.abilityDetails['temple_nue:temple_nue']);assert.equal(g.borrowedAbilities.temple_nue,borrowed);
+ assert.equal(g.testMetrics.abilityDetails['temple_nue:'+borrowed].calls,1);assert.equal(g.testMetrics.cardActions[borrowed],undefined);
+});
+test('Wild faction substitutions, direct ability points and faction points remain distinct',async()=>{
+ const g=blank();g.setCardAt(1,1,'sage_kasen');g.setCardAt(1,2,'yuuka');g.checkClaims(0);
+ assert.equal(g.testMetrics.claims.sunflower,1);assert.equal(g.testMetrics.substituteClaims.sunflower,1);assert.equal(g.testMetrics.substituteMembers.sunflower,1);assert.equal(g.testMetrics.cardActions.sage_kasen.claimMembers,1);assert.equal(g.testMetrics.cardActions.yuuka.claimMembers,1);assert.equal(g.testMetrics.scoreSources['faction:sunflower'].points,2);
+ g.setCardAt(2,2,'marisa');g.setCardAt(2,3,'sdm_patchouli');g.chooseBoardCell=async()=>({r:2,c:3});await g.resolveAbility('marisa',2,2,0,0);assert.equal(g.testMetrics.scoreSources['ability:marisa'].points,1);assert.equal(g.testMetrics.scoreSources['faction:sunflower'].points,2);
+});
+test('Rin reports removed discard points, opponent denial and the real card entering hand',async()=>{
+ const g=blank();g.setCardAt(1,1,'palace_rin');g.players[1].discard=['sdm_patchouli'];await g.resolveAbility('palace_rin',1,1,0,0);
+ assert.equal(g.testMetrics.cardActions.palace_rin.deniedPoints,1);assert.equal(g.testMetrics.scoreSources['ability:palace_rin'].lostPoints,1);assert.equal(g.testMetrics.scoreSources['ability:palace_rin'].points,0);assert(g.players[0].hand.includes('sdm_patchouli'));
+ g.players[0].discard=['medicine'];await g.resolveAbility('palace_rin',1,1,0,0);assert.equal(g.testMetrics.cardActions.palace_rin.deniedPoints,1);assert.equal(g.testMetrics.scoreSources['ability:palace_rin'].lostPoints,2);
+});
+test('Trading, hand return and end-hand counts distinguish movements from per-game retention',()=>{
+ const g=blank();g.players[0].hand=['medicine','sage_ran'];g.recordTestSeen('medicine');g.recordTestSeen('sage_ran');assert(g.tradeCard(0,'medicine',1));assert.equal(g.testMetrics.cardActions.medicine.tradedAway,1);
+ g.removeFromHand(0,'sage_ran');g.returnToDrawPile('sage_ran',{handOwner:0,effect:'sakuya'});assert.equal(g.testMetrics.cardActions.sage_ran.returnedFromHand,1);g.addToHand(0,'sage_ran');g.winner=g.players[0];const s=A.createAITestStats();A.recordCompletedAITest(s,g);
+ assert.equal(s.cards.sage_ran.heldAtEnd,1);assert.equal(s.cards.sage_ran.heldGames,1);assert.equal(s.cards.sage_ran.returnedFromHand,1);assert.equal(s.cards.medicine.tradedAway,1);assert.equal(s.cards.sdm_meiling.heldAtEnd,1);
+});
+test('Ending snapshots preserve restrictions and exact zones, survive restarts and are capped at thirty',()=>{
+ const s=A.createAITestStats();let g=blank();g.players[0].hand=['medicine'];g.players[1].discard=['sdm_patchouli'];g.drawPile=['sage_ran'];g.setCardAt(1,1,'yuuka');g.wasteland[2][2]=true;g.placementBlockTurns[0]=2;g.placementBlockedForTurn[0]=true;g.forcedPlay[0]='medicine';g.log('snapshot log');g.stalemateMessage='blocked';A.recordCompletedAITest(s,g);
+ const entry=s.endings[0];assert.equal(entry.match,1);assert.equal(entry.state.board[1][1],'yuuka');assert(entry.state.wasteland[2][2]);assert.equal(entry.state.players[0].legalPlacements,0);assert.equal(entry.state.players[0].forcedCard,'medicine');assert.equal(entry.state.players[0].blockTurns,2);assert.equal(entry.state.drawPile[0],'sage_ran');assert.equal(entry.state.shop.length,4);assert.equal(entry.state.recentLog.at(-1),'snapshot log');
+ g.players[0].hand.length=0;g.drawPile.length=0;g.setCardAt(1,1,null);assert.equal(entry.state.players[0].hand[0],'medicine');assert.equal(entry.state.board[1][1],'yuuka');
+ for(let i=0;i<31;i++){g=blank();g.testAbortReason='error';g.testError='example';A.recordCompletedAITest(s,g);}assert.equal(s.endings.length,30);assert.equal(s.endings.at(-1).match,32);assert.equal(s.games,1);assert.equal(s.errors,31);
+});
+test('Expanded dashboard and both exports retain cost outcomes, score sources, wild claims and snapshots',async()=>{
+ const g=blank();A.resetStats();g.setCardAt(1,1,'palace_yuugi');g.setCardAt(1,2,'sdm_patchouli');g.players[0].hand=['medicine','sage_ran'];g.selectCostCards=async()=>['medicine','sage_ran'];g.chooseBoardCell=async()=>({r:1,c:2});await g.resolveAbility('palace_yuugi',1,1,0,0);g.setCardAt(2,1,'sage_kasen');g.setCardAt(2,2,'yuuka');g.checkClaims(0);g.stalemateMessage='tie';A.recordCompletedAITest(A.stats(),g);A.openAITestDashboard();
+ assert(el('ai-test-abilities').innerHTML.includes('Yuugi'));assert(el('ai-test-ability-details').innerHTML.includes('Impossible Strength'));assert(el('ai-test-destinations').innerHTML.includes('Paid as cost'));assert(el('ai-test-score-sources').innerHTML.includes('Points gained'));assert(el('ai-test-endings').innerHTML.includes('#1'));
+ const exportData=JSON.parse(JSON.stringify(A.aiTestExportData()));assert.equal(exportData.version,2);assert.equal(exportData.statistics.cards.palace_yuugi.costPaid,2);assert.equal(exportData.statistics.cards.palace_yuugi.ownPoints,1);assert.equal(exportData.statistics.factions.sunflower.substituteClaims,1);assert.equal(exportData.statistics.endings.length,1);assert(exportData.definitions.abilityEffective.includes('Cost payments'));
+ const csv=A.aiTestCSV();assert(csv.includes('"paidAsCost"'));assert(csv.includes('"ability","palace_yuugi:palace_yuugi","1"'));assert(csv.includes('"score_source","faction:sunflower","2"'));assert(csv.includes('"ending","1","stalemate"'));assert(csv.includes('""drawPile""'));
 });
 test('The real turn loop finishes a no-move match and schedules the next without human input',async()=>{
  const g=blank(2);A.resetStats();g.players.forEach(p=>p.hand=[]);await A.runNextTurn();await flush();assert(g.stalemateMessage);assert.equal(A.stats().games,1);assert.equal(A.stats().stalemates,1);assert.equal(timers.size,1);assert.equal(ctx.window.__resolveHumanTurn,undefined);
