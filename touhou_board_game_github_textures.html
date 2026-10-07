@@ -12422,7 +12422,7 @@ function returnToMainMenu(){
   updateStartButtonState();
   window.scrollTo(0,0);
   el('start-btn').focus();
-  try{screen.orientation?.unlock();}catch(_error){}
+  if(fullscreenElement())void lockFullscreenLandscape();
   queueMobileViewport();
 }
 
@@ -12830,8 +12830,21 @@ function waitForFullscreenEntry(result){
 function setFullscreenMessage(text){
   for(const id of ['mobile-screen-message','menu-fullscreen-message'])el(id).textContent=text;
 }
+async function lockFullscreenLandscape(){
+  if(!fullscreenElement())return;
+  if(!screen.orientation?.lock){
+    if(mobileFullscreenWanted())setFullscreenMessage('Rotate your phone for landscape.');
+    return;
+  }
+  try{
+    await screen.orientation.lock('landscape');
+    if(fullscreenElement())setFullscreenMessage('');
+  }catch(_error){
+    if(fullscreenElement())setFullscreenMessage('Rotate your phone for landscape.');
+  }
+}
 async function requestGameFullscreen(){
-  if(fullscreenElement())return true;
+  if(fullscreenElement()){await lockFullscreenLandscape();return true;}
   if(mobileFullscreenPending)return false;
   if(!fullscreenAvailable()){
     mobileFullscreenArmed=false;setFullscreenMessage('Fullscreen is unavailable in this browser. Rotate your phone to play sideways.');return false;
@@ -12840,7 +12853,7 @@ async function requestGameFullscreen(){
   try{
     await waitForFullscreenEntry(fullscreenRequest().call(document.documentElement));
     if(!fullscreenElement())throw new Error('Fullscreen was not entered');
-    if(screen.orientation?.lock){try{await screen.orientation.lock('landscape');}catch(_error){setFullscreenMessage('Rotate your phone for landscape.');}}
+    await lockFullscreenLandscape();
     return true;
   }catch(_error){
     setFullscreenMessage('Fullscreen was blocked. Tap Fullscreen to retry, or rotate your phone.');return false;
@@ -12871,7 +12884,8 @@ function onAutomaticMobileFullscreen(event){
 }
 function initializeMobileFullscreen(){
   queueMobileViewport();onGameFullscreenChange();
-  if(!mobileFullscreenWanted() || fullscreenElement())return;
+  if(!mobileFullscreenWanted())return;
+  if(fullscreenElement()){void lockFullscreenLandscape();return;}
   if(!fullscreenAvailable()){mobileFullscreenArmed=false;setFullscreenMessage('Fullscreen is unavailable in this browser. Rotate your phone to play sideways.');return;}
   setFullscreenMessage('Tap anywhere to enter fullscreen.');
   // Modern browsers require a trusted tap. Reuse existing activation when available.

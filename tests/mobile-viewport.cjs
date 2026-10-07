@@ -8,12 +8,12 @@ class Element {
     const names=new Set();this.classList={contains:n=>names.has(n),add:n=>names.add(n),remove:n=>names.delete(n),toggle(n,on){if(on===undefined)on=!names.has(n);if(on)names.add(n);else names.delete(n);return on;}};}
   appendChild(node){node.parentElement=this;this.children.push(node);}
   insertBefore(node){node.parentElement=this;this.children.unshift(node);}
-  addEventListener(){} setAttribute(n,v){this.attributes[n]=v;}
+  addEventListener(){} setAttribute(n,v){this.attributes[n]=v;} focus(){}
 }
 const nodes=new Map();const el=id=>{if(!nodes.has(id))nodes.set(id,new Element());return nodes.get(id);};
 const body=new Element(),root=new Element(),events={};let width=844,height=390,safe={left:0,right:0,top:0,bottom:0},coarse=true,shop=false,count=7,choiceHeight=0,pendingFrame=null;
 const document={body,documentElement:root,fullscreenElement:null,addEventListener:(n,fn)=>events[n]=fn,removeEventListener:(n,fn)=>{if(events[n]===fn)delete events[n];}};
-const window={get innerWidth(){return width;},get innerHeight(){return height;},visualViewport:{get height(){return height;},addEventListener(){}},matchMedia:()=>({matches:coarse}),addEventListener:(n,fn)=>events[n]=fn};
+const window={get innerWidth(){return width;},get innerHeight(){return height;},visualViewport:{get height(){return height;},addEventListener(){}},matchMedia:()=>({matches:coarse}),addEventListener:(n,fn)=>events[n]=fn,scrollTo(){}};
 function dimensions(){
   const room=width-safe.left-safe.right-12,contentHeight=height-safe.top-safe.bottom-10-36;
   const shopWidth=shop?Number.parseFloat(body.values.get('--mobile-shop-width')||136)+6:0;
@@ -25,11 +25,17 @@ el('hand').getBoundingClientRect=()=>{const d=dimensions();return {width:d.handW
 const context={dockTutorialCoach(){},console,Math,document,window,el,SIZE:5,game:{kourindouEnabled:false,players:[{hand:Array(7).fill('card')}],cancelled:false},screen:{orientation:{}},navigator:{userActivation:{isActive:false}},setTimeout,clearTimeout,
   getComputedStyle:()=>({paddingLeft:String(safe.left+6),paddingRight:String(safe.right+6)}),
   requestAnimationFrame:fn=>{pendingFrame=fn;return 1;},positionRinnosukeBubble(){},repositionYuukaBlooms(){},touchHandDrag:null,
+  resetGameView(){},closeAITestDashboard(){},updateAITestControls(){},renderTitleTableCards(){},updateStartButtonState(){},
   handPlacementArrivals:new Set(),handDragSettlers:new Set(),finishHandDrag:()=>{context.cancelledDrag=true;}};
 vm.createContext(context);
 const viewportCode=js.slice(js.indexOf('/* CSS lays out the phone table'),js.indexOf("el('start-btn').addEventListener('click'"));
-vm.runInContext(viewportCode+'\nthis.api={syncMobileViewport,mobileHandMetrics,toggleGameFullscreen,onGameFullscreenChange,initializeMobileFullscreen,onAutomaticMobileFullscreen,requestGameFullscreen,resetFullscreen:()=>{mobileFullscreenArmed=true;mobileFullscreenPending=false;}};',context);
+const menuReturnCode=js.slice(js.indexOf('function returnToMainMenu(){'),js.indexOf('function startNewGame('));
+vm.runInContext(viewportCode+'\n'+menuReturnCode+'\nthis.api={syncMobileViewport,mobileHandMetrics,toggleGameFullscreen,onGameFullscreenChange,initializeMobileFullscreen,onAutomaticMobileFullscreen,requestGameFullscreen,returnToMainMenu,fullscreenPending:()=>mobileFullscreenPending,resetFullscreen:()=>{mobileFullscreenArmed=true;mobileFullscreenPending=false;}};',context);
 const A=context.api;
+async function settleFullscreen(){
+  for(let i=0;i<20;i++){await Promise.resolve();if(!A.fullscreenPending())return;}
+  throw Error('Fullscreen request did not settle');
+}
 function reset({w=844,h=390,isShop=false,hand=7,insets={},choice=0,isCoarse=true}={}){
   width=w;height=h;shop=isShop;count=hand;coarse=isCoarse;safe={left:0,right:0,top:0,bottom:0,...insets};choiceHeight=choice;
   context.game={kourindouEnabled:shop,players:[{hand:Array(count).fill('card')}],cancelled:false};
@@ -65,14 +71,30 @@ test('Unsupported fullscreen keeps the game usable and explains manual rotation'
   reset();await A.toggleGameFullscreen();assert(el('mobile-screen-message').textContent.includes('Rotate'));assert.equal(el('menu-fullscreen-message').textContent,el('mobile-screen-message').textContent);assert.equal(document.fullscreenElement,null);
 });
 test('A phone enters fullscreen on its first trusted menu tap without starting the game',async()=>{
- reset();el('game').classList.remove('active');let requests=0;root.requestFullscreen=async()=>{requests++;document.fullscreenElement=root;};
+ reset();el('game').classList.remove('active');let requests=0;const locks=[];root.requestFullscreen=async()=>{requests++;document.fullscreenElement=root;};context.screen.orientation.lock=async mode=>{locks.push(mode);};
  A.initializeMobileFullscreen();assert.equal(requests,0);assert(el('menu-fullscreen-message').textContent.includes('Tap'));A.syncMobileViewport();assert(body.classList.contains('mobile-device'));assert(!body.classList.contains('game-mobile'));
  A.onAutomaticMobileFullscreen({type:'pointerup',isTrusted:false});assert.equal(requests,0);
- A.onAutomaticMobileFullscreen({type:'pointerup',isTrusted:true});A.onAutomaticMobileFullscreen({type:'click',isTrusted:true});for(let i=0;i<6;i++)await Promise.resolve();
- assert.equal(requests,1);assert.equal(document.fullscreenElement,root);assert(!el('game').classList.contains('active'));assert.equal(el('menu-fullscreen-btn').attributes['aria-pressed'],'true');assert.equal(el('fullscreen-btn').attributes['aria-pressed'],'true');
+ A.onAutomaticMobileFullscreen({type:'pointerup',isTrusted:true});A.onAutomaticMobileFullscreen({type:'click',isTrusted:true});await settleFullscreen();
+ assert.equal(requests,1);assert.deepEqual(locks,['landscape']);assert.equal(document.fullscreenElement,root);assert(!el('game').classList.contains('active'));assert.equal(el('menu-fullscreen-btn').attributes['aria-pressed'],'true');assert.equal(el('fullscreen-btn').attributes['aria-pressed'],'true');
+});
+test('Returning to the main menu preserves fullscreen landscape without unlocking',async()=>{
+ reset();document.fullscreenElement=root;let unlocks=0;const locks=[];context.screen.orientation={lock:async mode=>{locks.push(mode);},unlock:()=>{unlocks++;}};
+ A.returnToMainMenu();await Promise.resolve();A.syncMobileViewport();
+ assert.equal(document.fullscreenElement,root);assert(!el('game').classList.contains('active'));assert.equal(el('setup').style.display,'');assert.equal(unlocks,0);assert.deepEqual(locks,['landscape']);assert(!body.classList.contains('game-mobile'));assert(body.classList.contains('mobile-device'));
+ el('game').classList.add('active');A.syncMobileViewport();assert(body.classList.contains('mobile-landscape'));assert.equal(document.fullscreenElement,root);assert.equal(unlocks,0);
+});
+test('A menu already in fullscreen restores landscape without requesting fullscreen again',async()=>{
+ reset();el('game').classList.remove('active');document.fullscreenElement=root;let requests=0;const locks=[];root.requestFullscreen=async()=>{requests++;};context.screen.orientation.lock=async mode=>{locks.push(mode);};
+ A.initializeMobileFullscreen();await Promise.resolve();assert.deepEqual(locks,['landscape']);
+ assert.equal(await A.requestGameFullscreen(),true);assert.deepEqual(locks,['landscape','landscape']);assert.equal(requests,0);assert.equal(el('menu-fullscreen-btn').attributes['aria-pressed'],'true');
+});
+test('A portrait menu without orientation locking shows the manual landscape notice',async()=>{
+ reset({w:390,h:844});el('game').classList.remove('active');root.requestFullscreen=async()=>{document.fullscreenElement=root;};
+ assert.equal(await A.requestGameFullscreen(),true);assert(el('menu-fullscreen-message').textContent.includes('Rotate'));assert.equal(el('menu-fullscreen-message').textContent,el('mobile-screen-message').textContent);
+ A.returnToMainMenu();assert(el('menu-fullscreen-message').textContent.includes('Rotate'));assert.equal(document.fullscreenElement,root);
 });
 test('Rejected mobile fullscreen shows a bilingual-ready fallback and can be retried manually',async()=>{
- reset();root.requestFullscreen=async()=>{throw Error('activation denied');};A.initializeMobileFullscreen();A.onAutomaticMobileFullscreen({type:'click',isTrusted:true});for(let i=0;i<6;i++)await Promise.resolve();
+ reset();root.requestFullscreen=async()=>{throw Error('activation denied');};A.initializeMobileFullscreen();A.onAutomaticMobileFullscreen({type:'click',isTrusted:true});await settleFullscreen();
  assert.equal(document.fullscreenElement,null);assert(el('menu-fullscreen-message').textContent.includes('blocked'));assert.equal(el('mobile-screen-message').textContent,el('menu-fullscreen-message').textContent);
  root.requestFullscreen=async()=>{document.fullscreenElement=root;};await A.toggleGameFullscreen();assert.equal(document.fullscreenElement,root);
 });

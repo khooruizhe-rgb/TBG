@@ -25,7 +25,7 @@ const document={body:new Element(),documentElement:new Element(),activeElement:n
 el('game').appendChild(el('layout'));el('log-panel').appendChild(el('tutorial-coach'));el('tutorial-coach').hidden=true;
 const tiles=new Map(),effects=[];
 let holdEffects=null,normalStarts=0;
-const context={console,Math,Set,Map,Promise,document,el,window:{scrollTo(){}},screen:{orientation:{unlock(){}}},
+const context={console,Math,Set,Map,Promise,document,el,window:{scrollTo(){}},fullscreenElement:()=>null,screen:{orientation:{unlock(){}}},
   setTimeout:fn=>{fn();return 0;},clearTimeout(){},queueMobileViewport(){},setRuleText:(n,s)=>n.textContent=s,
   triggerPlacementPresentation(){},speakRinnosuke(){},captureHandPlacementArrival(){},syncHandSelection(){},
   clearHandDragPhysics(){},clearHandPlacementArrivals(){},closeMobileJournal(){},clearRinnosukeBubble(){},clearCrownBackdrop(){},clearMindEffects(){},
