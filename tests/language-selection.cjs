@@ -95,6 +95,10 @@ test('Single-use Byakuren states, rejected selections and title flips have clear
  for(const [en,zh]of [['Makai Fantastica — each effect once, in any order','魔界幻想 — 每项限一次，顺序不限'],['Available once','可用一次'],['Used','已使用'],['Not enough cards','手牌不足'],['No valid targets','没有可选目标'],['Draw pile empty','抽牌堆为空'],['Flip card','翻牌'],['Choose a highlighted tile. Your selection is still active.','请选择高亮的格子。此次选择仍然有效。']])assert.equal(A.translateGameText(en),zh);
  const instruction='Drag cards to move them. Tap ↻ to flip, or press F. Double-click or double-tap to inspect.';assert.equal(A.translateGameText(instruction),'拖动卡牌可移动位置；点击 ↻ 或按 F 翻牌；双击可查看详情。');A.setGameLanguage('en');assert.equal(A.translateGameText('Available once'),'Available once');assert.equal(A.translateGameText(instruction),instruction);
 });
+test('The title memory-game instructions, feedback and controls are bilingual',()=>{
+ A.setGameLanguage('zh-CN');for(const [en,zh]of [['Memory match','翻牌小游戏'],['Back to the table','回到桌面'],['Match two cards with the same character.','翻开两张相同角色的卡牌即可配对。'],['Matching cards','配对卡牌'],['Pairs','配对'],['Attempts','尝试次数'],['Face-down card','背面的卡牌'],['All pairs found!','全部配对成功！'],['Play again','再玩一次']])assert.equal(A.translateGameText(en),zh);
+ A.setGameLanguage('en');assert.equal(A.translateGameText('All pairs found!'),'All pairs found!');
+});
 test('Physical card table instructions, discard regions and changing card counts are localized',()=>{
  A.setGameLanguage('zh-CN');
  for(const text of ['Move and stack cards freely. Drag one into the target area, then confirm. Double-tap to inspect.',"Each area is one player's discard pile. Move cards freely, then drag one into Your Hand and confirm.",'Confirm card choice','Place selected card here','Empty discard pile','Discard pile'])assert(!/[A-Za-z]{3,}/.test(A.translateGameText(text)),text);

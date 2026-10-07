@@ -30,7 +30,7 @@ const context={console,Math,Set,Map,Promise,document,el,window:{scrollTo(){}},fu
   triggerPlacementPresentation(){},speakRinnosuke(){},captureHandPlacementArrival(){},syncHandSelection(){},
   clearHandDragPhysics(){},clearHandPlacementArrivals(){},closeMobileJournal(){},clearRinnosukeBubble(){},clearCrownBackdrop(){},clearMindEffects(){},
   removeYuukaBloom(){},releaseRectPointer(){},clearExpansionEffects(){},closeCardDetails(){},updateStartButtonState(){},
-  finishTitleCardDrag(){},clearTableCardSlides(){},renderTitleTableCards(){},cancelAITestAutomation(){},updateAITestControls(){},closeAITestDashboard(){},closeDebugControls(){},
+  finishTitleCardDrag(){},clearTableCardSlides(){},closeTitleMemoryGame(){},renderTitleTableCards(){},cancelAITestAutomation(){},updateAITestControls(){},closeAITestDashboard(){},closeDebugControls(){},
   playGameCue(){},canAct:()=>true,requestAnimationFrame:fn=>fn(),clearRectPreview(){},renderStatus(){},renderBoard(){},
   tileElement:(r,c)=>{const key=r+','+c;if(!tiles.has(key)){const n=new Element();n.dataset={r,c};tiles.set(key,n);}return tiles.get(key);},
   waitForVisualEffects:()=>holdEffects?holdEffects.promise:Promise.resolve(true),runNextTurn:()=>normalStarts++,

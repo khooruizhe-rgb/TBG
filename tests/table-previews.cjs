@@ -3,7 +3,7 @@
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict');
 const file=process.argv[2]||(fs.existsSync('touhou_board_game_github_textures.html')?'touhou_board_game_github_textures.html':path.join(__dirname,'..','touhou_board_game_github_textures.html'));
 const html=fs.readFileSync(file,'utf8'),js=html.split('<script>')[1].split('</script>')[0],css=html.split('<style>')[1].split('</style>')[0];new vm.Script(js);
-let now=1000,seed=23,reduced=false,nextFrame=0;const frames=new Map();const math=Object.create(Math);math.random=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296);
+let now=1000,seed=23,reduced=false,nextFrame=0,nextTimer=0;const frames=new Map(),timers=new Map(),documentEvents={};const math=Object.create(Math);math.random=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296);
 class Element{
  constructor(){this.children=[];this.dataset={};this.attributes={};this.events={};this.values=new Map();this.names=new Set();this.captures=new Set();this.style={setProperty:(k,v)=>this.values.set(k,String(v)),removeProperty:k=>this.values.delete(k)};
   this.classList={add:(...n)=>n.forEach(x=>this.names.add(x)),remove:(...n)=>n.forEach(x=>this.names.delete(x)),contains:n=>this.names.has(n),toggle:(n,on)=>{if(on===undefined)on=!this.names.has(n);on?this.names.add(n):this.names.delete(n);return on;}};}
@@ -25,11 +25,11 @@ class Element{
   return {left:parse(this.values.get('--table-x'),window.innerWidth)-size.width/2,top:parse(this.values.get('--table-y'),window.innerHeight)-size.height/2,...size};}
 }
 const nodes=new Map(),el=id=>{if(!nodes.has(id))nodes.set(id,new Element());return nodes.get(id);};
-const document={body:new Element(),activeElement:null,addEventListener(){},removeEventListener(){},createElement:()=>new Element(),querySelectorAll(s){const walk=n=>n.children.flatMap(c=>[c,...walk(c)]);return walk(this.body).filter(n=>n.classList.contains(s.slice(1)));}};
-for(const id of ['title-table-cards','game','setup','start-btn','crown-backdrop-a','crown-backdrop-b','byakuren-peek-cards'])document.body.appendChild(el(id));
+const document={body:new Element(),activeElement:null,addEventListener:(key,fn)=>(documentEvents[key]??=[]).push(fn),removeEventListener(){},createElement:()=>new Element(),querySelectorAll(s){const walk=n=>n.children.flatMap(c=>[c,...walk(c)]);return walk(this.body).filter(n=>n.classList.contains(s.slice(1)));}};
+for(const id of ['title-table-cards','game','setup','start-btn','crown-backdrop-a','crown-backdrop-b','byakuren-peek-cards','title-memory-grid','title-memory-close','title-memory-replay'])document.body.appendChild(el(id));
 const storage=new Map(),events={},inspected=[];
 const window={innerWidth:1200,innerHeight:800,matchMedia:()=>({matches:reduced}),localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)},addEventListener:(k,fn)=>(events[k]??=[]).push(fn),removeEventListener:(k,fn)=>{events[k]=(events[k]||[]).filter(f=>f!==fn);},scrollTo(){}};
-const ctx={console,Math:math,Date:{now:()=>now},performance:{now:()=>now},document,window,el,openCardDetails:id=>inspected.push(id),cardBoardHtml:id=>`<div class="board-card">${id}</div>`,fullscreenElement:()=>null,screen:{orientation:{unlock(){}}},updateStartButtonState(){},queueMobileViewport(){},setRuleText:(node,text)=>node.textContent=text,playGameCue(){},requestAnimationFrame:fn=>{frames.set(++nextFrame,fn);return nextFrame;},cancelAnimationFrame:id=>frames.delete(id),resetGameView(){ctx.api.finishTitleCardDrag(true);}};
+const ctx={console,Math:math,Date:{now:()=>now},performance:{now:()=>now},document,window,el,openCardDetails:id=>inspected.push(id),cardBoardHtml:id=>`<div class="board-card">${id}</div>`,fullscreenElement:()=>null,screen:{orientation:{unlock(){}}},updateStartButtonState(){},queueMobileViewport(){},setRuleText:(node,text)=>node.textContent=text,playGameCue(){},setTimeout:(fn,delay)=>{timers.set(++nextTimer,{fn,at:now+delay});return nextTimer;},clearTimeout:id=>timers.delete(id),requestAnimationFrame:fn=>{frames.set(++nextFrame,fn);return nextFrame;},cancelAnimationFrame:id=>frames.delete(id),resetGameView(){ctx.api.closeTitleMemoryGame(false);ctx.api.finishTitleCardDrag(true);}};
 vm.createContext(ctx);
 vm.runInContext(js.slice(js.indexOf('const DIRS4'),js.indexOf('/* ===================== UI layer'))+'\nlet game=null;\n'+
  js.slice(js.indexOf('let titleCardDrag=null'),js.indexOf('let chosenPlayerCount = 3;'))+'\n'+
@@ -37,9 +37,10 @@ vm.runInContext(js.slice(js.indexOf('const DIRS4'),js.indexOf('/* ==============
  js.slice(js.indexOf('function crownLightFor'),js.indexOf('function discardLightFor'))+'\n'+
  js.slice(js.indexOf('const CROWN_SCENE_BACKGROUND'),js.indexOf('function triggerPlacementPresentation'))+'\n'+
  js.slice(js.indexOf('function returnToMainMenu(){'),js.indexOf('function startNewGame({'))+
- '\nthis.api={CARD,drawTitlePreviewCards,renderTitleTableCards,finishTitleCardDrag,returnToMainMenu,showCrownBackdrop,clearCrownBackdrop,CROWN_SCENE_BACKGROUND,CROWN_LIGHT_PALETTES,openByakurenPeek,cardChoiceGroupRect,stepTableCardSlide,clearTableCardSlides,slideCount:()=>tableCardSlides.size,averageWoodColor,cancelPeek:()=>cancelByakurenPeek?.(),drag:()=>titleCardDrag,resetPrevious:()=>lastTitleCardIds=[]};',ctx);
+ '\nthis.api={CARD,drawTitlePreviewCards,renderTitleTableCards,finishTitleCardDrag,returnToMainMenu,showCrownBackdrop,clearCrownBackdrop,CROWN_SCENE_BACKGROUND,CROWN_LIGHT_PALETTES,openByakurenPeek,cardChoiceGroupRect,stepTableCardSlide,clearTableCardSlides,closeTitleMemoryGame,openTitleMemoryGame,memory:()=>titleMemoryGame,slideCount:()=>tableCardSlides.size,averageWoodColor,cancelPeek:()=>cancelByakurenPeek?.(),drag:()=>titleCardDrag,resetPrevious:()=>lastTitleCardIds=[]};',ctx);
 const A=ctx.api,tests=[],test=(n,f)=>tests.push([n,f]);
 function frame(dt=16){now+=dt;const callbacks=[...frames.values()];frames.clear();callbacks.forEach(fn=>fn(now));}
+function advanceTimers(dt){now+=dt;for(const [id,timer]of [...timers])if(timer.at<=now){timers.delete(id);timer.fn();}}
 function render(){A.finishTitleCardDrag(true);el('game').classList.remove('active');inspected.length=0;now+=500;A.renderTitleTableCards();return el('title-table-cards').children;}
 function dispatch(node,type,extra={}){const event={type,currentTarget:node,pointerId:1,button:0,detail:1,clientX:100,clientY:100,preventDefault(){},stopPropagation(){},...extra};for(const fn of node.events[type]||[])fn(event);return event;}
 function styleValue(selector,property){
@@ -89,6 +90,48 @@ test('The compact menu preserves exposed tabletop space and uses a two-column ph
  assert.equal(styleValue('#setup.menu-paper','max-height'),'calc(100dvh - 48px)');
  assert.equal(styleValue('#setup.menu-paper','grid-template-columns'),'minmax(0,.9fr) minmax(0,1.2fr)');
  assert.equal(styleValue('.table-card-turn','transform-style'),'preserve-3d');assert.equal(styleValue('.table-card-front','backface-visibility'),'hidden');
+});
+test('Every scattered card must be flipped at least once before the memory game opens after the last animation',()=>{
+ const cards=render();for(const card of cards.slice(0,8))dispatch(card.querySelector('.table-card-flip'),'click');
+ dispatch(cards[0].querySelector('.table-card-flip'),'click');advanceTimers(400);assert.equal(A.memory(),null);
+ dispatch(cards[8],'keydown',{key:'f'});advanceTimers(339);assert.equal(A.memory(),null);advanceTimers(1);
+ const session=A.memory();assert(session);assert.equal(session.cards.length,8);assert(session.cards.every(card=>card.node.dataset.faceDown==='true'));assert.equal(el('title-memory-pairs').textContent,'0/4');
+ const counts=new Map();for(const card of session.cards)counts.set(card.id,(counts.get(card.id)||0)+1);assert.equal(counts.size,4);assert([...counts.values()].every(count=>count===2));assert(session.cards.every(card=>!A.CARD[card.id].token&&!A.CARD[card.id].shopkeeper));
+ assert(el('title-memory-overlay').classList.contains('show'));assert(!el('game').classList.contains('active'));
+});
+test('A memory mismatch waits, rejects third-card and duplicate taps, then turns both cards back over',()=>{
+ render();A.openTitleMemoryGame();const session=A.memory(),first=session.cards[0],second=session.cards.find(card=>card.id!==first.id),third=session.cards.find(card=>card!==first&&card!==second);
+ dispatch(first.node,'click');dispatch(first.node,'click');assert.equal(session.open.length,1);assert.equal(session.attempts,0);
+ dispatch(second.node,'click');dispatch(third.node,'click');assert.equal(session.attempts,1);assert(session.locked);assert.equal(third.node.dataset.faceDown,'true');
+ advanceTimers(849);assert.equal(first.node.dataset.faceDown,'false');advanceTimers(1);assert.equal(first.node.dataset.faceDown,'true');assert.equal(second.node.dataset.faceDown,'true');assert.equal(session.open.length,0);assert(!session.locked);
+});
+test('A matched pair stays revealed, cannot be chosen again and counts one pair and one attempt',()=>{
+ render();A.openTitleMemoryGame();const session=A.memory(),first=session.cards[0],second=session.cards.find(card=>card!==first&&card.id===first.id);
+ dispatch(first.node,'click');dispatch(second.node,'click');assert.equal(session.pairs,1);assert.equal(session.attempts,1);assert.equal(el('title-memory-pairs').textContent,'1/4');
+ for(const card of [first,second]){assert(card.matched);assert(card.node.disabled);assert(card.node.classList.contains('memory-matched'));assert.equal(card.node.dataset.faceDown,'false');dispatch(card.node,'click');}
+ assert.equal(session.pairs,1);assert.equal(session.attempts,1);assert.equal(session.open.length,0);
+});
+test('Completing all four pairs shows the replay control and replay creates a fresh covered game',()=>{
+ render();A.openTitleMemoryGame();const session=A.memory();for(const id of new Set(session.cards.map(card=>card.id)))for(const card of session.cards.filter(card=>card.id===id))dispatch(card.node,'click');
+ assert.equal(session.pairs,4);assert.equal(session.attempts,4);assert.equal(el('title-memory-message').textContent,'All pairs found!');assert(!el('title-memory-replay').hidden);assert.equal(document.activeElement,el('title-memory-replay'));
+ el('title-memory-replay').onclick();const next=A.memory();assert.notEqual(next,session);assert.equal(next.pairs,0);assert.equal(next.attempts,0);assert(next.cards.every(card=>card.node.dataset.faceDown==='true'));assert(el('title-memory-replay').hidden);
+});
+test('Closing or replaying cancels mismatch callbacks so an old game cannot change a later one',()=>{
+ render();A.openTitleMemoryGame();let session=A.memory();dispatch(session.cards[0].node,'click');dispatch(session.cards.find(card=>card.id!==session.cards[0].id).node,'click');
+ const stale=timers.get(session.timer).fn;el('title-memory-replay').onclick();session=A.memory();stale();assert.equal(A.memory(),session);assert.equal(session.open.length,0);assert(session.cards.every(card=>card.node.dataset.faceDown==='true'));
+ dispatch(session.cards[0].node,'click');dispatch(session.cards.find(card=>card.id!==session.cards[0].id).node,'click');el('title-memory-close').onclick();advanceTimers(900);
+ assert.equal(A.memory(),null);assert.equal(el('title-memory-grid').children.length,0);assert(!el('title-memory-overlay').classList.contains('show'));assert(document.querySelectorAll('.table-scatter-card').every(card=>card.dataset.turned==='false'));
+});
+test('Refreshing the spread or starting a real game prevents a late memory unlock',()=>{
+ let cards=render();for(const card of cards)dispatch(card.querySelector('.table-card-flip'),'click');A.renderTitleTableCards();advanceTimers(400);assert.equal(A.memory(),null);
+ cards=el('title-table-cards').children.slice();for(const card of cards)dispatch(card.querySelector('.table-card-flip'),'click');el('game').classList.add('active');advanceTimers(400);assert.equal(A.memory(),null);assert(!el('title-memory-overlay').classList.contains('show'));el('game').classList.remove('active');
+ render();A.openTitleMemoryGame();ctx.resetGameView();assert.equal(A.memory(),null);assert(!el('title-memory-overlay').classList.contains('show'));
+});
+test('The memory dialog keeps keyboard focus inside and Escape returns to the original table control',()=>{
+ const card=render()[0];card.focus();A.openTitleMemoryGame();frame();const session=A.memory();assert.equal(document.activeElement,session.cards[0].node);
+ const key=(key,shiftKey=false)=>{let prevented=false;for(const fn of documentEvents.keydown||[])fn({key,shiftKey,preventDefault(){prevented=true;}});return prevented;};
+ el('title-memory-close').focus();assert(key('Tab',true));assert.equal(document.activeElement,session.cards[7].node);assert(key('Tab'));assert.equal(document.activeElement,el('title-memory-close'));
+ assert(key('Escape'));assert.equal(A.memory(),null);assert.equal(document.activeElement,card);
 });
 test('A double click or double tap opens inspection once, and the first tap leaves the spread untouched',()=>{
  for(const pointerType of ['mouse','touch']){

@@ -2423,6 +2423,28 @@ body:not(:has(#game.active)) #setup{pointer-events:auto}
 }
 @media(prefers-reduced-motion:reduce){.table-card-turn{transition:none}}
 
+#title-memory-overlay{position:fixed;inset:0;z-index:405;display:none;align-items:center;justify-content:center;padding:20px;background:#170d0b99;backdrop-filter:blur(3px)}
+#title-memory-overlay.show{display:flex}
+#title-memory-panel{width:min(560px,max(260px,calc((100dvh - 160px)*1.5)),calc(100vw - 64px));max-height:calc(100dvh - 48px);overflow:auto;padding:14px;border:1px solid #c6a676;border-radius:9px;background:linear-gradient(#ffdc9f17,#24110822),var(--title-wood);background-size:cover,900px 420px;color:#fff0d1;box-shadow:0 18px 50px #130a0a99}
+.title-memory-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.title-memory-heading h3{margin:0;font-size:18px;color:#fff0d1}
+#title-memory-close,#title-memory-replay{padding:5px 9px;border:1px solid #cfad78;border-radius:4px;color:#fff0d1;background:#372331;font-size:11px;font-family:inherit;cursor:pointer}
+#title-memory-message{margin:0 0 10px;font-size:12px;line-height:1.4}
+#title-memory-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.title-memory-card{position:relative;aspect-ratio:3/4;min-width:0;padding:0;border:0;border-radius:7px;background:transparent;perspective:900px;cursor:pointer;touch-action:manipulation}
+.title-memory-card .board-card{width:100%;height:100%;padding:5px;border:2px solid var(--faction-edge,#e7d6b8);border-radius:7px;pointer-events:none}
+.title-memory-card .cname{font-size:clamp(7px,1vw,12px)}
+.title-memory-card .icon-row{font-size:12px}
+.title-memory-card .icon-row img{width:17px;height:17px;object-fit:contain}
+.title-memory-card .table-card-back{border-width:3px}
+.title-memory-card .table-card-back span{font-size:24px}
+.title-memory-card:focus-visible{outline:3px solid #ffd591;outline-offset:3px}
+.title-memory-card.memory-matched{filter:drop-shadow(0 0 5px #b6e8a0);cursor:default}
+.title-memory-card.memory-matched::after{content:'✓';position:absolute;right:4px;top:4px;display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#285b32;color:#fff4d1;font-size:12px;pointer-events:none}
+.title-memory-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:9px;font-size:11px}
+.title-memory-stats{display:flex;gap:14px}
+@media(orientation:landscape) and (max-height:600px){#title-memory-panel{padding:12px}.title-memory-heading h3{font-size:15px}#title-memory-message{font-size:11px;margin-bottom:8px}.title-memory-footer{margin-top:8px}}
+
 /* Paper notes and a felt playing mat share the title's wooden table. */
 body{--bg-panel:#efdfc2;--bg-panel-2:#e5d3b2;--line:#bea482;--gold:#845c31;--sakura:#8d4939;--ink:#453124;--muted:#765c46;background:#593921}
 .stars{display:none}
@@ -2610,6 +2632,14 @@ body.tutorial-practice #debug-menu-btn{display:none}
 <div class="crown-backdrop" id="crown-backdrop-b" aria-hidden="true"></div>
 <div class="stars"></div>
 <div id="title-table-cards" role="region" aria-label="Cards on the table"></div>
+<div id="title-memory-overlay" role="dialog" aria-modal="true" aria-labelledby="title-memory-title" aria-describedby="title-memory-message">
+  <section id="title-memory-panel">
+    <div class="title-memory-heading"><h3 id="title-memory-title">Memory match</h3><button id="title-memory-close" type="button">Back to the table</button></div>
+    <p id="title-memory-message" role="status">Match two cards with the same character.</p>
+    <div id="title-memory-grid" role="group" aria-label="Matching cards"></div>
+    <div class="title-memory-footer"><div class="title-memory-stats"><span><span>Pairs</span> <b id="title-memory-pairs">0/4</b></span><span><span>Attempts</span> <b id="title-memory-attempts">0</b></span></div><button id="title-memory-replay" type="button" hidden>Play again</button></div>
+  </section>
+</div>
 <div id="app">
   <header class="top">
     <h1>幻想郷 · Boundary of Fates</h1>
@@ -6717,6 +6747,15 @@ const ZH_TEXT={
   "Draw pile empty": "抽牌堆为空",
   "Choose a highlighted tile. Your selection is still active.": "请选择高亮的格子。此次选择仍然有效。",
   "Flip card": "翻牌",
+  "Memory match": "翻牌小游戏",
+  "Back to the table": "回到桌面",
+  "Match two cards with the same character.": "翻开两张相同角色的卡牌即可配对。",
+  "Matching cards": "配对卡牌",
+  "Pairs": "配对",
+  "Attempts": "尝试次数",
+  "Face-down card": "背面的卡牌",
+  "All pairs found!": "全部配对成功！",
+  "Play again": "再玩一次",
   "Drag cards to move them. Tap ↻ to flip, or press F. Double-click or double-tap to inspect.": "拖动卡牌可移动位置；点击 ↻ 或按 F 翻牌；双击可查看详情。",
   "Makai Fantastica — top three cards": "魔界幻想 — 牌堆顶的三张牌",
   "Drag one card into Your Hand. Arrange the rest left to right, or stack the next card on top. Double-click or double-tap to inspect.": "将一张牌拖入你的手牌区，其余卡牌从左到右排列，也可把先抽的牌叠在上面。双击可查看详情。",
@@ -11482,6 +11521,7 @@ el('draw-btn').addEventListener('click', async () => {
 
 /* ---------- Setup screen wiring ---------- */
 let titleCardDrag=null,lastTitleCardTap=null,lastTitleCardIds=[];
+let titleMemoryGame=null,titleMemoryUnlockTimer=null;
 let peekCardSession=null,cancelByakurenPeek=null;
 let peekCardLayer=1;
 const tableCardSlides=new Map();
@@ -11636,18 +11676,86 @@ function onTitleCardKeyDown(event){
   moveTitleCard(event.currentTarget,center.x+delta[0]*step,center.y+delta[1]*step);
   if(event.currentTarget.dataset.peekCard==='true')peekCardSession?.update(event.currentTarget,true);
 }
-function flipTitleCard(node){
-  if(!node || node.dataset.peekCard==='true' || !movableTableCardEnabled(node))return false;
-  if(titleCardDrag?.node===node)finishTitleCardDrag(true);
-  stopTableCardSlide(node);lastTitleCardTap=null;
-  const faceDown=node.dataset.faceDown!=='true';
+function setTitleCardFace(node,faceDown){
   node.dataset.faceDown=String(faceDown);node.classList.toggle('table-card-facedown',faceDown);
   node.querySelector('.table-card-front')?.setAttribute('aria-hidden',String(faceDown));
   node.querySelector('.table-card-reverse')?.setAttribute('aria-hidden',String(!faceDown));
   node.querySelector('.table-card-flip')?.setAttribute('aria-pressed',String(faceDown));
+}
+function titlePreviewNodes(){return [...document.querySelectorAll('.table-scatter-card')].filter(node=>node.dataset.titlePreview==='true');}
+function closeTitleMemoryGame(restoreFocus=true){
+  if(titleMemoryUnlockTimer!==null)clearTimeout(titleMemoryUnlockTimer);titleMemoryUnlockTimer=null;
+  const session=titleMemoryGame;titleMemoryGame=null;
+  if(session?.timer!==null && session?.timer!==undefined)clearTimeout(session.timer);
+  el('title-memory-overlay').classList.remove('show');el('title-memory-grid').replaceChildren();
+  for(const node of titlePreviewNodes())node.dataset.turned='false';
+  if(restoreFocus && !el('game').classList.contains('active') && session?.focusBefore?.isConnected)session.focusBefore.focus({preventScroll:true});
+}
+function openTitleMemoryGame(){
+  if(el('game').classList.contains('active'))return false;
+  const focusBefore=titleMemoryGame?.focusBefore || document.activeElement;
+  closeTitleMemoryGame(false);finishTitleCardDrag(true);clearTableCardSlides(false);lastTitleCardTap=null;
+  const ids=shuffle(CARDS.filter(card=>!card.token && !card.shopkeeper).slice()).slice(0,4).map(card=>card.id);
+  const session={cards:[],open:[],pairs:0,attempts:0,locked:false,timer:null,focusBefore};titleMemoryGame=session;
+  const host=el('title-memory-grid');el('title-memory-pairs').textContent='0/4';el('title-memory-attempts').textContent='0';
+  setRuleText(el('title-memory-message'),'Match two cards with the same character.');el('title-memory-replay').hidden=true;
+  shuffle([...ids,...ids]).forEach(id=>{
+    const node=document.createElement('button');node.type='button';node.className='title-memory-card table-card-facedown';node.dataset.cardId=id;
+    const turn=document.createElement('div'),front=document.createElement('div'),reverse=document.createElement('div');
+    turn.className='table-card-turn';front.className='table-card-front';reverse.className='table-card-reverse';
+    front.innerHTML=cardBoardHtml(id);reverse.innerHTML='<div class="table-card-back"><span>☯</span></div>';
+    turn.appendChild(front);turn.appendChild(reverse);node.appendChild(turn);setTitleCardFace(node,true);node.setAttribute('aria-label','Face-down card');
+    const card={id,node,matched:false};session.cards.push(card);node.addEventListener('click',()=>pickTitleMemoryCard(session,card));host.appendChild(node);
+  });
+  el('title-memory-close').onclick=()=>closeTitleMemoryGame();el('title-memory-replay').onclick=()=>openTitleMemoryGame();
+  el('title-memory-overlay').classList.add('show');
+  requestAnimationFrame(()=>{if(titleMemoryGame===session)session.cards[0].node.focus({preventScroll:true});});return true;
+}
+function pickTitleMemoryCard(session,card){
+  if(titleMemoryGame!==session || el('game').classList.contains('active') || session.locked || card.matched || session.open.includes(card))return false;
+  setTitleCardFace(card.node,false);card.node.setAttribute('aria-label',CARD[card.id].name);session.open.push(card);playGameCue('select');
+  if(session.open.length<2)return true;
+  session.attempts++;el('title-memory-attempts').textContent=String(session.attempts);
+  const pair=session.open.slice();
+  if(pair[0].id===pair[1].id){
+    for(const matched of pair){matched.matched=true;matched.node.disabled=true;matched.node.classList.add('memory-matched');}
+    session.open=[];session.pairs++;el('title-memory-pairs').textContent=`${session.pairs}/4`;
+    if(session.pairs===4){setRuleText(el('title-memory-message'),'All pairs found!');el('title-memory-replay').hidden=false;el('title-memory-replay').focus({preventScroll:true});}
+  }else{
+    session.locked=true;
+    session.timer=setTimeout(()=>{
+      if(titleMemoryGame!==session)return;
+      for(const missed of pair){setTitleCardFace(missed.node,true);missed.node.setAttribute('aria-label','Face-down card');}
+      session.open=[];session.locked=false;session.timer=null;
+    },850);
+  }
+  return true;
+}
+document.addEventListener('keydown',event=>{
+  const session=titleMemoryGame;if(!session)return;
+  if(event.key==='Escape'){event.preventDefault();closeTitleMemoryGame();return;}
+  if(event.key!=='Tab')return;
+  const focusable=[el('title-memory-close'),...session.cards.filter(card=>!card.matched).map(card=>card.node),...(!el('title-memory-replay').hidden ? [el('title-memory-replay')] : [])];
+  const index=focusable.indexOf(document.activeElement);
+  if(index<0 || (event.shiftKey && index===0) || (!event.shiftKey && index===focusable.length-1)){
+    event.preventDefault();focusable[event.shiftKey ? focusable.length-1 : 0].focus({preventScroll:true});
+  }
+});
+function flipTitleCard(node){
+  if(!node || node.dataset.titlePreview!=='true' || !movableTableCardEnabled(node) || titleMemoryGame)return false;
+  if(titleCardDrag?.node===node)finishTitleCardDrag(true);
+  stopTableCardSlide(node);lastTitleCardTap=null;setTitleCardFace(node,node.dataset.faceDown!=='true');node.dataset.turned='true';
+  const cards=titlePreviewNodes();
+  if(cards.length===9 && cards.every(card=>card.dataset.turned==='true') && titleMemoryUnlockTimer===null){
+    titleMemoryUnlockTimer=setTimeout(()=>{
+      titleMemoryUnlockTimer=null;
+      if(!el('game').classList.contains('active') && cards.every(card=>card.isConnected && card.dataset.turned==='true'))openTitleMemoryGame();
+    },340);
+  }
   playGameCue('select');return true;
 }
 function renderTitleTableCards(){
+  closeTitleMemoryGame(false);
   clearTableCardSlides(false);
   finishTitleCardDrag(true);lastTitleCardTap=null;
   document.querySelectorAll('.table-scatter-card').forEach(node=>node.remove());
@@ -11655,7 +11763,7 @@ function renderTitleTableCards(){
   const positions=[[12,23,-17],[20,63,12],[7,83,-9],[86,19,16],[82,59,-12],[95,82,14],[35,96,-11],[67,95,15],[74,4,-7]];
   drawTitlePreviewCards().forEach((preview,index)=>{
     const [x,y,baseAngle]=positions[index],angle=baseAngle+Math.random()*12-6;
-    const card=document.createElement('div');card.className='table-scatter-card';card.dataset.cardId=preview.id;card.dataset.angle=String(angle);
+    const card=document.createElement('div');card.className='table-scatter-card';card.dataset.cardId=preview.id;card.dataset.angle=String(angle);card.dataset.titlePreview='true';card.dataset.turned='false';
     card.setAttribute('role','group');card.setAttribute('tabindex','0');card.setAttribute('aria-label',`${preview.name}. Drag to move; press F to flip; double-click or double-tap to inspect.`);
     card.setAttribute('aria-keyshortcuts','F Enter Space ArrowLeft ArrowRight ArrowUp ArrowDown');
     card.style.setProperty('--table-x',`${x+Math.random()*4-2}%`);card.style.setProperty('--table-y',`${y+Math.random()*6-3}%`);
@@ -12456,6 +12564,7 @@ el('customize-toggle').addEventListener('click', () => {
 });
 
 function resetGameView(){
+  closeTitleMemoryGame(false);
   cancelAITestAutomation();
   closeDebugControls();
   if(typeof cancelByakurenPeek==='function')cancelByakurenPeek();
