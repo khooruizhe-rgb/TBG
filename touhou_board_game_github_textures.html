@@ -1694,8 +1694,12 @@
     line-height:1.02; font-weight:700; white-space:nowrap;
     color:var(--detail-ink); text-shadow:2px 2px 0 #170b14, -1px -1px var(--detail-accent), 0 0 9px #12080b;
   }
+  .card-detail-marks{ --detail-mark-size:35px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; }
   .card-detail-crown{ flex:none; color:var(--detail-accent); line-height:1; }
-  .card-detail-crown svg{ display:block; width:35px; height:35px; fill:currentColor; }
+  .card-detail-crown svg{ display:block; width:var(--detail-mark-size); height:var(--detail-mark-size); fill:currentColor; }
+  .card-detail-claim-size{ display:block; color:var(--detail-ink); filter:drop-shadow(0 1px 2px #100b1c); }
+  .card-detail-claim-size svg{ display:block; width:22px; height:22px; fill:currentColor; }
+  .card-detail-claim-size[hidden], .card-detail-crown[hidden]{ display:none; }
   .card-detail-portrait{
     position:absolute; z-index:1; top:15%; left:0; right:0; height:59%;
     display:flex; align-items:center; justify-content:center; overflow:visible; pointer-events:none;
@@ -1766,6 +1770,7 @@
   @media (max-height:540px){
     #card-detail{ aspect-ratio:auto; height:calc(100dvh - 32px); }
     .card-detail-header{ --detail-icon-size:64px; grid-template-columns:var(--detail-icon-size) minmax(0,1fr) 30px; min-height:68px; padding-top:4px; }
+    .card-detail-marks{ --detail-mark-size:30px; }
   }
   @media (prefers-reduced-motion:reduce){
     #card-detail-overlay.show, #card-detail-overlay.show #card-detail,
@@ -2189,6 +2194,8 @@ body.mobile-landscape.mobile-log-open #shop-panel{display:none;}
 body.mobile-landscape #game-toolbar{position:relative;z-index:220;}
 body.mobile-landscape #card-detail{width:min(340px,48vw);height:calc(100dvh - 20px);max-height:none;}
 body.mobile-landscape .card-detail-header{--detail-icon-size:38px;min-height:44px;grid-template-columns:38px minmax(0,1fr) 22px;}
+body.mobile-landscape .card-detail-marks{--detail-mark-size:22px;gap:2px;}
+body.mobile-landscape .card-detail-claim-size svg{width:16px;height:16px;}
 body.mobile-landscape .card-detail-name{font-size:16px;}
 body.mobile-landscape .card-detail-ability{font-size:16px;margin-bottom:5px;}
 body.mobile-landscape .card-detail-description{font-size:11px;line-height:1.25;}
@@ -2716,7 +2723,7 @@ body.tutorial-practice #debug-menu-btn{display:none}
   <details open><summary>Version comparison</summary>
    <div class="ai-lab-settings">
     <label>Comparison policy <select id="ai-lab-opponent">
-     <option value="previous">AI before this update</option><option value="baseline">Historical AI</option><option value="no-assembly">Without cost preservation</option><option value="no-kanako">Without Kanako reserve</option>
+     <option value="previous">AI before Rin/Satori update</option><option value="baseline">Historical AI</option><option value="no-assembly">Without cost preservation</option><option value="no-kanako">Without Kanako reserve</option>
      <option value="no-nitori">Without Nitori setup</option><option value="no-hecatia">Without Hecatia setup</option><option value="no-yukari">Without Yukari rework</option><option value="no-matara">Without Matara rework</option><option value="no-rin">Without Rin rework</option><option value="no-satori">Without Satori rework</option><option value="no-yukari-trade">Without Yukari trade protection</option>
     </select></label>
     <label>Opening groups <input id="ai-lab-blocks" type="number" min="1" max="1000" value="40"></label>
@@ -2735,7 +2742,7 @@ body.tutorial-practice #debug-menu-btn{display:none}
    <div id="ai-lab-position"></div>
    <div class="ai-lab-settings"><label>Action A <select id="ai-lab-action-a"></select></label><label>Action B <select id="ai-lab-action-b"></select></label>
     <label>Trials per continuation <input id="ai-lab-trials" type="number" min="1" max="500" value="20"></label>
-    <label>Continuation policy <select id="ai-lab-continuation"><option value="both">Both policies</option><option value="current">Current AI</option><option value="previous">AI before this update</option><option value="baseline">Historical AI</option></select></label>
+    <label>Continuation policy <select id="ai-lab-continuation"><option value="both">Both policies</option><option value="current">Current AI</option><option value="previous">AI before Rin/Satori update</option><option value="baseline">Historical AI</option></select></label>
    </div>
    <p class="ai-test-note">A and B share the same sampled hidden cards and rule seed in each trial. Rival private clue memories are omitted. These are estimates under the chosen continuations, not optimal-play proofs.</p>
    <p class="ai-test-note">First moves can be placements, draws or trades. Ability targets and payments are resolved by the continuation AI.</p>
@@ -2811,8 +2818,11 @@ body.tutorial-practice #debug-menu-btn{display:none}
     <div class="card-detail-header">
       <span id="card-detail-icon"></span>
       <h2 class="card-detail-name" id="card-detail-name"></h2>
-      <span class="card-detail-crown" id="card-detail-crown" aria-label="Crown card" hidden>
-        <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M4 31h32v4H4zm1-5L2 9l10 9 8-14 8 14 10-9-3 17z"/></svg>
+      <span class="card-detail-marks">
+        <span class="card-detail-crown" id="card-detail-crown" aria-label="Crown card" hidden>
+          <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M4 31h32v4H4zm1-5L2 9l10 9 8-14 8 14 10-9-3 17z"/></svg>
+        </span>
+        <span class="card-detail-claim-size" id="card-detail-claim-size" role="img" hidden></span>
       </span>
     </div>
     <div class="card-detail-portrait" id="card-detail-portrait"></div>
@@ -2852,7 +2862,7 @@ const AI_DIFFICULTIES=Object.freeze({
 
 // Strategy versions share this Game's rules; only decision policies vary.
 const AI_POLICY_PROFILES=Object.freeze({
-  current:{label:'Current AI'},previous:{label:'AI before this update'},baseline:{label:'Historical AI'},
+  current:{label:'Current AI'},previous:{label:'AI before Rin/Satori update'},baseline:{label:'Historical AI'},
   'no-rin':{label:'Without Rin rework',disabled:'rin'},
   'no-satori':{label:'Without Satori rework',disabled:'satori'},
   'no-yukari-trade':{label:'Without Yukari trade protection',disabled:'yukari-trade'},
@@ -2944,7 +2954,7 @@ const CARDS = [
   { id:'sage_yukari', faction:'sage', name:'Yukari Yakumo', crown:true, override:true,
     desc:"You can place this card on another board card to take that card into your hand." },
   { id:'sage_kasen',  faction:'sage', name:'Kasen Ibara', crown:true, wild:true,
-    desc:"This card counts as any faction when claiming cards." },
+    desc:"This card counts as any four-card faction when claiming cards." },
   { id:'sage_matara', faction:'sage', name:'Matara Okina', crown:true,
     desc:"Placed: This card uses the Placed ability of another board card you choose." },
   { id:'sage_ran',    faction:'sage', name:'Ran Yakumo',
@@ -3438,7 +3448,7 @@ class Game {
   }
   boardMatchesFaction(r,c,faction){
     const activeFaction=this.boardFaction(r,c);
-    return !!activeFaction && (activeFaction===faction || this.isWildActive(this.cardAt(r,c)));
+    return !!activeFaction && this.cardMatchesFaction(this.cardAt(r,c),faction);
   }
   claimFactionOrder(){
     return Object.keys(FACTIONS).filter(f=>FACTIONS[f].size>0).sort((a,b)=>FACTIONS[b].size-FACTIONS[a].size);
@@ -3529,7 +3539,16 @@ class Game {
     this.startingCardIds.add(id);
     return id;
   }
-  isWildActive(id){return !!CARD[this.abilityId(id)]?.wild && !this.isCrownAbilityDisabled(id);}
+  isWildActive(id,faction=null){
+    return !!CARD[this.abilityId(id)]?.wild && !this.isCrownAbilityDisabled(id)
+      && (faction===null || FACTIONS[faction]?.size===4);
+  }
+  cardMatchesFaction(id,faction){
+    return !!CARD[id] && (CARD[id].faction===faction || this.isWildActive(id,faction));
+  }
+  cardClaimFactions(id){
+    return this.isWildActive(id) ? this.claimFactionOrder().filter(f=>FACTIONS[f].size===4) : [CARD[id].faction];
+  }
   factionCells(faction){
     return this.boardCells(cell=>this.boardMatchesFaction(cell.r,cell.c,faction));
   }
@@ -6538,7 +6557,7 @@ const CARD_ABILITY_NAMES = {
 /* ---------- Language selection: canonical rules stay language-independent. ---------- */
 let gameLanguage='en';
 try{const saved=window.localStorage?.getItem('boundary-language');if(saved==='zh-CN')gameLanguage=saved;}catch(_error){}
-const ZH_CARDS={"sdm_remilia":["蕾米莉亚·斯卡蕾特","命运操纵","放置：将其他玩家手中的所有红魔馆卡牌加入你的手牌。"],"sdm_flandre":["芙兰朵露·斯卡蕾特","「目」之破坏","放置：选择任意玩家的一张手牌，将其送入该玩家的弃牌堆。"],"sdm_patchouli":["帕秋莉·诺蕾姬","魔法风云","放置：猜测另一名玩家手中的一张卡牌。猜对后，将该卡牌加入你的手牌。"],"sdm_sakuya":["十六夜咲夜","Zawarudo","放置：获得两个额外回合，然后将你的手牌洗入抽牌堆。"],"haku_yuyuko":["西行寺幽幽子","幽冥缠身","[代价 N] 放置：将 N 张随机的正交相邻卡牌送入你的弃牌堆。"],"haku_youmu":["魂魄妖梦","先之先","放置：放置此卡不消耗你的回合。"],"hourai_kaguya":["蓬莱山辉夜","看我操作！","放置：猜测另一名玩家手中的一张永远亭卡牌。每次猜对，你可以将该卡牌放到棋盘上并继续猜测。"],"hourai_eirin":["八意永琳","思兼装置","此卡在棋盘上时，所有领主卡牌的能力均被禁用。"],"hourai_reisen":["铃仙·优昙华院·因幡","狂气之瞳","放置：选择另一名玩家的一张手牌。该玩家必须在下个回合放置这张卡牌。"],"hourai_mokou":["藤原妹红","凤凰复生","放置：你的弃牌堆中每有一张卡牌，就抽一张牌。"],"mtn_kanako":["八坂神奈子","风神之神德","此卡可以放在荒地上。此卡在棋盘上时，其他妖怪之山卡牌的放置能力发动两次。\n放置：将你手中的一张妖怪之山卡牌放到棋盘上。"],"mtn_suwako":["洩矢诹访子","诅咒之地","放置：将三个棋盘格变为荒地。"],"mtn_sanae":["东风谷早苗","八坂之神风","放置：抽一张牌。如果八坂神奈子在棋盘上，再抽一张牌。"],"mtn_aya":["射命丸文","才不是道听途说呢！","放置：其他每名玩家展示四张手牌。"],"palace_satori":["古明地觉","恐怖催眠术","[代价 I] 放置：查看另一名玩家的手牌，并将其中一张加入你的手牌。"],"palace_rin":["火焰猫燐","猫之步伐","放置：将任意弃牌堆中的一张卡牌加入你的手牌。"],"palace_utsuho":["灵乌路空","核裂变","放置：将棋盘上的一个 2×2 区域变为荒地。"],"palace_koishi":["古明地恋","无意识的哲学","棋盘上有三张地灵殿卡牌时，此卡会自动从你的手牌移到棋盘上。"],"sage_yukari":["八云紫","境界操纵","你可以将此卡放在另一张棋盘卡牌上，并将被覆盖的卡牌加入你的手牌。"],"sage_kasen":["茨木华扇","无拘无束","收取阵营卡牌时，此卡可视为任意阵营的卡牌。"],"sage_matara":["摩多罗隐岐奈","/op","放置：选择另一张棋盘卡牌，由此卡使用它的放置能力。"],"sage_ran":["八云蓝","式神召回","放置：抽一张牌。如果八云紫在棋盘上，立即放置抽到的卡牌。"],"reimu":["博丽灵梦","梦想天生","放置：将棋盘上的一张领主卡牌加入你的手牌。"],"marisa":["雾雨魔理沙","极限火花","放置：将棋盘上的一张非领主卡牌送入你的弃牌堆。"],"yuuka":["风见幽香","花之主宰","放置：清除一个 3×3 区域中的荒地，然后将你的手牌洗入抽牌堆并抽四张牌。"],"medicine":["梅蒂欣·梅兰可莉","铃兰中毒","放置：选择一名玩家，将其两张随机手牌放回抽牌堆。"],"hell_hecatia":["赫卡提亚·拉碧斯拉祖利","三位一体狂想曲","此卡计为 3 点弃牌分数。只有弃牌堆已有超过 3 张地狱卡牌时，此卡才能进入该弃牌堆。"],"hell_clownpiece":["克劳恩皮丝","污秽耐受","此卡可以放在荒地上。\n放置：清除此卡周围的荒地。"],"hell_eiki":["四季映姬","黑白的判决","[代价 I] 放置：将棋盘上数量最多的阵营的所有卡牌放回抽牌堆。"],"hell_komachi":["小野塚小町","距离操控","放置：将此卡与另一张棋盘卡牌交换位置。如果棋盘上有另一张地狱卡牌，此次放置不消耗你的回合。"],"heaven_tenshi":["比那名居天子","全卡牌的绯想天！","[代价 II] 放置：将棋盘上的所有非天界卡牌放回抽牌堆。"],"heaven_iku":["永江衣玖","驾驭雷云","[代价 III] 放置：选择一个 2×2 区域，将其中最多两张随机的非天界卡牌送入你的弃牌堆。"],"temple_byakuren":["圣白莲","魔界幻想","放置：你可以按任意顺序使用每个效果一次。\n[代价 IV] 获得三个额外回合。\n[代价 III] 将另外三张棋盘卡牌放回抽牌堆，并将其所在格变为荒地。\n[代价 II] 查看抽牌堆顶的三张牌，拿取一张，并按任意顺序放回其余卡牌。\n棋盘上每有一张其他命莲寺卡牌，每个效果的代价减少一。"],"temple_shou":["寅丸星","光辉宝藏","[代价 I] 放置：棋盘上每有一块荒地，就抽一张牌，然后清除所有荒地。"],"temple_nue":["封兽鵺","能力奇美拉","放置：从三张随机卡牌中选择一个能力。短暂变为该卡牌的外貌，并使用它的能力。"],"temple_murasa":["村纱水蜜","无底漩涡","放置：选择一名玩家。该玩家在接下来两个回合中不能放置卡牌或交易。"],"temple_ichirin":["云居一轮","再打一轮！","[代价 II] 放置：将每张非命莲寺卡牌向远离此卡的方向推一格。被推出棋盘的卡牌放回抽牌堆。"],"sdm_meiling":["红美铃","内劲","放置：将一张相邻卡牌向远离此卡的方向移动一格。"],"hourai_tewi":["因幡帝","远古骗术","放置：向其他每名玩家的手牌中加入一张陷阱。"],"mtn_nitori":["河城荷取","光学迷彩","以此卡为中心的 3×3 区域中的卡牌不能被选中。"],"palace_yuugi":["星熊勇仪","怪力乱神","[代价 II] 放置：将一张正交相邻的卡牌送入你的弃牌堆。"],"sage_mai_satono":["丁礼田舞与尔子田里乃","驱动活力","放置：在你的下个回合获得一个额外回合。"],"hell_kutaka":["庭渡久侘歌","异界的护卫","此卡可以放在荒地上。\n放置：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。"],"shop_rinnosuke":["森近霖之助","香霖堂","此卡及其周围的卡牌不能移动或使用能力。\n先选择一张手牌，再点击森近霖之助即可交易。每回合限一次，且不消耗回合。"],"trap_token":["陷阱","嗯……这是陷阱！","此卡在手牌中时，不能交易、弃置或放回抽牌堆。\n放置：将另一张手牌放回抽牌堆。"]};
+const ZH_CARDS={"sdm_remilia":["蕾米莉亚·斯卡蕾特","命运操纵","放置：将其他玩家手中的所有红魔馆卡牌加入你的手牌。"],"sdm_flandre":["芙兰朵露·斯卡蕾特","「目」之破坏","放置：选择任意玩家的一张手牌，将其送入该玩家的弃牌堆。"],"sdm_patchouli":["帕秋莉·诺蕾姬","魔法风云","放置：猜测另一名玩家手中的一张卡牌。猜对后，将该卡牌加入你的手牌。"],"sdm_sakuya":["十六夜咲夜","Zawarudo","放置：获得两个额外回合，然后将你的手牌洗入抽牌堆。"],"haku_yuyuko":["西行寺幽幽子","幽冥缠身","[代价 N] 放置：将 N 张随机的正交相邻卡牌送入你的弃牌堆。"],"haku_youmu":["魂魄妖梦","先之先","放置：放置此卡不消耗你的回合。"],"hourai_kaguya":["蓬莱山辉夜","看我操作！","放置：猜测另一名玩家手中的一张永远亭卡牌。每次猜对，你可以将该卡牌放到棋盘上并继续猜测。"],"hourai_eirin":["八意永琳","思兼装置","此卡在棋盘上时，所有领主卡牌的能力均被禁用。"],"hourai_reisen":["铃仙·优昙华院·因幡","狂气之瞳","放置：选择另一名玩家的一张手牌。该玩家必须在下个回合放置这张卡牌。"],"hourai_mokou":["藤原妹红","凤凰复生","放置：你的弃牌堆中每有一张卡牌，就抽一张牌。"],"mtn_kanako":["八坂神奈子","风神之神德","此卡可以放在荒地上。此卡在棋盘上时，其他妖怪之山卡牌的放置能力发动两次。\n放置：将你手中的一张妖怪之山卡牌放到棋盘上。"],"mtn_suwako":["洩矢诹访子","诅咒之地","放置：将三个棋盘格变为荒地。"],"mtn_sanae":["东风谷早苗","八坂之神风","放置：抽一张牌。如果八坂神奈子在棋盘上，再抽一张牌。"],"mtn_aya":["射命丸文","才不是道听途说呢！","放置：其他每名玩家展示四张手牌。"],"palace_satori":["古明地觉","恐怖催眠术","[代价 I] 放置：查看另一名玩家的手牌，并将其中一张加入你的手牌。"],"palace_rin":["火焰猫燐","猫之步伐","放置：将任意弃牌堆中的一张卡牌加入你的手牌。"],"palace_utsuho":["灵乌路空","核裂变","放置：将棋盘上的一个 2×2 区域变为荒地。"],"palace_koishi":["古明地恋","无意识的哲学","棋盘上有三张地灵殿卡牌时，此卡会自动从你的手牌移到棋盘上。"],"sage_yukari":["八云紫","境界操纵","你可以将此卡放在另一张棋盘卡牌上，并将被覆盖的卡牌加入你的手牌。"],"sage_kasen":["茨木华扇","无拘无束","收取阵营卡牌时，此卡可视为任意4卡阵营的卡牌。"],"sage_matara":["摩多罗隐岐奈","/op","放置：选择另一张棋盘卡牌，由此卡使用它的放置能力。"],"sage_ran":["八云蓝","式神召回","放置：抽一张牌。如果八云紫在棋盘上，立即放置抽到的卡牌。"],"reimu":["博丽灵梦","梦想天生","放置：将棋盘上的一张领主卡牌加入你的手牌。"],"marisa":["雾雨魔理沙","极限火花","放置：将棋盘上的一张非领主卡牌送入你的弃牌堆。"],"yuuka":["风见幽香","花之主宰","放置：清除一个 3×3 区域中的荒地，然后将你的手牌洗入抽牌堆并抽四张牌。"],"medicine":["梅蒂欣·梅兰可莉","铃兰中毒","放置：选择一名玩家，将其两张随机手牌放回抽牌堆。"],"hell_hecatia":["赫卡提亚·拉碧斯拉祖利","三位一体狂想曲","此卡计为 3 点弃牌分数。只有弃牌堆已有超过 3 张地狱卡牌时，此卡才能进入该弃牌堆。"],"hell_clownpiece":["克劳恩皮丝","污秽耐受","此卡可以放在荒地上。\n放置：清除此卡周围的荒地。"],"hell_eiki":["四季映姬","黑白的判决","[代价 I] 放置：将棋盘上数量最多的阵营的所有卡牌放回抽牌堆。"],"hell_komachi":["小野塚小町","距离操控","放置：将此卡与另一张棋盘卡牌交换位置。如果棋盘上有另一张地狱卡牌，此次放置不消耗你的回合。"],"heaven_tenshi":["比那名居天子","全卡牌的绯想天！","[代价 II] 放置：将棋盘上的所有非天界卡牌放回抽牌堆。"],"heaven_iku":["永江衣玖","驾驭雷云","[代价 III] 放置：选择一个 2×2 区域，将其中最多两张随机的非天界卡牌送入你的弃牌堆。"],"temple_byakuren":["圣白莲","魔界幻想","放置：你可以按任意顺序使用每个效果一次。\n[代价 IV] 获得三个额外回合。\n[代价 III] 将另外三张棋盘卡牌放回抽牌堆，并将其所在格变为荒地。\n[代价 II] 查看抽牌堆顶的三张牌，拿取一张，并按任意顺序放回其余卡牌。\n棋盘上每有一张其他命莲寺卡牌，每个效果的代价减少一。"],"temple_shou":["寅丸星","光辉宝藏","[代价 I] 放置：棋盘上每有一块荒地，就抽一张牌，然后清除所有荒地。"],"temple_nue":["封兽鵺","能力奇美拉","放置：从三张随机卡牌中选择一个能力。短暂变为该卡牌的外貌，并使用它的能力。"],"temple_murasa":["村纱水蜜","无底漩涡","放置：选择一名玩家。该玩家在接下来两个回合中不能放置卡牌或交易。"],"temple_ichirin":["云居一轮","再打一轮！","[代价 II] 放置：将每张非命莲寺卡牌向远离此卡的方向推一格。被推出棋盘的卡牌放回抽牌堆。"],"sdm_meiling":["红美铃","内劲","放置：将一张相邻卡牌向远离此卡的方向移动一格。"],"hourai_tewi":["因幡帝","远古骗术","放置：向其他每名玩家的手牌中加入一张陷阱。"],"mtn_nitori":["河城荷取","光学迷彩","以此卡为中心的 3×3 区域中的卡牌不能被选中。"],"palace_yuugi":["星熊勇仪","怪力乱神","[代价 II] 放置：将一张正交相邻的卡牌送入你的弃牌堆。"],"sage_mai_satono":["丁礼田舞与尔子田里乃","驱动活力","放置：在你的下个回合获得一个额外回合。"],"hell_kutaka":["庭渡久侘歌","异界的护卫","此卡可以放在荒地上。\n放置：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。"],"shop_rinnosuke":["森近霖之助","香霖堂","此卡及其周围的卡牌不能移动或使用能力。\n先选择一张手牌，再点击森近霖之助即可交易。每回合限一次，且不消耗回合。"],"trap_token":["陷阱","嗯……这是陷阱！","此卡在手牌中时，不能交易、弃置或放回抽牌堆。\n放置：将另一张手牌放回抽牌堆。"]};
 const ZH_FACTIONS={"sdm":"红魔馆","hakugyokurou":"白玉楼","hourai":"永远亭","mountain":"妖怪之山","palace":"地灵殿","sage":"贤者","hakurei":"博丽","sunflower":"太阳花田","hell":"地狱","heaven":"天界","temple":"命莲寺","kourindou":"香霖堂","token":"衍生物"};
 const ZH_TEXT={
   "Boundary of Fates": "命运的境界",
@@ -6769,7 +6788,7 @@ const ZH_TEXT={
   "You can place this card on another board card to take that card into your hand.": "你可以将此卡放在另一张棋盘卡牌上，并将被覆盖的卡牌加入你的手牌。",
   "Kasen Ibara": "茨木华扇",
   "Wildest Hermit": "无拘无束",
-  "This card counts as any faction when claiming cards.": "收取阵营卡牌时，此卡可视为任意阵营的卡牌。",
+  "This card counts as any four-card faction when claiming cards.": "收取阵营卡牌时，此卡可视为任意4卡阵营的卡牌。",
   "Matara Okina": "摩多罗隐岐奈",
   "/op": "/op",
   "Placed: This card uses the Placed ability of another board card you choose.": "放置：选择另一张棋盘卡牌，由此卡使用它的放置能力。",
@@ -6879,7 +6898,7 @@ const ZH_TEXT={
   "An unusual choice. I’ll take good care of it.": "不寻常的选择。我会好好保管它。",
   "The trade is done. I’ll leave the next move to you.": "交易完成了。下一步就由你决定。"
 };
-Object.assign(ZH_TEXT,{'AI before this update':'本次修改前的 AI','Historical AI':'历史 AI（早期版本）','Without Rin rework':'关闭燐的新评估','Without Satori rework':'关闭觉的新评估','Without Yukari trade protection':'关闭紫的交易保护','Hand gained':'技能获得手牌','Cards stolen':'窃取手牌数','Own points lost':'自身分数损失','Ability skipped':'主动跳过技能','Decision diagnostics':'决策记录','Cost events':'支付次数','Cost cards':'支付卡牌数','Assembly breaks':'支付后凑牌材料不足','Yukari guard turns':'紫受交易保护的决策次数','Trading offers and purchases':'交易报价与购入','Actual retrieval outcomes':'实际取牌结果','Policy':'策略','Taken cards':'取牌次数'});
+Object.assign(ZH_TEXT,{'AI before Rin/Satori update':'燐与觉更新前的 AI','Historical AI':'历史 AI（早期版本）','Without Rin rework':'关闭燐的新评估','Without Satori rework':'关闭觉的新评估','Without Yukari trade protection':'关闭紫的交易保护','Hand gained':'技能获得手牌','Cards stolen':'窃取手牌数','Own points lost':'自身分数损失','Ability skipped':'主动跳过技能','Decision diagnostics':'决策记录','Cost events':'支付次数','Cost cards':'支付卡牌数','Assembly breaks':'支付后凑牌材料不足','Yukari guard turns':'紫受交易保护的决策次数','Trading offers and purchases':'交易报价与购入','Actual retrieval outcomes':'实际取牌结果','Policy':'策略','Taken cards':'取牌次数'});
 Object.assign(ZH_TEXT,{"Mode": "模式", "Play": "游玩", "AI test": "纯电脑测试", "Start AI test": "开始电脑测试", "Every seat is AI. Finished games restart automatically and contribute to the test data.": "所有席位均由电脑控制。每局结束后自动重开并累计测试数据。", "Fast test (skip effects)": "快速测试（跳过特效）", "Fast test": "快速测试", "Finished games restart automatically. Open Test data to pause or export the results.": "每局结束后自动重开。打开测试数据即可暂停或导出结果。", "Test data": "测试数据", "AI test data": "电脑测试数据", "Pause test": "暂停测试", "Resume test": "继续测试", "Back to game": "返回游戏", "Export CSV": "导出 CSV", "Export JSON": "导出 JSON", "Reset data": "清空数据", "Paused after the current action.": "当前行动结束后暂停。", "AI test is running.": "电脑测试正在运行。", "AI test is stopped.": "电脑测试已停止。", "Completed games": "已完成对局", "Wins": "达分获胜", "Stalemates": "僵局", "Aborted games": "中止对局", "Runtime errors": "运行错误", "Average turns": "平均回合数", "Total placements": "总放置次数", "Draw actions": "普通抽牌次数", "Trades": "交易次数", "Current round": "当前对局", "turns": "回合", "Last result": "上一局结果", "Runtime error": "运行错误", "Turn limit": "超过回合上限", "Stalemate": "僵局", "Faction claims": "阵营收取", "Faction": "阵营", "Claims": "收取次数", "Games claimed": "收取局数", "Claim rate": "收取率", "Card usage": "卡牌使用", "Card": "卡牌", "Placements": "放置次数", "Games in hand": "入手局数", "Games used": "使用局数", "Use rate": "使用率", "Placement share": "放置占比", "Seat results": "席位表现", "Seat": "席位", "Games": "对局数", "Win rate": "胜率", "Average points": "平均最终分数", "Test settings": "测试设置", "Only completed games count toward rates. Aborted games are excluded.": "比率仅统计已完成对局，中止对局不计入。", "Claim rate = games with this faction claimed ÷ completed games.": "收取率 = 收取过该阵营的对局数 ÷ 已完成对局数。", "Use rate = games where the card was placed ÷ games where it entered a hand.": "使用率 = 放置过该卡的对局数 ÷ 该卡进入过任意手牌的对局数。", "Placement share includes placements made by abilities.": "放置占比包含能力产生的放置。"});
 Object.assign(ZH_TEXT,{
   'Debug tools':'调试工具','Close':'关闭','Ability results':'能力结算','Resolutions':'结算次数','Effective':'有效次数','Effective rate':'有效率',
@@ -7233,6 +7252,18 @@ function fitCardDetailHeadings(){
 }
 window.addEventListener('resize',()=>requestAnimationFrame(fitCardDetailHeadings));
 
+function renderCardClaimSize(card){
+  const marker=el('card-detail-claim-size'),size=FACTIONS[card.faction]?.size;
+  marker.hidden=size!==2 && size!==4;
+  marker.replaceChildren();
+  marker.removeAttribute('aria-label');marker.removeAttribute('title');
+  if(marker.hidden)return;
+  const label=gameLanguage==='zh-CN' ? `此阵营需要收取 ${size} 张卡牌。` : `Collect ${size} cards to claim this faction.`;
+  marker.setAttribute('aria-label',label);marker.setAttribute('title',label);
+  const squares=size===4 ? [[1,1],[10,1],[1,10],[10,10]] : [[1,1],[10,10]];
+  marker.innerHTML=`<svg viewBox="0 0 18 18" aria-hidden="true">${squares.map(([x,y])=>`<rect x="${x}" y="${y}" width="7" height="7" rx=".5"/>`).join('')}</svg>`;
+}
+
 function openCardDetails(cardId,{followReference=false}={}){
   const c = CARD[cardId];
   if(!c) return;
@@ -7267,6 +7298,7 @@ function openCardDetails(cardId,{followReference=false}={}){
   if(factionIcon) iconHost.className = '';
   el('card-detail-name').textContent = c.name;
   el('card-detail-crown').hidden = !c.crown;
+  renderCardClaimSize(c);
   const portrait = el('card-detail-portrait');
   portrait.className = 'card-detail-portrait';
   portrait.replaceChildren();
@@ -8665,7 +8697,7 @@ function aiAcquisitionValue(playerIdx,id,payment=[]){
     const hand=game.players[playerIdx].hand;
     game.players[playerIdx].hand=hand.filter(other=>!payment.includes(other));
     if(!game.players[playerIdx].hand.includes(id))game.players[playerIdx].hand.push(id);
-    const material=aiMaterialValue(playerIdx,id),factions=game.isWildActive(id)?game.claimFactionOrder():[CARD[id].faction];
+    const material=aiMaterialValue(playerIdx,id),factions=game.cardClaimFactions(id);
     let claimPoints=0,claimSize=0;
     for(const faction of factions){
       const size=FACTIONS[faction]?.size||0;
@@ -8818,7 +8850,7 @@ function aiCurrentBestTrade(playerIdx){
     for(const [faction,fac] of Object.entries(FACTIONS)){
       if(!fac.size) continue;
       const onBoard=game.factionCells(faction).length;
-      const inHand=hand.filter(id=>CARD[id].faction===faction || game.isWildActive(id)).length;
+      const inHand=hand.filter(id=>game.cardMatchesFaction(id,faction)).length;
       value+=.35*(Math.min(fac.size,onBoard+inHand)**2-Math.min(fac.size,onBoard)**2);
     }
     return value;
@@ -8876,7 +8908,7 @@ function aiCurrentTwoCardFactionTrade(playerIdx,placement){
   if(placement?.type!=='place')return null;
   const player=game.players[playerIdx],faction=CARD[placement.cardId]?.faction;
   if(FACTIONS[faction]?.size!==2 || !player.hand.includes(placement.cardId))return null;
-  const isPartner=id=>id!==placement.cardId && (CARD[id]?.faction===faction || game.isWildActive(id));
+  const isPartner=id=>id!==placement.cardId && (game.cardMatchesFaction(id,faction));
   // An existing partner already supplies the pair; protected merchandise does not.
   if(game.factionCells(faction).length || player.hand.some(isPartner))return null;
   const stock=game.tradeCells().filter(cell=>isPartner(game.cardAt(cell.r,cell.c)));
@@ -8888,7 +8920,7 @@ function aiCurrentTwoCardFactionTrade(playerIdx,placement){
     if(value<keepValue){offeredId=id;keepValue=value;}
   }
   if(!offeredId)return null;
-  // Prefer the actual faction member so Kasen remains available for a larger claim.
+  // Stock must supply a printed member of this two-card faction.
   const target=stock.find(cell=>CARD[game.cardAt(cell.r,cell.c)].faction===faction) || stock[0];
   return {type:'trade',cardId:offeredId,target,thenPlace:placement};
 }
@@ -8913,7 +8945,7 @@ function aiMaterialValue(playerIdx,id){
   const card=CARD[id];if(!card)return 0;
   if(card.token)return -.8;
   const size=FACTIONS[card.faction]?.size||0;
-  const held=game.players[playerIdx].hand.filter(other=>CARD[other].faction===card.faction || game.isWildActive(other)).length;
+  const held=game.players[playerIdx].hand.filter(other=>game.cardMatchesFaction(other,card.faction)).length;
   const onBoard=game.factionCells(card.faction).length,progress=held+onBoard;
   let value=.3+(card.crown?.12:0);
   if(game.isWildActive(id))value+=1;
@@ -8930,7 +8962,7 @@ function aiBoardPlanValue(playerIdx){
   let value=0;
   for(const [faction,fac] of Object.entries(FACTIONS)){
     if(!fac.size)continue;
-    const members=game.factionCells(faction),held=game.players[playerIdx].hand.filter(id=>CARD[id].faction===faction || game.isWildActive(id)).length;
+    const members=game.factionCells(faction),held=game.players[playerIdx].hand.filter(id=>game.cardMatchesFaction(id,faction)).length;
     if(game.findFactionClaim(faction).length)value+=fac.size*1.5;
     else if(held && members.length)value+=.35*members.length*Math.min(1,(members.length+held)/fac.size);
   }
@@ -8940,7 +8972,7 @@ function aiBoardPlanValue(playerIdx){
 function aiPublicThreatValue(playerIdx){
   let value=0;
   for(const [faction,fac] of Object.entries(FACTIONS)){
-    if(!fac.size || game.players[playerIdx].hand.some(id=>CARD[id].faction===faction || game.isWildActive(id)))continue;
+    if(!fac.size || game.players[playerIdx].hand.some(id=>game.cardMatchesFaction(id,faction)))continue;
     const count=game.factionCells(faction).length;
     if(count)value+=.15*count+(count>=fac.size-1?.35:0);
   }
@@ -8956,7 +8988,7 @@ function aiPaymentBreaksAssembly(playerIdx,payment){
   const hand=game.players[playerIdx].hand;
   return Object.entries(FACTIONS).some(([faction,fac])=>{
     if(!fac.size)return false;
-    const member=id=>CARD[id].faction===faction || game.isWildActive(id);
+    const member=id=>game.cardMatchesFaction(id,faction);
     const board=game.factionCells(faction).length,held=hand.filter(member);
     return board+held.length>=fac.size && board+held.filter(id=>!payment.includes(id)).length<fac.size;
   });
@@ -9164,7 +9196,7 @@ function aiSetupValue(playerIdx,cardId,r,c){
   if(cardId==='hell_hecatia' && !aiPolicyHas(playerIdx,'hecatia'))return 0;
   if(game.isProtected(r,c) || game.isCrownAbilityDisabled(cardId))return 0;
   const player=game.players[playerIdx],faction=CARD[cardId].faction;
-  const held=player.hand.filter(id=>CARD[id].faction===faction || game.isWildActive(id)),members=game.factionCells(faction);
+  const held=player.hand.filter(id=>game.cardMatchesFaction(id,faction)),members=game.factionCells(faction);
   if(!aiFactionStillPossible(faction) || members.length>=FACTIONS[faction].size)return 0;
   if(cardId==='hell_hecatia'){
     if(!held.length || !game.players.some(p=>!game.canEnterDiscard(p.idx,cardId)))return 0;
@@ -9274,19 +9306,19 @@ function aiFactionStillPossible(faction){
   // Starting stock is public; never inspect the identities of hidden opponent hands/deck cards.
   const removed=new Set(game.players.flatMap(player=>player.discard));
   const pool=game.startingCardIds || new Set(CARDS.filter(card=>!card.shopExpansion && !card.token && !card.shopkeeper).map(card=>card.id));
-  const members=[...pool].filter(id=>!removed.has(id) && (CARD[id].faction===faction || game.isWildActive(id)));
+  const members=[...pool].filter(id=>!removed.has(id) && (game.cardMatchesFaction(id,faction)));
   return members.length>=size;
 }
 
 function aiFactionForecast(playerIdx,cardId,extraBonus=0){
   const card=CARD[cardId],hand=game.players[playerIdx].hand.filter(id=>id!==cardId);
-  const factions=game.isWildActive(cardId) ? game.claimFactionOrder() : [card.faction];
+  const factions=game.cardClaimFactions(cardId);
   let best={rate:0,size:0,faction:null,bonus:0,missing:0};
   for(const faction of factions){
     const size=FACTIONS[faction]?.size||0;if(!size)continue;
     const members=game.factionCells(faction),missing=Math.max(0,size-members.length);
     if(!missing || !members.some(cell=>game.cardAt(cell.r,cell.c)===cardId))continue;
-    const held=hand.filter(id=>CARD[id].faction===faction || game.isWildActive(id));
+    const held=hand.filter(id=>game.cardMatchesFaction(id,faction));
     let available=held.length,bonus=extraBonus;
     const active=!game.eirinActive() || !card.crown;
     if(active && cardId==='temple_byakuren'){
@@ -9408,9 +9440,9 @@ function aiRetentionValue(playerIdx,cardId){
   if(candidate?.reserveCombo)value+=60;
   if(game.isWildActive(cardId))value+=25;
   // Include faction material even when this card currently has no legal destination.
-  for(const faction of game.isWildActive(cardId)?game.claimFactionOrder():[card.faction]){
+  for(const faction of game.cardClaimFactions(cardId)){
     const size=FACTIONS[faction]?.size||0;if(!size)continue;
-    const count=game.factionCells(faction).length+game.players[playerIdx].hand.filter(id=>CARD[id].faction===faction || game.isWildActive(id)).length;
+    const count=game.factionCells(faction).length+game.players[playerIdx].hand.filter(id=>game.cardMatchesFaction(id,faction)).length;
     value+=Math.min(size,count)*2+(count>=size?20:0);
   }
   return value;
@@ -9509,8 +9541,8 @@ async function aiCurrentDecideAction(playerIdx,allowTrade=true){
 }
 
 
-/* Frozen policy before Rin/Satori and trade-guard revision, 955c631. */
-const AI_PREVIOUS_DIGEST='0e4f9a07b3f10abcd944926065db5586b8d47dd7dac7ff14948be716dd291a79';
+/* Frozen 955c631 decisions, faction matching adapted to the shared four-card-only Kasen rule. */
+const AI_PREVIOUS_DIGEST='3ed15a893019fd456e0cf94302e6e729ed559ee4b2044f06ec9061c96a1d0f8a';
 const AI_PREVIOUS_POLICY=(()=>{
 const NO_PLACED_ABILITY = new Set(['sage_kasen', 'hourai_eirin']);
 const DRAW_ABILITY_CARDS = new Set(['hourai_mokou','mtn_sanae','sage_ran','yuuka','hell_kutaka','temple_shou']);
@@ -9559,7 +9591,7 @@ function aiCurrentBestTrade(playerIdx){
     for(const [faction,fac] of Object.entries(FACTIONS)){
       if(!fac.size) continue;
       const onBoard=game.factionCells(faction).length;
-      const inHand=hand.filter(id=>CARD[id].faction===faction || game.isWildActive(id)).length;
+      const inHand=hand.filter(id=>game.cardMatchesFaction(id,faction)).length;
       value+=.35*(Math.min(fac.size,onBoard+inHand)**2-Math.min(fac.size,onBoard)**2);
     }
     return value;
@@ -9617,7 +9649,7 @@ function aiCurrentTwoCardFactionTrade(playerIdx,placement){
   if(placement?.type!=='place')return null;
   const player=game.players[playerIdx],faction=CARD[placement.cardId]?.faction;
   if(FACTIONS[faction]?.size!==2 || !player.hand.includes(placement.cardId))return null;
-  const isPartner=id=>id!==placement.cardId && (CARD[id]?.faction===faction || game.isWildActive(id));
+  const isPartner=id=>id!==placement.cardId && (game.cardMatchesFaction(id,faction));
   // An existing partner already supplies the pair; protected merchandise does not.
   if(game.factionCells(faction).length || player.hand.some(isPartner))return null;
   const stock=game.tradeCells().filter(cell=>isPartner(game.cardAt(cell.r,cell.c)));
@@ -9629,7 +9661,7 @@ function aiCurrentTwoCardFactionTrade(playerIdx,placement){
     if(value<keepValue){offeredId=id;keepValue=value;}
   }
   if(!offeredId)return null;
-  // Prefer the actual faction member so Kasen remains available for a larger claim.
+  // Stock must supply a printed member of this two-card faction.
   const target=stock.find(cell=>CARD[game.cardAt(cell.r,cell.c)].faction===faction) || stock[0];
   return {type:'trade',cardId:offeredId,target,thenPlace:placement};
 }
@@ -9654,7 +9686,7 @@ function aiMaterialValue(playerIdx,id){
   const card=CARD[id];if(!card)return 0;
   if(card.token)return -.8;
   const size=FACTIONS[card.faction]?.size||0;
-  const held=game.players[playerIdx].hand.filter(other=>CARD[other].faction===card.faction || game.isWildActive(other)).length;
+  const held=game.players[playerIdx].hand.filter(other=>game.cardMatchesFaction(other,card.faction)).length;
   const onBoard=game.factionCells(card.faction).length,progress=held+onBoard;
   let value=.3+(card.crown?.12:0);
   if(game.isWildActive(id))value+=1;
@@ -9671,7 +9703,7 @@ function aiBoardPlanValue(playerIdx){
   let value=0;
   for(const [faction,fac] of Object.entries(FACTIONS)){
     if(!fac.size)continue;
-    const members=game.factionCells(faction),held=game.players[playerIdx].hand.filter(id=>CARD[id].faction===faction || game.isWildActive(id)).length;
+    const members=game.factionCells(faction),held=game.players[playerIdx].hand.filter(id=>game.cardMatchesFaction(id,faction)).length;
     if(game.findFactionClaim(faction).length)value+=fac.size*1.5;
     else if(held && members.length)value+=.35*members.length*Math.min(1,(members.length+held)/fac.size);
   }
@@ -9681,7 +9713,7 @@ function aiBoardPlanValue(playerIdx){
 function aiPublicThreatValue(playerIdx){
   let value=0;
   for(const [faction,fac] of Object.entries(FACTIONS)){
-    if(!fac.size || game.players[playerIdx].hand.some(id=>CARD[id].faction===faction || game.isWildActive(id)))continue;
+    if(!fac.size || game.players[playerIdx].hand.some(id=>game.cardMatchesFaction(id,faction)))continue;
     const count=game.factionCells(faction).length;
     if(count)value+=.15*count+(count>=fac.size-1?.35:0);
   }
@@ -9697,7 +9729,7 @@ function aiPaymentBreaksAssembly(playerIdx,payment){
   const hand=game.players[playerIdx].hand;
   return Object.entries(FACTIONS).some(([faction,fac])=>{
     if(!fac.size)return false;
-    const member=id=>CARD[id].faction===faction || game.isWildActive(id);
+    const member=id=>game.cardMatchesFaction(id,faction);
     const board=game.factionCells(faction).length,held=hand.filter(member);
     return board+held.length>=fac.size && board+held.filter(id=>!payment.includes(id)).length<fac.size;
   });
@@ -9899,7 +9931,7 @@ function aiSetupValue(playerIdx,cardId,r,c){
   if(cardId==='hell_hecatia' && !aiPolicyHas(playerIdx,'hecatia'))return 0;
   if(game.isProtected(r,c) || game.isCrownAbilityDisabled(cardId))return 0;
   const player=game.players[playerIdx],faction=CARD[cardId].faction;
-  const held=player.hand.filter(id=>CARD[id].faction===faction || game.isWildActive(id)),members=game.factionCells(faction);
+  const held=player.hand.filter(id=>game.cardMatchesFaction(id,faction)),members=game.factionCells(faction);
   if(!aiFactionStillPossible(faction) || members.length>=FACTIONS[faction].size)return 0;
   if(cardId==='hell_hecatia'){
     if(!held.length || !game.players.some(p=>!game.canEnterDiscard(p.idx,cardId)))return 0;
@@ -10009,19 +10041,19 @@ function aiFactionStillPossible(faction){
   // Starting stock is public; never inspect the identities of hidden opponent hands/deck cards.
   const removed=new Set(game.players.flatMap(player=>player.discard));
   const pool=game.startingCardIds || new Set(CARDS.filter(card=>!card.shopExpansion && !card.token && !card.shopkeeper).map(card=>card.id));
-  const members=[...pool].filter(id=>!removed.has(id) && (CARD[id].faction===faction || game.isWildActive(id)));
+  const members=[...pool].filter(id=>!removed.has(id) && (game.cardMatchesFaction(id,faction)));
   return members.length>=size;
 }
 
 function aiFactionForecast(playerIdx,cardId,extraBonus=0){
   const card=CARD[cardId],hand=game.players[playerIdx].hand.filter(id=>id!==cardId);
-  const factions=game.isWildActive(cardId) ? game.claimFactionOrder() : [card.faction];
+  const factions=game.cardClaimFactions(cardId);
   let best={rate:0,size:0,faction:null,bonus:0,missing:0};
   for(const faction of factions){
     const size=FACTIONS[faction]?.size||0;if(!size)continue;
     const members=game.factionCells(faction),missing=Math.max(0,size-members.length);
     if(!missing || !members.some(cell=>game.cardAt(cell.r,cell.c)===cardId))continue;
-    const held=hand.filter(id=>CARD[id].faction===faction || game.isWildActive(id));
+    const held=hand.filter(id=>game.cardMatchesFaction(id,faction));
     let available=held.length,bonus=extraBonus;
     const active=!game.eirinActive() || !card.crown;
     if(active && cardId==='temple_byakuren'){
@@ -10139,9 +10171,9 @@ function aiRetentionValue(playerIdx,cardId){
   if(candidate?.reserveCombo)value+=60;
   if(game.isWildActive(cardId))value+=25;
   // Include faction material even when this card currently has no legal destination.
-  for(const faction of game.isWildActive(cardId)?game.claimFactionOrder():[card.faction]){
+  for(const faction of game.cardClaimFactions(cardId)){
     const size=FACTIONS[faction]?.size||0;if(!size)continue;
-    const count=game.factionCells(faction).length+game.players[playerIdx].hand.filter(id=>CARD[id].faction===faction || game.isWildActive(id)).length;
+    const count=game.factionCells(faction).length+game.players[playerIdx].hand.filter(id=>game.cardMatchesFaction(id,faction)).length;
     value+=Math.min(size,count)*2+(count>=size?20:0);
   }
   return value;
@@ -10252,8 +10284,8 @@ function aiKanakoTrade(...args){return aiCurrentKanakoTrade(...args);}
 return {aiEvaluateCard,aiChooseCostCards,aiFactionPlacement,aiKomachiTarget,aiDecideHardAction,aiDecideAction,aiBestTrade,aiTwoCardFactionTrade,aiKanakoTrade,aiAbilityPlan,aiBestChannel};
 })();
 
-/* Frozen baseline: 2b07010 decision policy, Komachi forecast adapted to the shared current rule. */
-const AI_BASELINE_DIGEST='6cb355e34159ae1924c00578c6180626e9c152feebf505330021200a21a76e1b';
+/* Frozen 2b07010 decisions, Komachi and Kasen forecasts adapted to shared current rules. */
+const AI_BASELINE_DIGEST='69f429e290a93f0c03f61cbd96bd938048e8e162ffd06eefdcff87728f8df7ca';
 const AI_FROZEN_POLICY=(()=>{
 const NO_PLACED_ABILITY = new Set(['sage_yukari', 'sage_kasen', 'hourai_eirin','mtn_nitori','hell_hecatia']);
 const DRAW_ABILITY_CARDS = new Set(['hourai_mokou','mtn_sanae','sage_ran','yuuka','hell_kutaka','temple_shou']);
@@ -10302,7 +10334,7 @@ function aiBestTrade(playerIdx){
     for(const [faction,fac] of Object.entries(FACTIONS)){
       if(!fac.size) continue;
       const onBoard=game.factionCells(faction).length;
-      const inHand=hand.filter(id=>CARD[id].faction===faction || game.isWildActive(id)).length;
+      const inHand=hand.filter(id=>game.cardMatchesFaction(id,faction)).length;
       value+=.35*(Math.min(fac.size,onBoard+inHand)**2-Math.min(fac.size,onBoard)**2);
     }
     return value;
@@ -10360,7 +10392,7 @@ function aiTwoCardFactionTrade(playerIdx,placement){
   if(placement?.type!=='place')return null;
   const player=game.players[playerIdx],faction=CARD[placement.cardId]?.faction;
   if(FACTIONS[faction]?.size!==2 || !player.hand.includes(placement.cardId))return null;
-  const isPartner=id=>id!==placement.cardId && (CARD[id]?.faction===faction || game.isWildActive(id));
+  const isPartner=id=>id!==placement.cardId && (game.cardMatchesFaction(id,faction));
   // An existing partner already supplies the pair; protected merchandise does not.
   if(game.factionCells(faction).length || player.hand.some(isPartner))return null;
   const stock=game.tradeCells().filter(cell=>isPartner(game.cardAt(cell.r,cell.c)));
@@ -10372,7 +10404,7 @@ function aiTwoCardFactionTrade(playerIdx,placement){
     if(value<keepValue){offeredId=id;keepValue=value;}
   }
   if(!offeredId)return null;
-  // Prefer the actual faction member so Kasen remains available for a larger claim.
+  // Stock must supply a printed member of this two-card faction.
   const target=stock.find(cell=>CARD[game.cardAt(cell.r,cell.c)].faction===faction) || stock[0];
   return {type:'trade',cardId:offeredId,target,thenPlace:placement};
 }
@@ -10437,19 +10469,19 @@ function aiFactionStillPossible(faction){
   // Starting stock is public; never inspect the identities of hidden opponent hands/deck cards.
   const removed=new Set(game.players.flatMap(player=>player.discard));
   const pool=game.startingCardIds || new Set(CARDS.filter(card=>!card.shopExpansion && !card.token && !card.shopkeeper).map(card=>card.id));
-  const members=[...pool].filter(id=>!removed.has(id) && (CARD[id].faction===faction || game.isWildActive(id)));
+  const members=[...pool].filter(id=>!removed.has(id) && (game.cardMatchesFaction(id,faction)));
   return members.length>=size;
 }
 
 function aiFactionForecast(playerIdx,cardId){
   const card=CARD[cardId],hand=game.players[playerIdx].hand.filter(id=>id!==cardId);
-  const factions=game.isWildActive(cardId) ? game.claimFactionOrder() : [card.faction];
+  const factions=game.cardClaimFactions(cardId);
   let best={rate:0,size:0,faction:null,bonus:0,missing:0};
   for(const faction of factions){
     const size=FACTIONS[faction]?.size||0;if(!size)continue;
     const members=game.factionCells(faction),missing=Math.max(0,size-members.length);
     if(!missing || !members.some(cell=>game.cardAt(cell.r,cell.c)===cardId))continue;
-    const held=hand.filter(id=>CARD[id].faction===faction || game.isWildActive(id));
+    const held=hand.filter(id=>game.cardMatchesFaction(id,faction));
     let available=held.length,bonus=0;
     const active=!game.eirinActive() || !card.crown;
     if(active && cardId==='temple_byakuren'){
@@ -10542,9 +10574,9 @@ function aiRetentionValue(playerIdx,cardId){
   if(candidate?.reserveCombo)value+=60;
   if(game.isWildActive(cardId))value+=25;
   // Include faction material even when this card currently has no legal destination.
-  for(const faction of game.isWildActive(cardId)?game.claimFactionOrder():[card.faction]){
+  for(const faction of game.cardClaimFactions(cardId)){
     const size=FACTIONS[faction]?.size||0;if(!size)continue;
-    const count=game.factionCells(faction).length+game.players[playerIdx].hand.filter(id=>CARD[id].faction===faction || game.isWildActive(id)).length;
+    const count=game.factionCells(faction).length+game.players[playerIdx].hand.filter(id=>game.cardMatchesFaction(id,faction)).length;
     value+=Math.min(size,count)*2+(count>=size?20:0);
   }
   return value;
@@ -11771,8 +11803,8 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='fdbe88ec457ae382a08ba7b2123d3ae014483cea1e556dec3821ddbef90ac9fe';
-const AI_EVALUATION_POLICY_DIGEST='3ed0029bb018e0ad0faaf69f1528977310402f219fb79ffce7c4cee2ef7d8302';
+const AI_EVALUATION_RULES_DIGEST='4252ab1205d082835408e6d6ae1c8c30c4f0f6205855a2c86eff0be4b8760134';
+const AI_EVALUATION_POLICY_DIGEST='2593f7838de53bcf751d6debd1b94a3f6d99ae905675af496711186cdff75892';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
   if(!source)throw new Error('Game source is unavailable.');
@@ -11988,7 +12020,7 @@ function evalNewOpening(seed,n,size,difficulty){
 async function evalCompare(config,send){
   evalValidateConfig(config);
   const report={format:'tbg-ai-evaluation',version:1,type:'comparison',baselineCommit:'2b07010618c21eee6dfc6ffd4092c8b4bbb42e9b',baselineDigest:AI_BASELINE_DIGEST,previousCommit:'955c63140738e5cc9deae85802cec12f10c5d61a',previousDigest:AI_PREVIOUS_DIGEST,diagnosticsVersion:2,
-    currentPolicy:'retrieval-and-trade-guard-2026-10-07',rules:'Shared current Game engine',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,startedAt:new Date().toISOString(),finished:false,blocks:[]};
+    currentPolicy:'retrieval-and-trade-guard-kasen-four-2026-10-07',rules:'Shared current Game engine',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,startedAt:new Date().toISOString(),finished:false,blocks:[]};
   const lineups=evalMixedLineups(config.players,config.opponent);
   for(let i=0;i<config.blocks;i++){
     await evalYield();const seed=evalHashSeed(config.seed,config.phase||'development',i),size=config.size==='both'?(i%2?5:4):Number(config.size);
@@ -12003,7 +12035,7 @@ async function evalCompare(config,send){
 async function evalFork(snapshot,config,send){
   evalValidateSnapshot(snapshot);evalValidateConfig(config,'fork');const actor=snapshot.state.currentPlayerIdx;config={...config,actor};
   const continuations=config.continuations||['current','previous'];
-  const report={format:'tbg-ai-evaluation',version:1,diagnosticsVersion:2,currentPolicy:'retrieval-and-trade-guard-2026-10-07',previousDigest:AI_PREVIOUS_DIGEST,type:'fork',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,snapshot,startedAt:new Date().toISOString(),finished:false,pairs:[],
+  const report={format:'tbg-ai-evaluation',version:1,diagnosticsVersion:2,currentPolicy:'retrieval-and-trade-guard-kasen-four-2026-10-07',previousDigest:AI_PREVIOUS_DIGEST,type:'fork',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,snapshot,startedAt:new Date().toISOString(),finished:false,pairs:[],
     assumptions:'Unknown rival cards and deck order are re-sampled from the acting player information. Rival private clue memories are omitted. Continuations are finite AI policies, not optimal play.'};
   for(let i=0;i<config.trials;i++){
     const seed=evalHashSeed(config.seed,'fork',i),sample=evalSampleHidden(snapshot,actor,evalPRNG(seed));
@@ -12171,7 +12203,7 @@ function aiLabDownload(content,name,type='application/json'){
 }
 function aiLabExportCSV(report){
   const rows=[['test','seed','opening_size','continuation','branch','seat','policy','ending','winner','score_share','points','turns','seen','placements','claims','hand_turns','held','diagnostics_version','master_seed','phase','difficulty','current_policy','comparison_policy','match_seed','rules_digest','policy_digest','card_actions','ability_details','score_sources','diagnostics']];
-  const add=(m,seed,size,continuation='',branch='')=>{const shares=evalScoreShares(m);m.roster.forEach((policy,i)=>{const s=m.seats[i];rows.push([report.type,seed,size,continuation,branch,i+1,policy,m.reason,m.winner===null?'':m.winner+1,shares?.[i]??'',m.points[i],m.turns,JSON.stringify(s.seen),JSON.stringify(s.placements),JSON.stringify(s.claims),JSON.stringify(s.handTurns),JSON.stringify(s.held),report.diagnosticsVersion||2,report.config?.seed||'',report.config?.phase||'',report.config?.difficulty||report.snapshot?.state?.aiDifficulty||'',report.currentPolicy||'retrieval-and-trade-guard-2026-10-07',report.config?.opponent||'',m.seed??seed,report.rulesDigest||'',report.policyDigest||'',JSON.stringify(s.cardActions||{}),JSON.stringify(s.abilityDetails||{}),JSON.stringify(s.scoreSources||{}),JSON.stringify(s.diagnostics||{})]);});};
+  const add=(m,seed,size,continuation='',branch='')=>{const shares=evalScoreShares(m);m.roster.forEach((policy,i)=>{const s=m.seats[i];rows.push([report.type,seed,size,continuation,branch,i+1,policy,m.reason,m.winner===null?'':m.winner+1,shares?.[i]??'',m.points[i],m.turns,JSON.stringify(s.seen),JSON.stringify(s.placements),JSON.stringify(s.claims),JSON.stringify(s.handTurns),JSON.stringify(s.held),report.diagnosticsVersion||2,report.config?.seed||'',report.config?.phase||'',report.config?.difficulty||report.snapshot?.state?.aiDifficulty||'',report.currentPolicy||'retrieval-and-trade-guard-kasen-four-2026-10-07',report.config?.opponent||'',m.seed??seed,report.rulesDigest||'',report.policyDigest||'',JSON.stringify(s.cardActions||{}),JSON.stringify(s.abilityDetails||{}),JSON.stringify(s.scoreSources||{}),JSON.stringify(s.diagnostics||{})]);});};
   if(report.type==='comparison')for(const block of report.blocks)for(const m of block.matches)add(m,block.seed,block.size);
   else for(const pair of report.pairs){add(pair.a,pair.seed,report.snapshot.size,pair.continuation,'A');add(pair.b,pair.seed,report.snapshot.size,pair.continuation,'B');}
   return '\ufeff'+rows.map(row=>row.map(value=>'"'+String(value).replaceAll('"','""')+'"').join(',')).join('\r\n');

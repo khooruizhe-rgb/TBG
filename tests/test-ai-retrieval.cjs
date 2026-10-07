@@ -18,7 +18,7 @@ async function place(g,id,r=1,c=1){g.removeFromHand(0,id);return g.internalPlace
 test('The expected maximum uses sampling without replacement and a known-card floor',()=>{
  assert(Math.abs(A.aiExpectedBestAcquisition([1,2,3],1)-2)<1e-12);assert(Math.abs(A.aiExpectedBestAcquisition([1,2,3],2)-8/3)<1e-12);assert.equal(A.aiExpectedBestAcquisition([1,2,3],3),3);assert.equal(A.aiExpectedBestAcquisition([1,2,3],2,4),4);
 });
-test('The immediately previous strategy snapshot has not changed',()=>{
+test('The rule-adapted previous strategy snapshot matches its recorded digest',()=>{
  const crypto=require('node:crypto'),a=js.indexOf('const AI_PREVIOUS_POLICY=(()=>{\n')+'const AI_PREVIOUS_POLICY=(()=>{\n'.length,b=js.indexOf('function aiEvaluateCard(...args)',a);
  const expected=js.match(/const AI_PREVIOUS_DIGEST='([a-f0-9]+)'/)[1];assert.equal(crypto.createHash('sha256').update(js.slice(a,b)).digest('hex'),expected);
 });
@@ -101,10 +101,24 @@ test('Current versus immediately previous policy completes mixed real-engine mat
 });
 const priorFile=path.join(path.dirname(file),'ai_pre_retrieval_revision.html');
 if(fs.existsSync(priorFile))test('Frozen previous policy reproduces pre-update matches on the shared rules',async()=>{
- const old=load(fs.readFileSync(priorFile,'utf8').split('<script>')[1].split('</script>')[0]).A;
+ let prior=fs.readFileSync(priorFile,'utf8').split('<script>')[1].split('</script>')[0];
+ // Compare decisions on identical rules. The reference's former Kasen matching
+ // must not manufacture two-card claims forbidden by the shared current engine.
+ prior=prior.slice(0,prior.indexOf('const DIRS4'))+
+   js.slice(js.indexOf('const DIRS4'),js.indexOf('/* ===================== UI layer'))+
+   prior.slice(prior.indexOf('/* ===================== UI layer'));
+ for(const [from,to] of [
+   ['CARD[id].faction===faction || game.isWildActive(id)','game.cardMatchesFaction(id,faction)'],
+   ['CARD[id]?.faction===faction || game.isWildActive(id)','game.cardMatchesFaction(id,faction)'],
+   ['CARD[other].faction===card.faction || game.isWildActive(other)','game.cardMatchesFaction(other,card.faction)'],
+   ['game.isWildActive(cardId) ? game.claimFactionOrder() : [card.faction]','game.cardClaimFactions(cardId)'],
+   ['game.isWildActive(cardId)?game.claimFactionOrder():[card.faction]','game.cardClaimFactions(cardId)']
+ ])prior=prior.replaceAll(from,to);
+ const old=load(prior).A;
  for(const seed of [49,72,104]){
   const snapshot=plain(old.evalNewOpening(seed,3,seed===72?5:4,'hard'));
-  const a=await old.evalRunMatch(snapshot,['current','current','current'],seed+1000),b=await A.evalRunMatch(snapshot,['previous','previous','previous'],seed+1000);
+  const a=await old.evalRunMatch(snapshot,['previous','previous','previous'],seed+1000),b=await A.evalRunMatch(snapshot,['previous','previous','previous'],seed+1000);
+  assert.notEqual(a.reason,'error',a.error);assert.notEqual(b.reason,'error',b.error);
   for(const key of ['reason','winner','points','turns'])assert.deepEqual(plain(b[key]),plain(a[key]),'Seed '+seed+' '+key);
   assert.deepEqual(plain(b.seats.map(s=>({seen:s.seen,placements:s.placements,claims:s.claims,handTurns:s.handTurns,held:s.held}))),plain(a.seats),'Seed '+seed+' seat observations');
  }

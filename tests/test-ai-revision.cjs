@@ -55,10 +55,10 @@ test('Preparatory trading respects Murasa, Reisen, the once-per-turn limit and u
   g.tradedThisTurn[1]=true;assert.equal(A.aiTwoCardFactionTrade(1,placement),null);g.tradedThisTurn[1]=false;
   g.players[1].hand=['medicine','trap_token'];assert.equal(A.aiTwoCardFactionTrade(1,placement),null);g.players[1].hand=['medicine'];assert.equal(A.aiTwoCardFactionTrade(1,placement),null);
 });
-test('Kasen can supply the missing partner when active, with the physical partner preferred',()=>{
+test('Kasen cannot supply a two-card partner, while the physical partner still can',()=>{
   const g=setup({hand:['medicine','sdm_meiling']});g.shopCards=['shop_rinnosuke','sage_kasen','yuuka','hell_kutaka'];const placement={type:'place',cardId:'medicine',r:2,c:2};
   let action=A.aiTwoCardFactionTrade(1,placement);assert.equal(g.cardAt(action.target.r,action.target.c),'yuuka');
-  g.shopCards[2]='hourai_tewi';action=A.aiTwoCardFactionTrade(1,placement);assert.equal(g.cardAt(action.target.r,action.target.c),'sage_kasen');
+  g.shopCards[2]='hourai_tewi';assert.equal(A.aiTwoCardFactionTrade(1,placement),null);
   g.setCardAt(0,0,'hourai_eirin');assert.equal(A.aiTwoCardFactionTrade(1,placement),null);
 });
 test('An actual AI turn trades for a partner first, then keeps its planned placement and spends only one turn',async()=>{
@@ -107,7 +107,7 @@ test('Eiki ignores protected merchandise when finding the largest faction',async
   await g.resolveAbility('hell_eiki',3,3,1,0);
   assert.equal(g.cardAt(3,3),null);assert.equal(g.cardAt(3,2),null);assert.equal(g.cardAt(0,0),'sdm_remilia');
 });
-test('Kasen evaluates all factions and chooses a four-card completion over a two-card one',async()=>{
+test('Kasen evaluates four-card factions and ignores a former two-card completion',async()=>{
   const g=setup({hand:['sage_kasen'],board:[[0,0,'sdm_remilia'],[0,1,'sdm_flandre'],[1,0,'sdm_patchouli'],[3,3,'haku_yuyuko']]});
   const pick=await A.aiDecideAction(1,false);g.setCardAt(pick.r,pick.c,'sage_kasen');
   assert.equal(g.findFactionClaim('sdm').length,4);assert.equal(A.aiEvaluateCard(1,'sage_kasen')?.cardId,'sage_kasen');
@@ -116,13 +116,43 @@ test('Actual overlapping faction resolution claims the four-card group first',()
   const g=setup({board:[[0,0,'sdm_remilia'],[0,1,'sdm_flandre'],[1,0,'sdm_patchouli'],[1,1,'sage_kasen'],[1,2,'haku_yuyuko']]});
   g.checkClaims(1);assert.equal(g.players[1].discard.length,4);assert.equal(g.cardAt(1,2),'haku_yuyuko');
 });
-test('Kasen preserves a feasible four-card route over an immediate two-card claim',()=>{
+test('Kasen preserves a feasible four-card route without predicting a two-card claim',()=>{
   setup({hand:['sage_kasen','sdm_sakuya'],board:[[0,0,'sdm_remilia'],[0,1,'sdm_flandre'],[3,3,'haku_yuyuko']]});
   const pick=A.aiEvaluateCard(1,'sage_kasen');assert.equal(pick.claimSize,4);assert.equal(pick.claimsNow,false);
 });
-test('A winning two-card claim is not sacrificed to a speculative four-card plan',()=>{
+test('Kasen cannot manufacture a winning two-card claim at five points',()=>{
   setup({hand:['sage_kasen','sdm_sakuya'],discards:[[],six.slice(0,5)],board:[[0,0,'sdm_remilia'],[0,1,'sdm_flandre'],[3,3,'haku_yuyuko']]});
-  const pick=A.aiEvaluateCard(1,'sage_kasen');assert.equal(pick.winsNow,true);assert.equal(pick.claimsNow,true);
+  const pick=A.aiEvaluateCard(1,'sage_kasen');assert.equal(pick.winsNow,false);assert.equal(pick.claimsNow,false);assert.equal(pick.claimSize,4);
+});
+test('Kasen completes each of the seven four-card factions in real claim resolution',()=>{
+  for(const faction of Object.keys(A.FACTIONS).filter(f=>A.FACTIONS[f].size===4)){
+    const members=A.CARDS.filter(card=>card.faction===faction && !card.wild && !['hourai_eirin','hell_hecatia'].includes(card.id)).slice(0,3);
+    const g=setup({board:members.map((card,i)=>[Math.floor(i/2),i%2,card.id])});g.setCardAt(1,1,'sage_kasen');
+    assert.equal(g.findFactionClaim(faction).length,4,faction);g.checkClaims(1);
+    assert.equal(g.players[1].discard.length,4,faction);assert(g.players[1].discard.includes('sage_kasen'));
+  }
+});
+test('None of the four two-card factions can claim Kasen, but their printed pairs still claim',()=>{
+  for(const faction of Object.keys(A.FACTIONS).filter(f=>A.FACTIONS[f].size===2)){
+    const pair=A.CARDS.filter(card=>card.faction===faction);const g=setup({board:[[0,0,pair[0].id],[0,1,'sage_kasen']]});
+    assert.equal(g.findFactionClaim(faction).length,0,faction);g.checkClaims(1);assert.equal(g.players[1].discard.length,0);
+    g.setCardAt(0,1,pair[1].id);g.checkClaims(1);assert.equal(g.players[1].discard.length,2,faction);
+  }
+});
+test('Borrowed Kasen ability obeys the four-card limit and Eirin disables its substitution',()=>{
+  const g=setup({board:[[0,0,'yuuka'],[0,1,'temple_nue'],[2,0,'sdm_remilia'],[2,1,'sdm_flandre'],[3,0,'sdm_patchouli']]});
+  g.borrowedAbilities.temple_nue='sage_kasen';assert.equal(g.isWildActive('temple_nue'),true);
+  assert.equal(g.cardMatchesFaction('temple_nue','sunflower'),false);assert.equal(g.findFactionClaim('sunflower').length,0);
+  g.setCardAt(0,1,null);g.setCardAt(3,1,'temple_nue');assert.equal(g.findFactionClaim('sdm').length,4);
+  g.setCardAt(0,3,'hourai_eirin');assert.equal(g.findFactionClaim('sdm').length,0);assert.equal(g.isWildActive('temple_nue'),false);
+});
+test('Every comparison policy forecasts no two-card Kasen claim or preparatory trade',()=>{
+  for(const policy of ['current','previous','baseline'])for(const [cardId,faction] of [['haku_youmu','hakugyokurou'],['marisa','hakurei'],['medicine','sunflower'],['heaven_iku','heaven']]){
+    const g=setup({hand:['sage_kasen'],board:[[0,0,cardId]]});g.players[1].aiPolicy=policy;
+    const candidate=A.aiEvaluateCard(1,'sage_kasen');assert.equal(candidate.claimsNow,false,policy+faction);assert.notEqual(candidate.claimSize,2,policy+faction);
+    g.setCardAt(0,0,null);g.players[1].hand=[cardId,'sdm_meiling'];g.shopCards=['shop_rinnosuke','sage_kasen','hourai_tewi','hell_kutaka'];
+    assert.equal(A.aiTwoCardFactionTrade(1,{type:'place',cardId,r:2,c:2}),null,policy+faction);
+  }
 });
 test('Eirin disables Kasen faction substitution in both rule and evaluator',()=>{
   const g=setup({hand:['sage_kasen'],board:[[0,0,'sdm_remilia'],[0,1,'sdm_flandre'],[1,0,'sdm_patchouli'],[3,3,'hourai_eirin']]});
@@ -283,7 +313,7 @@ test('Reisen forced card still blocks trading and Marisa no-target is low priori
 });
 test('Marisa target penalty lifts for a faction claim and when a valid blast exists',()=>{
   setup({hand:['marisa'],board:[[0,0,'sdm_patchouli']]});assert.equal(A.aiEvaluateCard(1,'marisa').lowPriority,false);
-  setup({hand:['marisa'],board:[[0,0,'sage_kasen']]});assert.equal(A.aiEvaluateCard(1,'marisa').claimsNow,true);
+  setup({hand:['marisa'],board:[[0,0,'reimu'],[3,3,'sdm_patchouli']]});assert.equal(A.aiEvaluateCard(1,'marisa').claimsNow,true);
   assert.equal(A.aiEvaluateCard(1,'marisa').lowPriority,false);
 });
 test('Patchouli selects revealed opponent cards and transfers the correctly named card',async()=>{
