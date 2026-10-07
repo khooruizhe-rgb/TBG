@@ -1697,7 +1697,7 @@
   .card-detail-marks{ --detail-mark-size:35px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; }
   .card-detail-crown{ flex:none; color:var(--detail-accent); line-height:1; }
   .card-detail-crown svg{ display:block; width:var(--detail-mark-size); height:var(--detail-mark-size); fill:currentColor; }
-  .card-detail-claim-size{ display:block; color:var(--detail-ink); filter:drop-shadow(0 1px 2px #100b1c); }
+  .card-detail-claim-size{ display:block; color:var(--faction-edge,var(--detail-accent)); filter:drop-shadow(0 1px 2px #100b1c); }
   .card-detail-claim-size svg{ display:block; width:22px; height:22px; fill:currentColor; }
   .card-detail-claim-size[hidden], .card-detail-crown[hidden]{ display:none; }
   .card-detail-portrait{
@@ -2446,6 +2446,7 @@ body.mobile-landscape .board-card,body.mobile-landscape #hand .hand-card{border-
 .card-faction-temple{--faction-edge:#d7a449}
 .card-faction-kourindou{--faction-edge:#c69e64}
 .card-faction-token{--faction-edge:#aa80c9}
+.card-art-marisa,#card-detail.detail-card-marisa{--faction-edge:#ffeb3b}
 .draw-return-ghost.ability-byakuren{animation:byakurenDiscardFlight .95s cubic-bezier(.2,.75,.3,1) both}
 .draw-return-ghost.ability-byakuren::before,.draw-return-ghost.ability-byakuren::after{display:none}
 .temple-fx.byakuren-turns svg{animation:templeMandala 1.15s ease-out both}
@@ -3009,7 +3010,7 @@ CARDS.push(
   { id:'hell_kutaka', faction:'hell', name:'Niwatari Kutaka', shopExpansion:true, wasteOK:true,
     desc:"This card can be placed on wasteland.\nPlaced: If this card is on wasteland, take a Hell card from the draw pile into your hand." },
   { id:'shop_rinnosuke', faction:'kourindou', name:'Morichika Rinnosuke', shopkeeper:true, wasteOK:true,
-    desc:"This card and the cards around it cannot move or use abilities.\nSelect a hand card, then click Rinnosuke to trade once per turn without using your turn.",
+    desc:"This card and the cards around it cannot be selected or moved, and cannot use abilities.\nSelect a hand card, then click Rinnosuke to trade once per turn without using your turn.",
     handDesc:'Wait, place me back! You can’t just put me into your hand!' },
   { id:'trap_token', faction:'token', name:'Trap', token:true,
     desc:"This card cannot be traded, discarded or returned to the draw pile from your hand.\nPlaced: Return another hand card to the draw pile." }
@@ -3423,7 +3424,7 @@ class Game {
     const keeper=this.boardCells(cell=>cell.id==='shop_rinnosuke')[0];
     if(!this.kourindouEnabled || !keeper) return [];
     return this.boardCells(cell=>!CARD[cell.id].shopkeeper && !CARD[cell.id].token
-      && this.canSelectBoardCard(cell.r,cell.c)
+      && this.canSelectBoardCard(cell.r,cell.c,true)
       && Math.abs(cell.r-keeper.r)<=1 && Math.abs(cell.c-keeper.c)<=1);
   }
   canOverrideShop(playerIdx,slot){
@@ -3432,6 +3433,7 @@ class Game {
       && !!this.shopCards[slot] && !this.players[playerIdx].isAI
       && this.players[playerIdx].hand.includes('sage_yukari')
       && this.canOverrideTarget('sage_yukari',this.shopCards[slot])
+      && this.canSelectBoardCard(this.shopTiles[slot].r,this.shopTiles[slot].c,true)
       && !(forced && forced!=='sage_yukari' && this.players[playerIdx].hand.includes(forced));
   }
   async overrideShop(playerIdx,slot){
@@ -3484,8 +3486,9 @@ class Game {
     const base=this.isActiveOnBoard('mtn_kanako') ? 2 : 1;
     return base*(this.hasActiveAbility('mtn_kanako') ? 2 : 1);
   }
-  canSelectBoardCard(r,c){
-    if(!this.cardAt(r,c)) return false;
+  canSelectBoardCard(r,c,allowProtected=false){
+    // Trading and Yukari's prior override bypass shop protection, never Nitori.
+    if(!this.cardAt(r,c) || (!allowProtected && this.isProtected(r,c))) return false;
     return !this.boardCells(cell=>this.abilityId(cell.id)==='mtn_nitori' && !this.isProtected(cell.r,cell.c) && !this.isCrownAbilityDisabled(cell.id)
       && Math.abs(cell.r-r)<=1 && Math.abs(cell.c-c)<=1).length;
   }
@@ -3794,7 +3797,7 @@ class Game {
   emptyOrWastelandForCard(card,playerIdx=this.currentPlayerIdx){
     if(this.isPlacementBlocked(playerIdx))return [];
     return this.abilityCells(playerIdx,this.allTiles()).filter(({r,c})=>{
-      if(this.cardAt(r,c)) return this.canOverrideTarget(card.id,this.cardAt(r,c)) && this.canSelectBoardCard(r,c)
+      if(this.cardAt(r,c)) return this.canOverrideTarget(card.id,this.cardAt(r,c)) && this.canSelectBoardCard(r,c,this.abilityId(card.id)==='sage_yukari')
         && (this.abilityId(card.id)==='sage_yukari' || this.canMoveBoardCard(r,c));
       return !this.wastelandAt(r,c) || this.canPlaceOnWasteland(card);
     });
@@ -3900,7 +3903,7 @@ class Game {
     if(this.players[p]?.isAI && !inBounds(r,c))return false;
     const id = this.cardAt(r,c);
     if(!id) return false;
-    if(!this.canSelectBoardCard(r,c) || (effect!=='yukari' && !this.canMoveBoardCard(r,c))) return this.reportBlocked(r,c);
+    if(!this.canSelectBoardCard(r,c,effect==='yukari') || (effect!=='yukari' && !this.canMoveBoardCard(r,c))) return this.reportBlocked(r,c);
     if(effect && this.ui && this.ui.onBoardToHand){
       try{ this.ui.onBoardToHand({cardId:id,playerIdx:p,source:{r,c,effect}}); }
       catch(_error){ /* Animations cannot prevent a board move. */ }
@@ -6572,7 +6575,7 @@ const CARD_ABILITY_NAMES = {
 /* ---------- Language selection: canonical rules stay language-independent. ---------- */
 let gameLanguage='en';
 try{const saved=window.localStorage?.getItem('boundary-language');if(saved==='zh-CN')gameLanguage=saved;}catch(_error){}
-const ZH_CARDS={"sdm_remilia":["蕾米莉亚·斯卡蕾特","命运操纵","放置：将其他玩家手中的所有红魔馆卡牌加入你的手牌。"],"sdm_flandre":["芙兰朵露·斯卡蕾特","「目」之破坏","放置：选择任意玩家的一张手牌，将其送入该玩家的弃牌堆。"],"sdm_patchouli":["帕秋莉·诺蕾姬","魔法风云","放置：猜测另一名玩家手中的一张卡牌。猜对后，将该卡牌加入你的手牌。"],"sdm_sakuya":["十六夜咲夜","Zawarudo","放置：获得两个额外回合，然后将你的手牌洗入抽牌堆。"],"haku_yuyuko":["西行寺幽幽子","幽冥缠身","[代价 N] 放置：将 N 张随机的正交相邻卡牌送入你的弃牌堆。"],"haku_youmu":["魂魄妖梦","先之先","放置：放置此卡不消耗你的回合。"],"hourai_kaguya":["蓬莱山辉夜","看我操作！","放置：猜测另一名玩家手中的一张永远亭卡牌。每次猜对，你可以将该卡牌放到棋盘上并继续猜测。"],"hourai_eirin":["八意永琳","思兼装置","此卡在棋盘上时，所有领主卡牌的能力均被禁用。"],"hourai_reisen":["铃仙·优昙华院·因幡","狂气之瞳","放置：选择另一名玩家的一张手牌。该玩家必须在下个回合放置这张卡牌。"],"hourai_mokou":["藤原妹红","凤凰复生","放置：你的弃牌堆中每有一张卡牌，就抽一张牌。"],"mtn_kanako":["八坂神奈子","风神之神德","此卡可以放在荒地上。此卡在棋盘上时，其他妖怪之山卡牌的放置能力发动两次。\n放置：将你手中的一张妖怪之山卡牌放到棋盘上。"],"mtn_suwako":["洩矢诹访子","诅咒之地","放置：将三个棋盘格变为荒地。"],"mtn_sanae":["东风谷早苗","八坂之神风","放置：抽一张牌。如果八坂神奈子在棋盘上，再抽一张牌。"],"mtn_aya":["射命丸文","才不是道听途说呢！","放置：其他每名玩家展示四张手牌。"],"palace_satori":["古明地觉","恐怖催眠术","[代价 I] 放置：查看另一名玩家的手牌，并将其中一张加入你的手牌。"],"palace_rin":["火焰猫燐","猫之步伐","放置：将任意弃牌堆中的一张卡牌加入你的手牌。"],"palace_utsuho":["灵乌路空","核裂变","放置：将棋盘上的一个 2×2 区域变为荒地。"],"palace_koishi":["古明地恋","无意识的哲学","棋盘上有三张地灵殿卡牌时，此卡会自动从你的手牌移到棋盘上。"],"sage_yukari":["八云紫","境界操纵","你可以将此卡放在另一张棋盘卡牌上，并将被覆盖的卡牌加入你的手牌。"],"sage_kasen":["茨木华扇","无拘无束","收取阵营卡牌时，此卡可视为任意4卡阵营的卡牌。"],"sage_matara":["摩多罗隐岐奈","/op","放置：选择另一张棋盘卡牌，由此卡使用它的放置能力。"],"sage_ran":["八云蓝","式神召回","放置：抽一张牌。如果八云紫在棋盘上，立即放置抽到的卡牌。"],"reimu":["博丽灵梦","梦想天生","放置：将棋盘上的一张领主卡牌加入你的手牌。"],"marisa":["雾雨魔理沙","极限火花","放置：将棋盘上的一张非领主卡牌送入你的弃牌堆。"],"yuuka":["风见幽香","花之主宰","放置：清除一个 3×3 区域中的荒地，然后将你的手牌洗入抽牌堆并抽四张牌。"],"medicine":["梅蒂欣·梅兰可莉","铃兰中毒","放置：选择一名玩家，将其两张随机手牌放回抽牌堆。"],"hell_hecatia":["赫卡提亚·拉碧斯拉祖利","三位一体狂想曲","此卡计为 3 点弃牌分数。只有弃牌堆已有超过 3 张地狱卡牌时，此卡才能进入该弃牌堆。"],"hell_clownpiece":["克劳恩皮丝","污秽耐受","此卡可以放在荒地上。\n放置：清除此卡周围的荒地。"],"hell_eiki":["四季映姬","黑白的判决","[代价 I] 放置：将棋盘上数量最多的阵营的所有卡牌放回抽牌堆。"],"hell_komachi":["小野塚小町","距离操控","放置：将此卡与另一张棋盘卡牌交换位置。如果棋盘上有另一张地狱卡牌，此次放置不消耗你的回合。"],"heaven_tenshi":["比那名居天子","全卡牌的绯想天！","[代价 II] 放置：将棋盘上的所有非天界卡牌放回抽牌堆。"],"heaven_iku":["永江衣玖","驾驭雷云","[代价 III] 放置：选择一个 2×2 区域，将其中最多两张随机的非天界卡牌送入你的弃牌堆。"],"temple_byakuren":["圣白莲","魔界幻想","放置：你可以按任意顺序使用每个效果一次。\n[代价 IV] 获得三个额外回合。\n[代价 III] 将另外三张棋盘卡牌放回抽牌堆，并将其所在格变为荒地。\n[代价 II] 查看抽牌堆顶的三张牌，拿取一张，并按任意顺序放回其余卡牌。\n棋盘上每有一张其他命莲寺卡牌，每个效果的代价减少一。"],"temple_shou":["寅丸星","光辉宝藏","[代价 I] 放置：棋盘上每有一块荒地，就抽一张牌，然后清除所有荒地。"],"temple_nue":["封兽鵺","能力奇美拉","放置：从三张随机卡牌中选择一个能力。短暂变为该卡牌的外貌，并使用它的能力。"],"temple_murasa":["村纱水蜜","无底漩涡","放置：选择一名玩家。该玩家在接下来两个回合中不能放置卡牌或交易。"],"temple_ichirin":["云居一轮","再打一轮！","[代价 II] 放置：将每张非命莲寺卡牌向远离此卡的方向推一格。被推出棋盘的卡牌放回抽牌堆。"],"sdm_meiling":["红美铃","内劲","放置：将一张相邻卡牌向远离此卡的方向移动一格。"],"hourai_tewi":["因幡帝","远古骗术","放置：向其他每名玩家的手牌中加入一张陷阱。"],"mtn_nitori":["河城荷取","光学迷彩","以此卡为中心的 3×3 区域中的卡牌不能被选中。"],"palace_yuugi":["星熊勇仪","怪力乱神","[代价 II] 放置：将一张正交相邻的卡牌送入你的弃牌堆。"],"sage_mai_satono":["丁礼田舞与尔子田里乃","驱动活力","放置：在你的下个回合获得一个额外回合。"],"hell_kutaka":["庭渡久侘歌","异界的护卫","此卡可以放在荒地上。\n放置：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。"],"shop_rinnosuke":["森近霖之助","香霖堂","此卡及其周围的卡牌不能移动或使用能力。\n先选择一张手牌，再点击森近霖之助即可交易。每回合限一次，且不消耗回合。"],"trap_token":["陷阱","嗯……这是陷阱！","此卡在手牌中时，不能交易、弃置或放回抽牌堆。\n放置：将另一张手牌放回抽牌堆。"]};
+const ZH_CARDS={"sdm_remilia":["蕾米莉亚·斯卡蕾特","命运操纵","放置：将其他玩家手中的所有红魔馆卡牌加入你的手牌。"],"sdm_flandre":["芙兰朵露·斯卡蕾特","「目」之破坏","放置：选择任意玩家的一张手牌，将其送入该玩家的弃牌堆。"],"sdm_patchouli":["帕秋莉·诺蕾姬","魔法风云","放置：猜测另一名玩家手中的一张卡牌。猜对后，将该卡牌加入你的手牌。"],"sdm_sakuya":["十六夜咲夜","Zawarudo","放置：获得两个额外回合，然后将你的手牌洗入抽牌堆。"],"haku_yuyuko":["西行寺幽幽子","幽冥缠身","[代价 N] 放置：将 N 张随机的正交相邻卡牌送入你的弃牌堆。"],"haku_youmu":["魂魄妖梦","先之先","放置：放置此卡不消耗你的回合。"],"hourai_kaguya":["蓬莱山辉夜","看我操作！","放置：猜测另一名玩家手中的一张永远亭卡牌。每次猜对，你可以将该卡牌放到棋盘上并继续猜测。"],"hourai_eirin":["八意永琳","思兼装置","此卡在棋盘上时，所有领主卡牌的能力均被禁用。"],"hourai_reisen":["铃仙·优昙华院·因幡","狂气之瞳","放置：选择另一名玩家的一张手牌。该玩家必须在下个回合放置这张卡牌。"],"hourai_mokou":["藤原妹红","凤凰复生","放置：你的弃牌堆中每有一张卡牌，就抽一张牌。"],"mtn_kanako":["八坂神奈子","风神之神德","此卡可以放在荒地上。此卡在棋盘上时，其他妖怪之山卡牌的放置能力发动两次。\n放置：将你手中的一张妖怪之山卡牌放到棋盘上。"],"mtn_suwako":["洩矢诹访子","诅咒之地","放置：将三个棋盘格变为荒地。"],"mtn_sanae":["东风谷早苗","八坂之神风","放置：抽一张牌。如果八坂神奈子在棋盘上，再抽一张牌。"],"mtn_aya":["射命丸文","才不是道听途说呢！","放置：其他每名玩家展示四张手牌。"],"palace_satori":["古明地觉","恐怖催眠术","[代价 I] 放置：查看另一名玩家的手牌，并将其中一张加入你的手牌。"],"palace_rin":["火焰猫燐","猫之步伐","放置：将任意弃牌堆中的一张卡牌加入你的手牌。"],"palace_utsuho":["灵乌路空","核裂变","放置：将棋盘上的一个 2×2 区域变为荒地。"],"palace_koishi":["古明地恋","无意识的哲学","棋盘上有三张地灵殿卡牌时，此卡会自动从你的手牌移到棋盘上。"],"sage_yukari":["八云紫","境界操纵","你可以将此卡放在另一张棋盘卡牌上，并将被覆盖的卡牌加入你的手牌。"],"sage_kasen":["茨木华扇","无拘无束","收取阵营卡牌时，此卡可视为任意4卡阵营的卡牌。"],"sage_matara":["摩多罗隐岐奈","/op","放置：选择另一张棋盘卡牌，由此卡使用它的放置能力。"],"sage_ran":["八云蓝","式神召回","放置：抽一张牌。如果八云紫在棋盘上，立即放置抽到的卡牌。"],"reimu":["博丽灵梦","梦想天生","放置：将棋盘上的一张领主卡牌加入你的手牌。"],"marisa":["雾雨魔理沙","极限火花","放置：将棋盘上的一张非领主卡牌送入你的弃牌堆。"],"yuuka":["风见幽香","花之主宰","放置：清除一个 3×3 区域中的荒地，然后将你的手牌洗入抽牌堆并抽四张牌。"],"medicine":["梅蒂欣·梅兰可莉","铃兰中毒","放置：选择一名玩家，将其两张随机手牌放回抽牌堆。"],"hell_hecatia":["赫卡提亚·拉碧斯拉祖利","三位一体狂想曲","此卡计为 3 点弃牌分数。只有弃牌堆已有超过 3 张地狱卡牌时，此卡才能进入该弃牌堆。"],"hell_clownpiece":["克劳恩皮丝","污秽耐受","此卡可以放在荒地上。\n放置：清除此卡周围的荒地。"],"hell_eiki":["四季映姬","黑白的判决","[代价 I] 放置：将棋盘上数量最多的阵营的所有卡牌放回抽牌堆。"],"hell_komachi":["小野塚小町","距离操控","放置：将此卡与另一张棋盘卡牌交换位置。如果棋盘上有另一张地狱卡牌，此次放置不消耗你的回合。"],"heaven_tenshi":["比那名居天子","全卡牌的绯想天！","[代价 II] 放置：将棋盘上的所有非天界卡牌放回抽牌堆。"],"heaven_iku":["永江衣玖","驾驭雷云","[代价 III] 放置：选择一个 2×2 区域，将其中最多两张随机的非天界卡牌送入你的弃牌堆。"],"temple_byakuren":["圣白莲","魔界幻想","放置：你可以按任意顺序使用每个效果一次。\n[代价 IV] 获得三个额外回合。\n[代价 III] 将另外三张棋盘卡牌放回抽牌堆，并将其所在格变为荒地。\n[代价 II] 查看抽牌堆顶的三张牌，拿取一张，并按任意顺序放回其余卡牌。\n棋盘上每有一张其他命莲寺卡牌，每个效果的代价减少一。"],"temple_shou":["寅丸星","光辉宝藏","[代价 I] 放置：棋盘上每有一块荒地，就抽一张牌，然后清除所有荒地。"],"temple_nue":["封兽鵺","能力奇美拉","放置：从三张随机卡牌中选择一个能力。短暂变为该卡牌的外貌，并使用它的能力。"],"temple_murasa":["村纱水蜜","无底漩涡","放置：选择一名玩家。该玩家在接下来两个回合中不能放置卡牌或交易。"],"temple_ichirin":["云居一轮","再打一轮！","[代价 II] 放置：将每张非命莲寺卡牌向远离此卡的方向推一格。被推出棋盘的卡牌放回抽牌堆。"],"sdm_meiling":["红美铃","内劲","放置：将一张相邻卡牌向远离此卡的方向移动一格。"],"hourai_tewi":["因幡帝","远古骗术","放置：向其他每名玩家的手牌中加入一张陷阱。"],"mtn_nitori":["河城荷取","光学迷彩","以此卡为中心的 3×3 区域中的卡牌不能被选中。"],"palace_yuugi":["星熊勇仪","怪力乱神","[代价 II] 放置：将一张正交相邻的卡牌送入你的弃牌堆。"],"sage_mai_satono":["丁礼田舞与尔子田里乃","驱动活力","放置：在你的下个回合获得一个额外回合。"],"hell_kutaka":["庭渡久侘歌","异界的护卫","此卡可以放在荒地上。\n放置：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。"],"shop_rinnosuke":["森近霖之助","香霖堂","此卡及其周围的卡牌不能被选中、移动或使用能力。\n先选择一张手牌，再点击森近霖之助即可交易。每回合限一次，且不消耗回合。"],"trap_token":["陷阱","嗯……这是陷阱！","此卡在手牌中时，不能交易、弃置或放回抽牌堆。\n放置：将另一张手牌放回抽牌堆。"]};
 const ZH_FACTIONS={"sdm":"红魔馆","hakugyokurou":"白玉楼","hourai":"永远亭","mountain":"妖怪之山","palace":"地灵殿","sage":"贤者","hakurei":"博丽","sunflower":"太阳花田","hell":"地狱","heaven":"天界","temple":"命莲寺","kourindou":"香霖堂","token":"衍生物"};
 const ZH_TEXT={
   "Boundary of Fates": "命运的境界",
@@ -6875,7 +6878,7 @@ const ZH_TEXT={
   "This card can be placed on wasteland.\nPlaced: If this card is on wasteland, take a Hell card from the draw pile into your hand.": "此卡可以放在荒地上。\n放置：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。",
   "Morichika Rinnosuke": "森近霖之助",
   "Kourindou": "香霖堂",
-  "This card and the cards around it cannot move or use abilities.\nSelect a hand card, then click Rinnosuke to trade once per turn without using your turn.": "此卡及其周围的卡牌不能移动或使用能力。\n先选择一张手牌，再点击森近霖之助即可交易。每回合限一次，且不消耗回合。",
+  "This card and the cards around it cannot be selected or moved, and cannot use abilities.\nSelect a hand card, then click Rinnosuke to trade once per turn without using your turn.": "此卡及其周围的卡牌不能被选中、移动或使用能力。\n先选择一张手牌，再点击森近霖之助即可交易。每回合限一次，且不消耗回合。",
   "Trap": "陷阱",
   "Well...Its a trap!": "嗯……这是陷阱！",
   "This card cannot be traded, discarded or returned to the draw pile from your hand.\nPlaced: Return another hand card to the draw pile.": "此卡在手牌中时，不能交易、弃置或放回抽牌堆。\n放置：将另一张手牌放回抽牌堆。",
@@ -7267,6 +7270,10 @@ function fitCardDetailHeadings(){
 }
 window.addEventListener('resize',()=>requestAnimationFrame(fitCardDetailHeadings));
 
+const CLAIM_MARK_PALETTES=Object.freeze({
+  sage:Object.freeze(['#8f70ff','#e7b83f','#ff8b73','#428dff']),
+  hakurei:Object.freeze(['#e0483f','#ffeb3b'])
+});
 function renderCardClaimSize(card){
   const marker=el('card-detail-claim-size'),size=FACTIONS[card.faction]?.size;
   marker.hidden=size!==2 && size!==4;
@@ -7276,7 +7283,8 @@ function renderCardClaimSize(card){
   const label=gameLanguage==='zh-CN' ? `此阵营需要收取 ${size} 张卡牌。` : `Collect ${size} cards to claim this faction.`;
   marker.setAttribute('aria-label',label);marker.setAttribute('title',label);
   const squares=size===4 ? [[1,1],[10,1],[1,10],[10,10]] : [[1,1],[10,10]];
-  marker.innerHTML=`<svg viewBox="0 0 18 18" aria-hidden="true">${squares.map(([x,y])=>`<rect x="${x}" y="${y}" width="7" height="7" rx=".5"/>`).join('')}</svg>`;
+  const colours=CLAIM_MARK_PALETTES[card.faction] || Array(size).fill(FACTIONS[card.faction].color);
+  marker.innerHTML=`<svg viewBox="0 0 18 18" aria-hidden="true">${squares.map(([x,y],i)=>`<rect x="${x}" y="${y}" width="7" height="7" rx=".5" fill="${colours[i]}"/>`).join('')}</svg>`;
 }
 
 function openCardDetails(cardId,{followReference=false}={}){
@@ -8823,7 +8831,7 @@ function aiRecordDecision(playerIdx,action,allowTrade){
 
 function aiPlacementCells(currentGame, cardId, spaces){
   spaces=spaces.filter(cell=>inBounds(cell.r,cell.c));
-  if(currentGame.abilityId(cardId)==='sage_yukari') return spaces.filter(cell=>currentGame.cardAt(cell.r,cell.c)!=='shop_rinnosuke');
+  spaces=spaces.filter(cell=>!currentGame.cardAt(cell.r,cell.c) || currentGame.canSelectBoardCard(cell.r,cell.c));
   if(cardId==='haku_yuyuko') return spaces.filter(cell=>currentGame.adjacentOccupiedCount(cell.r,cell.c)>=2);
   if(cardId==='marisa') return spaces.filter(cell=>currentGame.safeMarisaPlacement(cell.r,cell.c));
   if(cardId==='reimu' && !currentGame.mainBoardCells(cell=>CARD[cell.id].crown && currentGame.canMoveBoardCard(cell.r,cell.c) && currentGame.canSelectBoardCard(cell.r,cell.c)).length) return [];
@@ -9566,14 +9574,14 @@ async function aiCurrentDecideAction(playerIdx,allowTrade=true){
 
 
 /* Frozen 955c631 decisions, adapted to shared Kasen matching and main-board AI target rules. */
-const AI_PREVIOUS_DIGEST='3945548c57b1d6c5ebbbb09dfe54f5e0db789baa0002eb39d02cf3695e0f1481';
+const AI_PREVIOUS_DIGEST='02b934d669736ada1b6141bf4c4cab746fd5d14e0cf0235cd57eb2204bc1d442';
 const AI_PREVIOUS_POLICY=(()=>{
 const NO_PLACED_ABILITY = new Set(['sage_kasen', 'hourai_eirin']);
 const DRAW_ABILITY_CARDS = new Set(['hourai_mokou','mtn_sanae','sage_ran','yuuka','hell_kutaka','temple_shou']);
 
 function aiPlacementCells(currentGame, cardId, spaces){
   spaces=spaces.filter(cell=>inBounds(cell.r,cell.c));
-  if(currentGame.abilityId(cardId)==='sage_yukari') return spaces.filter(cell=>currentGame.cardAt(cell.r,cell.c)!=='shop_rinnosuke');
+  spaces=spaces.filter(cell=>!currentGame.cardAt(cell.r,cell.c) || currentGame.canSelectBoardCard(cell.r,cell.c));
   if(cardId==='haku_yuyuko') return spaces.filter(cell=>currentGame.adjacentOccupiedCount(cell.r,cell.c)>=2);
   if(cardId==='marisa') return spaces.filter(cell=>currentGame.safeMarisaPlacement(cell.r,cell.c));
   if(cardId==='reimu' && !currentGame.mainBoardCells(cell=>CARD[cell.id].crown && currentGame.canMoveBoardCard(cell.r,cell.c) && currentGame.canSelectBoardCard(cell.r,cell.c)).length) return [];
@@ -10318,14 +10326,14 @@ return {aiEvaluateCard,aiChooseCostCards,aiFactionPlacement,aiKomachiTarget,aiDe
 })();
 
 /* Frozen 2b07010 decisions, Komachi, Kasen and main-board targets adapted to shared current rules. */
-const AI_BASELINE_DIGEST='8b540f6fb7ee3aedaeedcc7c64d86daf96258c484da9676989a0fb5d4f0be58f';
+const AI_BASELINE_DIGEST='464bc49d9a63c3d9dec5ed26c37b8669bbcce6dda3cf12bbc63cf5b88d23ceb0';
 const AI_FROZEN_POLICY=(()=>{
 const NO_PLACED_ABILITY = new Set(['sage_yukari', 'sage_kasen', 'hourai_eirin','mtn_nitori','hell_hecatia']);
 const DRAW_ABILITY_CARDS = new Set(['hourai_mokou','mtn_sanae','sage_ran','yuuka','hell_kutaka','temple_shou']);
 
 function aiPlacementCells(currentGame, cardId, spaces){
   spaces=spaces.filter(cell=>inBounds(cell.r,cell.c));
-  if(currentGame.abilityId(cardId)==='sage_yukari') return spaces.filter(cell=>currentGame.cardAt(cell.r,cell.c)!=='shop_rinnosuke');
+  spaces=spaces.filter(cell=>!currentGame.cardAt(cell.r,cell.c) || currentGame.canSelectBoardCard(cell.r,cell.c));
   if(cardId==='haku_yuyuko') return spaces.filter(cell=>currentGame.adjacentOccupiedCount(cell.r,cell.c)>=2);
   if(cardId==='marisa') return spaces.filter(cell=>currentGame.safeMarisaPlacement(cell.r,cell.c));
   if(cardId==='reimu' && !currentGame.mainBoardCells(cell=>CARD[cell.id].crown && currentGame.canMoveBoardCard(cell.r,cell.c) && currentGame.canSelectBoardCard(cell.r,cell.c)).length) return [];
@@ -11842,8 +11850,8 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='7546977ecd1024d6e6203cd5c4ff7a794b27569d1e304d78dc07d31b5c518e7e';
-const AI_EVALUATION_POLICY_DIGEST='8af7d6a12ae2c4d6002f2a2d4a515ba20fc83f318102b220c2d05e95bf709b5e';
+const AI_EVALUATION_RULES_DIGEST='654e786677d5736e2728830ae78bfcfa0c5d5ac3b0a71ff08be756e092ccb289';
+const AI_EVALUATION_POLICY_DIGEST='76a521ae11d265397664fe1fc9aec0278a1447ad18c51f116bf7b19ad9776064';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
   if(!source)throw new Error('Game source is unavailable.');
@@ -12059,7 +12067,7 @@ function evalNewOpening(seed,n,size,difficulty){
 async function evalCompare(config,send){
   evalValidateConfig(config);
   const report={format:'tbg-ai-evaluation',version:1,type:'comparison',baselineCommit:'2b07010618c21eee6dfc6ffd4092c8b4bbb42e9b',baselineDigest:AI_BASELINE_DIGEST,previousCommit:'955c63140738e5cc9deae85802cec12f10c5d61a',previousDigest:AI_PREVIOUS_DIGEST,diagnosticsVersion:2,
-    currentPolicy:'retrieval-trade-kasen-main-board-2026-10-07',rules:'Shared current Game engine',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,startedAt:new Date().toISOString(),finished:false,blocks:[]};
+    currentPolicy:'retrieval-trade-rinnosuke-selection-2026-10-08',rules:'Shared current Game engine',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,startedAt:new Date().toISOString(),finished:false,blocks:[]};
   const lineups=evalMixedLineups(config.players,config.opponent);
   for(let i=0;i<config.blocks;i++){
     await evalYield();const seed=evalHashSeed(config.seed,config.phase||'development',i),size=config.size==='both'?(i%2?5:4):Number(config.size);
@@ -12074,7 +12082,7 @@ async function evalCompare(config,send){
 async function evalFork(snapshot,config,send){
   evalValidateSnapshot(snapshot);evalValidateConfig(config,'fork');const actor=snapshot.state.currentPlayerIdx;config={...config,actor};
   const continuations=config.continuations||['current','previous'];
-  const report={format:'tbg-ai-evaluation',version:1,diagnosticsVersion:2,currentPolicy:'retrieval-trade-kasen-main-board-2026-10-07',previousDigest:AI_PREVIOUS_DIGEST,type:'fork',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,snapshot,startedAt:new Date().toISOString(),finished:false,pairs:[],
+  const report={format:'tbg-ai-evaluation',version:1,diagnosticsVersion:2,currentPolicy:'retrieval-trade-rinnosuke-selection-2026-10-08',previousDigest:AI_PREVIOUS_DIGEST,type:'fork',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,snapshot,startedAt:new Date().toISOString(),finished:false,pairs:[],
     assumptions:'Unknown rival cards and deck order are re-sampled from the acting player information. Rival private clue memories are omitted. Continuations are finite AI policies, not optimal play.'};
   for(let i=0;i<config.trials;i++){
     const seed=evalHashSeed(config.seed,'fork',i),sample=evalSampleHidden(snapshot,actor,evalPRNG(seed));
@@ -12242,7 +12250,7 @@ function aiLabDownload(content,name,type='application/json'){
 }
 function aiLabExportCSV(report){
   const rows=[['test','seed','opening_size','continuation','branch','seat','policy','ending','winner','score_share','points','turns','seen','placements','claims','hand_turns','held','diagnostics_version','master_seed','phase','difficulty','current_policy','comparison_policy','match_seed','rules_digest','policy_digest','card_actions','ability_details','score_sources','diagnostics']];
-  const add=(m,seed,size,continuation='',branch='')=>{const shares=evalScoreShares(m);m.roster.forEach((policy,i)=>{const s=m.seats[i];rows.push([report.type,seed,size,continuation,branch,i+1,policy,m.reason,m.winner===null?'':m.winner+1,shares?.[i]??'',m.points[i],m.turns,JSON.stringify(s.seen),JSON.stringify(s.placements),JSON.stringify(s.claims),JSON.stringify(s.handTurns),JSON.stringify(s.held),report.diagnosticsVersion||2,report.config?.seed||'',report.config?.phase||'',report.config?.difficulty||report.snapshot?.state?.aiDifficulty||'',report.currentPolicy||'retrieval-trade-kasen-main-board-2026-10-07',report.config?.opponent||'',m.seed??seed,report.rulesDigest||'',report.policyDigest||'',JSON.stringify(s.cardActions||{}),JSON.stringify(s.abilityDetails||{}),JSON.stringify(s.scoreSources||{}),JSON.stringify(s.diagnostics||{})]);});};
+  const add=(m,seed,size,continuation='',branch='')=>{const shares=evalScoreShares(m);m.roster.forEach((policy,i)=>{const s=m.seats[i];rows.push([report.type,seed,size,continuation,branch,i+1,policy,m.reason,m.winner===null?'':m.winner+1,shares?.[i]??'',m.points[i],m.turns,JSON.stringify(s.seen),JSON.stringify(s.placements),JSON.stringify(s.claims),JSON.stringify(s.handTurns),JSON.stringify(s.held),report.diagnosticsVersion||2,report.config?.seed||'',report.config?.phase||'',report.config?.difficulty||report.snapshot?.state?.aiDifficulty||'',report.currentPolicy||'retrieval-trade-rinnosuke-selection-2026-10-08',report.config?.opponent||'',m.seed??seed,report.rulesDigest||'',report.policyDigest||'',JSON.stringify(s.cardActions||{}),JSON.stringify(s.abilityDetails||{}),JSON.stringify(s.scoreSources||{}),JSON.stringify(s.diagnostics||{})]);});};
   if(report.type==='comparison')for(const block of report.blocks)for(const m of block.matches)add(m,block.seed,block.size);
   else for(const pair of report.pairs){add(pair.a,pair.seed,report.snapshot.size,pair.continuation,'A');add(pair.b,pair.seed,report.snapshot.size,pair.continuation,'B');}
   return '\ufeff'+rows.map(row=>row.map(value=>'"'+String(value).replaceAll('"','""')+'"').join(',')).join('\r\n');

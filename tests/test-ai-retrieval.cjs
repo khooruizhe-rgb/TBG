@@ -114,6 +114,7 @@ if(fs.existsSync(priorFile))test('Frozen previous policy reproduces pre-update m
    ['game.isWildActive(cardId) ? game.claimFactionOrder() : [card.faction]','game.cardClaimFactions(cardId)'],
    ['game.isWildActive(cardId)?game.claimFactionOrder():[card.faction]','game.cardClaimFactions(cardId)'],
    ['function aiPlacementCells(currentGame, cardId, spaces){\n','function aiPlacementCells(currentGame, cardId, spaces){\n  spaces=spaces.filter(cell=>inBounds(cell.r,cell.c));\n'],
+   ["  if(currentGame.abilityId(cardId)==='sage_yukari') return spaces.filter(cell=>currentGame.cardAt(cell.r,cell.c)!=='shop_rinnosuke');",'  spaces=spaces.filter(cell=>!currentGame.cardAt(cell.r,cell.c) || currentGame.canSelectBoardCard(cell.r,cell.c));'],
    ['function aiCostCanResolve(playerIdx, cardId, r, c){\n','function aiCostCanResolve(playerIdx, cardId, r, c){\n  if(!inBounds(r,c))return false;\n'],
    ['function aiBestDiscardTarget(playerIdx,cells){\n','function aiBestDiscardTarget(playerIdx,cells){\n  cells=cells.filter(cell=>inBounds(cell.r,cell.c));\n'],
    ['function aiAbilityPlan(playerIdx,abilityId,r,c){\n','function aiAbilityPlan(playerIdx,abilityId,r,c){\n  if(!inBounds(r,c))return {utility:0,direct:0,handGain:0,bonus:0,skip:true,abilityId};\n'],

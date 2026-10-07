@@ -25,6 +25,11 @@ test('Every portrait, fifth card and token receives its own faction rim class',(
  for(const card of A.CARDS)assert(A.cardBgClass(card,card.id).split(' ').includes(`card-faction-${card.faction}`),card.id);
  assert(html.includes('border:3px solid var(--faction-edge,#e7d6b8)'));assert(html.includes('border:2px solid var(--faction-edge,#e7d6b8)'));assert(html.includes('.look-into-card.hand-card.selected{border-color:var(--faction-edge,var(--gold))}'));
 });
+test('Marisa has a yellow rim on small cards and inspection, while Reimu keeps the faction rim',()=>{
+ assert.match(html,/\.card-art-marisa,#card-detail\.detail-card-marisa\{--faction-edge:#ffeb3b\}/);
+ const card=A.CARDS.find(c=>c.id==='marisa');assert(A.cardBgClass(card,card.id).split(' ').includes('card-art-marisa'));
+ assert.equal(A.FACTIONS.hakurei.color,'#e0483f');
+});
 test('Selecting a hand card preserves Rinnosuke’s current line and keeps its bubble visible',()=>{
  setup();assert(A.speakRinnosuke('welcome',{force:true}));const line=el('rinnosuke-bubble-text').textContent,positionCount=positions;A.setSelection('medicine');
  for(const kind of ['welcome','observe','offer'])assert.equal(A.speakRinnosuke(kind,{force:true}),false);

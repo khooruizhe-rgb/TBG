@@ -144,6 +144,18 @@ test('Claim markers remain four for shop faction substitutes and localize with i
   assert.equal(el('card-detail-claim-size').attributes['title'],'此阵营需要收取 4 张卡牌。');
   vm.runInContext('gameLanguage="en"',context);A.openCardDetails('sage_ran');
 });
+test('Claim squares follow faction colours, with four Sage colours and two Hakurei colours',()=>{
+  for(const card of A.CARDS.filter(card=>A.FACTIONS[card.faction].size)){
+    A.openCardDetails(card.id);
+    const colours=[...el('card-detail-claim-size').innerHTML.matchAll(/fill="(#[a-f0-9]+)"/g)].map(match=>match[1]);
+    if(card.faction==='sage')assert.deepEqual(colours,['#8f70ff','#e7b83f','#ff8b73','#428dff']);
+    else if(card.faction==='hakurei')assert.deepEqual(colours,['#e0483f','#ffeb3b']);
+    else assert.deepEqual(colours,Array(A.FACTIONS[card.faction].size).fill(A.FACTIONS[card.faction].color),card.id);
+  }
+  vm.runInContext('gameLanguage="zh-CN"',context);A.openCardDetails('marisa');
+  assert.match(el('card-detail-claim-size').innerHTML,/fill="#ffeb3b"/);
+  vm.runInContext('gameLanguage="en"',context);A.openCardDetails('sage_ran');
+});
 test('A real linked-card click navigates without cancelling the pending placement',()=>{
   effect.scrollTop=37;
   const link=el('card-detail-description').children.find(c=>c.dataset.inspectCard==='sage_yukari');

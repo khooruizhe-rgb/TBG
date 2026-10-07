@@ -119,6 +119,37 @@ test('Normal AI trading and acquired fifth cards on the main board still work',a
  const g=setup({hand:['medicine'],stock:['shop_rinnosuke','sdm_meiling','hourai_tewi','hell_kutaka']});assert(g.canTrade(0,'medicine'));assert(g.tradeCard(0,'medicine',1));assert(g.players[0].hand.includes('sdm_meiling'));assert.equal(g.shopCards[1],'medicine');assert(!g.canTrade(0,'sdm_meiling'));
  g.setCardAt(0,0,'hourai_tewi');const before=shopState(g);await g.resolveAbility('marisa',1,1,0,0);assert(g.players[0].discard.includes('hourai_tewi'));assert.equal(shopState(g),before);
 });
+test('Rinnosuke and his neighbours cannot be selected by human or AI abilities on the main board',async()=>{
+ for(const size of [4,5])for(const human of [true,false]){
+  const g=setup({size,human,board:[[1,1,'shop_rinnosuke'],[0,0,'sdm_patchouli'],[0,1,'sdm_sakuya'],[1,2,'medicine'],[size-1,size-1,'mtn_sanae']]});
+  for(const t of g.boardCells().filter(t=>g.isProtected(t.r,t.c)))assert(!g.canSelectBoardCard(t.r,t.c));
+  assert(g.canSelectBoardCard(size-1,size-1));assert(g.selectableBoardCells(0).every(t=>!g.isProtected(t.r,t.c)));
+  if(human)g.ui.pickCell=async(_title,cells)=>cells[0];
+  const before=plain(g.board);await g.resolveAbility('marisa',size-1,0,0,0);
+  for(const t of [{r:1,c:1},{r:0,c:0},{r:0,c:1},{r:1,c:2}])assert.equal(g.cardAt(t.r,t.c),before[t.r][t.c]);
+ }
+});
+test('AI Yukari filters every protected card using selection rules instead of a Rinnosuke ID exception',()=>{
+ assert(!js.includes("return spaces.filter(cell=>currentGame.cardAt(cell.r,cell.c)!=='shop_rinnosuke')"));
+ for(const policy of policies){
+  const g=setup({policy,hand:['sage_yukari'],board:[[1,1,'shop_rinnosuke'],[0,0,'sdm_patchouli']]});
+  const spaces=g.emptyOrWastelandForCard(A.CARD.sage_yukari,0),choices=A.aiPlacementCells(g,'sage_yukari',spaces);
+  assert(spaces.some(t=>t.r===1&&t.c===1),'The prior override remains a legal human interaction');
+  assert(!choices.some(t=>g.cardAt(t.r,t.c)&&g.isProtected(t.r,t.c)));
+ }
+});
+test('Trading bypasses Rinnosuke selection protection and still respects active Nitori',()=>{
+ const g=setup({human:true,hand:['sdm_meiling'],board:[[1,1,'shop_rinnosuke'],[0,2,'medicine'],[0,3,'mtn_nitori']]});
+ assert(!g.canSelectBoardCard(0,2));assert(!g.canSelectBoardCard(0,2,true));assert(!g.tradeCells().some(t=>t.r===0&&t.c===2));
+ g.setCardAt(0,3,null);assert(!g.canSelectBoardCard(0,2));assert(g.canSelectBoardCard(0,2,true));assert(g.tradeCells().some(t=>t.r===0&&t.c===2));
+ assert(g.tradeCard(0,'sdm_meiling',{r:0,c:2}));assert(g.players[0].hand.includes('medicine'));
+});
+test('Yukari may override Rinnosuke first and the protection follows him after replacement',async()=>{
+ const g=setup({human:true,hand:['sage_yukari'],stock:['shop_rinnosuke','sdm_meiling','hourai_tewi','hell_kutaka']}),tile=g.shopTiles[0];
+ assert(!g.canSelectBoardCard(tile.r,tile.c));await g.overrideShop(0,0);assert(g.players[0].hand.includes('shop_rinnosuke'));
+ assert(g.canSelectBoardCard(g.shopTiles[1].r,g.shopTiles[1].c));g.removeFromHand(0,'shop_rinnosuke');await g.internalPlace('shop_rinnosuke',1,1,0,0);
+ g.setCardAt(0,0,'medicine');assert(!g.canSelectBoardCard(1,1));assert(!g.canSelectBoardCard(0,0));assert(g.canSelectBoardCard(g.shopTiles[1].r,g.shopTiles[1].c));
+});
 test('Human shop choice, ranges, global effects and Yukari’s Rinnosuke easter egg remain available',async()=>{
  const g=setup({human:true,hand:['sage_yukari'],stock:['shop_rinnosuke','sdm_meiling','hourai_tewi','hell_kutaka']}),tile=g.shopTiles[0];
  g.ui.pickCell=async(_title,cells)=>cells[cells.length-1];assert(!isMain(g,await g.chooseCell(0,g.allTiles(),'test')));assert(g.rectZones(2,0).some(z=>z.some(t=>!isMain(g,t))));assert(g.canOverrideShop(0,0));
