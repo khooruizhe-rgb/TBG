@@ -3280,7 +3280,7 @@ class Game {
     const card=CARD[id];
     return id==='temple_byakuren' ? this.byakurenCost(placement,2) : card.cost3?3:card.cost2?2:card.cost1?1:0;
   }
-  templeReturnTargets(r,c){return this.boardCells(cell=>!(cell.r===r && cell.c===c)
+  templeReturnTargets(r,c,p=this.currentPlayerIdx){return this.abilityBoardCells(p,cell=>!(cell.r===r && cell.c===c)
     && this.canReturnBoardToDraw(cell.r,cell.c) && this.canSelectBoardCard(cell.r,cell.c))
       .map(cell=>({...cell,id:this.cardAt(cell.r,cell.c)}));}
   byakurenOptions(p,r,c){
@@ -3291,7 +3291,7 @@ class Game {
       {value:'look',base:2,text:'Look at three cards, take one and order the rest.'}
     ].map(option=>{
       const cost=this.byakurenCost({r,c},option.base);
-      const available=option.value==='return' ? this.templeReturnTargets(r,c).length>0
+      const available=option.value==='return' ? this.templeReturnTargets(r,c,p).length>0
         : option.value==='look' ? this.drawPile.length+cost>0 : true;
       return {...option,cost,label:`${cost ? `[Cost ${romanNumeral(cost)}]` : '[Free]'} ${option.text}`,
         disabled:payable<cost || !available};
@@ -3307,7 +3307,7 @@ class Game {
       return actions*.8+Math.min(3,retainedTemple)*1.5-option.cost*.45;
     }
     if(option.value==='return'){
-      const targets=this.templeReturnTargets(r,c).slice().sort((a,b)=>(this.boardFaction(a.r,a.c)==='temple')-(this.boardFaction(b.r,b.c)==='temple')).slice(0,3);
+      const targets=this.templeReturnTargets(r,c,p).slice().sort((a,b)=>(this.boardFaction(a.r,a.c)==='temple')-(this.boardFaction(b.r,b.c)==='temple')).slice(0,3);
       return targets.reduce((n,cell)=>n+(this.boardFaction(cell.r,cell.c)==='temple' ? -3 : .65+(CARD[cell.id].crown ? .35 : 0)),0)-option.cost*.3;
     }
     return 1.2-option.cost*.45;
@@ -3339,13 +3339,13 @@ class Game {
     };
     return ids.slice().sort((a,b)=>ordering ? value(a)-value(b) : value(b)-value(a))[0];
   }
-  templeWasteland(){return this.allTiles().filter(cell=>this.wastelandAt(cell.r,cell.c));}
+  templeWasteland(p=this.currentPlayerIdx){return this.abilityCells(p,this.allTiles()).filter(cell=>this.wastelandAt(cell.r,cell.c));}
   presentTemple(effect,details){
     if(this.cancelled)return;
     try{return this.ui?.onTempleEffect?.({effect,...details});}catch(_error){}
   }
-  ichirinPushes(r,c){
-    return this.boardCells(cell=>this.boardFaction(cell.r,cell.c)!=='temple'
+  ichirinPushes(r,c,p=this.currentPlayerIdx){
+    return this.abilityBoardCells(p,cell=>this.boardFaction(cell.r,cell.c)!=='temple'
       && !(cell.r===r && cell.c===c) && this.canMoveBoardCard(cell.r,cell.c))
       .map(cell=>({...cell,toR:cell.r+Math.sign(cell.r-r),toC:cell.c+Math.sign(cell.c-c),distance:Math.max(Math.abs(cell.r-r),Math.abs(cell.c-c))}))
       .sort((a,b)=>b.distance-a.distance);
@@ -3359,7 +3359,7 @@ class Game {
       const cost=this.abilityCost(id,{r,c});
       if(this.payableCards(p).length<cost || (CARD[id].crown && this.eirinActive()))return -10;
       if(id==='temple_byakuren')return Math.max(0,...this.byakurenOptions(p,r,c).filter(option=>!option.disabled).map(option=>this.byakurenOptionValue(p,r,c,option)));
-      if(id==='temple_shou')return Math.min(this.drawPile.length+cost,this.templeWasteland().length);
+      if(id==='temple_shou')return Math.min(this.drawPile.length+cost,this.templeWasteland(p).length);
       if(id==='temple_murasa')return 2;
       if(id==='sage_kasen')return 2;
       if(id==='sdm_sakuya')return 2;
@@ -3391,9 +3391,9 @@ class Game {
   tileBounds(r,c){return this.shopTileAt(r,c)
     ? {minR:SIZE+2,maxR:SIZE+3,minC:0,maxC:2} : {minR:0,maxR:SIZE-1,minC:0,maxC:SIZE-1};}
   rectCells(anchor,dim,hover=anchor){return computeRectCells(anchor,dim,hover,(r,c)=>this.hasTile(r,c));}
-  rectZones(dim){
+  rectZones(dim,playerIdx=null){
     const regions=[{minR:0,maxR:SIZE-1,minC:0,maxC:SIZE-1}];
-    if(this.shopTiles.length) regions.push(this.tileBounds(SIZE+2,1));
+    if(this.shopTiles.length && !this.players[playerIdx]?.isAI) regions.push(this.tileBounds(SIZE+2,1));
     const zones=[];
     for(const box of regions) for(let r=box.minR;r<=Math.max(box.minR,box.maxR-dim+1);r++)
       for(let c=box.minC;c<=Math.max(box.minC,box.maxC-dim+1);c++){
@@ -3402,9 +3402,14 @@ class Game {
     return zones;
   }
   mainBoardCells(filter=()=>true){return this.boardCells(cell=>inBounds(cell.r,cell.c) && filter(cell));}
+  // Shop coordinates remain legal for humans and trading, never for AI abilities.
+  abilityCells(playerIdx,cells){
+    return this.players[playerIdx]?.isAI ? cells.filter(cell=>inBounds(cell.r,cell.c)) : cells;
+  }
+  abilityBoardCells(playerIdx,filter=()=>true){return this.abilityCells(playerIdx,this.boardCells(filter));}
   selectableBoardCells(playerIdx,filter=()=>true){
     return this.players[playerIdx].isAI
-      ? this.movableBoardCells(cell=>this.canSelectBoardCard(cell.r,cell.c) && filter(cell))
+      ? this.movableBoardCells(cell=>inBounds(cell.r,cell.c) && this.canSelectBoardCard(cell.r,cell.c) && filter(cell))
       : this.boardCells(cell=>this.canSelectBoardCard(cell.r,cell.c) && filter(cell));
   }
   reportBlocked(r,c){
@@ -3424,7 +3429,7 @@ class Game {
   canOverrideShop(playerIdx,slot){
     const forced=this.forcedPlay[playerIdx];
     return !this.cancelled && !this.winner && !this.isPlacementBlocked(playerIdx) && this.kourindouEnabled && Number.isInteger(slot)
-      && !!this.shopCards[slot] && !(this.players[playerIdx].isAI && this.shopCards[slot]==='shop_rinnosuke')
+      && !!this.shopCards[slot] && !this.players[playerIdx].isAI
       && this.players[playerIdx].hand.includes('sage_yukari')
       && this.canOverrideTarget('sage_yukari',this.shopCards[slot])
       && !(forced && forced!=='sage_yukari' && this.players[playerIdx].hand.includes(forced));
@@ -3501,7 +3506,8 @@ class Game {
     this.setWastelandAt(r,c,false);
     return true;
   }
-  moveBoardToDraw(r,c,effect){
+  moveBoardToDraw(r,c,effect,playerIdx=null){
+    if(this.players[playerIdx]?.isAI && !inBounds(r,c))return false;
     if(!this.canReturnBoardToDraw(r,c)) return this.reportBlocked(r,c);
     const id=this.cardAt(r,c);
     this.returnToDrawPile(id,{r,c,effect});
@@ -3575,6 +3581,7 @@ class Game {
   }
   meilingPushes(r,c,includeProtected=false){
     return DIRS8.map(([dr,dc])=>({r:r+dr,c:c+dc,toR:r+2*dr,toC:c+2*dc})).filter(move=>{
+      if(!includeProtected && (!inBounds(move.r,move.c) || !inBounds(move.toR,move.toC)))return false;
       if(!this.canSelectBoardCard(move.r,move.c)) return false;
       if(includeProtected) return !!this.cardAt(move.r,move.c);
       if(!this.canMoveBoardCard(move.r,move.c) || !this.hasTile(move.toR,move.toC) || this.cardAt(move.toR,move.toC)) return false;
@@ -3582,7 +3589,7 @@ class Game {
     });
   }
   yuugiTargets(r,c,includeProtected=false,playerIdx=this.currentPlayerIdx){
-    return DIRS4.map(([dr,dc])=>({r:r+dr,c:c+dc})).filter(cell=>this.canSelectBoardCard(cell.r,cell.c)
+    return this.abilityCells(playerIdx,DIRS4.map(([dr,dc])=>({r:r+dr,c:c+dc}))).filter(cell=>this.canSelectBoardCard(cell.r,cell.c)
       && this.canEnterDiscard(playerIdx,this.cardAt(cell.r,cell.c))
       && (includeProtected ? this.cardAt(cell.r,cell.c) : this.canMoveBoardCard(cell.r,cell.c)));
   }
@@ -3616,9 +3623,10 @@ class Game {
      placement. This reads the board without changing it and is replanned after
      each guessed card resolves its ability. */
   planKaguyaClaim(placement=null,observerIdx=this.currentPlayerIdx){
-    const members=this.factionCells('hourai')
+    const members=this.abilityCells(observerIdx,this.factionCells('hourai'))
       .map(cell=>({...cell,id:this.cardAt(cell.r,cell.c)}));
     if(placement){
+      if(this.players[observerIdx]?.isAI && !inBounds(placement.r,placement.c))return null;
       if(this.cardAt(placement.r,placement.c) || this.wastelandAt(placement.r,placement.c) || this.isProtected(placement.r,placement.c)
         || this.isOnBoard('hourai_kaguya') || this.eirinActive()) return null;
       members.push({...placement,id:'hourai_kaguya'});
@@ -3631,7 +3639,7 @@ class Game {
     // Finish with Eirin so her crown-suppression passive arrives last.
     known.sort((a,b)=>(a.id==='hourai_eirin')-(b.id==='hourai_eirin'));
     const distance=cell=>Math.abs(cell.r-kaguya.r)+Math.abs(cell.c-kaguya.c);
-    const empty=this.emptyCells().filter(cell=>!this.isProtected(cell.r,cell.c) && (!placement || cell.r!==placement.r || cell.c!==placement.c));
+    const empty=this.emptyCells(observerIdx).filter(cell=>!this.isProtected(cell.r,cell.c) && (!placement || cell.r!==placement.r || cell.c!==placement.c));
     const key=cell=>cell.r*SIZE+cell.c;
     const visited=new Set();
     let best=null,bestScore=Infinity;
@@ -3675,10 +3683,10 @@ class Game {
     if(this.isProtected(r,c)) return 0;
     switch(cardId){
       case 'temple_byakuren': return 0;
-      case 'palace_yuugi': return this.payableCards(playerIdx).filter(id=>id!==cardId).length>=2 && this.yuugiTargets(r,c).length ? 1 : 0;
+      case 'palace_yuugi': return this.payableCards(playerIdx).filter(id=>id!==cardId).length>=2 && this.yuugiTargets(r,c,false,playerIdx).length ? 1 : 0;
       case 'haku_yuyuko': {
         if(this.payableCards(playerIdx).filter(id=>id!==cardId).length===0) return 0;
-        const adjacent=this.yuyukoTargets(r,c);
+        const adjacent=this.yuyukoTargets(r,c,playerIdx);
         if(!adjacent.length) return 0;
         const x=Math.min(adjacent.length,this.payableCards(playerIdx).filter(id=>id!==cardId).length);
         return adjacent.reduce((points,cell)=>points+this.pointValue(cell.id),0)*x/adjacent.length;
@@ -3693,7 +3701,7 @@ class Game {
       case 'heaven_iku': {
         if(this.payableCards(playerIdx).filter(id=>id!==cardId).length<3) return 0;
         let best=0;
-        for(const zone of this.rectZones(2)){
+        for(const zone of this.rectZones(2,playerIdx)){
           best=Math.max(best,Math.min(2,this.ikuTargetsForZone(zone,playerIdx).length));
         }
         return best;
@@ -3721,7 +3729,7 @@ class Game {
         const returned=this.payableCards(playerIdx).filter(id=>id!==cardId).length;
         return Math.min(4,this.drawPile.length+returned)-returned;
       }
-      case 'temple_shou': return Math.min(this.drawPile.length+1,this.templeWasteland().length);
+      case 'temple_shou': return Math.min(this.drawPile.length+1,this.templeWasteland(playerIdx).length);
       case 'temple_byakuren': {
         const caster=this.boardCells(cell=>cell.id===cardId)[0] || {r:-1,c:-1};
         return !this.eirinActive() && this.byakurenOptions(playerIdx,caster.r,caster.c).some(option=>option.value==='look' && !option.disabled) ? 1 : 0;
@@ -3753,7 +3761,7 @@ class Game {
   }
   marisaTargets(r,c,avoidAdjacentReimu,includeProtected=false){
     const candidates=includeProtected ? this.boardCells.bind(this) : this.movableBoardCells.bind(this);
-    return candidates(cell=>this.canSelectBoardCard(cell.r,cell.c) && this.canEnterDiscard(this.currentPlayerIdx,cell.id)
+    return candidates(cell=>(includeProtected || inBounds(cell.r,cell.c)) && this.canSelectBoardCard(cell.r,cell.c) && this.canEnterDiscard(this.currentPlayerIdx,cell.id)
       && !CARD[cell.id].crown && !(cell.r===r && cell.c===c)
       && !(avoidAdjacentReimu && cell.id==='reimu' && Math.abs(cell.r-r)+Math.abs(cell.c-c)===1));
   }
@@ -3782,10 +3790,10 @@ class Game {
     return drawn;
   }
 
-  emptyCells(){return this.allTiles().filter(({r,c})=>!this.cardAt(r,c) && !this.wastelandAt(r,c));}
+  emptyCells(playerIdx=null){return this.abilityCells(playerIdx,this.allTiles()).filter(({r,c})=>!this.cardAt(r,c) && !this.wastelandAt(r,c));}
   emptyOrWastelandForCard(card,playerIdx=this.currentPlayerIdx){
     if(this.isPlacementBlocked(playerIdx))return [];
-    return this.allTiles().filter(({r,c})=>{
+    return this.abilityCells(playerIdx,this.allTiles()).filter(({r,c})=>{
       if(this.cardAt(r,c)) return this.canOverrideTarget(card.id,this.cardAt(r,c)) && this.canSelectBoardCard(r,c)
         && (this.abilityId(card.id)==='sage_yukari' || this.canMoveBoardCard(r,c));
       return !this.wastelandAt(r,c) || this.canPlaceOnWasteland(card);
@@ -3889,6 +3897,7 @@ class Game {
     if(this.testMetrics && source?.handOwner!=null && source.effect!=='cost')this.testCardActions(cardId).returnedFromHand++;
   }
   moveBoardToHand(r,c,p,effect){
+    if(this.players[p]?.isAI && !inBounds(r,c))return false;
     const id = this.cardAt(r,c);
     if(!id) return false;
     if(!this.canSelectBoardCard(r,c) || (effect!=='yukari' && !this.canMoveBoardCard(r,c))) return this.reportBlocked(r,c);
@@ -3900,6 +3909,7 @@ class Game {
     this.addToHand(p,id,true);return true;
   }
   moveBoardToDiscard(r,c,p,effect){
+    if(this.players[p]?.isAI && !inBounds(r,c))return false;
     const id = this.cardAt(r,c);
     if(!id) return false;
     if(!this.canMoveBoardCard(r,c) || !this.canSelectBoardCard(r,c)) return this.reportBlocked(r,c);
@@ -3914,6 +3924,7 @@ class Game {
     const targets=[];
     for(const [dr,dc] of DIRS4){
       const nr=r+dr,nc=c+dc;
+      if(this.players[playerIdx]?.isAI && !inBounds(nr,nc))continue;
       if(!this.hasTile(nr,nc)) continue;
       const id=this.cardAt(nr,nc);
       if(id && this.canMoveBoardCard(nr,nc) && this.canSelectBoardCard(nr,nc)
@@ -3923,7 +3934,7 @@ class Game {
     return targets;
   }
   ikuTargetsForZone(zone,playerIdx){
-    return zone.filter(cell=>{
+    return this.abilityCells(playerIdx,zone).filter(cell=>{
       const id=this.cardAt(cell.r,cell.c);
       return id && this.boardFaction(cell.r,cell.c)!=='heaven' && this.canMoveBoardCard(cell.r,cell.c)
         && this.canSelectBoardCard(cell.r,cell.c) && this.canEnterDiscard(playerIdx,id);
@@ -3940,11 +3951,11 @@ class Game {
     const player = this.players[playerIdx];
     if(player.isAI){
       await sleep(600);
-      const tiles=this.allTiles(),anchor=tiles[Math.floor(Math.random()*tiles.length)];
+      const tiles=this.abilityCells(playerIdx,this.allTiles()),anchor=tiles[Math.floor(Math.random()*tiles.length)];
       const dirs = [{r:-1,c:-1}, {r:-1,c:1}, {r:1,c:-1}, {r:1,c:1}];
       const dir = dirs[Math.floor(Math.random()*dirs.length)];
       const hover = { r: anchor.r+dir.r, c: anchor.c+dir.c };
-      return this.rectCells(anchor,dim,hover);
+      return this.abilityCells(playerIdx,this.rectCells(anchor,dim,hover));
     }
     return await this.ui.pickRectByDrag(dim, title);
   }
@@ -3952,7 +3963,7 @@ class Game {
   /* Iku chooses a complete square. minCards is zero because fewer than two targets
      are allowed; the AI counts only cards this ability can actually send away. */
   async chooseOccupiedRectArea(playerIdx, dim, minCards, title, targetable=()=>true){
-    const zones=this.rectZones(dim).filter(cells=>cells.filter(cell=>this.cardAt(cell.r,cell.c)).length>=minCards);
+    const zones=this.rectZones(dim,playerIdx).filter(cells=>cells.filter(cell=>this.cardAt(cell.r,cell.c)).length>=minCards);
     if(!zones.length) return null;
     if(this.players[playerIdx].isAI){
       await sleep(600);
@@ -3996,6 +4007,7 @@ class Game {
     return await this.ui.pickFromList(title, options);
   }
   async chooseCell(playerIdx, cells, title){
+    cells=this.abilityCells(playerIdx,cells);
     if(!cells.length) return null;
     const player = this.players[playerIdx];
     if(player.isAI){
@@ -4006,7 +4018,7 @@ class Game {
   }
   async chooseCells(playerIdx, count, cells, title){
     const chosen = [];
-    let remaining = cells.slice();
+    let remaining = this.abilityCells(playerIdx,cells).slice();
     for(let i=0;i<count && remaining.length;i++){
       const pick = await this.chooseCell(playerIdx, remaining, `${title} (${i+1}/${count})`);
       if(!pick) break;
@@ -4053,6 +4065,7 @@ class Game {
     return sage.length ? sage : ids;
   }
   preferSageCells(playerIdx, cells, idAt){
+    cells=this.abilityCells(playerIdx,cells);
     if(!this.players[playerIdx].isAI || this.aiMakesMistake('target')) return cells;
     const sageCells = cells.filter(cell=>CARD[idAt(cell)].faction==='sage');
     return sageCells.length ? sageCells : cells;
@@ -4209,7 +4222,7 @@ class Game {
     for(const p of this.players){
       const triggerId=p.hand.find(id=>CARD[this.abilityId(id)]?.trigger && !this.isCrownAbilityDisabled(id));
       if(!this.isPlacementBlocked(p.idx) && triggerId){
-        const cells = this.emptyCells();
+        const cells = this.emptyCells(p.idx);
         if(!cells.length) return null;
         this.removeFromHand(p.idx,triggerId);
         return {ownerIdx:p.idx,cardId:triggerId,cellCandidates:cells};
@@ -4247,7 +4260,9 @@ class Game {
   /* ---------- Placement + ability resolution ---------- */
   async internalPlace(cardId, r, c, playerIdx, depth, crownEffectId=null){
     depth = depth||0;
-    if(this.cancelled || this.isPlacementBlocked(playerIdx) || !this.hasTile(r,c) || (this.cardAt(r,c) && this.isProtected(r,c) && this.abilityId(cardId)!=='sage_yukari')) return {};
+    if(this.cancelled || this.isPlacementBlocked(playerIdx) || !this.hasTile(r,c)
+      || (this.players[playerIdx].isAI && !inBounds(r,c))
+      || (this.cardAt(r,c) && this.isProtected(r,c) && this.abilityId(cardId)!=='sage_yukari')) return {};
     const occupied=this.cardAt(r,c);
     if(occupied){
       if(!this.canOverrideTarget(cardId,occupied) || !this.moveBoardToHand(r,c,playerIdx,'yukari')) return {};
@@ -4297,7 +4312,7 @@ class Game {
     const self = this;
     const me = self.players[playerIdx].name;
     const meS = possessive(me);
-    if(this.cancelled || depth>=6) return {};
+    if(this.cancelled || depth>=6 || (this.players[playerIdx].isAI && !inBounds(r,c))) return {};
     cardId=this.abilityId(cardId);
     if(this.isProtected(r,c) && cardId!=='sage_yukari'){ this.log(`${CARD[cardId].name} is silenced by Rinnosuke.`); return {}; }
     if(CARD[cardId].crown && this.eirinActive() && cardId!=='hourai_eirin')return {};
@@ -4354,7 +4369,7 @@ class Game {
           self.log(`${me} looks at ${peek.length} draw-pile card${peek.length===1?'':'s'}, takes one and orders the rest.`);
           self.render();continue;
         }
-        const targets=self.templeReturnTargets(r,c);
+        const targets=self.templeReturnTargets(r,c,playerIdx);
         const chosen=self.players[playerIdx].isAI && !self.aiMakesMistake('target')
           ? targets.slice().sort((a,b)=>(self.boardFaction(a.r,a.c)==='temple')-(self.boardFaction(b.r,b.c)==='temple') || self.pointValue(b.id)-self.pointValue(a.id)).slice(0,3)
           : await self.chooseCells(playerIdx,Math.min(3,targets.length),targets,'Byakuren — choose other cards to return to the draw pile');
@@ -4365,7 +4380,7 @@ class Game {
         let hit=0;
         for(const cell of chosen.slice(0,3)){
           if(cell.r===r && cell.c===c)continue;
-          if(self.canSelectBoardCard(cell.r,cell.c) && self.moveBoardToDraw(cell.r,cell.c,'byakuren')){
+          if(self.canSelectBoardCard(cell.r,cell.c) && self.moveBoardToDraw(cell.r,cell.c,'byakuren',playerIdx)){
             self.setWastelandAt(cell.r,cell.c,true);hit++;
           }
         }
@@ -4379,7 +4394,7 @@ class Game {
       }
       case 'temple_shou': {
         if(!await self.payCost1(playerIdx) || self.cancelled)break;
-        const waste=self.templeWasteland();
+        const waste=self.templeWasteland(playerIdx);
         self.presentTemple('shou',{r,c,tiles:waste});
         const count=Math.min(waste.length,self.drawPile.length);
         for(let i=0;i<count;i++){
@@ -4416,12 +4431,12 @@ class Game {
         if(!await self.payCost2(playerIdx) || self.cancelled)break;
         self.presentTemple('ichirin',{r,c});
         let pushed=0,returned=0;
-        for(const move of self.ichirinPushes(r,c)){
+        for(const move of self.ichirinPushes(r,c,playerIdx)){
           const id=self.cardAt(move.r,move.c);
           if(!id)continue;
           const inside=inBounds(move.r,move.c) ? inBounds(move.toR,move.toC) : !inBounds(move.toR,move.toC) && self.hasTile(move.toR,move.toC);
           if(!inside){
-            if(self.moveBoardToDraw(move.r,move.c,'ichirin'))returned++;
+            if(self.moveBoardToDraw(move.r,move.c,'ichirin',playerIdx))returned++;
           }else if(!self.cardAt(move.toR,move.toC) && (!self.wastelandAt(move.toR,move.toC) || self.canPlaceOnWasteland(CARD[id]))){
             try{self.ui?.onBoardPush?.({cardId:id,source:{r,c},from:move,to:{r:move.toR,c:move.toC},effect:'ichirin'});}catch(_error){}
             self.setCardAt(move.r,move.c,null);self.setCardAt(move.toR,move.toC,id);pushed++;
@@ -4474,7 +4489,7 @@ class Game {
         break;
       }
       case 'palace_yuugi': {
-        const targets=self.yuugiTargets(r,c,!self.players[playerIdx].isAI);
+        const targets=self.yuugiTargets(r,c,!self.players[playerIdx].isAI,playerIdx);
         if(!targets.length || !await self.payCost2(playerIdx)) break;
         const cell=await self.chooseBoardCell(playerIdx,targets,'Yuugi: send an orthogonally adjacent card to your discard pile');
         if(cell){
@@ -4584,7 +4599,7 @@ class Game {
         };
       }
       case 'haku_yuyuko': {
-        const adjacent=self.yuyukoTargets(r,c);
+        const adjacent=self.yuyukoTargets(r,c,playerIdx);
         const maxX=Math.min(adjacent.length,self.payableCards(playerIdx).length);
         if(!maxX){ self.log(`${meS} Yuyuko has no eligible adjacent target or no cards to pay her cost.`); break; }
         const roman=['','I','II','III','IV'];
@@ -4613,7 +4628,7 @@ class Game {
         let first=true;
         while(guard<6){
           guard++;
-          const cells = self.emptyCells();
+          const cells = self.emptyCells(playerIdx);
           if(!cells.length){ self.log(`${meS} Kaguya finds no empty space left on the board.`); break; }
           if(!self.players[playerIdx].isAI && !self.players.some(pl=>pl.hand.some(id=>CARD[id].faction==='hourai'))){
             self.log(`${meS} Kaguya finds no Eientei cards left in any player's hand.`);
@@ -4683,7 +4698,7 @@ class Game {
       }
       case 'mtn_kanako': {
         const inHand = self.players[playerIdx].hand.filter(id=>CARD[id].faction==='mountain');
-        const cells = self.emptyCells();
+        const cells = self.emptyCells(playerIdx);
         if(!inHand.length || !cells.length){
           self.log(`${meS} Kanako has no Youkai Mountain card to place (or no room on the board).`);
           break;
@@ -4703,7 +4718,7 @@ class Game {
         break;
       }
       case 'mtn_suwako': {
-        const targets = self.emptyCells();
+        const targets = self.emptyCells(playerIdx);
         const count = 3 * (self.hasActiveAbility('mtn_kanako') ? 2 : 1);
         const chosen = await self.chooseCells(playerIdx, Math.min(count, targets.length), targets, 'Suwako: designate wasteland');
         if(chosen.length && self.ui && self.ui.onWastelandCreate){
@@ -4842,7 +4857,7 @@ class Game {
         self.log(drawnId ? `${meS} Ran draws ${CARD[drawnId].name}.` : `${meS} Ran finds the draw pile empty.`);
         if(drawnId && self.isActiveOnBoard('sage_yukari')){
           const cardObj = CARD[drawnId];
-          const spaces = self.emptyOrWastelandForCard(cardObj);
+          const spaces = self.emptyOrWastelandForCard(cardObj,playerIdx);
           const cells = self.players[playerIdx].isAI ? aiPlacementCells(self, drawnId, spaces) : spaces;
           if(cells.length){
             self.removeFromHand(playerIdx, drawnId);
@@ -4937,7 +4952,7 @@ class Game {
         const clearedCells=[];
         for(const [dr,dc] of DIRS8){
           const nr=r+dr, nc=c+dc;
-          if(self.hasTile(nr,nc) && self.wastelandAt(nr,nc)) clearedCells.push({r:nr,c:nc});
+          if((!self.players[playerIdx].isAI || inBounds(nr,nc)) && self.hasTile(nr,nc) && self.wastelandAt(nr,nc)) clearedCells.push({r:nr,c:nc});
         }
         if(clearedCells.length) self.presentAbility('clownpiece',{r,c,playerIdx,cells:clearedCells});
         let cleared=0;
@@ -4951,7 +4966,7 @@ class Game {
         const paid = await self.payCost1(playerIdx);
         if(!paid){ self.log(`${me} declines Eiki's cost — the ability is skipped.`); break; }
         const counts = Object.keys(FACTIONS).filter(fk=>FACTIONS[fk].size>0).map(fk => ({
-          fk, cells: self.boardCells(cell=>self.boardFaction(cell.r,cell.c)===fk)
+          fk, cells: self.abilityBoardCells(playerIdx,cell=>self.boardFaction(cell.r,cell.c)===fk)
         })).filter(x=>x.cells.length>0);
         if(counts.length){
           const max = Math.max(...counts.map(x=>x.cells.length));
@@ -4964,7 +4979,7 @@ class Game {
           }
           if(chosen){
             let returned=0;
-            for(const cell of chosen.cells) if(self.moveBoardToDraw(cell.r,cell.c,'eiki')) returned++;
+            for(const cell of chosen.cells) if(self.moveBoardToDraw(cell.r,cell.c,'eiki',playerIdx)) returned++;
             self.shuffleDrawPile();
             self.log(`${meS} Eiki returns ${returned} ${FACTIONS[chosen.fk].name} card${returned===1?'':'s'} to the draw pile.${returned<chosen.cells.length ? ' Protected cards stay in place.' : ''}`);
           }
@@ -4999,7 +5014,7 @@ class Game {
         break;
       }
       case 'heaven_tenshi': {
-        const targets = self.boardCells(cell=>self.boardFaction(cell.r,cell.c)!=='heaven' && self.canReturnBoardToDraw(cell.r,cell.c));
+        const targets = self.abilityBoardCells(playerIdx,cell=>self.boardFaction(cell.r,cell.c)!=='heaven' && self.canReturnBoardToDraw(cell.r,cell.c));
         if(!targets.length){ self.log(`${meS} Tenshi finds no non-Heaven cards on the board.`); break; }
         if(self.players[playerIdx].isAI && self.tenshiOccupiedCount() < Math.ceil(SIZE*SIZE/2)){
           self.log(`${meS} Tenshi waits until cards or wasteland occupy at least half the board.`);
@@ -5019,7 +5034,7 @@ class Game {
         }
         for(const cell of targets){
           const id = self.cardAt(cell.r,cell.c);
-          self.moveBoardToDraw(cell.r,cell.c,'tenshi');
+          self.moveBoardToDraw(cell.r,cell.c,'tenshi',playerIdx);
         }
         self.shuffleDrawPile();
         self.log(`${meS} Tenshi returns ${targets.length} non-Heaven card${targets.length===1?'':'s'} from the board to the draw pile.`);
@@ -5028,7 +5043,7 @@ class Game {
       }
       case 'heaven_iku': {
         const minTargets=self.winCount(self.players[playerIdx])>=6 ? 1 : 2;
-        if(self.players[playerIdx].isAI && !self.rectZones(2).some(zone=>self.ikuTargetsForZone(zone,playerIdx).length>=minTargets)){
+        if(self.players[playerIdx].isAI && !self.rectZones(2,playerIdx).some(zone=>self.ikuTargetsForZone(zone,playerIdx).length>=minTargets)){
           self.log(`${meS} Iku waits for an area with ${minTargets} eligible card${minTargets===1?'':'s'}.`);
           break;
         }
@@ -8807,35 +8822,37 @@ function aiRecordDecision(playerIdx,action,allowTrade){
 
 
 function aiPlacementCells(currentGame, cardId, spaces){
+  spaces=spaces.filter(cell=>inBounds(cell.r,cell.c));
   if(currentGame.abilityId(cardId)==='sage_yukari') return spaces.filter(cell=>currentGame.cardAt(cell.r,cell.c)!=='shop_rinnosuke');
   if(cardId==='haku_yuyuko') return spaces.filter(cell=>currentGame.adjacentOccupiedCount(cell.r,cell.c)>=2);
   if(cardId==='marisa') return spaces.filter(cell=>currentGame.safeMarisaPlacement(cell.r,cell.c));
-  if(cardId==='reimu' && !currentGame.movableBoardCells(cell=>CARD[cell.id].crown && currentGame.canSelectBoardCard(cell.r,cell.c)).length) return [];
+  if(cardId==='reimu' && !currentGame.mainBoardCells(cell=>CARD[cell.id].crown && currentGame.canMoveBoardCard(cell.r,cell.c) && currentGame.canSelectBoardCard(cell.r,cell.c)).length) return [];
   return spaces;
 }
 
 function aiCostCanResolve(playerIdx, cardId, r, c){
+  if(!inBounds(r,c))return false;
   const card=CARD[cardId];
   if(game.isProtected(r,c) && cardId!=='sage_yukari') return false;
-  if(cardId==='palace_yuugi') return game.payableCards(playerIdx).filter(id=>id!==cardId).length>=2 && game.yuugiTargets(r,c).length>0;
+  if(cardId==='palace_yuugi') return game.payableCards(playerIdx).filter(id=>id!==cardId).length>=2 && game.yuugiTargets(r,c,false,playerIdx).length>0;
   if(cardId==='hell_kutaka') return game.wastelandAt(r,c) && game.drawPile.some(id=>CARD[id].faction==='hell');
   if(cardId==='sdm_meiling') return game.meilingPushes(r,c).length>0;
   // Kaguya herself leaves the hand before her ability checks for targets.
   if(cardId==='hourai_kaguya') return !game.eirinActive()
-    && game.emptyCells().length>1
+    && game.emptyCells(playerIdx).length>1
     && (game.knownHandCards(playerIdx,'hourai').some(c=>c.id!==cardId)
       || game.players.some(p=>p.idx!==playerIdx && p.hand.length>0));
   if(cardId==='haku_yuyuko') return game.payableCards(playerIdx).filter(id=>id!==cardId).length>0
-    && game.yuyukoTargets(r,c).length>0 && !game.eirinActive();
+    && game.yuyukoTargets(r,c,playerIdx).length>0 && !game.eirinActive();
   const cost=game.abilityCost(cardId,{r,c});
-  if(cardId==='temple_shou' && !game.templeWasteland().length)return false;
+  if(cardId==='temple_shou' && !game.templeWasteland(playerIdx).length)return false;
   if(cardId==='temple_byakuren')return !game.eirinActive() && game.byakurenOptions(playerIdx,r,c).some(option=>!option.disabled);
-  if(cardId==='temple_ichirin' && !game.ichirinPushes(r,c).length)return false;
+  if(cardId==='temple_ichirin' && !game.ichirinPushes(r,c,playerIdx).length)return false;
   if(!cost) return true;
   if(game.payableCards(playerIdx).filter(id=>id!==cardId).length<cost || (card.crown && game.eirinActive())) return false;
   if(cardId==='palace_satori') return game.players.some(pl=>pl.idx!==playerIdx && pl.hand.length>0);
   if(cardId==='heaven_tenshi') return game.tenshiOccupiedCount({r,c}) >= Math.ceil(SIZE*SIZE/2)
-    && game.boardCells(cell=>game.boardFaction(cell.r,cell.c)!=='heaven' && game.canReturnBoardToDraw(cell.r,cell.c)).length>0;
+    && game.abilityBoardCells(playerIdx,cell=>game.boardFaction(cell.r,cell.c)!=='heaven' && game.canReturnBoardToDraw(cell.r,cell.c)).length>0;
   if(cardId==='heaven_iku') return game.estimateDirectDiscardPoints(playerIdx,cardId,r,c)>=(game.winCount(game.players[playerIdx])>=6?1:2);
   return true;
 }
@@ -8953,8 +8970,8 @@ function aiMaterialValue(playerIdx,id){
   if(AI_ONE_MORE.has(id) && aiFactionStillPossible(card.faction))value+=.4;
   if(id==='mtn_nitori' && game.players[playerIdx].hand.includes('mtn_kanako'))value+=.6;
   if(id==='hell_hecatia' && progress>=2 && aiFactionStillPossible('hell'))value+=.5;
-  if(id==='sage_yukari' && game.boardCells(cell=>game.canOverrideTarget(id,cell.id) && game.canSelectBoardCard(cell.r,cell.c)).length)value+=.55;
-  if(id==='sage_matara' && game.boardCells(cell=>!AI_PASSIVE_ABILITIES.has(game.abilityId(cell.id)) && game.abilityId(cell.id)!=='sage_matara').length)value+=.5;
+  if(id==='sage_yukari' && game.selectableBoardCells(playerIdx,cell=>game.canOverrideTarget(id,cell.id)).length)value+=.55;
+  if(id==='sage_matara' && game.selectableBoardCells(playerIdx,cell=>!AI_PASSIVE_ABILITIES.has(game.abilityId(cell.id)) && game.abilityId(cell.id)!=='sage_matara').length)value+=.5;
   return value;
 }
 
@@ -9005,6 +9022,7 @@ function aiRemovalValue(playerIdx,cells,direct=0,payment=[]){
 }
 
 function aiBestDiscardTarget(playerIdx,cells){
+  cells=cells.filter(cell=>inBounds(cell.r,cell.c));
   let best=null;
   for(const cell of cells){
     const value=aiRemovalValue(playerIdx,[cell],game.pointValue(game.cardAt(cell.r,cell.c)));
@@ -9014,7 +9032,7 @@ function aiBestDiscardTarget(playerIdx,cells){
 }
 
 function aiBestEikiFaction(playerIdx,payment=[]){
-  const groups=Object.keys(FACTIONS).filter(f=>FACTIONS[f].size).map(faction=>({faction,cells:game.boardCells(cell=>game.boardFaction(cell.r,cell.c)===faction)}));
+  const groups=Object.keys(FACTIONS).filter(f=>FACTIONS[f].size).map(faction=>({faction,cells:game.abilityBoardCells(playerIdx,cell=>game.boardFaction(cell.r,cell.c)===faction)}));
   const maximum=Math.max(0,...groups.map(group=>group.cells.length));
   let best=null;
   for(const group of groups.filter(group=>maximum && group.cells.length===maximum)){
@@ -9026,6 +9044,7 @@ function aiBestEikiFaction(playerIdx,payment=[]){
 }
 
 function aiCurrentAbilityPlan(playerIdx,abilityId,r,c){
+  if(!inBounds(r,c))return {utility:0,direct:0,handGain:0,bonus:0,skip:true,abilityId};
   abilityId=game.abilityId(abilityId);
   const actor=game.cardAt(r,c)||abilityId,hand=game.players[playerIdx].hand.filter(id=>id!==actor);
   const none={utility:0,direct:0,handGain:0,bonus:0,skip:true,abilityId};
@@ -9051,7 +9070,7 @@ function aiCurrentAbilityPlan(playerIdx,abilityId,r,c){
       if(direct<=1 && game.winCount(game.players[playerIdx])<6)utility=0;break;
     }
     case 'heaven_iku': {
-      for(const zone of game.rectZones(2)){
+      for(const zone of game.rectZones(2,playerIdx)){
         const cells=game.ikuTargetsForZone(zone,playerIdx),n=Math.min(2,cells.length);if(!n)continue;
         const points=cells.reduce((sum,cell)=>sum+game.pointValue(game.cardAt(cell.r,cell.c)),0)*n/cells.length;
         const value=points+aiRemovalValue(playerIdx,cells,0,[])*n/cells.length-fee;
@@ -9065,12 +9084,12 @@ function aiCurrentAbilityPlan(playerIdx,abilityId,r,c){
     }
     case 'heaven_tenshi': {
       if(game.tenshiOccupiedCount()<Math.ceil(SIZE*SIZE/2))return none;
-      const cells=game.boardCells(cell=>game.boardFaction(cell.r,cell.c)!=='heaven' && game.canReturnBoardToDraw(cell.r,cell.c));
+      const cells=game.abilityBoardCells(playerIdx,cell=>game.boardFaction(cell.r,cell.c)!=='heaven' && game.canReturnBoardToDraw(cell.r,cell.c));
       if(!cells.length)return none;
       utility=aiRemovalValue(playerIdx,cells,0,payment)+cells.length*.12;break;
     }
     case 'temple_ichirin': {
-      const moves=game.ichirinPushes(r,c),before=aiBoardPlanValue(playerIdx),threat=aiPublicThreatValue(playerIdx);
+      const moves=game.ichirinPushes(r,c,playerIdx),before=aiBoardPlanValue(playerIdx),threat=aiPublicThreatValue(playerIdx);
       utility=aiWithRulePreview(()=>{
         game.players[playerIdx].hand=hand.filter(id=>!payment.includes(id));let moved=0;
         for(const move of moves){
@@ -9108,7 +9127,7 @@ function aiCurrentAbilityPlan(playerIdx,abilityId,r,c){
     case 'mtn_kanako': {
       const held=hand.filter(id=>CARD[id].faction==='mountain');
       bonus=held.length?1:0;utility=bonus*.85;
-      for(const id of held)for(const cell of game.emptyOrWastelandForCard(CARD[id],playerIdx)){
+      for(const id of held)for(const cell of aiPlacementCells(game,id,game.emptyOrWastelandForCard(CARD[id],playerIdx))){
         const claims=aiWithPlacement(id,cell,()=>aiCurrentClaims(playerIdx),playerIdx);
         const points=claims.reduce((n,claim)=>n+claim.points,0);
         if(points>utility){utility=points;target={cardId:id,cell};}
@@ -9152,8 +9171,8 @@ function aiCurrentAbilityPlan(playerIdx,abilityId,r,c){
     }
     case 'sdm_patchouli': handGain=game.estimateHandGain(playerIdx,abilityId);utility=handGain*.7;break;
     case 'yuuka': handGain=Math.min(4,game.drawPile.length+hand.filter(id=>game.canHandEnterPile(id)).length)-hand.filter(id=>game.canHandEnterPile(id)).length;
-      utility=handGain*.55+(game.templeWasteland().length?.3:0);break;
-    case 'temple_shou': handGain=Math.min(game.drawPile.length+cost,game.templeWasteland().length);utility=handGain*.55-fee;break;
+      utility=handGain*.55+(game.templeWasteland(playerIdx).length?.3:0);break;
+    case 'temple_shou': handGain=Math.min(game.drawPile.length+cost,game.templeWasteland(playerIdx).length);utility=handGain*.55-fee;break;
     case 'temple_murasa': utility=game.players.some(p=>p.idx!==playerIdx && p.hand.length)?1.1:0;break;
     case 'hourai_reisen': utility=game.players.some(p=>p.idx!==playerIdx && p.hand.length)?.4:0;break;
     case 'mtn_aya': utility=game.players.some(p=>p.idx!==playerIdx && p.hand.length)?.3:0;break;
@@ -9179,6 +9198,7 @@ function aiCurrentAbilityPlan(playerIdx,abilityId,r,c){
 }
 
 function aiCurrentBestChannel(playerIdx,r,c){
+  if(!inBounds(r,c))return null;
   let best=null;
   for(const cell of game.selectableBoardCells(playerIdx,cell=>!(cell.r===r && cell.c===c))){
     const abilityId=game.abilityId(game.cardAt(cell.r,cell.c));
@@ -9225,8 +9245,8 @@ function aiChannelClaims(playerIdx,plan,r,c){
     const id=plan.abilityId,target=plan.target,actor=game.cardAt(r,c);
     if(plan.payment?.length)game.players[playerIdx].hand=game.players[playerIdx].hand.filter(card=>!plan.payment.includes(card));
     if((id==='marisa' || id==='palace_yuugi' || id==='reimu') && target)game.setCardAt(target.r,target.c,null);
-    if(id==='hell_eiki' && target)for(const cell of game.boardCells(cell=>game.boardFaction(cell.r,cell.c)===target && game.canReturnBoardToDraw(cell.r,cell.c)))game.setCardAt(cell.r,cell.c,null);
-    if(id==='heaven_tenshi')for(const cell of game.boardCells(cell=>game.boardFaction(cell.r,cell.c)!=='heaven' && game.canReturnBoardToDraw(cell.r,cell.c)))game.setCardAt(cell.r,cell.c,null);
+    if(id==='hell_eiki' && target)for(const cell of game.abilityBoardCells(playerIdx,cell=>game.boardFaction(cell.r,cell.c)===target && game.canReturnBoardToDraw(cell.r,cell.c)))game.setCardAt(cell.r,cell.c,null);
+    if(id==='heaven_tenshi')for(const cell of game.abilityBoardCells(playerIdx,cell=>game.boardFaction(cell.r,cell.c)!=='heaven' && game.canReturnBoardToDraw(cell.r,cell.c)))game.setCardAt(cell.r,cell.c,null);
     if(id==='hell_komachi' && target){
       const other=game.cardAt(target.r,target.c);game.setCardAt(target.r,target.c,actor);game.setCardAt(r,c,other);
     }
@@ -9282,7 +9302,7 @@ function aiCanConnectFaction(faction,missing){
   const members=game.factionCells(faction);
   if(!members.length)return false;
   if(missing===0)return game.findFactionClaim(faction).length>0;
-  const empty=game.emptyCells().filter(cell=>!game.isProtected(cell.r,cell.c));
+  const empty=game.emptyCells().filter(cell=>inBounds(cell.r,cell.c) && !game.isProtected(cell.r,cell.c));
   if(empty.length<missing)return false;
   const seen=new Set();let budget=1500;
   const search=added=>{
@@ -9395,7 +9415,7 @@ function aiCurrentEvaluateCard(playerIdx,cardId){
         forecast={rate:0,size:0,faction:null,bonus:0,missing:0};
       const ownMembers=game.factionCells(card.faction);
       const comboReady=forecast.bonus>0 && forecast.missing<=forecast.bonus;
-      const futureSpace=game.emptyCells().some(t=>!game.isProtected(t.r,t.c));
+      const futureSpace=game.emptyCells(playerIdx).some(t=>!game.isProtected(t.r,t.c));
       const reserveCombo=cardId==='mtn_kanako'
         ? !points && !comboReady
         : (AI_ONE_MORE.has(cardId) || cardId==='palace_koishi') && !points && !comboReady && futureSpace
@@ -9468,6 +9488,8 @@ function aiCurrentChooseCostCards(playerIdx,eligible,count){
 }
 
 function aiCurrentFactionPlacement(playerIdx,cardId,cells,faction=CARD[cardId].faction){
+  cells=cells.filter(cell=>inBounds(cell.r,cell.c));
+  if(!cells.length)return null;
   if(game.aiMakesMistake('target'))return cells[Math.floor(Math.random()*cells.length)];
   let best=null,bestScore=-Infinity;
   for(const cell of cells){
@@ -9487,6 +9509,8 @@ function aiCurrentFactionPlacement(playerIdx,cardId,cells,faction=CARD[cardId].f
 }
 
 function aiCurrentKomachiTarget(playerIdx,r,c,cells,allowMistake=true){
+  cells=cells.filter(cell=>inBounds(cell.r,cell.c));
+  if(!cells.length)return null;
   if(allowMistake && game.aiMakesMistake('target'))return cells[Math.floor(Math.random()*cells.length)];
   const caster=game.cardAt(r,c);let best=null,bestValue=-Infinity;
   for(const cell of cells){
@@ -9541,42 +9565,44 @@ async function aiCurrentDecideAction(playerIdx,allowTrade=true){
 }
 
 
-/* Frozen 955c631 decisions, faction matching adapted to the shared four-card-only Kasen rule. */
-const AI_PREVIOUS_DIGEST='3ed15a893019fd456e0cf94302e6e729ed559ee4b2044f06ec9061c96a1d0f8a';
+/* Frozen 955c631 decisions, adapted to shared Kasen matching and main-board AI target rules. */
+const AI_PREVIOUS_DIGEST='3945548c57b1d6c5ebbbb09dfe54f5e0db789baa0002eb39d02cf3695e0f1481';
 const AI_PREVIOUS_POLICY=(()=>{
 const NO_PLACED_ABILITY = new Set(['sage_kasen', 'hourai_eirin']);
 const DRAW_ABILITY_CARDS = new Set(['hourai_mokou','mtn_sanae','sage_ran','yuuka','hell_kutaka','temple_shou']);
 
 function aiPlacementCells(currentGame, cardId, spaces){
+  spaces=spaces.filter(cell=>inBounds(cell.r,cell.c));
   if(currentGame.abilityId(cardId)==='sage_yukari') return spaces.filter(cell=>currentGame.cardAt(cell.r,cell.c)!=='shop_rinnosuke');
   if(cardId==='haku_yuyuko') return spaces.filter(cell=>currentGame.adjacentOccupiedCount(cell.r,cell.c)>=2);
   if(cardId==='marisa') return spaces.filter(cell=>currentGame.safeMarisaPlacement(cell.r,cell.c));
-  if(cardId==='reimu' && !currentGame.movableBoardCells(cell=>CARD[cell.id].crown && currentGame.canSelectBoardCard(cell.r,cell.c)).length) return [];
+  if(cardId==='reimu' && !currentGame.mainBoardCells(cell=>CARD[cell.id].crown && currentGame.canMoveBoardCard(cell.r,cell.c) && currentGame.canSelectBoardCard(cell.r,cell.c)).length) return [];
   return spaces;
 }
 
 function aiCostCanResolve(playerIdx, cardId, r, c){
+  if(!inBounds(r,c))return false;
   const card=CARD[cardId];
   if(game.isProtected(r,c) && cardId!=='sage_yukari') return false;
-  if(cardId==='palace_yuugi') return game.payableCards(playerIdx).filter(id=>id!==cardId).length>=2 && game.yuugiTargets(r,c).length>0;
+  if(cardId==='palace_yuugi') return game.payableCards(playerIdx).filter(id=>id!==cardId).length>=2 && game.yuugiTargets(r,c,false,playerIdx).length>0;
   if(cardId==='hell_kutaka') return game.wastelandAt(r,c) && game.drawPile.some(id=>CARD[id].faction==='hell');
   if(cardId==='sdm_meiling') return game.meilingPushes(r,c).length>0;
   // Kaguya herself leaves the hand before her ability checks for targets.
   if(cardId==='hourai_kaguya') return !game.eirinActive()
-    && game.emptyCells().length>1
+    && game.emptyCells(playerIdx).length>1
     && (game.knownHandCards(playerIdx,'hourai').some(c=>c.id!==cardId)
       || game.players.some(p=>p.idx!==playerIdx && p.hand.length>0));
   if(cardId==='haku_yuyuko') return game.payableCards(playerIdx).filter(id=>id!==cardId).length>0
-    && game.yuyukoTargets(r,c).length>0 && !game.eirinActive();
+    && game.yuyukoTargets(r,c,playerIdx).length>0 && !game.eirinActive();
   const cost=game.abilityCost(cardId,{r,c});
-  if(cardId==='temple_shou' && !game.templeWasteland().length)return false;
+  if(cardId==='temple_shou' && !game.templeWasteland(playerIdx).length)return false;
   if(cardId==='temple_byakuren')return !game.eirinActive() && game.byakurenOptions(playerIdx,r,c).some(option=>!option.disabled);
-  if(cardId==='temple_ichirin' && !game.ichirinPushes(r,c).length)return false;
+  if(cardId==='temple_ichirin' && !game.ichirinPushes(r,c,playerIdx).length)return false;
   if(!cost) return true;
   if(game.payableCards(playerIdx).filter(id=>id!==cardId).length<cost || (card.crown && game.eirinActive())) return false;
   if(cardId==='palace_satori') return game.players.some(pl=>pl.idx!==playerIdx && pl.hand.length>0);
   if(cardId==='heaven_tenshi') return game.tenshiOccupiedCount({r,c}) >= Math.ceil(SIZE*SIZE/2)
-    && game.boardCells(cell=>game.boardFaction(cell.r,cell.c)!=='heaven' && game.canReturnBoardToDraw(cell.r,cell.c)).length>0;
+    && game.abilityBoardCells(playerIdx,cell=>game.boardFaction(cell.r,cell.c)!=='heaven' && game.canReturnBoardToDraw(cell.r,cell.c)).length>0;
   if(cardId==='heaven_iku') return game.estimateDirectDiscardPoints(playerIdx,cardId,r,c)>=(game.winCount(game.players[playerIdx])>=6?1:2);
   return true;
 }
@@ -9694,8 +9720,8 @@ function aiMaterialValue(playerIdx,id){
   if(AI_ONE_MORE.has(id) && aiFactionStillPossible(card.faction))value+=.4;
   if(id==='mtn_nitori' && game.players[playerIdx].hand.includes('mtn_kanako'))value+=.6;
   if(id==='hell_hecatia' && progress>=2 && aiFactionStillPossible('hell'))value+=.5;
-  if(id==='sage_yukari' && game.boardCells(cell=>game.canOverrideTarget(id,cell.id) && game.canSelectBoardCard(cell.r,cell.c)).length)value+=.55;
-  if(id==='sage_matara' && game.boardCells(cell=>!AI_PASSIVE_ABILITIES.has(game.abilityId(cell.id)) && game.abilityId(cell.id)!=='sage_matara').length)value+=.5;
+  if(id==='sage_yukari' && game.selectableBoardCells(playerIdx,cell=>game.canOverrideTarget(id,cell.id)).length)value+=.55;
+  if(id==='sage_matara' && game.selectableBoardCells(playerIdx,cell=>!AI_PASSIVE_ABILITIES.has(game.abilityId(cell.id)) && game.abilityId(cell.id)!=='sage_matara').length)value+=.5;
   return value;
 }
 
@@ -9746,6 +9772,7 @@ function aiRemovalValue(playerIdx,cells,direct=0,payment=[]){
 }
 
 function aiBestDiscardTarget(playerIdx,cells){
+  cells=cells.filter(cell=>inBounds(cell.r,cell.c));
   let best=null;
   for(const cell of cells){
     const value=aiRemovalValue(playerIdx,[cell],game.pointValue(game.cardAt(cell.r,cell.c)));
@@ -9755,7 +9782,7 @@ function aiBestDiscardTarget(playerIdx,cells){
 }
 
 function aiBestEikiFaction(playerIdx,payment=[]){
-  const groups=Object.keys(FACTIONS).filter(f=>FACTIONS[f].size).map(faction=>({faction,cells:game.boardCells(cell=>game.boardFaction(cell.r,cell.c)===faction)}));
+  const groups=Object.keys(FACTIONS).filter(f=>FACTIONS[f].size).map(faction=>({faction,cells:game.abilityBoardCells(playerIdx,cell=>game.boardFaction(cell.r,cell.c)===faction)}));
   const maximum=Math.max(0,...groups.map(group=>group.cells.length));
   let best=null;
   for(const group of groups.filter(group=>maximum && group.cells.length===maximum)){
@@ -9767,6 +9794,7 @@ function aiBestEikiFaction(playerIdx,payment=[]){
 }
 
 function aiAbilityPlan(playerIdx,abilityId,r,c){
+  if(!inBounds(r,c))return {utility:0,direct:0,handGain:0,bonus:0,skip:true,abilityId};
   abilityId=game.abilityId(abilityId);
   const actor=game.cardAt(r,c)||abilityId,hand=game.players[playerIdx].hand.filter(id=>id!==actor);
   const none={utility:0,direct:0,handGain:0,bonus:0,skip:true,abilityId};
@@ -9792,7 +9820,7 @@ function aiAbilityPlan(playerIdx,abilityId,r,c){
       if(direct<=1 && game.winCount(game.players[playerIdx])<6)utility=0;break;
     }
     case 'heaven_iku': {
-      for(const zone of game.rectZones(2)){
+      for(const zone of game.rectZones(2,playerIdx)){
         const cells=game.ikuTargetsForZone(zone,playerIdx),n=Math.min(2,cells.length);if(!n)continue;
         const points=cells.reduce((sum,cell)=>sum+game.pointValue(game.cardAt(cell.r,cell.c)),0)*n/cells.length;
         const value=points+aiRemovalValue(playerIdx,cells,0,[])*n/cells.length-fee;
@@ -9806,12 +9834,12 @@ function aiAbilityPlan(playerIdx,abilityId,r,c){
     }
     case 'heaven_tenshi': {
       if(game.tenshiOccupiedCount()<Math.ceil(SIZE*SIZE/2))return none;
-      const cells=game.boardCells(cell=>game.boardFaction(cell.r,cell.c)!=='heaven' && game.canReturnBoardToDraw(cell.r,cell.c));
+      const cells=game.abilityBoardCells(playerIdx,cell=>game.boardFaction(cell.r,cell.c)!=='heaven' && game.canReturnBoardToDraw(cell.r,cell.c));
       if(!cells.length)return none;
       utility=aiRemovalValue(playerIdx,cells,0,payment)+cells.length*.12;break;
     }
     case 'temple_ichirin': {
-      const moves=game.ichirinPushes(r,c),before=aiBoardPlanValue(playerIdx),threat=aiPublicThreatValue(playerIdx);
+      const moves=game.ichirinPushes(r,c,playerIdx),before=aiBoardPlanValue(playerIdx),threat=aiPublicThreatValue(playerIdx);
       utility=aiWithRulePreview(()=>{
         game.players[playerIdx].hand=hand.filter(id=>!payment.includes(id));let moved=0;
         for(const move of moves){
@@ -9849,7 +9877,7 @@ function aiAbilityPlan(playerIdx,abilityId,r,c){
     case 'mtn_kanako': {
       const held=hand.filter(id=>CARD[id].faction==='mountain');
       bonus=held.length?1:0;utility=bonus*.85;
-      for(const id of held)for(const cell of game.emptyOrWastelandForCard(CARD[id],playerIdx)){
+      for(const id of held)for(const cell of aiPlacementCells(game,id,game.emptyOrWastelandForCard(CARD[id],playerIdx))){
         const claims=aiWithPlacement(id,cell,()=>aiCurrentClaims(playerIdx),playerIdx);
         const points=claims.reduce((n,claim)=>n+claim.points,0);
         if(points>utility){utility=points;target={cardId:id,cell};}
@@ -9887,8 +9915,8 @@ function aiAbilityPlan(playerIdx,abilityId,r,c){
     }
     case 'sdm_patchouli': handGain=game.estimateHandGain(playerIdx,abilityId);utility=handGain*.7;break;
     case 'yuuka': handGain=Math.min(4,game.drawPile.length+hand.filter(id=>game.canHandEnterPile(id)).length)-hand.filter(id=>game.canHandEnterPile(id)).length;
-      utility=handGain*.55+(game.templeWasteland().length?.3:0);break;
-    case 'temple_shou': handGain=Math.min(game.drawPile.length+cost,game.templeWasteland().length);utility=handGain*.55-fee;break;
+      utility=handGain*.55+(game.templeWasteland(playerIdx).length?.3:0);break;
+    case 'temple_shou': handGain=Math.min(game.drawPile.length+cost,game.templeWasteland(playerIdx).length);utility=handGain*.55-fee;break;
     case 'temple_murasa': utility=game.players.some(p=>p.idx!==playerIdx && p.hand.length)?1.1:0;break;
     case 'hourai_reisen': utility=game.players.some(p=>p.idx!==playerIdx && p.hand.length)?.4:0;break;
     case 'mtn_aya': utility=game.players.some(p=>p.idx!==playerIdx && p.hand.length)?.3:0;break;
@@ -9914,6 +9942,7 @@ function aiAbilityPlan(playerIdx,abilityId,r,c){
 }
 
 function aiBestChannel(playerIdx,r,c){
+  if(!inBounds(r,c))return null;
   let best=null;
   for(const cell of game.selectableBoardCells(playerIdx,cell=>!(cell.r===r && cell.c===c))){
     const abilityId=game.abilityId(game.cardAt(cell.r,cell.c));
@@ -9960,8 +9989,8 @@ function aiChannelClaims(playerIdx,plan,r,c){
     const id=plan.abilityId,target=plan.target,actor=game.cardAt(r,c);
     if(plan.payment?.length)game.players[playerIdx].hand=game.players[playerIdx].hand.filter(card=>!plan.payment.includes(card));
     if((id==='marisa' || id==='palace_yuugi' || id==='reimu') && target)game.setCardAt(target.r,target.c,null);
-    if(id==='hell_eiki' && target)for(const cell of game.boardCells(cell=>game.boardFaction(cell.r,cell.c)===target && game.canReturnBoardToDraw(cell.r,cell.c)))game.setCardAt(cell.r,cell.c,null);
-    if(id==='heaven_tenshi')for(const cell of game.boardCells(cell=>game.boardFaction(cell.r,cell.c)!=='heaven' && game.canReturnBoardToDraw(cell.r,cell.c)))game.setCardAt(cell.r,cell.c,null);
+    if(id==='hell_eiki' && target)for(const cell of game.abilityBoardCells(playerIdx,cell=>game.boardFaction(cell.r,cell.c)===target && game.canReturnBoardToDraw(cell.r,cell.c)))game.setCardAt(cell.r,cell.c,null);
+    if(id==='heaven_tenshi')for(const cell of game.abilityBoardCells(playerIdx,cell=>game.boardFaction(cell.r,cell.c)!=='heaven' && game.canReturnBoardToDraw(cell.r,cell.c)))game.setCardAt(cell.r,cell.c,null);
     if(id==='hell_komachi' && target){
       const other=game.cardAt(target.r,target.c);game.setCardAt(target.r,target.c,actor);game.setCardAt(r,c,other);
     }
@@ -10017,7 +10046,7 @@ function aiCanConnectFaction(faction,missing){
   const members=game.factionCells(faction);
   if(!members.length)return false;
   if(missing===0)return game.findFactionClaim(faction).length>0;
-  const empty=game.emptyCells().filter(cell=>!game.isProtected(cell.r,cell.c));
+  const empty=game.emptyCells().filter(cell=>inBounds(cell.r,cell.c) && !game.isProtected(cell.r,cell.c));
   if(empty.length<missing)return false;
   const seen=new Set();let budget=1500;
   const search=added=>{
@@ -10127,7 +10156,7 @@ function aiCurrentEvaluateCard(playerIdx,cardId){
         forecast={rate:0,size:0,faction:null,bonus:0,missing:0};
       const ownMembers=game.factionCells(card.faction);
       const comboReady=forecast.bonus>0 && forecast.missing<=forecast.bonus;
-      const futureSpace=game.emptyCells().some(t=>!game.isProtected(t.r,t.c));
+      const futureSpace=game.emptyCells(playerIdx).some(t=>!game.isProtected(t.r,t.c));
       const reserveCombo=cardId==='mtn_kanako'
         ? !points && !comboReady
         : (AI_ONE_MORE.has(cardId) || cardId==='palace_koishi') && !points && !comboReady && futureSpace
@@ -10199,6 +10228,8 @@ function aiCurrentChooseCostCards(playerIdx,eligible,count){
 }
 
 function aiCurrentFactionPlacement(playerIdx,cardId,cells,faction=CARD[cardId].faction){
+  cells=cells.filter(cell=>inBounds(cell.r,cell.c));
+  if(!cells.length)return null;
   if(game.aiMakesMistake('target'))return cells[Math.floor(Math.random()*cells.length)];
   let best=null,bestScore=-Infinity;
   for(const cell of cells){
@@ -10218,6 +10249,8 @@ function aiCurrentFactionPlacement(playerIdx,cardId,cells,faction=CARD[cardId].f
 }
 
 function aiCurrentKomachiTarget(playerIdx,r,c,cells,allowMistake=true){
+  cells=cells.filter(cell=>inBounds(cell.r,cell.c));
+  if(!cells.length)return null;
   if(allowMistake && game.aiMakesMistake('target'))return cells[Math.floor(Math.random()*cells.length)];
   const caster=game.cardAt(r,c);let best=null,bestValue=-Infinity;
   for(const cell of cells){
@@ -10284,42 +10317,44 @@ function aiKanakoTrade(...args){return aiCurrentKanakoTrade(...args);}
 return {aiEvaluateCard,aiChooseCostCards,aiFactionPlacement,aiKomachiTarget,aiDecideHardAction,aiDecideAction,aiBestTrade,aiTwoCardFactionTrade,aiKanakoTrade,aiAbilityPlan,aiBestChannel};
 })();
 
-/* Frozen 2b07010 decisions, Komachi and Kasen forecasts adapted to shared current rules. */
-const AI_BASELINE_DIGEST='69f429e290a93f0c03f61cbd96bd938048e8e162ffd06eefdcff87728f8df7ca';
+/* Frozen 2b07010 decisions, Komachi, Kasen and main-board targets adapted to shared current rules. */
+const AI_BASELINE_DIGEST='8b540f6fb7ee3aedaeedcc7c64d86daf96258c484da9676989a0fb5d4f0be58f';
 const AI_FROZEN_POLICY=(()=>{
 const NO_PLACED_ABILITY = new Set(['sage_yukari', 'sage_kasen', 'hourai_eirin','mtn_nitori','hell_hecatia']);
 const DRAW_ABILITY_CARDS = new Set(['hourai_mokou','mtn_sanae','sage_ran','yuuka','hell_kutaka','temple_shou']);
 
 function aiPlacementCells(currentGame, cardId, spaces){
+  spaces=spaces.filter(cell=>inBounds(cell.r,cell.c));
   if(currentGame.abilityId(cardId)==='sage_yukari') return spaces.filter(cell=>currentGame.cardAt(cell.r,cell.c)!=='shop_rinnosuke');
   if(cardId==='haku_yuyuko') return spaces.filter(cell=>currentGame.adjacentOccupiedCount(cell.r,cell.c)>=2);
   if(cardId==='marisa') return spaces.filter(cell=>currentGame.safeMarisaPlacement(cell.r,cell.c));
-  if(cardId==='reimu' && !currentGame.movableBoardCells(cell=>CARD[cell.id].crown && currentGame.canSelectBoardCard(cell.r,cell.c)).length) return [];
+  if(cardId==='reimu' && !currentGame.mainBoardCells(cell=>CARD[cell.id].crown && currentGame.canMoveBoardCard(cell.r,cell.c) && currentGame.canSelectBoardCard(cell.r,cell.c)).length) return [];
   return spaces;
 }
 
 function aiCostCanResolve(playerIdx, cardId, r, c){
+  if(!inBounds(r,c))return false;
   const card=CARD[cardId];
   if(game.isProtected(r,c) && cardId!=='sage_yukari') return false;
-  if(cardId==='palace_yuugi') return game.payableCards(playerIdx).filter(id=>id!==cardId).length>=2 && game.yuugiTargets(r,c).length>0;
+  if(cardId==='palace_yuugi') return game.payableCards(playerIdx).filter(id=>id!==cardId).length>=2 && game.yuugiTargets(r,c,false,playerIdx).length>0;
   if(cardId==='hell_kutaka') return game.wastelandAt(r,c) && game.drawPile.some(id=>CARD[id].faction==='hell');
   if(cardId==='sdm_meiling') return game.meilingPushes(r,c).length>0;
   // Kaguya herself leaves the hand before her ability checks for targets.
   if(cardId==='hourai_kaguya') return !game.eirinActive()
-    && game.emptyCells().length>1
+    && game.emptyCells(playerIdx).length>1
     && (game.knownHandCards(playerIdx,'hourai').some(c=>c.id!==cardId)
       || game.players.some(p=>p.idx!==playerIdx && p.hand.length>0));
   if(cardId==='haku_yuyuko') return game.payableCards(playerIdx).filter(id=>id!==cardId).length>0
-    && game.yuyukoTargets(r,c).length>0 && !game.eirinActive();
+    && game.yuyukoTargets(r,c,playerIdx).length>0 && !game.eirinActive();
   const cost=game.abilityCost(cardId,{r,c});
-  if(cardId==='temple_shou' && !game.templeWasteland().length)return false;
+  if(cardId==='temple_shou' && !game.templeWasteland(playerIdx).length)return false;
   if(cardId==='temple_byakuren')return !game.eirinActive() && game.byakurenOptions(playerIdx,r,c).some(option=>!option.disabled);
-  if(cardId==='temple_ichirin' && !game.ichirinPushes(r,c).length)return false;
+  if(cardId==='temple_ichirin' && !game.ichirinPushes(r,c,playerIdx).length)return false;
   if(!cost) return true;
   if(game.payableCards(playerIdx).filter(id=>id!==cardId).length<cost || (card.crown && game.eirinActive())) return false;
   if(cardId==='palace_satori') return game.players.some(pl=>pl.idx!==playerIdx && pl.hand.length>0);
   if(cardId==='heaven_tenshi') return game.tenshiOccupiedCount({r,c}) >= Math.ceil(SIZE*SIZE/2)
-    && game.boardCells(cell=>game.boardFaction(cell.r,cell.c)!=='heaven' && game.canReturnBoardToDraw(cell.r,cell.c)).length>0;
+    && game.abilityBoardCells(playerIdx,cell=>game.boardFaction(cell.r,cell.c)!=='heaven' && game.canReturnBoardToDraw(cell.r,cell.c)).length>0;
   if(cardId==='heaven_iku') return game.estimateDirectDiscardPoints(playerIdx,cardId,r,c)>=(game.winCount(game.players[playerIdx])>=6?1:2);
   return true;
 }
@@ -10445,7 +10480,7 @@ function aiCanConnectFaction(faction,missing){
   const members=game.factionCells(faction);
   if(!members.length)return false;
   if(missing===0)return game.findFactionClaim(faction).length>0;
-  const empty=game.emptyCells().filter(cell=>!game.isProtected(cell.r,cell.c));
+  const empty=game.emptyCells().filter(cell=>inBounds(cell.r,cell.c) && !game.isProtected(cell.r,cell.c));
   if(empty.length<missing)return false;
   const seen=new Set();let budget=1500;
   const search=added=>{
@@ -10541,7 +10576,7 @@ function aiEvaluateCard(playerIdx,cardId){
       const position=DIRS4.reduce((n,[dr,dc])=>n+(game.boardMatchesFaction(cell.r+dr,cell.c+dc,forecast.faction||card.faction)?1:0),0);
       const isCombo=AI_ONE_MORE.has(cardId) || cardId==='palace_koishi';
       const comboReady=forecast.bonus>0 && forecast.missing<=forecast.bonus;
-      const futureSpace=game.emptyCells().some(t=>!game.isProtected(t.r,t.c));
+      const futureSpace=game.emptyCells(playerIdx).some(t=>!game.isProtected(t.r,t.c));
       const reserveCombo=isCombo && !points && !comboReady && futureSpace && ownMembers.length<FACTIONS[card.faction].size
         && aiFactionStillPossible(card.faction);
       return {claims,points,forecast,claimSize,position,reserveCombo};
@@ -10602,6 +10637,8 @@ function aiChooseCostCards(playerIdx,eligible,count){
 }
 
 function aiFactionPlacement(playerIdx,cardId,cells,faction=CARD[cardId].faction){
+  cells=cells.filter(cell=>inBounds(cell.r,cell.c));
+  if(!cells.length)return null;
   if(game.aiMakesMistake('target'))return cells[Math.floor(Math.random()*cells.length)];
   let best=null,bestScore=-Infinity;
   for(const cell of cells){
@@ -10621,6 +10658,8 @@ function aiFactionPlacement(playerIdx,cardId,cells,faction=CARD[cardId].faction)
 }
 
 function aiKomachiTarget(playerIdx,r,c,cells){
+  cells=cells.filter(cell=>inBounds(cell.r,cell.c));
+  if(!cells.length)return null;
   if(game.aiMakesMistake('target'))return cells[Math.floor(Math.random()*cells.length)];
   const caster=game.cardAt(r,c);let best=null,bestValue=-Infinity;
   for(const cell of cells){
@@ -11803,8 +11842,8 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='4252ab1205d082835408e6d6ae1c8c30c4f0f6205855a2c86eff0be4b8760134';
-const AI_EVALUATION_POLICY_DIGEST='2593f7838de53bcf751d6debd1b94a3f6d99ae905675af496711186cdff75892';
+const AI_EVALUATION_RULES_DIGEST='7546977ecd1024d6e6203cd5c4ff7a794b27569d1e304d78dc07d31b5c518e7e';
+const AI_EVALUATION_POLICY_DIGEST='8af7d6a12ae2c4d6002f2a2d4a515ba20fc83f318102b220c2d05e95bf709b5e';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
   if(!source)throw new Error('Game source is unavailable.');
@@ -12020,7 +12059,7 @@ function evalNewOpening(seed,n,size,difficulty){
 async function evalCompare(config,send){
   evalValidateConfig(config);
   const report={format:'tbg-ai-evaluation',version:1,type:'comparison',baselineCommit:'2b07010618c21eee6dfc6ffd4092c8b4bbb42e9b',baselineDigest:AI_BASELINE_DIGEST,previousCommit:'955c63140738e5cc9deae85802cec12f10c5d61a',previousDigest:AI_PREVIOUS_DIGEST,diagnosticsVersion:2,
-    currentPolicy:'retrieval-and-trade-guard-kasen-four-2026-10-07',rules:'Shared current Game engine',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,startedAt:new Date().toISOString(),finished:false,blocks:[]};
+    currentPolicy:'retrieval-trade-kasen-main-board-2026-10-07',rules:'Shared current Game engine',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,startedAt:new Date().toISOString(),finished:false,blocks:[]};
   const lineups=evalMixedLineups(config.players,config.opponent);
   for(let i=0;i<config.blocks;i++){
     await evalYield();const seed=evalHashSeed(config.seed,config.phase||'development',i),size=config.size==='both'?(i%2?5:4):Number(config.size);
@@ -12035,7 +12074,7 @@ async function evalCompare(config,send){
 async function evalFork(snapshot,config,send){
   evalValidateSnapshot(snapshot);evalValidateConfig(config,'fork');const actor=snapshot.state.currentPlayerIdx;config={...config,actor};
   const continuations=config.continuations||['current','previous'];
-  const report={format:'tbg-ai-evaluation',version:1,diagnosticsVersion:2,currentPolicy:'retrieval-and-trade-guard-kasen-four-2026-10-07',previousDigest:AI_PREVIOUS_DIGEST,type:'fork',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,snapshot,startedAt:new Date().toISOString(),finished:false,pairs:[],
+  const report={format:'tbg-ai-evaluation',version:1,diagnosticsVersion:2,currentPolicy:'retrieval-trade-kasen-main-board-2026-10-07',previousDigest:AI_PREVIOUS_DIGEST,type:'fork',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,snapshot,startedAt:new Date().toISOString(),finished:false,pairs:[],
     assumptions:'Unknown rival cards and deck order are re-sampled from the acting player information. Rival private clue memories are omitted. Continuations are finite AI policies, not optimal play.'};
   for(let i=0;i<config.trials;i++){
     const seed=evalHashSeed(config.seed,'fork',i),sample=evalSampleHidden(snapshot,actor,evalPRNG(seed));
@@ -12203,7 +12242,7 @@ function aiLabDownload(content,name,type='application/json'){
 }
 function aiLabExportCSV(report){
   const rows=[['test','seed','opening_size','continuation','branch','seat','policy','ending','winner','score_share','points','turns','seen','placements','claims','hand_turns','held','diagnostics_version','master_seed','phase','difficulty','current_policy','comparison_policy','match_seed','rules_digest','policy_digest','card_actions','ability_details','score_sources','diagnostics']];
-  const add=(m,seed,size,continuation='',branch='')=>{const shares=evalScoreShares(m);m.roster.forEach((policy,i)=>{const s=m.seats[i];rows.push([report.type,seed,size,continuation,branch,i+1,policy,m.reason,m.winner===null?'':m.winner+1,shares?.[i]??'',m.points[i],m.turns,JSON.stringify(s.seen),JSON.stringify(s.placements),JSON.stringify(s.claims),JSON.stringify(s.handTurns),JSON.stringify(s.held),report.diagnosticsVersion||2,report.config?.seed||'',report.config?.phase||'',report.config?.difficulty||report.snapshot?.state?.aiDifficulty||'',report.currentPolicy||'retrieval-and-trade-guard-kasen-four-2026-10-07',report.config?.opponent||'',m.seed??seed,report.rulesDigest||'',report.policyDigest||'',JSON.stringify(s.cardActions||{}),JSON.stringify(s.abilityDetails||{}),JSON.stringify(s.scoreSources||{}),JSON.stringify(s.diagnostics||{})]);});};
+  const add=(m,seed,size,continuation='',branch='')=>{const shares=evalScoreShares(m);m.roster.forEach((policy,i)=>{const s=m.seats[i];rows.push([report.type,seed,size,continuation,branch,i+1,policy,m.reason,m.winner===null?'':m.winner+1,shares?.[i]??'',m.points[i],m.turns,JSON.stringify(s.seen),JSON.stringify(s.placements),JSON.stringify(s.claims),JSON.stringify(s.handTurns),JSON.stringify(s.held),report.diagnosticsVersion||2,report.config?.seed||'',report.config?.phase||'',report.config?.difficulty||report.snapshot?.state?.aiDifficulty||'',report.currentPolicy||'retrieval-trade-kasen-main-board-2026-10-07',report.config?.opponent||'',m.seed??seed,report.rulesDigest||'',report.policyDigest||'',JSON.stringify(s.cardActions||{}),JSON.stringify(s.abilityDetails||{}),JSON.stringify(s.scoreSources||{}),JSON.stringify(s.diagnostics||{})]);});};
   if(report.type==='comparison')for(const block of report.blocks)for(const m of block.matches)add(m,block.seed,block.size);
   else for(const pair of report.pairs){add(pair.a,pair.seed,report.snapshot.size,pair.continuation,'A');add(pair.b,pair.seed,report.snapshot.size,pair.continuation,'B');}
   return '\ufeff'+rows.map(row=>row.map(value=>'"'+String(value).replaceAll('"','""')+'"').join(',')).join('\r\n');

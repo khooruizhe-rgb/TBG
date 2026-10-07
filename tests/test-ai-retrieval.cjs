@@ -102,8 +102,8 @@ test('Current versus immediately previous policy completes mixed real-engine mat
 const priorFile=path.join(path.dirname(file),'ai_pre_retrieval_revision.html');
 if(fs.existsSync(priorFile))test('Frozen previous policy reproduces pre-update matches on the shared rules',async()=>{
  let prior=fs.readFileSync(priorFile,'utf8').split('<script>')[1].split('</script>')[0];
- // Compare decisions on identical rules. The reference's former Kasen matching
- // must not manufacture two-card claims forbidden by the shared current engine.
+ // Compare decisions on identical rules. Adapt only faction matching and AI
+ // target scope; retain the reference's independent pre-update scoring weights.
  prior=prior.slice(0,prior.indexOf('const DIRS4'))+
    js.slice(js.indexOf('const DIRS4'),js.indexOf('/* ===================== UI layer'))+
    prior.slice(prior.indexOf('/* ===================== UI layer'));
@@ -112,7 +112,31 @@ if(fs.existsSync(priorFile))test('Frozen previous policy reproduces pre-update m
    ['CARD[id]?.faction===faction || game.isWildActive(id)','game.cardMatchesFaction(id,faction)'],
    ['CARD[other].faction===card.faction || game.isWildActive(other)','game.cardMatchesFaction(other,card.faction)'],
    ['game.isWildActive(cardId) ? game.claimFactionOrder() : [card.faction]','game.cardClaimFactions(cardId)'],
-   ['game.isWildActive(cardId)?game.claimFactionOrder():[card.faction]','game.cardClaimFactions(cardId)']
+   ['game.isWildActive(cardId)?game.claimFactionOrder():[card.faction]','game.cardClaimFactions(cardId)'],
+   ['function aiPlacementCells(currentGame, cardId, spaces){\n','function aiPlacementCells(currentGame, cardId, spaces){\n  spaces=spaces.filter(cell=>inBounds(cell.r,cell.c));\n'],
+   ['function aiCostCanResolve(playerIdx, cardId, r, c){\n','function aiCostCanResolve(playerIdx, cardId, r, c){\n  if(!inBounds(r,c))return false;\n'],
+   ['function aiBestDiscardTarget(playerIdx,cells){\n','function aiBestDiscardTarget(playerIdx,cells){\n  cells=cells.filter(cell=>inBounds(cell.r,cell.c));\n'],
+   ['function aiAbilityPlan(playerIdx,abilityId,r,c){\n','function aiAbilityPlan(playerIdx,abilityId,r,c){\n  if(!inBounds(r,c))return {utility:0,direct:0,handGain:0,bonus:0,skip:true,abilityId};\n'],
+   ['function aiBestChannel(playerIdx,r,c){\n','function aiBestChannel(playerIdx,r,c){\n  if(!inBounds(r,c))return null;\n'],
+   ['function aiCurrentFactionPlacement(playerIdx,cardId,cells,faction=CARD[cardId].faction){\n','function aiCurrentFactionPlacement(playerIdx,cardId,cells,faction=CARD[cardId].faction){\n  cells=cells.filter(cell=>inBounds(cell.r,cell.c));\n  if(!cells.length)return null;\n'],
+   ['function aiCurrentKomachiTarget(playerIdx,r,c,cells,allowMistake=true){\n','function aiCurrentKomachiTarget(playerIdx,r,c,cells,allowMistake=true){\n  cells=cells.filter(cell=>inBounds(cell.r,cell.c));\n  if(!cells.length)return null;\n'],
+   ['function aiFactionPlacement(playerIdx,cardId,cells,faction=CARD[cardId].faction){\n','function aiFactionPlacement(playerIdx,cardId,cells,faction=CARD[cardId].faction){\n  cells=cells.filter(cell=>inBounds(cell.r,cell.c));\n  if(!cells.length)return null;\n'],
+   ['function aiKomachiTarget(playerIdx,r,c,cells){\n','function aiKomachiTarget(playerIdx,r,c,cells){\n  cells=cells.filter(cell=>inBounds(cell.r,cell.c));\n  if(!cells.length)return null;\n'],
+   ['game.emptyCells().length>1','game.emptyCells(playerIdx).length>1'],
+   ['game.emptyCells().some(t=>!game.isProtected(t.r,t.c))','game.emptyCells(playerIdx).some(t=>!game.isProtected(t.r,t.c))'],
+   ['game.emptyCells().filter(cell=>!game.isProtected(cell.r,cell.c))','game.emptyCells().filter(cell=>inBounds(cell.r,cell.c) && !game.isProtected(cell.r,cell.c))'],
+   ['game.templeWasteland()','game.templeWasteland(playerIdx)'],
+   ['game.ichirinPushes(r,c)','game.ichirinPushes(r,c,playerIdx)'],
+   ['game.yuugiTargets(r,c)','game.yuugiTargets(r,c,false,playerIdx)'],
+   ['game.yuyukoTargets(r,c).length','game.yuyukoTargets(r,c,playerIdx).length'],
+   ['game.rectZones(2)','game.rectZones(2,playerIdx)'],
+   ['game.boardCells(cell=>game.boardFaction(cell.r,cell.c)===faction)','game.abilityBoardCells(playerIdx,cell=>game.boardFaction(cell.r,cell.c)===faction)'],
+   ['game.boardCells(cell=>game.boardFaction(cell.r,cell.c)===target && game.canReturnBoardToDraw(cell.r,cell.c))','game.abilityBoardCells(playerIdx,cell=>game.boardFaction(cell.r,cell.c)===target && game.canReturnBoardToDraw(cell.r,cell.c))'],
+   ["game.boardCells(cell=>game.boardFaction(cell.r,cell.c)!=='heaven' && game.canReturnBoardToDraw(cell.r,cell.c))","game.abilityBoardCells(playerIdx,cell=>game.boardFaction(cell.r,cell.c)!=='heaven' && game.canReturnBoardToDraw(cell.r,cell.c))"],
+   ['game.boardCells(cell=>game.canOverrideTarget(id,cell.id) && game.canSelectBoardCard(cell.r,cell.c))','game.selectableBoardCells(playerIdx,cell=>game.canOverrideTarget(id,cell.id))'],
+   ["game.boardCells(cell=>!AI_PASSIVE_ABILITIES.has(game.abilityId(cell.id)) && game.abilityId(cell.id)!=='sage_matara')","game.selectableBoardCells(playerIdx,cell=>!AI_PASSIVE_ABILITIES.has(game.abilityId(cell.id)) && game.abilityId(cell.id)!=='sage_matara')"],
+   ['for(const id of held)for(const cell of game.emptyOrWastelandForCard(CARD[id]))','for(const id of held)for(const cell of aiPlacementCells(game,id,game.emptyOrWastelandForCard(CARD[id],playerIdx)))'],
+   ['currentGame.movableBoardCells(cell=>CARD[cell.id].crown && currentGame.canSelectBoardCard(cell.r,cell.c))','currentGame.mainBoardCells(cell=>CARD[cell.id].crown && currentGame.canMoveBoardCard(cell.r,cell.c) && currentGame.canSelectBoardCard(cell.r,cell.c))']
  ])prior=prior.replaceAll(from,to);
  const old=load(prior).A;
  for(const seed of [49,72,104]){

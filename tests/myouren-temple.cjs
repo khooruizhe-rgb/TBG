@@ -103,7 +103,7 @@ test('Shou clears every wasteland even when the pile runs out',async()=>{
  const g=setup({hand:['medicine'],waste:[[0,0],[0,1],[0,2],[0,3],[1,0]]});await g.resolveAbility('temple_shou',2,2,1,0);assert.equal(g.players[1].hand.length,1);assert.equal(g.templeWasteland().length,0);
 });
 test('Shou clears main and shop spaces as ordinary playable terrain',async()=>{
- const g=setup({hand:['medicine'],board:[[1,1,'temple_shou']],waste:[[0,0],[7,0]]});await g.resolveAbility('temple_shou',1,1,1,0);
+ const g=setup({hand:['medicine'],board:[[1,1,'temple_shou']],waste:[[0,0],[7,0]]});g.players[1].isAI=false;g.selectCostCards=async(p,n)=>g.payableCards(p).slice(0,n);await g.resolveAbility('temple_shou',1,1,1,0);
  for(const [r,c]of [[0,0],[7,0]])assert(!g.wastelandAt(r,c));assert(g.emptyOrWastelandForCard(A.CARD.sdm_patchouli).some(t=>t.r===0&&t.c===0));
  g.setWastelandAt(0,0,true);assert(g.wastelandAt(0,0));g.clearWasteland(0,0);assert(!g.wastelandAt(0,0));assert(!g.wastelandAt(7,0));
 });

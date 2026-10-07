@@ -119,9 +119,9 @@ test('Yukari scores a legal capture as hand gain rather than an empty passive',a
   A.aiWithPlacement('sage_yukari',pick.cell,()=>{assert(g.players[1].hand.includes('sdm_sakuya'));assert(!g.players[1].hand.includes('sage_yukari'));},1);
   assert.equal(state(g),before);assert.equal(g.players[1].hand,hand);
 });
-test('Yukari recognizes a missing pair member in protected merchandise',()=>{
+test('Yukari ignores protected merchandise even when it supplies a missing pair member',()=>{
   const g=setup({hand:['sage_yukari','yuuka'],board:[[0,3,'mtn_aya']]});g.shopCards=['shop_rinnosuke','medicine','hourai_tewi','hell_kutaka'];
-  const pick=A.aiEvaluateCard(1,'sage_yukari'),target=g.shopTiles[1];assert.deepEqual([pick.cell.r,pick.cell.c],[target.r,target.c]);
+  const pick=A.aiEvaluateCard(1,'sage_yukari');assert(pick.cell.r>=0 && pick.cell.r<4);assert(pick.cell.c>=0 && pick.cell.c<4);
 });
 test('Yukari avoids dismantling a ready board pair merely to retrieve its member',()=>{
   setup({hand:['sage_yukari','yuuka'],board:[[0,0,'medicine'],[0,3,'mtn_aya']]});
