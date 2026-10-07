@@ -21,7 +21,7 @@ class Element{
 }
 const el=id=>{if(!nodes.has(id))nodes.set(id,new Element(id));return nodes.get(id);};
 const document={body:new Element(),documentElement:new Element(),activeElement:null,addEventListener(){},removeEventListener(){},
-  querySelectorAll:s=>s==='.tutorial-focus'?all.filter(n=>n.classList.contains('tutorial-focus')):[]};
+  createElement:()=>new Element(),querySelectorAll:s=>s==='.tutorial-focus'?all.filter(n=>n.classList.contains('tutorial-focus')):[]};
 el('game').appendChild(el('layout'));el('log-panel').appendChild(el('tutorial-coach'));el('tutorial-coach').hidden=true;
 const tiles=new Map(),effects=[];
 let holdEffects=null,normalStarts=0;
@@ -64,6 +64,7 @@ vm.runInContext(slice('const DIRS4','/* ===================== UI layer')+`
   `
   Object.assign(ui,{
 `+slice('  pickOwnHandCards(title, cardIds, opts={}){','  pickHandCard(title,')+
+  slice('  pickFromList(title, options){','  pickOwnHandCard(title,')+
   slice('  pickRectByDrag(dim, title, isValid){','  promptText(title){')+
   `});
   this.api={openTutorial,tutorialStep,renderTutorial,updateTutorialProgress,tutorialAllowsAction,tutorialObjectiveMet,configureTutorialGame,
@@ -176,6 +177,27 @@ test('Trading is guided only during the shop lesson while Kourindou is visible t
 test('A live match cannot be replaced by a tutorial',async()=>{
   A.returnToMainMenu();A.startNewGame();const live=A.game();A.openTutorial();await flush();assert.equal(A.game(),live);assert.equal(A.state(),null);
 });
+test('An unavailable occupied tile preserves the pending placement, hand and human turn',async()=>{
+  await newLesson();const g=A.game();clickHand('mtn_sanae');const choice=A.pending().cell,turn=context.window.__resolveHumanTurn;
+  const before=JSON.stringify([g.players[0].hand,g.board,g.drawPile,g.shopCards]);const target=g.shopTiles[0];
+  A.commitCellChoice(target.r,target.c);A.commitCellChoice(-1,-1);await flush();
+  assert.equal(A.pending().cell,choice);assert.equal(context.window.__resolveHumanTurn,turn);assert.equal(JSON.stringify([g.players[0].hand,g.board,g.drawPile,g.shopCards]),before);assert(el('instruction-bar').classList.contains('show'));
+  const legal=choice.cells[0];A.commitCellChoice(legal.r,legal.c);await flush();assert.equal(g.cardAt(legal.r,legal.c),'mtn_sanae');assert(A.state().complete);
+});
+test('A board target that becomes protected cannot consume an ability or close its selection',async()=>{
+  await newLesson();const g=A.game();g.setCardAt(1,1,'sdm_flandre');g.setCardAt(3,3,'hourai_mokou');
+  let settled=false;const action=g.chooseBoardCell(0,[{r:1,c:1},{r:3,c:3}],'Choose a card').then(value=>{settled=true;return value;});await flush();
+  const choice=A.pending().cell;assert(choice);g.setCardAt(0,0,'mtn_nitori');const before=JSON.stringify([g.players[0].hand,g.board,g.drawPile]);
+  A.commitCellChoice(1,1);await flush();assert(!settled);assert.equal(A.pending().cell,choice);assert.equal(JSON.stringify([g.players[0].hand,g.board,g.drawPile]),before);
+  A.commitCellChoice(3,3);assert.deepEqual({...await action},{r:3,c:3});assert.equal(A.pending().cell,null);
+});
+test('Used Byakuren effects display their status and cannot resolve even through a stale click handler',async()=>{
+  let settled=false;const options=[{label:'[Cost IV] Take three extra turns.',value:'turns',singleUse:true,used:true,status:'Used',disabled:true},{label:'[Cost II] Look at three cards, take one and order the rest.',value:'look',singleUse:true,status:'Available once'}];
+  const action=context.ui.pickFromList('Makai Fantastica — each effect once, in any order',options).then(value=>{settled=true;return value;});
+  const [used,available]=el('modal-options').children;assert(used.classList.contains('effect-used'));assert.equal(used.children[1].textContent,'Used');assert.equal(available.children[1].textContent,'Available once');
+  for(const handler of used.events.click)handler();await flush();assert(!settled);assert(el('modal-overlay').classList.contains('show'));
+  for(const handler of available.events.click)handler();assert.equal(await action,'look');assert(!el('modal-overlay').classList.contains('show'));
+});
 test('The coach moves above the real layout on mobile and returns to the side panel on desktop',async()=>{
   A.dockTutorialCoach(true);assert.equal(el('tutorial-coach').parentElement,el('game'));
   assert(el('game').children.indexOf(el('tutorial-coach'))<el('game').children.indexOf(el('layout')));
@@ -193,4 +215,4 @@ test('Every board size and player count includes Kourindou, even with an old dis
   }
   A.setSize(4);
 });
-(async()=>{let passed=0;for(const [name,fn]of tests){await fn();console.log('PASS '+name);passed++;}console.log(`${passed}/${tests.length} board tutorial checks passed`);})().catch(e=>{console.error(e);process.exitCode=1;});
+(async()=>{let passed=0;for(const [name,fn]of tests){let timer;try{await Promise.race([fn(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Pending test did not finish: '+name)),2500);})]);}finally{clearTimeout(timer);}console.log('PASS '+name);passed++;}console.log(`${passed}/${tests.length} board tutorial checks passed`);})().catch(e=>{console.error(e);process.exitCode=1;});

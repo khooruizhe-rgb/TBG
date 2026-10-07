@@ -1537,6 +1537,11 @@
   #modal-options{ display:flex; flex-direction:column; gap:8px; max-height:50vh; overflow-y:auto; }
   .modal-opt{ text-align:left; background:var(--bg-panel-2); border:1px solid var(--line); color:var(--ink); padding:10px 12px; border-radius:8px; cursor:pointer; font-family:inherit; font-size:0.88rem; }
   .modal-opt:hover{ border-color:var(--gold); background:#2a2148; }
+  .modal-opt.byakuren-effect{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;line-height:1.5}
+  .effect-status{font-size:11px;white-space:nowrap;border:1px solid #96734466;border-radius:4px;padding:3px 6px;background:#fff2cd;color:#755225}
+  .byakuren-effect:disabled{cursor:default;opacity:.6}
+  .byakuren-effect.effect-used{opacity:.5}
+  .effect-used .effect-status{background:#ded6c9;color:#71675a}
   #look-into-overlay{
     position:fixed; inset:0; z-index:65; display:none; align-items:center; justify-content:center;
     overflow-y:auto; padding:16px; background:rgba(8,6,16,.82); backdrop-filter:blur(5px);
@@ -2346,6 +2351,13 @@ body:not(:has(#game.active)) #setup{pointer-events:auto}
 .table-scatter-card .board-card .icon-row img{width:30px;height:30px;object-fit:contain}
 .table-card-back{height:100%;display:grid;place-items:center;border:5px solid #e8d9bf;border-radius:8px;color:#dac08c;background:repeating-linear-gradient(45deg,#cda26c18 0 1px,transparent 1px 10px),repeating-linear-gradient(-45deg,#cda26c18 0 1px,transparent 1px 10px),#34213c;box-shadow:inset 0 0 0 2px #c1a36c,1px 2px 0 #aa8b65}
 .table-card-back span{display:grid;place-items:center;width:70%;aspect-ratio:1;border:1px solid #b59660;border-radius:50%;font-size:46px;background:#34213c;box-shadow:0 0 0 7px #34213c,0 0 0 8px #b5966055}
+.table-scatter-card:not(.byakuren-peek-card){perspective:900px}
+.table-card-turn{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .32s cubic-bezier(.3,.1,.2,1)}
+.table-card-front,.table-card-reverse{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.table-card-reverse{transform:rotateY(180deg)}
+.table-card-facedown .table-card-turn{transform:rotateY(180deg)}
+.table-card-flip{position:absolute;right:6px;top:6px;z-index:2;width:30px;height:30px;padding:0;border:1px solid #c6a676;border-radius:50%;background:#2e203aeb;color:#fff0c7;font-size:21px;line-height:1;cursor:pointer;touch-action:manipulation}
+.table-card-flip:hover,.table-card-flip:focus-visible{background:#6a4732;outline:2px solid #ffe0a3;outline-offset:2px}
 #setup.menu-paper{--ink:#423021;--muted:#80634e;--gold:#775020;--sakura:#80513e;--line:#c9b395;--bg-panel-2:#f4e5cd;position:relative;width:min(100%,600px);max-width:600px;margin:0;padding:34px 36px 24px;isolation:isolate;border:1px solid #d5ba8c;border-radius:3px;color:var(--ink);background:radial-gradient(ellipse at 40% 0%,#fff9e9aa,transparent 65%),repeating-linear-gradient(3deg,#69401b03 0 1px,transparent 1px 5px),#eedfc2;box-shadow:0 18px 50px #190e0b6b,2px 3px 0 #b89c73,inset 0 0 0 7px #f6ead3,inset 0 0 0 8px #c2a77355}
 .menu-intro{margin-bottom:25px}
 .menu-intro .menu-kicker{font:600 12px 'Cinzel',serif;letter-spacing:.16em;margin:0 0 12px;color:#886444}
@@ -2379,6 +2391,37 @@ body:not(:has(#game.active)) #setup{pointer-events:auto}
 @media(orientation:landscape) and (max-height:600px){body:not(:has(#game.active)){padding:12px}body:not(:has(#game.active)) #app{min-height:calc(100dvh - 24px)}#setup.menu-paper{width:min(100%,710px);max-width:710px;padding:18px 26px 16px}.menu-intro{margin-bottom:16px}.menu-intro .menu-kicker{margin-bottom:5px;font-size:10px}.menu-intro .menu-japanese{font-size:14px;margin-bottom:4px}.menu-intro h1{font-size:30px}.menu-divider{display:none}.menu-intro .menu-description{margin-top:8px;font-size:12px}.menu-settings{margin-bottom:16px}.menu-setting legend{margin-bottom:6px}#setup .menu-setting .pill-btn{padding:8px 6px}.menu-actions{grid-template-columns:1fr auto}.menu-advanced{margin-top:10px}.menu-footnote{margin-top:5px}.table-scatter-card{width:142px}}
 @media(orientation:landscape) and (max-height:600px) and (max-width:520px){#setup.menu-paper{padding:14px 16px}.menu-intro .menu-japanese,.menu-intro .menu-kicker,.menu-footnote{display:none}.menu-intro h1{font-size:25px}.menu-intro .menu-description{font-size:11px;line-height:1.35}.menu-intro{margin-bottom:10px}.menu-settings{gap:6px;margin-bottom:10px}#setup .menu-setting .pill-btn{padding:6px}.menu-actions #start-btn,.menu-actions #tutorial-start{padding:9px;font-size:12px}.menu-advanced{margin-top:6px}}
 @media(prefers-reduced-motion:reduce){.table-scatter-card{animation:none}}
+
+/* Keep the setup note smaller than the table, including phone landscape. */
+#setup.menu-paper{width:min(480px,calc(100vw - 64px));max-width:480px;max-height:calc(100dvh - 64px);overflow:auto;scrollbar-width:thin;padding:22px 26px 18px}
+.menu-intro{margin-bottom:16px}
+.menu-intro h1{font-size:clamp(26px,3.5vw,35px)}
+.menu-intro .menu-kicker{margin-bottom:7px}
+.menu-divider{margin:12px 20% 10px}
+.menu-settings{gap:8px;margin-bottom:16px}
+.menu-advanced{margin-top:10px}
+@media(orientation:landscape) and (max-height:600px){
+  #setup.menu-paper{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.2fr);gap:8px 16px;width:min(600px,calc(100vw - 112px));max-width:600px;max-height:calc(100dvh - 48px);padding:14px 18px}
+  #setup .menu-intro{grid-column:1;grid-row:1 / span 3;margin:0;align-self:center;text-align:left}
+  #setup .menu-intro h1{font-size:25px}
+  #setup .menu-intro .menu-kicker{display:none}
+  #setup .menu-intro .menu-description{font-size:11px;line-height:1.4;margin-top:9px}
+  #setup .language-setting,#setup #menu-fullscreen-controls{grid-column:2;margin:0;font-size:11px}
+  #setup .language-setting{justify-content:flex-start}
+  #setup #menu-fullscreen-controls{justify-content:flex-start;flex-wrap:wrap;gap:4px}
+  #setup #menu-fullscreen-controls .pill-btn{padding:4px 7px;font-size:11px}
+  #setup .menu-settings{grid-column:2;grid-template-columns:1fr;gap:5px;margin:0}
+  #setup .menu-setting{display:grid;grid-template-columns:64px minmax(0,1fr);align-items:center;gap:4px}
+  #setup .menu-setting legend{display:contents;font-size:11px}
+  #setup .menu-setting .pill-btn{padding:5px 3px;font-size:11px}
+  #setup .menu-actions{grid-column:1 / -1;gap:8px}
+  #setup .menu-actions #start-btn,#setup .menu-actions #tutorial-start{padding:8px 11px;font-size:12px}
+  #setup .menu-advanced{grid-column:1;margin:0;text-align:left}
+  #setup #menu-debug-options{grid-column:2;margin:0;text-align:right;align-self:center;font-size:11px}
+  #setup #custom-hand-picker,#setup .menu-footnote{grid-column:1 / -1}
+  #setup .menu-footnote{display:block;margin:0;font-size:10px;line-height:1.4}
+}
+@media(prefers-reduced-motion:reduce){.table-card-turn{transition:none}}
 
 /* Paper notes and a felt playing mat share the title's wooden table. */
 body{--bg-panel:#efdfc2;--bg-panel-2:#e5d3b2;--line:#bea482;--gold:#845c31;--sakura:#8d4939;--ink:#453124;--muted:#765c46;background:#593921}
@@ -2633,7 +2676,7 @@ body.tutorial-practice #debug-menu-btn{display:none}
       <div id="custom-hand-grid" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center; max-height:360px; overflow-y:auto; padding:6px;"></div>
     </div>
 
-    <p class="menu-footnote">Drag cards to rearrange them. Double-click or double-tap to inspect.</p>
+    <p class="menu-footnote">Drag cards to move them. Tap ↻ to flip, or press F. Double-click or double-tap to inspect.</p>
   </div>
 
   <div id="game">
@@ -3295,7 +3338,8 @@ class Game {
       const available=option.value==='return' ? this.templeReturnTargets(r,c,p).length>0
         : option.value==='look' ? this.drawPile.length+cost>0 : true;
       return {...option,cost,label:`${cost ? `[Cost ${romanNumeral(cost)}]` : '[Free]'} ${option.text}`,
-        disabled:payable<cost || !available};
+        disabled:payable<cost || !available,
+        unavailableReason:payable<cost ? 'Not enough cards' : !available ? (option.value==='return' ? 'No valid targets' : 'Draw pile empty') : ''};
     });
   }
   byakurenOptionValue(p,r,c,option){
@@ -3316,12 +3360,14 @@ class Game {
   async chooseByakurenEffect(p,r,c,used=new Set()){
     const preserveTemple=this.players[p].isAI && used.has('turns');
     const spareCost=this.payableCards(p).filter(id=>CARD[id].faction!=='temple').length;
-    const options=this.byakurenOptions(p,r,c).map(option=>({...option,disabled:option.disabled || used.has(option.value)
+    const options=this.byakurenOptions(p,r,c).map(option=>({...option,singleUse:true,used:used.has(option.value),
+      status:used.has(option.value) ? 'Used' : option.disabled ? option.unavailableReason : 'Available once',
+      disabled:option.disabled || used.has(option.value)
       || (preserveTemple && option.cost>spareCost)})),available=options.filter(option=>!option.disabled
         && (!this.players[p].isAI || !aiPolicyHas(p,'assembly',this) || typeof aiPaymentBreaksAssembly!=='function'
           || !aiPaymentBreaksAssembly(p,aiProposedPayment(p,option.cost))));
     if(!available.length)return null;
-    if(!this.players[p].isAI)return await this.chooseFromList(p,[...options,{label:'Finish ability',value:null}],'Makai Fantastica — use effects in any order');
+    if(!this.players[p].isAI)return await this.chooseFromList(p,[...options,{label:'Finish ability',value:null}],'Makai Fantastica — each effect once, in any order');
     if(this.aiMakesMistake('target'))return available[Math.floor(Math.random()*available.length)].value;
     available.sort((a,b)=>this.byakurenOptionValue(p,r,c,b)-this.byakurenOptionValue(p,r,c,a));
     return this.byakurenOptionValue(p,r,c,available[0])>0 ? available[0].value : null;
@@ -4009,7 +4055,7 @@ class Game {
     }
     return await this.ui.pickFromList(title, options);
   }
-  async chooseCell(playerIdx, cells, title){
+  async chooseCell(playerIdx, cells, title, isValid=null){
     cells=this.abilityCells(playerIdx,cells);
     if(!cells.length) return null;
     const player = this.players[playerIdx];
@@ -4017,13 +4063,21 @@ class Game {
       await sleep(600);
       return cells[Math.floor(Math.random()*cells.length)];
     }
-    return await this.ui.pickCell(title, cells);
+    while(!this.cancelled){
+      const available=cells.filter(cell=>!isValid || isValid(cell));
+      if(!available.length)return null;
+      const pick=await this.ui.pickCell(title,available,{isValid});
+      if(!pick)return null;
+      const target=available.find(cell=>cell.r===pick.r && cell.c===pick.c);
+      if(target && (!isValid || isValid(target)))return target;
+    }
+    return null;
   }
-  async chooseCells(playerIdx, count, cells, title){
+  async chooseCells(playerIdx, count, cells, title, isValid=null){
     const chosen = [];
     let remaining = this.abilityCells(playerIdx,cells).slice();
     for(let i=0;i<count && remaining.length;i++){
-      const pick = await this.chooseCell(playerIdx, remaining, `${title} (${i+1}/${count})`);
+      const pick = await this.chooseCell(playerIdx, remaining, `${title} (${i+1}/${count})`,isValid);
       if(!pick) break;
       chosen.push(pick);
       remaining = remaining.filter(x=>!(x.r===pick.r && x.c===pick.c));
@@ -4031,7 +4085,8 @@ class Game {
     return chosen;
   }
   async chooseBoardCell(playerIdx, cells, title){
-    return await this.chooseCell(playerIdx, cells.filter(cell=>this.canSelectBoardCard(cell.r,cell.c)), title);
+    return await this.chooseCell(playerIdx,cells.filter(cell=>this.canSelectBoardCard(cell.r,cell.c)),title,
+      cell=>this.canSelectBoardCard(cell.r,cell.c));
   }
   async choosePlayer(playerIdx, title, opts){
     opts = opts || {};
@@ -4375,7 +4430,8 @@ class Game {
         const targets=self.templeReturnTargets(r,c,playerIdx);
         const chosen=self.players[playerIdx].isAI && !self.aiMakesMistake('target')
           ? targets.slice().sort((a,b)=>(self.boardFaction(a.r,a.c)==='temple')-(self.boardFaction(b.r,b.c)==='temple') || self.pointValue(b.id)-self.pointValue(a.id)).slice(0,3)
-          : await self.chooseCells(playerIdx,Math.min(3,targets.length),targets,'Byakuren — choose other cards to return to the draw pile');
+          : await self.chooseCells(playerIdx,Math.min(3,targets.length),targets,'Byakuren — choose other cards to return to the draw pile',
+            cell=>!(cell.r===r && cell.c===c) && self.canSelectBoardCard(cell.r,cell.c) && self.canReturnBoardToDraw(cell.r,cell.c));
         if(self.cancelled)break;
         const strike=self.presentTemple('byakuren',{r,c,targets:chosen,playerIdx});
         if(strike?.ready && await strike.ready===false)break;
@@ -6653,6 +6709,15 @@ const ZH_TEXT={
   "Take this card": "拿取此卡",
   "Place card": "放置卡牌",
   "Makai Fantastica — use effects in any order": "魔界幻想 — 按任意顺序使用效果",
+  "Makai Fantastica — each effect once, in any order": "魔界幻想 — 每项限一次，顺序不限",
+  "Available once": "可用一次",
+  "Used": "已使用",
+  "Not enough cards": "手牌不足",
+  "No valid targets": "没有可选目标",
+  "Draw pile empty": "抽牌堆为空",
+  "Choose a highlighted tile. Your selection is still active.": "请选择高亮的格子。此次选择仍然有效。",
+  "Flip card": "翻牌",
+  "Drag cards to move them. Tap ↻ to flip, or press F. Double-click or double-tap to inspect.": "拖动卡牌可移动位置；点击 ↻ 或按 F 翻牌；双击可查看详情。",
   "Makai Fantastica — top three cards": "魔界幻想 — 牌堆顶的三张牌",
   "Drag one card into Your Hand. Arrange the rest left to right, or stack the next card on top. Double-click or double-tap to inspect.": "将一张牌拖入你的手牌区，其余卡牌从左到右排列，也可把先抽的牌叠在上面。双击可查看详情。",
   "Draw pile · next card on the left": "抽牌堆 · 左侧卡牌先抽",
@@ -7792,8 +7857,14 @@ function commitShopChoice(slot){
 
 function commitCellChoice(r, c){
   if(!pendingCellChoice) return;
+  const choice=pendingCellChoice;
+  if(!choice.cells.some(cell=>cell.r===r && cell.c===c) || (choice.isValid && !choice.isValid({r,c}))){
+    playGameCue('invalid');
+    setRuleText(el('instruction-bar'),'Choose a highlighted tile. Your selection is still active.');
+    return;
+  }
   playGameCue('select');
-  const resolve = pendingCellChoice.resolve;
+  const resolve = choice.resolve;
   pendingCellChoice = null;
   el('instruction-bar').classList.remove('show');
   el('instruction-bar').textContent = '';
@@ -7802,7 +7873,7 @@ function commitCellChoice(r, c){
 
 function onCellClick(e){
   const r=Number(e.currentTarget.dataset.r),c=Number(e.currentTarget.dataset.c);
-  if(pendingCellChoice && pendingCellChoice.cells.some(cell=>cell.r===r && cell.c===c)) commitCellChoice(r,c);
+  if(pendingCellChoice) commitCellChoice(r,c);
 }
 
 function onCellDragOver(e){
@@ -8341,8 +8412,15 @@ const ui = {
         const btn = document.createElement('button');
         btn.className = 'modal-opt';
         btn.disabled=!!opt.disabled;
-        setRuleText(btn,opt.label,{cards:false});
+        if(opt.singleUse){
+          btn.classList.add('byakuren-effect');btn.classList.toggle('effect-used',!!opt.used);
+          const label=document.createElement('span'),status=document.createElement('span');
+          label.className='effect-label';status.className='effect-status';
+          setRuleText(label,opt.label,{cards:false});setRuleText(status,opt.status,{cards:false});
+          btn.appendChild(label);btn.appendChild(status);
+        }else setRuleText(btn,opt.label,{cards:false});
         btn.addEventListener('click', () => {
+          if(btn.disabled)return;
           playGameCue('select');
           el('modal-overlay').classList.remove('show');
           resolve(opt.value);
@@ -8565,11 +8643,11 @@ const ui = {
       renderBoard();
     });
   },
-  pickCell(title, cells){
+  pickCell(title, cells, opts={}){
     return new Promise(resolve => {
       setRuleText(el('instruction-bar'),title);
       el('instruction-bar').classList.add('show');
-      pendingCellChoice = { cells, resolve: (cell)=>{ resolve(cell); } };
+      pendingCellChoice = { cells,isValid:opts.isValid,resolve: (cell)=>{ resolve(cell); } };
       renderBoard();
     });
   },
@@ -11494,6 +11572,7 @@ function finishTitleCardDrag(cancelled=false,releasedAt=performance.now()){
   }
 }
 function onTitleCardPointerDown(event){
+  if(event.target?.closest?.('.table-card-flip'))return;
   if(event.button>0 || event.isPrimary===false || !movableTableCardEnabled(event.currentTarget))return;
   event.preventDefault();finishTitleCardDrag(true);
   const node=event.currentTarget;stopTableCardSlide(node);
@@ -11532,24 +11611,41 @@ function onTitleCardPointerCancel(event){
 }
 function onTitleCardClick(event){
   event.stopPropagation();
+  if(event.target?.closest?.('.table-card-flip'))return;
   if(event.detail===0)onTitleCardDoubleClick(event);
 }
 function onTitleCardDoubleClick(event){
   event.preventDefault();event.stopPropagation();const node=event.currentTarget;
+  if(event.target?.closest?.('.table-card-flip'))return;
   if(!movableTableCardEnabled(node) || Number(node.dataset.ignoreClickUntil || 0)>Date.now())return;
   stopTableCardSlide(node);
   lastTitleCardTap=null;node.dataset.ignoreClickUntil=String(Date.now()+450);openCardDetails(node.dataset.cardId);
 }
 function onTitleCardKeyDown(event){
+  if(event.target?.closest?.('.table-card-flip'))return;
   if(!movableTableCardEnabled(event.currentTarget))return;
   stopTableCardSlide(event.currentTarget);
   lastTitleCardTap=null;
+  if(event.key.toLowerCase()==='f' && event.currentTarget.dataset.peekCard!=='true'){
+    event.preventDefault();flipTitleCard(event.currentTarget);return;
+  }
   if(event.key==='Enter' || event.key===' '){event.preventDefault();openCardDetails(event.currentTarget.dataset.cardId);return;}
   const directions={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};
   const delta=directions[event.key];if(!delta)return;
   event.preventDefault();const center=liftTitleCard(event.currentTarget),step=event.shiftKey?40:12;
   moveTitleCard(event.currentTarget,center.x+delta[0]*step,center.y+delta[1]*step);
   if(event.currentTarget.dataset.peekCard==='true')peekCardSession?.update(event.currentTarget,true);
+}
+function flipTitleCard(node){
+  if(!node || node.dataset.peekCard==='true' || !movableTableCardEnabled(node))return false;
+  if(titleCardDrag?.node===node)finishTitleCardDrag(true);
+  stopTableCardSlide(node);lastTitleCardTap=null;
+  const faceDown=node.dataset.faceDown!=='true';
+  node.dataset.faceDown=String(faceDown);node.classList.toggle('table-card-facedown',faceDown);
+  node.querySelector('.table-card-front')?.setAttribute('aria-hidden',String(faceDown));
+  node.querySelector('.table-card-reverse')?.setAttribute('aria-hidden',String(!faceDown));
+  node.querySelector('.table-card-flip')?.setAttribute('aria-pressed',String(faceDown));
+  playGameCue('select');return true;
 }
 function renderTitleTableCards(){
   clearTableCardSlides(false);
@@ -11560,10 +11656,20 @@ function renderTitleTableCards(){
   drawTitlePreviewCards().forEach((preview,index)=>{
     const [x,y,baseAngle]=positions[index],angle=baseAngle+Math.random()*12-6;
     const card=document.createElement('div');card.className='table-scatter-card';card.dataset.cardId=preview.id;card.dataset.angle=String(angle);
-    card.setAttribute('role','button');card.setAttribute('tabindex','0');card.setAttribute('aria-label',`${preview.name}. Drag to move; double-click or double-tap to inspect.`);
+    card.setAttribute('role','group');card.setAttribute('tabindex','0');card.setAttribute('aria-label',`${preview.name}. Drag to move; press F to flip; double-click or double-tap to inspect.`);
+    card.setAttribute('aria-keyshortcuts','F Enter Space ArrowLeft ArrowRight ArrowUp ArrowDown');
     card.style.setProperty('--table-x',`${x+Math.random()*4-2}%`);card.style.setProperty('--table-y',`${y+Math.random()*6-3}%`);
     card.style.setProperty('--table-angle',`${angle}deg`);card.style.setProperty('--table-delay',`${index*.04}s`);
-    card.innerHTML=index===6 || index===7 ? '<div class="table-card-back"><span>☯</span></div>' : cardBoardHtml(preview.id);
+    const faceDown=index===6 || index===7,turn=document.createElement('div'),front=document.createElement('div'),reverse=document.createElement('div');
+    card.dataset.faceDown=String(faceDown);card.classList.toggle('table-card-facedown',faceDown);
+    turn.className='table-card-turn';front.className='table-card-front';reverse.className='table-card-reverse';
+    front.innerHTML=cardBoardHtml(preview.id);reverse.innerHTML='<div class="table-card-back"><span>☯</span></div>';
+    front.setAttribute('aria-hidden',String(faceDown));reverse.setAttribute('aria-hidden',String(!faceDown));
+    turn.appendChild(front);turn.appendChild(reverse);card.appendChild(turn);
+    const flip=document.createElement('button');flip.type='button';flip.className='table-card-flip';flip.textContent='↻';
+    flip.setAttribute('aria-label','Flip card');flip.setAttribute('title','Flip card');flip.setAttribute('aria-pressed',String(faceDown));
+    for(const type of ['pointerdown','pointerup','dblclick','keydown'])flip.addEventListener(type,event=>event.stopPropagation());
+    flip.addEventListener('click',event=>{event.stopPropagation();flipTitleCard(card);});card.appendChild(flip);
     card.addEventListener('pointerdown',onTitleCardPointerDown);card.addEventListener('pointermove',onTitleCardPointerMove);
     card.addEventListener('pointerup',onTitleCardPointerUp);card.addEventListener('pointercancel',onTitleCardPointerCancel);card.addEventListener('lostpointercapture',onTitleCardPointerCancel);
     card.addEventListener('click',onTitleCardClick);card.addEventListener('dblclick',onTitleCardDoubleClick);card.addEventListener('keydown',onTitleCardKeyDown);
@@ -11850,7 +11956,7 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='654e786677d5736e2728830ae78bfcfa0c5d5ac3b0a71ff08be756e092ccb289';
+const AI_EVALUATION_RULES_DIGEST='cdafbb20f9b0ae1d44c821c5bb4cf10ad1718efb1e7e9abd1764418ec759664c';
 const AI_EVALUATION_POLICY_DIGEST='76a521ae11d265397664fe1fc9aec0278a1447ad18c51f116bf7b19ad9776064';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;

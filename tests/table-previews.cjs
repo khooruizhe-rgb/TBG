@@ -10,7 +10,7 @@ class Element{
  set className(s){this.names=new Set(s.split(/\s+/).filter(Boolean));}get className(){return [...this.names].join(' ');}
  appendChild(n){n.remove();n.parentElement=this;this.children.push(n);return n;}
  removeEventListener(k,fn){this.events[k]=(this.events[k]||[]).filter(f=>f!==fn);}
- querySelector(s){return this.children.find(node=>node.classList.contains(s.slice(1)))||null;}
+ querySelector(s){for(const child of this.children){if(child.classList.contains(s.slice(1)))return child;const found=child.querySelector(s);if(found)return found;}return null;}
  set innerHTML(markup){this.markup=markup;this.replaceChildren();if(markup.includes('class="peek-order"')){const label=new Element();label.className='peek-order';this.appendChild(label);}}
  get innerHTML(){return this.markup||'';}
  replaceChildren(){for(const n of this.children)n.parentElement=null;this.children=[];}
@@ -62,9 +62,33 @@ test('Refresh remembers the last spread, and blocked storage still allows random
  const original=window.localStorage;window.localStorage={getItem(){throw Error('blocked');},setItem(){throw Error('blocked');}};A.resetPrevious();assert.equal(A.drawTitlePreviewCards().length,9);window.localStorage=original;
 });
 test('Every preview, including both face-down cards, can be inspected without starting a game',()=>{
- const cards=render().slice();assert.equal(cards.length,9);assert.equal(cards.filter(c=>c.innerHTML.includes('table-card-back')).length,2);
- for(const c of cards){assert.equal(c.attributes.role,'button');assert.equal(c.attributes.tabindex,'0');assert(c.attributes['aria-label'].includes(A.CARD[c.dataset.cardId].name));dispatch(c,'dblclick');}
+ const cards=render().slice();assert.equal(cards.length,9);assert.equal(cards.filter(c=>c.dataset.faceDown==='true').length,2);
+ for(const c of cards){assert.equal(c.attributes.role,'group');assert.equal(c.attributes.tabindex,'0');assert(c.attributes['aria-label'].includes(A.CARD[c.dataset.cardId].name));dispatch(c,'dblclick');}
  assert.deepEqual(inspected,cards.map(c=>c.dataset.cardId));
+});
+test('The title flip button reveals and hides the same card without dragging or inspecting it',()=>{
+ for(const faceDown of ['false','true']){
+  const c=render().find(card=>card.dataset.faceDown===faceDown),id=c.dataset.cardId,button=c.querySelector('.table-card-flip'),before=c.getBoundingClientRect();
+  assert(button);assert.equal(button.type,'button');assert.equal(button.attributes['aria-label'],'Flip card');
+  dispatch(button,'pointerdown',{pointerType:'touch'});dispatch(c,'pointerdown',{target:{closest:()=>button},pointerType:'touch'});assert.equal(A.drag(),null);
+  dispatch(button,'click');assert.equal(c.dataset.faceDown,String(faceDown!=='true'));assert.equal(c.dataset.cardId,id);assert.equal(inspected.length,0);assert.deepEqual(c.getBoundingClientRect(),before);
+  assert.equal(c.querySelector('.table-card-front').attributes['aria-hidden'],c.dataset.faceDown);assert.equal(button.attributes['aria-pressed'],c.dataset.faceDown);
+  dispatch(c,'dblclick',{target:{closest:()=>button}});assert.equal(inspected.length,0);
+  dispatch(button,'click');assert.equal(c.dataset.faceDown,faceDown);assert.deepEqual(c.getBoundingClientRect(),before);
+ }
+});
+test('F flips a moved title card while inspection, physical dragging and gameplay isolation remain intact',()=>{
+ const c=render()[0],id=c.dataset.cardId;dispatch(c,'keydown',{key:'ArrowRight'});const moved=c.getBoundingClientRect();
+ dispatch(c,'keydown',{key:'F'});assert.equal(c.dataset.faceDown,'true');assert.deepEqual(c.getBoundingClientRect(),moved);
+ dispatch(c,'keydown',{key:'Enter'});assert.deepEqual(inspected,[id]);now+=500;
+ dispatch(c,'pointerdown');dispatch(c,'pointermove',{clientX:160});dispatch(c,'pointerup',{clientX:160});assert.equal(c.dataset.faceDown,'true');assert.equal(c.dataset.cardId,id);
+ el('game').classList.add('active');dispatch(c.querySelector('.table-card-flip'),'click');assert.equal(c.dataset.faceDown,'true');dispatch(c,'keydown',{key:'f'});assert.equal(c.dataset.faceDown,'true');el('game').classList.remove('active');
+});
+test('The compact menu preserves exposed tabletop space and uses a two-column phone landscape note',()=>{
+ assert.equal(styleValue('#setup.menu-paper','width'),'min(600px,calc(100vw - 112px))');
+ assert.equal(styleValue('#setup.menu-paper','max-height'),'calc(100dvh - 48px)');
+ assert.equal(styleValue('#setup.menu-paper','grid-template-columns'),'minmax(0,.9fr) minmax(0,1.2fr)');
+ assert.equal(styleValue('.table-card-turn','transform-style'),'preserve-3d');assert.equal(styleValue('.table-card-front','backface-visibility'),'hidden');
 });
 test('A double click or double tap opens inspection once, and the first tap leaves the spread untouched',()=>{
  for(const pointerType of ['mouse','touch']){

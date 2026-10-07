@@ -32,6 +32,10 @@ test('Every real card has a Chinese name, ability title and complete rules witho
  A.setGameLanguage('zh-CN');assert.equal(Object.keys(A.ZH_CARDS).length,A.CARDS.length);
  for(const card of A.CARDS){const [name,ability,description]=A.ZH_CARDS[card.id];assert.equal(A.translateGameText(card.name),name);assert.equal(A.translateGameText(card.desc),description);assert.equal(A.translateGameText(A.CARD_ABILITY_NAMES[card.id]),ability);assert(ability);assert(!/[A-Za-z]{3,}/.test(description.replace(/\b[IVXLCDMN]+\b/g,'')),card.id);assert.notEqual(card.name,name);}
 });
+test('Kasen description limits substitution to four-card factions in both languages',()=>{
+ A.setGameLanguage('zh-CN');assert.equal(A.translateGameText(A.CARD.sage_kasen.desc),'收取阵营卡牌时，此卡可视为任意4卡阵营的卡牌。');
+ A.setGameLanguage('en');assert.equal(A.translateGameText(A.CARD.sage_kasen.desc),'This card counts as any four-card faction when claiming cards.');
+});
 test('Kutaka uses 异界的护卫 in card details and direct ability text without changing the English title',()=>{
  A.setGameLanguage('zh-CN');assert.equal(A.ZH_CARDS.hell_kutaka[1],'异界的护卫');assert.equal(A.translateGameText('Overseeing Gateway'),'异界的护卫');
  const title=el('kutaka-title');A.setCardAbilityTitle(title,'hell_kutaka');assert.equal(title.textContent,'异界的护卫');A.setGameLanguage('en');assert.equal(title.textContent,'Overseeing Gateway');A.setGameLanguage('zh-CN');assert.equal(title.textContent,'异界的护卫');
@@ -85,6 +89,11 @@ test('Hidden debug controls, payment diagnostics, copied abilities and ending sn
  'The latest 30 snapshots retain the board, hands, draw pile, restrictions and recent log. Full details are in JSON.'];
  A.setGameLanguage('zh-CN');for(const value of values){const out=A.translateGameText(value);assert.notEqual(out,value);assert(!/[A-Za-z]{3,}/.test(out.replace('JSON','')),out);}
  A.setGameLanguage('en');for(const value of values)assert.equal(A.translateGameText(value),value);
+});
+test('Single-use Byakuren states, rejected selections and title flips have clear Chinese labels',()=>{
+ A.setGameLanguage('zh-CN');
+ for(const [en,zh]of [['Makai Fantastica — each effect once, in any order','魔界幻想 — 每项限一次，顺序不限'],['Available once','可用一次'],['Used','已使用'],['Not enough cards','手牌不足'],['No valid targets','没有可选目标'],['Draw pile empty','抽牌堆为空'],['Flip card','翻牌'],['Choose a highlighted tile. Your selection is still active.','请选择高亮的格子。此次选择仍然有效。']])assert.equal(A.translateGameText(en),zh);
+ const instruction='Drag cards to move them. Tap ↻ to flip, or press F. Double-click or double-tap to inspect.';assert.equal(A.translateGameText(instruction),'拖动卡牌可移动位置；点击 ↻ 或按 F 翻牌；双击可查看详情。');A.setGameLanguage('en');assert.equal(A.translateGameText('Available once'),'Available once');assert.equal(A.translateGameText(instruction),instruction);
 });
 test('Physical card table instructions, discard regions and changing card counts are localized',()=>{
  A.setGameLanguage('zh-CN');
