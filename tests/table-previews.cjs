@@ -20,13 +20,14 @@ class Element{
  get isConnected(){let root=this;while(root.parentElement)root=root.parentElement;return root===document.body;}
  setPointerCapture(id){this.captures.add(id);}hasPointerCapture(id){return this.captures.has(id);}releasePointerCapture(id){this.captures.delete(id);}
  getBoundingClientRect(){if(this.rect)return {...this.rect,right:this.rect.left+this.rect.width,bottom:this.rect.top+this.rect.height};let width=144;
+  if(this.classList.contains('title-memory-table-card'))width=parseFloat(document.body.values.get('--memory-card-width'))||width;
   if(this.dataset.peekCard==='true'){width=parseFloat(el('byakuren-peek-overlay').values.get('--peek-card-width'))||width;if(window.innerHeight<=600 && window.innerWidth>window.innerHeight)width=Math.min(width,window.innerHeight*.17);}
   const size={width,height:width*4/3},parse=(v,total)=>String(v).endsWith('%')?parseFloat(v)*total/100:parseFloat(v)||0;
   return {left:parse(this.values.get('--table-x'),window.innerWidth)-size.width/2,top:parse(this.values.get('--table-y'),window.innerHeight)-size.height/2,...size};}
 }
 const nodes=new Map(),el=id=>{if(!nodes.has(id))nodes.set(id,new Element());return nodes.get(id);};
 const document={body:new Element(),activeElement:null,addEventListener:(key,fn)=>(documentEvents[key]??=[]).push(fn),removeEventListener(){},createElement:()=>new Element(),querySelectorAll(s){const walk=n=>n.children.flatMap(c=>[c,...walk(c)]);return walk(this.body).filter(n=>n.classList.contains(s.slice(1)));}};
-for(const id of ['title-table-cards','game','setup','start-btn','crown-backdrop-a','crown-backdrop-b','byakuren-peek-cards','title-memory-grid','title-memory-close','title-memory-replay'])document.body.appendChild(el(id));
+for(const id of ['title-table-cards','game','setup','start-btn','crown-backdrop-a','crown-backdrop-b','byakuren-peek-cards','title-memory-status','title-memory-controls','title-memory-close','title-memory-replay'])document.body.appendChild(el(id));
 const storage=new Map(),events={},inspected=[];
 const window={innerWidth:1200,innerHeight:800,matchMedia:()=>({matches:reduced}),localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)},addEventListener:(k,fn)=>(events[k]??=[]).push(fn),removeEventListener:(k,fn)=>{events[k]=(events[k]||[]).filter(f=>f!==fn);},scrollTo(){}};
 const ctx={console,Math:math,Date:{now:()=>now},performance:{now:()=>now},document,window,el,openCardDetails:id=>inspected.push(id),cardBoardHtml:id=>`<div class="board-card">${id}</div>`,fullscreenElement:()=>null,screen:{orientation:{unlock(){}}},updateStartButtonState(){},queueMobileViewport(){},setRuleText:(node,text)=>node.textContent=text,playGameCue(){},setTimeout:(fn,delay)=>{timers.set(++nextTimer,{fn,at:now+delay});return nextTimer;},clearTimeout:id=>timers.delete(id),requestAnimationFrame:fn=>{frames.set(++nextFrame,fn);return nextFrame;},cancelAnimationFrame:id=>frames.delete(id),resetGameView(){ctx.api.closeTitleMemoryGame(false);ctx.api.finishTitleCardDrag(true);}};
@@ -37,7 +38,7 @@ vm.runInContext(js.slice(js.indexOf('const DIRS4'),js.indexOf('/* ==============
  js.slice(js.indexOf('function crownLightFor'),js.indexOf('function discardLightFor'))+'\n'+
  js.slice(js.indexOf('const CROWN_SCENE_BACKGROUND'),js.indexOf('function triggerPlacementPresentation'))+'\n'+
  js.slice(js.indexOf('function returnToMainMenu(){'),js.indexOf('function startNewGame({'))+
- '\nthis.api={CARD,drawTitlePreviewCards,renderTitleTableCards,finishTitleCardDrag,returnToMainMenu,showCrownBackdrop,clearCrownBackdrop,CROWN_SCENE_BACKGROUND,CROWN_LIGHT_PALETTES,openByakurenPeek,cardChoiceGroupRect,stepTableCardSlide,clearTableCardSlides,closeTitleMemoryGame,openTitleMemoryGame,memory:()=>titleMemoryGame,slideCount:()=>tableCardSlides.size,averageWoodColor,cancelPeek:()=>cancelByakurenPeek?.(),drag:()=>titleCardDrag,resetPrevious:()=>lastTitleCardIds=[]};',ctx);
+ '\nthis.api={CARD,drawTitlePreviewCards,renderTitleTableCards,finishTitleCardDrag,returnToMainMenu,showCrownBackdrop,clearCrownBackdrop,CROWN_SCENE_BACKGROUND,CROWN_LIGHT_PALETTES,openByakurenPeek,cardChoiceGroupRect,stepTableCardSlide,clearTableCardSlides,closeTitleMemoryGame,openTitleMemoryGame,titleMemoryLayout,memory:()=>titleMemoryGame,slideCount:()=>tableCardSlides.size,averageWoodColor,cancelPeek:()=>cancelByakurenPeek?.(),drag:()=>titleCardDrag,resetPrevious:()=>lastTitleCardIds=[]};',ctx);
 const A=ctx.api,tests=[],test=(n,f)=>tests.push([n,f]);
 function frame(dt=16){now+=dt;const callbacks=[...frames.values()];frames.clear();callbacks.forEach(fn=>fn(now));}
 function advanceTimers(dt){now+=dt;for(const [id,timer]of [...timers])if(timer.at<=now){timers.delete(id);timer.fn();}}
@@ -55,35 +56,44 @@ test('The full-screen menu grid passes pointer input through, while its setup pa
  assert.equal(styleValue('.table-scatter-card','pointer-events'),'auto');
  assert.notEqual(styleValue('#app','pointer-events'),'none','the match container must stay interactive');
 });
-test('Each spread contains nine valid distinct cards and avoids the entire previous spread',()=>{
- const first=Array.from(A.drawTitlePreviewCards(),c=>c.id),next=Array.from(A.drawTitlePreviewCards(),c=>c.id);assert.equal(new Set(first).size,9);assert.equal(new Set(next).size,9);assert(first.every(id=>A.CARD[id]));assert(next.every(id=>!first.includes(id)));
-});
-test('Refresh remembers the last spread, and blocked storage still allows random cards',()=>{
- const previous=JSON.parse(storage.get('boundary-title-preview'));A.resetPrevious();const next=Array.from(A.drawTitlePreviewCards(),c=>c.id);assert(next.every(id=>!previous.includes(id)));
- const original=window.localStorage;window.localStorage={getItem(){throw Error('blocked');},setItem(){throw Error('blocked');}};A.resetPrevious();assert.equal(A.drawTitlePreviewCards().length,9);window.localStorage=original;
-});
-test('Every preview, including both face-down cards, can be inspected without starting a game',()=>{
- const cards=render().slice();assert.equal(cards.length,9);assert.equal(cards.filter(c=>c.dataset.faceDown==='true').length,2);
- for(const c of cards){assert.equal(c.attributes.role,'group');assert.equal(c.attributes.tabindex,'0');assert(c.attributes['aria-label'].includes(A.CARD[c.dataset.cardId].name));dispatch(c,'dblclick');}
- assert.deepEqual(inspected,cards.map(c=>c.dataset.cardId));
-});
-test('The title flip button reveals and hides the same card without dragging or inspecting it',()=>{
- for(const faceDown of ['false','true']){
-  const c=render().find(card=>card.dataset.faceDown===faceDown),id=c.dataset.cardId,button=c.querySelector('.table-card-flip'),before=c.getBoundingClientRect();
-  assert(button);assert.equal(button.type,'button');assert.equal(button.attributes['aria-label'],'Flip card');
-  dispatch(button,'pointerdown',{pointerType:'touch'});dispatch(c,'pointerdown',{target:{closest:()=>button},pointerType:'touch'});assert.equal(A.drag(),null);
-  dispatch(button,'click');assert.equal(c.dataset.faceDown,String(faceDown!=='true'));assert.equal(c.dataset.cardId,id);assert.equal(inspected.length,0);assert.deepEqual(c.getBoundingClientRect(),before);
-  assert.equal(c.querySelector('.table-card-front').attributes['aria-hidden'],c.dataset.faceDown);assert.equal(button.attributes['aria-pressed'],c.dataset.faceDown);
-  dispatch(c,'dblclick',{target:{closest:()=>button}});assert.equal(inspected.length,0);
-  dispatch(button,'click');assert.equal(c.dataset.faceDown,faceDown);assert.deepEqual(c.getBoundingClientRect(),before);
+test('Each spread has ten distinct cards from five factions, two per faction, and avoids the previous spread',()=>{
+ for(let i=0;i<30;i++){
+  const previous=JSON.parse(storage.get('boundary-title-preview')||'[]'),cards=Array.from(A.drawTitlePreviewCards()),counts=new Map();
+  assert.equal(cards.length,10);assert.equal(new Set(cards.map(card=>card.id)).size,10);assert(cards.every(card=>!card.token&&!card.shopkeeper));
+  for(const card of cards)counts.set(card.faction,(counts.get(card.faction)||0)+1);
+  assert.equal(counts.size,5);assert([...counts.values()].every(count=>count===2));assert(cards.every(card=>!previous.includes(card.id)));
  }
 });
-test('F flips a moved title card while inspection, physical dragging and gameplay isolation remain intact',()=>{
+test('Refresh remembers the previous paired spread, and blocked storage still allows ten cards',()=>{
+ const previous=JSON.parse(storage.get('boundary-title-preview'));A.resetPrevious();const next=Array.from(A.drawTitlePreviewCards(),c=>c.id);assert(next.every(id=>!previous.includes(id)));
+ const original=window.localStorage;window.localStorage={getItem(){throw Error('blocked');},setItem(){throw Error('blocked');}};A.resetPrevious();assert.equal(A.drawTitlePreviewCards().length,10);window.localStorage=original;
+});
+test('Every preview can be inspected and has no extra flip button',()=>{
+ const cards=render().slice();assert.equal(cards.length,10);assert.equal(cards.filter(c=>c.dataset.faceDown==='true').length,2);
+ for(const c of cards){assert.equal(c.attributes.role,'button');assert.equal(c.attributes.tabindex,'0');assert(c.attributes['aria-label'].includes(A.CARD[c.dataset.cardId].name));assert.equal(c.querySelector('.table-card-flip'),null);dispatch(c,'dblclick');}
+ assert.deepEqual(inspected,cards.map(c=>c.dataset.cardId));assert(!css.includes('.table-card-flip'));
+});
+test('One click flips either face without moving, changing the card or opening inspection',()=>{
+ for(const faceDown of ['false','true']){
+  const c=render().find(card=>card.dataset.faceDown===faceDown),id=c.dataset.cardId,before=c.getBoundingClientRect();
+  dispatch(c,'click');assert.equal(c.dataset.faceDown,String(faceDown!=='true'));assert.equal(c.dataset.cardId,id);assert.equal(inspected.length,0);assert.deepEqual(c.getBoundingClientRect(),before);
+  assert.equal(c.querySelector('.table-card-front').attributes['aria-hidden'],c.dataset.faceDown);assert.equal(c.attributes['aria-pressed'],c.dataset.faceDown);
+  dispatch(c,'click');assert.equal(c.dataset.faceDown,faceDown);assert.deepEqual(c.getBoundingClientRect(),before);
+ }
+});
+test('Mouse, touch and pen tap releases flip once, even with a later compatibility click',()=>{
+ for(const pointerType of ['mouse','touch','pen'])for(const detail of [0,1]){
+  const c=render()[0];dispatch(c,'pointerdown',{pointerType});dispatch(c,'pointerup',{pointerType});assert.equal(c.dataset.faceDown,'true');assert.equal(A.drag(),null);
+  dispatch(c,'click',{detail});assert.equal(c.dataset.faceDown,'true');assert.equal(inspected.length,0);
+ }
+});
+test('F, Enter and Space flip a title card, I inspects it, and gameplay disables title input',()=>{
  const c=render()[0],id=c.dataset.cardId;dispatch(c,'keydown',{key:'ArrowRight'});const moved=c.getBoundingClientRect();
  dispatch(c,'keydown',{key:'F'});assert.equal(c.dataset.faceDown,'true');assert.deepEqual(c.getBoundingClientRect(),moved);
- dispatch(c,'keydown',{key:'Enter'});assert.deepEqual(inspected,[id]);now+=500;
+ dispatch(c,'keydown',{key:'Enter'});assert.equal(c.dataset.faceDown,'false');dispatch(c,'keydown',{key:' '});assert.equal(c.dataset.faceDown,'true');
+ dispatch(c,'keydown',{key:'i'});assert.deepEqual(inspected,[id]);now+=500;
  dispatch(c,'pointerdown');dispatch(c,'pointermove',{clientX:160});dispatch(c,'pointerup',{clientX:160});assert.equal(c.dataset.faceDown,'true');assert.equal(c.dataset.cardId,id);
- el('game').classList.add('active');dispatch(c.querySelector('.table-card-flip'),'click');assert.equal(c.dataset.faceDown,'true');dispatch(c,'keydown',{key:'f'});assert.equal(c.dataset.faceDown,'true');el('game').classList.remove('active');
+ el('game').classList.add('active');now+=500;dispatch(c,'click');dispatch(c,'keydown',{key:'f'});assert.equal(c.dataset.faceDown,'true');el('game').classList.remove('active');
 });
 test('The compact menu preserves exposed tabletop space and uses a two-column phone landscape note',()=>{
  assert.equal(styleValue('#setup.menu-paper','width'),'min(600px,calc(100vw - 112px))');
@@ -91,52 +101,77 @@ test('The compact menu preserves exposed tabletop space and uses a two-column ph
  assert.equal(styleValue('#setup.menu-paper','grid-template-columns'),'minmax(0,.9fr) minmax(0,1.2fr)');
  assert.equal(styleValue('.table-card-turn','transform-style'),'preserve-3d');assert.equal(styleValue('.table-card-front','backface-visibility'),'hidden');
 });
-test('Every scattered card must be flipped at least once before the memory game opens after the last animation',()=>{
- const cards=render();for(const card of cards.slice(0,8))dispatch(card.querySelector('.table-card-flip'),'click');
- dispatch(cards[0].querySelector('.table-card-flip'),'click');advanceTimers(400);assert.equal(A.memory(),null);
- dispatch(cards[8],'keydown',{key:'f'});advanceTimers(339);assert.equal(A.memory(),null);advanceTimers(1);
- const session=A.memory();assert(session);assert.equal(session.cards.length,8);assert(session.cards.every(card=>card.node.dataset.faceDown==='true'));assert.equal(el('title-memory-pairs').textContent,'0/4');
- const counts=new Map();for(const card of session.cards)counts.set(card.id,(counts.get(card.id)||0)+1);assert.equal(counts.size,4);assert([...counts.values()].every(count=>count===2));assert(session.cards.every(card=>!A.CARD[card.id].token&&!A.CARD[card.id].shopkeeper));
- assert(el('title-memory-overlay').classList.contains('show'));assert(!el('game').classList.contains('active'));
+function coverTitleCards(){const cards=render().slice();for(const card of cards)if(card.dataset.faceDown!=='true')dispatch(card,'click');return cards;}
+function memory(){const nodes=coverTitleCards();advanceTimers(340);const session=A.memory();assert(session);advanceTimers(450);advanceTimers(450);assert.equal(session.phase,'ready');return {session,nodes};}
+test('Only ten currently face-down cards unlock the game; turning one back up cancels the pending start',()=>{
+ const cards=render().slice();for(const card of cards)dispatch(card,'click');advanceTimers(400);assert.equal(A.memory(),null,'flipping each once leaves the initially covered cards face-up');
+ for(const card of cards)if(card.dataset.faceDown!=='true')dispatch(card,'click');advanceTimers(339);assert.equal(A.memory(),null);
+ dispatch(cards[0],'click');advanceTimers(1);assert.equal(A.memory(),null);dispatch(cards[0],'click');advanceTimers(340);assert.equal(A.memory().phase,'collecting');
 });
-test('A memory mismatch waits, rejects third-card and duplicate taps, then turns both cards back over',()=>{
- render();A.openTitleMemoryGame();const session=A.memory(),first=session.cards[0],second=session.cards.find(card=>card.id!==first.id),third=session.cards.find(card=>card!==first&&card!==second);
+test('The same ten cards gather centrally, then spread on the original table without a modal or grid',()=>{
+ const nodes=coverTitleCards();const original=new Set(nodes);advanceTimers(340);const session=A.memory();assert.equal(session.phase,'collecting');
+ assert.equal(session.cards.length,10);assert(session.cards.every(card=>original.has(card.node)&&card.node.dataset.faceDown==='true'));
+ assert(session.cards.every(card=>Math.abs(parseFloat(card.node.values.get('--table-x'))-window.innerWidth/2)<12));
+ assert(document.body.classList.contains('title-memory-active'));assert.equal(el('title-memory-status').hidden,false);assert(!html.includes('id="title-memory-overlay"'));assert(!html.includes('id="title-memory-grid"'));
+ dispatch(session.cards[0].node,'click');assert.equal(session.open.length,0);dispatch(session.cards[0].node,'pointerdown');assert.equal(A.drag(),null);
+ advanceTimers(450);assert.equal(session.phase,'spreading');assert.equal(new Set(session.cards.map(card=>card.node.values.get('--table-y'))).size,2);
+ assert.equal(new Set(session.cards.map(card=>card.node.values.get('--table-x'))).size,5);
+ advanceTimers(450);assert.equal(session.phase,'ready');assert(session.cards.every(card=>!card.node.classList.contains('title-memory-arranging')));assert(!el('game').classList.contains('active'));
+});
+test('Mismatch waits before covering both cards, rejects a third flip and still allows free movement',()=>{
+ const {session}=memory(),first=session.cards[0],second=session.cards.find(card=>card.faction!==first.faction),third=session.cards.find(card=>card!==first&&card!==second);
  dispatch(first.node,'click');dispatch(first.node,'click');assert.equal(session.open.length,1);assert.equal(session.attempts,0);
  dispatch(second.node,'click');dispatch(third.node,'click');assert.equal(session.attempts,1);assert(session.locked);assert.equal(third.node.dataset.faceDown,'true');
+ const before=third.node.getBoundingClientRect();dragTo(third.node,before.left+before.width/2+45,before.top+before.height/2+20,'touch');assert.notEqual(third.node.getBoundingClientRect().left,before.left);assert.equal(third.node.dataset.faceDown,'true');
  advanceTimers(849);assert.equal(first.node.dataset.faceDown,'false');advanceTimers(1);assert.equal(first.node.dataset.faceDown,'true');assert.equal(second.node.dataset.faceDown,'true');assert.equal(session.open.length,0);assert(!session.locked);
 });
-test('A matched pair stays revealed, cannot be chosen again and counts one pair and one attempt',()=>{
- render();A.openTitleMemoryGame();const session=A.memory(),first=session.cards[0],second=session.cards.find(card=>card!==first&&card.id===first.id);
- dispatch(first.node,'click');dispatch(second.node,'click');assert.equal(session.pairs,1);assert.equal(session.attempts,1);assert.equal(el('title-memory-pairs').textContent,'1/4');
- for(const card of [first,second]){assert(card.matched);assert(card.node.disabled);assert(card.node.classList.contains('memory-matched'));assert.equal(card.node.dataset.faceDown,'false');dispatch(card.node,'click');}
- assert.equal(session.pairs,1);assert.equal(session.attempts,1);assert.equal(session.open.length,0);
+test('Two different characters of the same faction match, reveal briefly and fly fully offscreen before removal',()=>{
+ const {session}=memory(),first=session.cards[0],second=session.cards.find(card=>card!==first&&card.faction===first.faction);assert.notEqual(first.id,second.id);
+ dispatch(first.node,'click');dispatch(second.node,'click');assert.equal(session.pairs,1);assert.equal(session.attempts,1);assert.equal(el('title-memory-pairs').textContent,'1/5');
+ for(const card of [first,second]){assert(card.matched);assert(card.node.classList.contains('title-memory-matched'));assert.equal(card.node.dataset.faceDown,'false');dispatch(card.node,'click');assert.equal(card.node.attributes.tabindex,'-1');}
+ assert.equal(session.attempts,1);advanceTimers(339);assert(first.node.isConnected);assert(!first.node.classList.contains('title-memory-flying'));
+ advanceTimers(1);assert(first.node.classList.contains('title-memory-flying'));assert(parseFloat(first.node.values.get('--table-x'))<0);assert(parseFloat(second.node.values.get('--table-x'))>window.innerWidth);
+ const exits=[first.node.values.get('--table-x'),second.node.values.get('--table-x')];for(const fn of events.resize)fn();assert.deepEqual([first.node.values.get('--table-x'),second.node.values.get('--table-x')],exits,'resize must not pull a flying card back onto the table');
+ advanceTimers(699);assert(first.node.isConnected);advanceTimers(1);assert(!first.node.isConnected&&!second.node.isConnected);assert.equal(document.querySelectorAll('.table-scatter-card').length,8);
 });
-test('Completing all four pairs shows the replay control and replay creates a fresh covered game',()=>{
- render();A.openTitleMemoryGame();const session=A.memory();for(const id of new Set(session.cards.map(card=>card.id)))for(const card of session.cards.filter(card=>card.id===id))dispatch(card.node,'click');
- assert.equal(session.pairs,4);assert.equal(session.attempts,4);assert.equal(el('title-memory-message').textContent,'All pairs found!');assert(!el('title-memory-replay').hidden);assert.equal(document.activeElement,el('title-memory-replay'));
- el('title-memory-replay').onclick();const next=A.memory();assert.notEqual(next,session);assert.equal(next.pairs,0);assert.equal(next.attempts,0);assert(next.cards.every(card=>card.node.dataset.faceDown==='true'));assert(el('title-memory-replay').hidden);
+test('All five matches fly away, then replay generates a fresh ten-card faction game on the same table',()=>{
+ const {session}=memory();for(const faction of new Set(session.cards.map(card=>card.faction)))for(const card of session.cards.filter(card=>card.faction===faction))dispatch(card.node,'click');
+ assert.equal(session.pairs,5);assert.equal(session.attempts,5);assert(el('title-memory-replay').hidden);advanceTimers(340);advanceTimers(700);
+ assert.equal(document.querySelectorAll('.table-scatter-card').length,0);assert.equal(session.phase,'complete');assert.equal(el('title-memory-message').textContent,'All pairs found!');assert.equal(el('title-memory-replay').hidden,false);
+ el('title-memory-replay').onclick();const next=A.memory();assert.notEqual(next,session);assert.equal(next.pairs,0);assert.equal(next.attempts,0);assert.equal(next.cards.length,10);assert(next.cards.every(card=>card.node.dataset.faceDown==='true'));assert(el('title-memory-replay').hidden);
 });
-test('Closing or replaying cancels mismatch callbacks so an old game cannot change a later one',()=>{
- render();A.openTitleMemoryGame();let session=A.memory();dispatch(session.cards[0].node,'click');dispatch(session.cards.find(card=>card.id!==session.cards[0].id).node,'click');
- const stale=timers.get(session.timer).fn;el('title-memory-replay').onclick();session=A.memory();stale();assert.equal(A.memory(),session);assert.equal(session.open.length,0);assert(session.cards.every(card=>card.node.dataset.faceDown==='true'));
- dispatch(session.cards[0].node,'click');dispatch(session.cards.find(card=>card.id!==session.cards[0].id).node,'click');el('title-memory-close').onclick();advanceTimers(900);
- assert.equal(A.memory(),null);assert.equal(el('title-memory-grid').children.length,0);assert(!el('title-memory-overlay').classList.contains('show'));assert(document.querySelectorAll('.table-scatter-card').every(card=>card.dataset.turned==='false'));
+test('Closing during gathering, mismatch or a flight cancels old work, and stale callbacks cannot alter new cards',()=>{
+ for(const stage of ['collecting','mismatch','flying']){
+  let session;if(stage==='collecting'){coverTitleCards();advanceTimers(340);session=A.memory();}else{session=memory().session;const first=session.cards[0],second=session.cards.find(card=>stage==='mismatch'?card.faction!==first.faction:card!==first&&card.faction===first.faction);dispatch(first.node,'click');dispatch(second.node,'click');if(stage==='flying')advanceTimers(340);}
+  const stale=[...session.timers].map(id=>timers.get(id)?.fn).filter(Boolean);el('title-memory-close').onclick();const fresh=el('title-table-cards').children.slice();for(const fn of stale)fn();advanceTimers(1200);
+  assert.equal(A.memory(),null);assert.equal(document.querySelectorAll('.table-scatter-card').length,10);assert.deepEqual(el('title-table-cards').children,fresh);assert(!document.body.classList.contains('title-memory-active'));assert(el('title-memory-status').hidden);assert.equal(document.activeElement,el('start-btn'));
+ }
 });
-test('Refreshing the spread or starting a real game prevents a late memory unlock',()=>{
- let cards=render();for(const card of cards)dispatch(card.querySelector('.table-card-flip'),'click');A.renderTitleTableCards();advanceTimers(400);assert.equal(A.memory(),null);
- cards=el('title-table-cards').children.slice();for(const card of cards)dispatch(card.querySelector('.table-card-flip'),'click');el('game').classList.add('active');advanceTimers(400);assert.equal(A.memory(),null);assert(!el('title-memory-overlay').classList.contains('show'));el('game').classList.remove('active');
- render();A.openTitleMemoryGame();ctx.resetGameView();assert.equal(A.memory(),null);assert(!el('title-memory-overlay').classList.contains('show'));
+test('Refresh and the real-game reset cancel both a pending unlock and an active gathering animation',()=>{
+ coverTitleCards();A.renderTitleTableCards();advanceTimers(400);assert.equal(A.memory(),null);
+ coverTitleCards();el('game').classList.add('active');advanceTimers(400);assert.equal(A.memory(),null);el('game').classList.remove('active');
+ coverTitleCards();advanceTimers(340);ctx.resetGameView();advanceTimers(1200);assert.equal(A.memory(),null);assert(!document.body.classList.contains('title-memory-active'));
 });
-test('The memory dialog keeps keyboard focus inside and Escape returns to the original table control',()=>{
- const card=render()[0];card.focus();A.openTitleMemoryGame();frame();const session=A.memory();assert.equal(document.activeElement,session.cards[0].node);
- const key=(key,shiftKey=false)=>{let prevented=false;for(const fn of documentEvents.keydown||[])fn({key,shiftKey,preventDefault(){prevented=true;}});return prevented;};
- el('title-memory-close').focus();assert(key('Tab',true));assert.equal(document.activeElement,session.cards[7].node);assert(key('Tab'));assert.equal(document.activeElement,el('title-memory-close'));
- assert(key('Escape'));assert.equal(A.memory(),null);assert.equal(document.activeElement,card);
+test('Ten-card layouts fit desktop, phone landscape and portrait, while ready cards remain freely draggable',()=>{
+ for(const [width,height]of [[1200,800],[844,390],[480,320],[390,844]]){
+  window.innerWidth=width;window.innerHeight=height;const layout=A.titleMemoryLayout();assert.equal(layout.points.length,10);
+  for(const p of layout.points){assert(p.x-layout.width/2>=20);assert(p.x+layout.width/2<=width-20);assert(p.y-layout.width*2/3>=64);assert(p.y+layout.width*2/3<=height-64);}
+  const {session}=memory(),card=session.cards[0],before=card.node.getBoundingClientRect();dragTo(card.node,width/2+20,height/2,'touch');assert.notEqual(card.node.getBoundingClientRect().left,before.left);assert.equal(card.node.dataset.faceDown,'true');
+ }
+ window.innerWidth=1200;window.innerHeight=800;
 });
-test('A double click or double tap opens inspection once, and the first tap leaves the spread untouched',()=>{
+test('Reduced-motion users get the same five-pair game without travel animations',()=>{
+ reduced=true;coverTitleCards();advanceTimers(340);advanceTimers(0);advanceTimers(0);const session=A.memory();assert.equal(session.phase,'ready');
+ const first=session.cards[0],second=session.cards.find(card=>card!==first&&card.faction===first.faction);dispatch(first.node,'click');dispatch(second.node,'click');advanceTimers(0);advanceTimers(0);assert(!first.node.isConnected&&!second.node.isConnected);reduced=false;
+});
+test('An open card inspection postpones the all-backs trigger and Escape in the game returns to the setup',()=>{
+ coverTitleCards();el('card-detail-overlay').classList.add('show');advanceTimers(340);assert.equal(A.memory(),null);el('card-detail-overlay').classList.remove('show');advanceTimers(340);advanceTimers(450);advanceTimers(450);assert(A.memory());
+ let prevented=false;for(const fn of documentEvents.keydown||[])fn({key:'Escape',preventDefault(){prevented=true;}});assert(prevented);assert.equal(A.memory(),null);assert.equal(document.activeElement,el('start-btn'));
+});
+test('A double click or double tap opens inspection once, after the first tap flips the card',()=>{
  for(const pointerType of ['mouse','touch']){
   const c=render()[0],before=c.getBoundingClientRect();dispatch(c,'pointerdown',{pointerType});dispatch(c,'pointerup',{pointerType});dispatch(c,'click');
-  assert.equal(inspected.length,0);assert.equal(c.parentElement,el('title-table-cards'));assert.deepEqual(c.getBoundingClientRect(),before);
+  assert.equal(inspected.length,0);assert.equal(c.dataset.faceDown,'true');assert.equal(c.parentElement,el('title-table-cards'));assert.deepEqual(c.getBoundingClientRect(),before);
   now+=120;dispatch(c,'pointerdown',{pointerType});dispatch(c,'pointerup',{pointerType});dispatch(c,'click',{detail:2});dispatch(c,'dblclick');
   assert.deepEqual(inspected,[c.dataset.cardId]);assert.equal(A.drag(),null);assert(!c.hasPointerCapture(1));
  }
@@ -159,17 +194,17 @@ test('Unrelated or slow taps do not inspect a card',()=>{
  now+=100;tap(b,{clientX:150});assert.equal(inspected.length,0);
  now+=100;tap(b,{clientX:150});assert.deepEqual(inspected,[b.dataset.cardId]);
 });
-test('Keyboard assistive clicks inspect, and title input is inactive while playing',()=>{
- const c=render()[0];dispatch(c,'click',{detail:0});assert.deepEqual(inspected,[c.dataset.cardId]);now+=500;el('game').classList.add('active');dispatch(c,'pointerdown');dispatch(c,'dblclick');dispatch(c,'keydown',{key:'Enter'});assert.equal(A.drag(),null);assert.equal(inspected.length,1);el('game').classList.remove('active');
+test('Keyboard assistive clicks flip, and title input is inactive while playing',()=>{
+ const c=render()[0];dispatch(c,'click',{detail:0});assert.equal(c.dataset.faceDown,'true');assert.equal(inspected.length,0);now+=500;el('game').classList.add('active');dispatch(c,'pointerdown');dispatch(c,'dblclick');dispatch(c,'keydown',{key:'Enter'});assert.equal(A.drag(),null);assert.equal(inspected.length,0);el('game').classList.remove('active');
 });
 test('Pointer cancellation restores the position and releases capture without an accidental inspection',()=>{
  const c=render()[0];dispatch(c,'pointerdown');const start={...A.drag().center};dispatch(c,'pointermove',{clientX:400,clientY:300});dispatch(c,'pointercancel');assert.equal(A.drag(),null);assert.equal(parseFloat(c.values.get('--table-x')),start.x);assert.equal(parseFloat(c.values.get('--table-y')),start.y);assert(!c.hasPointerCapture(1));dispatch(c,'click');assert.equal(inspected.length,0);
 });
-test('Arrow keys move cards, Shift moves farther and Enter or Space inspects them',()=>{
- const c=render()[0],before=c.getBoundingClientRect();dispatch(c,'keydown',{key:'ArrowRight'});assert.equal(parseFloat(c.values.get('--table-x')),before.left+before.width/2+12);dispatch(c,'keydown',{key:'ArrowDown',shiftKey:true});assert.equal(parseFloat(c.values.get('--table-y')),before.top+before.height/2+40);dispatch(c,'keydown',{key:'Enter'});dispatch(c,'keydown',{key:' '});assert.deepEqual(inspected,[c.dataset.cardId,c.dataset.cardId]);
+test('Arrow keys move title cards, Shift moves farther, and I inspects',()=>{
+ const c=render()[0],before=c.getBoundingClientRect();dispatch(c,'keydown',{key:'ArrowRight'});assert.equal(parseFloat(c.values.get('--table-x')),before.left+before.width/2+12);dispatch(c,'keydown',{key:'ArrowDown',shiftKey:true});assert.equal(parseFloat(c.values.get('--table-y')),before.top+before.height/2+40);dispatch(c,'keydown',{key:'i'});assert.deepEqual(inspected,[c.dataset.cardId]);
 });
 test('A fresh spread removes moved cards and retires an unfinished drag',()=>{
- const c=render()[0];dispatch(c,'pointerdown');dispatch(c,'pointermove',{clientX:500});A.renderTitleTableCards();assert.equal(A.drag(),null);assert.equal(document.querySelectorAll('.table-scatter-card').length,9);assert(!document.querySelectorAll('.table-scatter-card').includes(c));assert.equal(inspected.length,0);
+ const c=render()[0];dispatch(c,'pointerdown');dispatch(c,'pointermove',{clientX:500});A.renderTitleTableCards();assert.equal(A.drag(),null);assert.equal(document.querySelectorAll('.table-scatter-card').length,10);assert(!document.querySelectorAll('.table-scatter-card').includes(c));assert.equal(inspected.length,0);
 });
 test('Returning from a match or tutorial refreshes the spread and leaves settings intact',()=>{
  const old=render().map(c=>c.dataset.cardId);el('game').classList.add('active');el('setup').style.display='none';A.returnToMainMenu();const next=el('title-table-cards').children.map(c=>c.dataset.cardId);assert(next.every(id=>!old.includes(id)));assert(!el('game').classList.contains('active'));assert.equal(el('setup').style.display,'');assert.equal(document.activeElement,el('start-btn'));
