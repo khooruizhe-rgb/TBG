@@ -36,6 +36,14 @@ test('Kasen description limits substitution to four-card factions in both langua
  A.setGameLanguage('zh-CN');assert.equal(A.translateGameText(A.CARD.sage_kasen.desc),'收取阵营卡牌时，此卡可视为任意4卡阵营的卡牌。');
  A.setGameLanguage('en');assert.equal(A.translateGameText(A.CARD.sage_kasen.desc),'This card counts as any four-card faction when claiming cards.');
 });
+test('Hecatia uses an inclusive three-card threshold and localized refusal messages',()=>{
+ A.setGameLanguage('zh-CN');assert.equal(A.translateGameText(A.CARD.hell_hecatia.desc),'此卡计为 3 点弃牌分数。只有弃牌堆已有 3 张及以上地狱卡牌时，此卡才能进入该弃牌堆。');
+ const name=A.CARD.hell_hecatia.name,zh=A.ZH_CARDS.hell_hecatia[0];
+ assert.equal(A.translateGameText(`${name} needs at least 3 Hell cards already in Your discard pile and stays in place.`),`${zh} 留在原位；你的弃牌堆需要已有至少三张地狱卡牌。`);
+ assert.equal(A.translateGameText(`${name} needs at least 3 Hell cards already in AI 1's discard pile and stays in place.`),`${zh} 留在原位；电脑 1的弃牌堆需要已有至少三张地狱卡牌。`);
+ assert.equal(A.translateGameText(`${name} stays in place: the discard pile needs at least 3 Hell cards already in it.`),`${zh} 留在原位，该弃牌堆需要已有至少三张地狱卡牌。`);
+ A.setGameLanguage('en');assert.equal(A.translateGameText(A.CARD.hell_hecatia.desc),A.CARD.hell_hecatia.desc);
+});
 test('Kutaka uses 异界的护卫 in card details and direct ability text without changing the English title',()=>{
  A.setGameLanguage('zh-CN');assert.equal(A.ZH_CARDS.hell_kutaka[1],'异界的护卫');assert.equal(A.translateGameText('Overseeing Gateway'),'异界的护卫');
  const title=el('kutaka-title');A.setCardAbilityTitle(title,'hell_kutaka');assert.equal(title.textContent,'异界的护卫');A.setGameLanguage('en');assert.equal(title.textContent,'Overseeing Gateway');A.setGameLanguage('zh-CN');assert.equal(title.textContent,'异界的护卫');
