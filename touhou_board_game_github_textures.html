@@ -2836,13 +2836,22 @@ body.tutorial-practice #debug-menu-btn{display:none}
     <div id="ai-test-summary"></div><p id="ai-test-current"></p>
     <p class="ai-test-note">Only completed games count toward rates. Aborted games are excluded.</p>
     <h3>Faction claims</h3><p class="ai-test-note">Claim rate = games with this faction claimed ÷ completed games.</p><div id="ai-test-factions" class="ai-test-table"></div>
+    <h3>Faction claimant outcomes</h3><p class="ai-test-note">Each AI counts once per faction per game. Final wins include the sole highest score at a stalemate. Tied leaders are separate. These associations do not prove that a claim caused a win.</p><div id="ai-test-faction-outcomes" class="ai-test-table"></div>
     <h3>Card usage</h3><p class="ai-test-note">Use rate = games where the card was placed ÷ games where it entered a hand.</p>
     <p class="ai-test-note">Placement share includes placements made by abilities.</p><div id="ai-test-cards" class="ai-test-table"></div>
+    <h3>AI card evaluations</h3><p class="ai-test-note">Each held card is sampled once per real voluntary decision. Scores describe its best placement and are not win probabilities. Unavailable cards are excluded from score averages. Forced placements are separate.</p><div id="ai-test-evaluations" class="ai-test-table"></div>
     <h3>Ability results</h3><p class="ai-test-note">Effective means a rule change or information reveal. Cost payment alone does not count. Passive cards have no active resolution rate.</p>
     <div id="ai-test-abilities" class="ai-test-table"></div>
     <details><summary>Copied ability details</summary><div id="ai-test-ability-details" class="ai-test-table"></div></details>
     <h3>Card destinations</h3><p class="ai-test-note">Counts are card movements. Cards may move more than once in a game.</p><div id="ai-test-destinations" class="ai-test-table"></div>
     <h3>Score sources</h3><p class="ai-test-note">Points are measured on entry to discard. Rin and passive changes can make final scores differ.</p><div id="ai-test-score-sources" class="ai-test-table"></div>
+    <h3>Kourindou trading</h3><p class="ai-test-note">Purchased-card use records its first exit from the buyer's hand. Claims follow its first placement until it leaves the board. Trader win rates are associations. JSON and CSV retain every trade pair.</p><p class="ai-test-note">Buyer win rates count each buyer once per category per game, even after repeated trades.</p><div id="ai-test-trade-summary" class="ai-test-table"></div>
+    <h4>Purchased cards</h4><div id="ai-test-trade-purchases" class="ai-test-table"></div>
+    <h4>Offered cards</h4><div id="ai-test-trade-offers" class="ai-test-table"></div>
+    <h4>Trade pairs</h4><p class="ai-test-note">The table shows the 30 most frequent pairs. Exports include all pairs.</p><div id="ai-test-trade-pairs" class="ai-test-table"></div>
+    <h4>Trade availability</h4><div id="ai-test-trade-decisions" class="ai-test-table"></div>
+    <h3>Reisen forced placements</h3><div id="ai-test-forced" class="ai-test-table"></div>
+    <details><summary>Latest decision trace</summary><p class="ai-test-note">The latest completed game retains the final 16 diagnostic events per AI. Aggregate totals are not capped.</p><div id="ai-test-decisions"></div></details>
     <h3>Stalemate and error snapshots</h3><p class="ai-test-note">The latest 30 snapshots retain the board, hands, draw pile, restrictions and recent log. Full details are in JSON.</p><div id="ai-test-endings"></div>
     <h3>Seat results</h3><div id="ai-test-seats" class="ai-test-table"></div>
     <h3>Test settings</h3><div id="ai-test-settings" class="ai-test-table"></div>
@@ -3123,12 +3132,13 @@ function romanNumeral(n){
 }
 function possessive(name){ return name === 'You' ? 'Your' : `${name}'s`; }
 
-/* AI-test measurements are collected from real mutations, never AI forecasts. */
+/* Rule-result counts come from real mutations. Decision scores are a separate,
+   explicitly labelled sample taken only at an actual AI decision. */
 const AI_TEST_SNAPSHOT_LIMIT=30;
 function testCardId(id){return CARD[id]?.token ? 'trap_token' : id;}
 function newTestCardActions(){return {handGained:0,handStolen:0,ownPointsLost:0,abilitySkipped:0,abilityCalls:0,abilityEffective:0,costPaid:0,paidAsCost:0,tradedAway:0,returnedFromHand:0,heldAtEnd:0,heldGames:0,claimMembers:0,ownPoints:0,opponentPoints:0,deniedPoints:0};}
 function createAITestMetrics(){return {bySeat:{},turns:0,drawActions:0,trades:0,placements:{},claims:{},substituteClaims:{},substituteMembers:{},cardActions:{},abilityDetails:{},scoreSources:{},seen:new Set(),recorded:false};}
-function createAITestStats(){return {diagnostics:{},games:0,wins:0,stalemates:0,aborted:0,errors:0,turns:0,drawActions:0,trades:0,placements:0,factions:{},cards:{},seats:{},configurations:{},abilityDetails:{},scoreSources:{},endings:[],lastResult:null};}
+function createAITestStats(){return {diagnostics:{},games:0,wins:0,stalemates:0,aborted:0,errors:0,turns:0,drawActions:0,trades:0,placements:0,factions:{},factionOutcomes:{},evaluations:{},tradeStats:{},tradeDecisions:{},forcedPlacements:{},cards:{},seats:{},configurations:{},abilityDetails:{},scoreSources:{},endings:[],lastResult:null};}
 function addTestFields(target,source){for(const [key,value] of Object.entries(source))if(typeof value==='number')target[key]=(target[key]||0)+value;}
 function mergeTestDiagnostics(target,source){
   for(const [key,value] of Object.entries(source||{})){
@@ -3141,6 +3151,41 @@ function testAbilitySignature(state,paidIds){
   const paid=new Set(paidIds);
   return JSON.stringify({...state,hands:state.hands.map(ids=>ids.filter(id=>!paid.has(id))),deck:state.deck.filter(id=>!paid.has(id)),knowledge:state.knowledge.map(entries=>entries.filter(([id])=>!paid.has(id)))});
 }
+function testSeatOutcome(match,playerIdx){
+  if(match.winner)return {kind:match.winner.idx===playerIdx?'wins':'losses',share:match.winner.idx===playerIdx?1:0};
+  const points=match.players.map(p=>match.winCount(p)),maximum=Math.max(...points),leaders=points.filter(n=>n===maximum).length;
+  if(points[playerIdx]!==maximum)return {kind:'losses',share:0};
+  return {kind:leaders===1?'wins':'ties',share:1/leaders};
+}
+function finalizeAITestDiagnostics(match){
+  const metrics=match.testMetrics;
+  if(!metrics || metrics.outcomesFinalized || match.cancelled || match.testAbortReason || (!match.winner && !match.stalemateMessage))return;
+  metrics.outcomesFinalized=true;
+  for(const player of match.players){
+    const seat=match.testSeatMetrics(player.idx),d=seat.diagnostics,outcome=testSeatOutcome(match,player.idx);
+    for(const [id,faction] of Object.entries(FACTIONS))if(faction.size>0){
+      const claims=seat.claims[id]||0,row=(d.factionOutcomes ||= {})[id] ||= {},group=claims?'claimant':'nonClaimant';
+      addTestFields(row,{[`${group}Games`]:1,[`${group}Wins`]:outcome.kind==='wins'?1:0,[`${group}Ties`]:outcome.kind==='ties'?1:0,
+        [`${group}Losses`]:outcome.kind==='losses'?1:0,[`${group}ScoreSum`]:outcome.share});
+      if(claims){addTestFields(row,{claims,claimsByWinner:outcome.kind==='wins'?claims:0,claimsByTiedLeader:outcome.kind==='ties'?claims:0,
+        claimsByLoser:outcome.kind==='losses'?claims:0,claimantPointsSum:match.winCount(player)});
+        if(seat.firstClaimTurns?.[id]!=null)addTestFields(row,{timedClaimantGames:1,firstClaimTurnSum:seat.firstClaimTurns[id]});}
+    }
+    for(const receipt of seat.tradeReceipts||[]){
+      const exit=receipt.exit || (player.hand.includes(receipt.received)?'heldAtEnd':'otherExit');
+      const fields={trades:1,wins:outcome.kind==='wins'?1:0,ties:outcome.kind==='ties'?1:0,losses:outcome.kind==='losses'?1:0,scoreSum:outcome.share,[exit]:1,claimByBuyer:receipt.claimByBuyer?1:0,
+        claimByOther:receipt.claimByOther?1:0,waitTurnsSum:(receipt.exitTurn??metrics.turns)-receipt.turn,
+        [receipt.purpose]:1,forecastSamples:receipt.purpose==='handImprovement' && receipt.forecastGain!=null?1:0,
+        forecastGainSum:receipt.purpose==='handImprovement'?receipt.forecastGain||0:0,
+        forecastRateSamples:receipt.forecastRate==null?0:1,forecastRateSum:receipt.forecastRate||0};
+      const trades=d.tradeStats ||= {totals:{},offers:{},purchases:{},pairs:{}};
+      for(const row of [trades.totals,trades.offers[receipt.offered] ||= {},trades.purchases[receipt.received] ||= {},
+        trades.pairs[`${receipt.offered}>${receipt.received}`] ||= {}])addTestFields(row,fields);
+    }
+    if(d.tradeStats)for(const row of [d.tradeStats.totals,...Object.values(d.tradeStats.offers),...Object.values(d.tradeStats.purchases),...Object.values(d.tradeStats.pairs)])
+      addTestFields(row,{buyerGames:1,buyerWins:outcome.kind==='wins'?1:0,buyerTies:outcome.kind==='ties'?1:0,buyerLosses:outcome.kind==='losses'?1:0,buyerScoreSum:outcome.share});
+  }
+}
 function recordCompletedAITest(stats,match){
   const metrics=match.testMetrics;
   if(!metrics || metrics.recorded || match.cancelled || (!match.winner && !match.stalemateMessage && !match.testAbortReason))return false;
@@ -3152,6 +3197,9 @@ function recordCompletedAITest(stats,match){
     if(stats.endings.length>AI_TEST_SNAPSHOT_LIMIT)stats.endings.splice(0,stats.endings.length-AI_TEST_SNAPSHOT_LIMIT);
   }
   if(match.testAbortReason){stats.aborted++;if(match.testAbortReason==='error')stats.errors++;return true;}
+  finalizeAITestDiagnostics(match);
+  stats.latestDecisions=match.players.map(player=>({seat:player.idx+1,policy:player.aiPolicy||'current',outcome:testSeatOutcome(match,player.idx),
+    events:JSON.parse(JSON.stringify(match.testSeatMetrics(player.idx).diagnostics.events))}));
   stats.games++;stats.wins+=!!match.winner;stats.stalemates+=!!match.stalemateMessage;
   stats.turns+=metrics.turns;stats.drawActions+=metrics.drawActions;stats.trades+=metrics.trades;
   const key=`${settings.players}/${settings.board}/${settings.difficulty}`;
@@ -3160,7 +3208,10 @@ function recordCompletedAITest(stats,match){
   for(const player of match.players){
     const seat=stats.seats[player.idx] ||= {games:0,wins:0,points:0};
     seat.games++;seat.wins+=match.winner?.idx===player.idx;seat.points+=match.winCount(player);
-    mergeTestDiagnostics(stats.diagnostics[player.aiPolicy||'current'] ||= {},match.testSeatMetrics(player.idx).diagnostics);
+    const diagnostics=match.testSeatMetrics(player.idx).diagnostics;
+    mergeTestDiagnostics(stats.diagnostics[player.aiPolicy||'current'] ||= {},diagnostics);
+    for(const field of ['factionOutcomes','evaluations','tradeStats','tradeDecisions','forcedPlacements'])
+      mergeTestDiagnostics(stats[field] ||= {},diagnostics[field]);
   }
   for(const [faction,count] of Object.entries(metrics.claims)){
     const row=stats.factions[faction] ||= {claims:0,games:0,substituteClaims:0,substituteMembers:0};
@@ -3247,13 +3298,31 @@ class Game {
     for(const player of this.players)for(const id of player.hand)this.recordTestSeen(id,player.idx);
   }
 
-  testSeatMetrics(p){return this.testMetrics && ((this.testMetrics.bySeat ||= {})[p] ||= {seen:new Set(),placements:{},claims:{},handTurns:{},cardActions:{},abilityDetails:{},scoreSources:{},diagnostics:{actions:{},costEvents:0,costCards:0,costAssemblyBreaks:0,trades:0,offers:{},purchases:{},yukariTradeGuardTurns:0,retrievals:{},skips:{},events:[],omittedEvents:0}});}
+  testSeatMetrics(p){return this.testMetrics && ((this.testMetrics.bySeat ||= {})[p] ||= {seen:new Set(),placements:{},claims:{},firstClaimTurns:{},tradeReceipts:[],handTurns:{},cardActions:{},abilityDetails:{},scoreSources:{},diagnostics:{actions:{},costEvents:0,costCards:0,costAssemblyBreaks:0,trades:0,offers:{},purchases:{},evaluations:{},tradeDecisions:{},forcedPlacements:{},yukariTradeGuardTurns:0,retrievals:{},skips:{},events:[],omittedEvents:0}});}
   recordTestSeen(cardId,p=this.currentPlayerIdx){if(this.testMetrics && CARD[cardId]){this.testMetrics.seen.add(testCardId(cardId));this.testSeatMetrics(p).seen.add(testCardId(cardId));}}
   recordTestPlacement(cardId,p=this.currentPlayerIdx){
     if(!this.testMetrics)return;
     this.recordTestSeen(cardId,p);const id=CARD[cardId].token ? 'trap_token' : cardId;
     this.testMetrics.placements[id]=(this.testMetrics.placements[id] || 0)+1;
     const seat=this.testSeatMetrics(p);seat.placements[id]=(seat.placements[id]||0)+1;
+    this.recordTestTradeExit(cardId,'placed',p);
+  }
+  recordTestTradeExit(cardId,kind,playerIdx=null){
+    if(!this.testMetrics)return;
+    for(const [owner,seat] of Object.entries(this.testMetrics.bySeat))for(const receipt of seat.tradeReceipts||[]){
+      if(receipt.received!==cardId || receipt.exit)continue;
+      if(playerIdx!==null && Number(owner)!==playerIdx && kind!=='placed')continue;
+      receipt.exit=kind==='placed' && Number(owner)!==playerIdx?'placedByOther':kind;
+      receipt.exitTurn=this.testMetrics.turns;receipt.onBoard=kind==='placed';
+    }
+  }
+  recordTestTradeBoardExit(cardId,claimer=null,faction=null){
+    if(!this.testMetrics)return;
+    for(const [owner,seat] of Object.entries(this.testMetrics.bySeat))for(const receipt of seat.tradeReceipts||[]){
+      if(receipt.received!==cardId || !receipt.onBoard)continue;
+      receipt.onBoard=false;
+      if(faction){receipt.claimByBuyer=Number(owner)===claimer;receipt.claimByOther=Number(owner)!==claimer;receipt.claimFaction=faction;}
+    }
   }
   testCardActions(id){return this.testMetrics && (this.testMetrics.cardActions[testCardId(id)] ||= newTestCardActions());}
   testSeatCardActions(p,id){return this.testMetrics && (this.testSeatMetrics(p).cardActions[testCardId(id)] ||= newTestCardActions());}
@@ -3291,8 +3360,9 @@ class Game {
     return {currentSeat:this.currentPlayerIdx+1,drawPile:this.drawPile.slice(),board:this.board.map(row=>row.slice()),wasteland:this.wasteland.map(row=>row.slice()),
       shop:this.shopTiles.map(tile=>({...tile,cardId:this.cardAt(tile.r,tile.c)})),borrowedAbilities:{...this.borrowedAbilities},
       players:this.players.map(p=>{const forced=this.forcedPlay[p.idx],held=forced && p.hand.includes(forced) ? [forced] : p.hand;
-        const legalPlacements=held.reduce((sum,id)=>{const spaces=this.emptyOrWastelandForCard(CARD[id],p.idx);return sum+(typeof aiPlacementCells==='function'?aiPlacementCells(this,id,spaces):spaces).length;},0);
-        return {seat:p.idx+1,name:p.name,hand:p.hand.slice(),discard:p.discard.slice(),points:this.winCount(p),canDraw:this.canDrawNormally(p.idx),placementBlocked:this.isPlacementBlocked(p.idx),blockTurns:this.placementBlockTurns[p.idx],forcedCard:forced||null,legalPlacements};}),
+        const legalPlacements=held.reduce((sum,id)=>{const spaces=this.emptyOrWastelandForCard(CARD[id],p.idx);return sum+(forced && held.length===1 && typeof aiForcedPlacementCells==='function'?aiForcedPlacementCells(this,id,spaces):typeof aiPlacementCells==='function'?aiPlacementCells(this,id,spaces):spaces).length;},0);
+        const ruleLegalPlacements=held.reduce((sum,id)=>sum+this.emptyOrWastelandForCard(CARD[id],p.idx).filter(cell=>inBounds(cell.r,cell.c)).length,0);
+        return {seat:p.idx+1,name:p.name,hand:p.hand.slice(),discard:p.discard.slice(),points:this.winCount(p),canDraw:this.canDrawNormally(p.idx),placementBlocked:this.isPlacementBlocked(p.idx),blockTurns:this.placementBlockTurns[p.idx],forcedCard:forced||null,legalPlacements,ruleLegalPlacements};}),
       recentLog:JSON.parse(JSON.stringify(this.logLines.slice(-20)))};
   }
   async resolveAbility(cardId,r,c,playerIdx,depth){
@@ -3598,7 +3668,7 @@ class Game {
       && this.players[playerIdx].hand.includes(cardId) && !CARD[cardId].shopkeeper && !CARD[cardId].token
       && !(this.forcedPlay[playerIdx] && this.players[playerIdx].hand.includes(this.forcedPlay[playerIdx]));
   }
-  tradeCard(playerIdx,offeredId,target){
+  tradeCard(playerIdx,offeredId,target,forecast=null){
     const cell=Number.isInteger(target) ? this.shopTiles[target] : target;
     if((this.players[playerIdx].isAI && offeredId==='sage_yukari' && aiPolicyHas(playerIdx,'yukari-trade',this)) || !this.canTrade(playerIdx,offeredId) || !cell
       || !this.tradeCells().some(t=>t.r===cell.r && t.c===cell.c)) return false;
@@ -3607,6 +3677,11 @@ class Game {
     if(this.testMetrics){this.testMetrics.trades++;this.testCardActions(offeredId).tradedAway++;this.testSeatCardActions(playerIdx,offeredId).tradedAway++;
       const d=this.testSeatMetrics(playerIdx).diagnostics;d.trades++;d.offers[testCardId(offeredId)]=(d.offers[testCardId(offeredId)]||0)+1;d.purchases[testCardId(boughtId)]=(d.purchases[testCardId(boughtId)]||0)+1;
       const pair=`${testCardId(offeredId)}>${testCardId(boughtId)}`;d.tradePairs ||= {};d.tradePairs[pair]=(d.tradePairs[pair]||0)+1;
+      this.recordTestTradeExit(offeredId,'retraded',playerIdx);
+      this.recordTestTradeBoardExit(boughtId);
+      this.testSeatMetrics(playerIdx).tradeReceipts.push({offered:offeredId,received:boughtId,turn:this.testMetrics.turns,
+        purpose:!forecast?'unclassified':forecast.thenPlace?forecast.thenPlace.cardId==='mtn_kanako'?'kanakoSetup':'pairCompletion':'handImprovement',
+        forecastGain:Number.isFinite(forecast?.gain)?forecast.gain:null,forecastRate:Number.isFinite(forecast?.rate)?forecast.rate:null});
       this.recordTestDecision(playerIdx,'trade',{offered:testCardId(offeredId),received:testCardId(boughtId),target:{r,c}});}
     if(this.ui?.onShopTrade){try{this.ui.onShopTrade({playerIdx,offeredId,boughtId,r,c});}catch(_error){}}
     this.removeFromHand(playerIdx,offeredId);
@@ -3925,6 +4000,10 @@ class Game {
     if(i>=0){pl.hand.splice(i,1);this.forgetHandCard(cardId);}
   }
   addToHand(p, cardId,isPublic=false){
+    if(this.testMetrics)for(const [owner,seat] of Object.entries(this.testMetrics.bySeat))
+      if(Number(owner)!==p && (seat.tradeReceipts||[]).some(receipt=>receipt.received===cardId && !receipt.exit))
+        this.recordTestTradeExit(cardId,'takenByOther',Number(owner));
+    this.recordTestTradeBoardExit(cardId);
     this.recordTestSeen(cardId,p);
     const frame=this.activeTestAbility();if(frame && p===frame.playerIdx)frame.gained.push(cardId);
     this.players[p].hand.push(cardId);
@@ -3953,6 +4032,8 @@ class Game {
       catch(_error){ /* A cosmetic effect must never stop the game or its win check. */ }
     }
     this.players[p].discard.push(cardId);
+    if(source?.handOwner!=null)this.recordTestTradeExit(cardId,'discardedFromHand',source.handOwner);
+    else this.recordTestTradeBoardExit(cardId,p,source?.claimFaction);
     this.recordTestScore(p,cardId,source);
     if(this.ui && this.ui.onPointsGained){
       try{ this.ui.onPointsGained({playerIdx:p, points:this.pointValue(cardId)}); }
@@ -3971,6 +4052,8 @@ class Game {
     }
     this.forgetHandCard(cardId);
     this.drawPile.push(cardId);
+    if(source?.handOwner!=null)this.recordTestTradeExit(cardId,source.effect==='cost'?'paidAsCost':'returned',source.handOwner);
+    else this.recordTestTradeBoardExit(cardId);
     if(this.testMetrics && source?.handOwner!=null && source.effect!=='cost')this.testCardActions(cardId).returnedFromHand++;
   }
   moveBoardToHand(r,c,p,effect){
@@ -4284,6 +4367,7 @@ class Game {
         if(this.testMetrics){
           this.testMetrics.claims[fk]=(this.testMetrics.claims[fk] || 0)+1;
           const seat=this.testSeatMetrics(placerIdx);seat.claims[fk]=(seat.claims[fk]||0)+1;
+          seat.firstClaimTurns[fk] ??= this.testMetrics.turns;
           const substitutes=cells.filter(cell=>this.isWildActive(this.cardAt(cell.r,cell.c)) && CARD[this.cardAt(cell.r,cell.c)].faction!==fk).length;
           if(substitutes){this.testMetrics.substituteClaims[fk]=(this.testMetrics.substituteClaims[fk]||0)+1;this.testMetrics.substituteMembers[fk]=(this.testMetrics.substituteMembers[fk]||0)+substitutes;}
           for(const cell of cells)this.testCardActions(this.cardAt(cell.r,cell.c)).claimMembers++;
@@ -7025,6 +7109,7 @@ const ZH_TEXT={
 };
 Object.assign(ZH_TEXT,{'AI before Rin/Satori update':'燐与觉更新前的 AI','Historical AI':'历史 AI（早期版本）','Without Rin rework':'关闭燐的新评估','Without Satori rework':'关闭觉的新评估','Without Yukari trade protection':'关闭紫的交易保护','Hand gained':'技能获得手牌','Cards stolen':'窃取手牌数','Own points lost':'自身分数损失','Ability skipped':'主动跳过技能','Decision diagnostics':'决策记录','Cost events':'支付次数','Cost cards':'支付卡牌数','Assembly breaks':'支付后凑牌材料不足','Yukari guard turns':'紫受交易保护的决策次数','Trading offers and purchases':'交易报价与购入','Actual retrieval outcomes':'实际取牌结果','Policy':'策略','Taken cards':'取牌次数'});
 Object.assign(ZH_TEXT,{"Mode": "模式", "Play": "游玩", "AI test": "纯电脑测试", "Start AI test": "开始电脑测试", "Every seat is AI. Finished games restart automatically and contribute to the test data.": "所有席位均由电脑控制。每局结束后自动重开并累计测试数据。", "Fast test (skip effects)": "快速测试（跳过特效）", "Fast test": "快速测试", "Finished games restart automatically. Open Test data to pause or export the results.": "每局结束后自动重开。打开测试数据即可暂停或导出结果。", "Test data": "测试数据", "AI test data": "电脑测试数据", "Pause test": "暂停测试", "Resume test": "继续测试", "Back to game": "返回游戏", "Export CSV": "导出 CSV", "Export JSON": "导出 JSON", "Reset data": "清空数据", "Paused after the current action.": "当前行动结束后暂停。", "AI test is running.": "电脑测试正在运行。", "AI test is stopped.": "电脑测试已停止。", "Completed games": "已完成对局", "Wins": "达分获胜", "Stalemates": "僵局", "Aborted games": "中止对局", "Runtime errors": "运行错误", "Average turns": "平均回合数", "Total placements": "总放置次数", "Draw actions": "普通抽牌次数", "Trades": "交易次数", "Current round": "当前对局", "turns": "回合", "Last result": "上一局结果", "Runtime error": "运行错误", "Turn limit": "超过回合上限", "Stalemate": "僵局", "Faction claims": "阵营收取", "Faction": "阵营", "Claims": "收取次数", "Games claimed": "收取局数", "Claim rate": "收取率", "Card usage": "卡牌使用", "Card": "卡牌", "Placements": "放置次数", "Games in hand": "入手局数", "Games used": "使用局数", "Use rate": "使用率", "Placement share": "放置占比", "Seat results": "席位表现", "Seat": "席位", "Games": "对局数", "Win rate": "胜率", "Average points": "平均最终分数", "Test settings": "测试设置", "Only completed games count toward rates. Aborted games are excluded.": "比率仅统计已完成对局，中止对局不计入。", "Claim rate = games with this faction claimed ÷ completed games.": "收取率 = 收取过该阵营的对局数 ÷ 已完成对局数。", "Use rate = games where the card was placed ÷ games where it entered a hand.": "使用率 = 放置过该卡的对局数 ÷ 该卡进入过任意手牌的对局数。", "Placement share includes placements made by abilities.": "放置占比包含能力产生的放置。"});
+Object.assign(ZH_TEXT,{"Faction claimant outcomes": "阵营收取者的最终表现", "Each AI counts once per faction per game. Final wins include the sole highest score at a stalemate. Tied leaders are separate. These associations do not prove that a claim caused a win.": "每个阵营每局按收取者各计一次。获胜包含僵局时唯一最高分，并列领先另计。这些关联不代表收取阵营导致获胜。", "Claimant games": "收取者对局数", "Claimant wins": "收取者获胜局数", "Claimant ties": "收取者并列局数", "Claims by winner": "胜方收取次数", "Claimant win rate": "收取者最终胜率", "Non-claimant games": "未收取者对局数", "Non-claimant win rate": "未收取者最终胜率", "Average claimant points": "收取者平均最终分数", "Average first claim turn": "首次收取平均回合", "AI card evaluations": "电脑卡牌评价", "Each held card is sampled once per real voluntary decision. Scores describe its best placement and are not win probabilities. Unavailable cards are excluded from score averages. Forced placements are separate.": "每次实际自主决策为每张手牌记录一次。分数是当前最优放置的估值，不是胜率；没有候选位置的卡不以零分混入平均值。强制放置另计。", "Decision samples": "决策样本数", "Scored samples": "有效评分数", "No rule destination": "规则无可放位置", "Rejected by strategy": "策略拒绝放置", "Average score": "平均评分", "Average hand gain estimate": "平均手牌收益估值", "Average claim size estimate": "平均收取规模估值", "Low priority rate": "低优先级比例", "Chosen placements": "选中放置次数", "Average chosen-card score": "选中卡平均评分", "Kourindou trading": "香霖堂交易", "Purchased-card use records its first exit from the buyer's hand. Claims follow its first placement until it leaves the board. Trader win rates are associations. JSON and CSV retain every trade pair.": "买入卡用途统计其首次离开买家的手牌，收取记录追踪首次放置至离开棋盘。买家胜率仅表示关联；JSON 与 CSV 保留全部交易组合。", "Purchased cards": "买入卡牌", "Offered cards": "换出卡牌", "Trade pairs": "交易组合", "The table shows the 30 most frequent pairs. Exports include all pairs.": "此表显示最常见的 30 种组合，导出包含全部组合。", "All trades": "全部交易", "Trade pair": "换出 → 买入", "Placed by buyer": "买家放置", "Placed by another AI": "他人放置", "Traded again": "再次交易", "Returned to draw pile": "回到抽牌堆", "Taken by another AI": "被他人拿走", "Discarded from hand": "从手牌弃掉", "Other exit": "其他去向", "Claimed by buyer": "买家用于收取", "Claimed by another AI": "他人用于收取", "Buyer wins": "买家获胜次数", "Buyer ties": "买家并列次数", "Buyer win rate": "买家最终胜率", "Average wait turns": "平均等待回合", "Average forecast trade gain": "平均预计交易收益", "Trade availability": "交易可用性", "Decision state": "决策状态", "Decisions": "决策次数", "Trading available": "可交易", "Already traded this turn": "本回合已交易", "Forced placement": "被强制放置", "Shop unavailable": "商店不可用", "No tradable card": "没有可交易手牌", "Trade chosen": "选择交易", "Reisen forced placements": "铃仙强制放置", "Forced attempts": "强制放置次数", "Forced placements": "实际放置成功", "Strategy bypassed": "越过策略筛选", "No legal cell": "无合法位置", "Placement failures": "异常未放置", "Latest decision trace": "最近一局决策记录", "The latest completed game retains the final 16 diagnostic events per AI. Aggregate totals are not capped.": "最近完成的一局保留各电脑最后 16 条诊断记录，累计统计不受此上限影响。"});
 Object.assign(ZH_TEXT,{
   'Debug tools':'调试工具','Close':'关闭','Ability results':'能力结算','Resolutions':'结算次数','Effective':'有效次数','Effective rate':'有效率',
   'Cost paid':'支付代价张数','Own points':'自己入弃牌得分','Opponent points':'对手入弃牌得分','Points denied':'夺走对手分数',
@@ -7046,6 +7131,8 @@ Object.assign(ZH_TEXT,{
   'Protected by Rinnosuke — no faction while protected':'受霖之助保护，保护期间不属于任何阵营',
   'This card will be the next card drawn. The other card goes beneath it.':'这张牌将是下一张抽到的牌，另一张放在它下面。',
 });
+Object.assign(ZH_TEXT,{'Kanako setup trades':'神奈子铺场交易','Pair completion trades':'二卡阵营凑牌交易','Hand improvement trades':'一般手牌改善交易','Unclassified trades':'未记录交易分支'});
+Object.assign(ZH_TEXT,{'Buyer games':'买家对局数','Buyer wins':'买家获胜局数','Buyer ties':'买家并列局数','Buyer win rates count each buyer once per category per game, even after repeated trades.':'买家胜率按每种类别每局各计一次，同局多次交易不会重复增加样本数。'});
 const languageTextSources=new WeakMap(),languageAttributeSources=new WeakMap(),abilityTitleSources=new WeakMap(),ruleTextSources=new Map();
 function canonicalCardName(value){
   const text=String(value).trim();
@@ -8938,16 +9025,42 @@ function aiRecordDecision(playerIdx,action,allowTrade){
   if(!game.testMetrics)return;
   const seat=game.testSeatMetrics(playerIdx),d=seat.diagnostics;
   d.actions[action.type]=(d.actions[action.type]||0)+1;
+  const forced=action.type==='forced-place',hand=game.players[playerIdx].hand;
+  const tradeDecision=d.tradeDecisions;
+  tradeDecision.decisions=(tradeDecision.decisions||0)+1;
+  const tradeReason=game.isPlacementBlocked(playerIdx)?'blocked':game.forcedPlay[playerIdx] && hand.includes(game.forcedPlay[playerIdx]) || forced?'forced':
+    game.tradedThisTurn[playerIdx]?'alreadyTraded':!game.shopkeeperAvailable()?'shopUnavailable':!hand.some(id=>game.canTrade(playerIdx,id))?'noTradableCard':'available';
+  tradeDecision[tradeReason]=(tradeDecision[tradeReason]||0)+1;
+  if(action.type==='trade')tradeDecision.chosen=(tradeDecision.chosen||0)+1;
   let forecast=null;
-  if(action.type==='place'){
-    const candidate=aiEvaluateCard(playerIdx,action.cardId);
-    if(candidate)forecast={cell:candidate.cell,matchesChosenCell:candidate.cell.r===action.r && candidate.cell.c===action.c,rate:candidate.rate,handGain:candidate.handGain,claimsNow:candidate.claimsNow,claimSize:candidate.claimSize,skipAbility:candidate.skipAbility,lowPriority:candidate.lowPriority,retrieval:candidate.retrieval||null};
+  // One observation per held card at this actual decision, never per simulated cell
+  // or payment search. Unavailable scores are not silently averaged as zero.
+  if(!forced)for(const cardId of hand){
+    const candidate=aiEvaluateCard(playerIdx,cardId),row=d.evaluations[testCardId(cardId)] ||= {};
+    addTestFields(row,{observations:1,chosen:action.type==='place' && action.cardId===cardId?1:0});
+    if(!candidate){const legal=aiForcedPlacementCells(game,cardId,game.emptyOrWastelandForCard(CARD[cardId],playerIdx));
+      addTestFields(row,{unavailable:1,[legal.length?'strategyRejected':'noRuleSpace']:1});continue;}
+    addTestFields(row,{evaluated:1,rateSum:candidate.rate,handGainSum:candidate.handGain,claimSizeSum:candidate.claimSize,
+      lowPriority:candidate.lowPriority?1:0,claimsNow:candidate.claimsNow?1:0,winsNow:candidate.winsNow?1:0,reserveCombo:candidate.reserveCombo?1:0,
+      suppressedCrown:candidate.suppressedCrown?1:0,skipAbility:candidate.skipAbility?1:0});
+    if(action.type==='place' && action.cardId===cardId){
+      const matches=candidate.cell.r===action.r && candidate.cell.c===action.c;
+      addTestFields(row,{chosenEvaluated:1,chosenRateSum:candidate.rate,chosenCellMatches:matches?1:0});
+      forecast={cell:candidate.cell,matchesChosenCell:matches,rate:candidate.rate,handGain:candidate.handGain,claimsNow:candidate.claimsNow,claimSize:candidate.claimSize,skipAbility:candidate.skipAbility,lowPriority:candidate.lowPriority,retrieval:candidate.retrieval||null};
+    }
   }
   const guarded=allowTrade && game.players[playerIdx].hand.includes('sage_yukari') && game.canTrade(playerIdx,'sage_yukari') && aiPolicyHas(playerIdx,'yukari-trade');
   if(guarded)d.yukariTradeGuardTurns++;
-  game.recordTestDecision(playerIdx,'action',{action:{type:action.type,cardId:action.cardId||null,r:action.r??null,c:action.c??null,target:action.target||null},forecast,yukariTradeGuard:guarded});
+  game.recordTestDecision(playerIdx,'action',{action:{type:action.type,cardId:action.cardId||null,r:action.r??null,c:action.c??null,target:action.target||null,
+    thenPlace:action.thenPlace||null,tradeGain:Number.isFinite(action.gain)?action.gain:null},forecast,yukariTradeGuard:guarded});
 }
 
+function aiForcedPlacementCells(currentGame,cardId,spaces){
+  // Reisen commands a legal placement even when the card has no useful ability.
+  // Keep rule-level protection/terrain checks from emptyOrWastelandForCard and
+  // exclude the off-board shop; ordinary AI strategy filters do not apply.
+  return spaces.filter(cell=>inBounds(cell.r,cell.c));
+}
 
 
 function aiPlacementCells(currentGame, cardId, spaces){
@@ -10887,7 +11000,10 @@ async function doPlayerAction(playerIdx){
     if(player.hand.includes(cardId)){
       const cardObj = CARD[cardId];
       const spaces = game.emptyOrWastelandForCard(cardObj);
-      const cells = player.isAI ? aiPlacementCells(game,cardId,spaces) : spaces;
+      const cells = player.isAI ? aiForcedPlacementCells(game,cardId,spaces) : spaces;
+      const forcedStats=game.testMetrics && ((game.testSeatMetrics(playerIdx).diagnostics.forcedPlacements[testCardId(cardId)] ||= {}));
+      if(forcedStats)addTestFields(forcedStats,{attempts:1,noLegalCell:cells.length?0:1,
+        bypassedStrategy:player.isAI && cells.length && !aiPlacementCells(game,cardId,spaces).length?1:0});
       if(cells.length){
         game.log(`${player.name} must place ${cardObj.name} (Reisen's decree).`);
         renderAll();
@@ -10900,13 +11016,16 @@ async function doPlayerAction(playerIdx){
         if(player.isAI)aiRecordDecision(playerIdx,{type:'forced-place',cardId,r:cell.r,c:cell.c},false);
         game.removeFromHand(playerIdx, cardId);
         if(cardObj.override && game.cardAt(cell.r,cell.c)) logOverride(cardObj,cell.r,cell.c,playerIdx);
+        const beforePlacements=game.testMetrics?.placements[testCardId(cardId)]||0;
         const flags = await game.internalPlace(cardId, cell.r, cell.c, playerIdx, 0);
+        if(forcedStats)addTestFields(forcedStats,{placed:(game.testMetrics.placements[testCardId(cardId)]||0)>beforePlacements?1:0});
         if(player.isAI){ await sleep(1000); }
         // Whoever awaits doPlayerAction (runNextTurn, or an in-progress afterAction loop for
         // extra turns / no-turn-cost placements) is responsible for calling afterAction with
         // this result — doPlayerAction never drives the turn forward itself.
         return flags;
       } else {
+        game.recordTestDecision(playerIdx,'forced-unavailable',{cardId:testCardId(cardId),legalCells:0});
         game.forcedPlay[playerIdx] = null;
         game.log(`${player.name} cannot place ${cardObj.name} anywhere — Reisen's decree forces them to skip their turn entirely.`);
         renderAll();
@@ -10929,7 +11048,7 @@ async function doPlayerAction(playerIdx){
       if(game!==activeGame || activeGame.cancelled) return {};
       if(action.type!=='trade') break;
       aiRecordDecision(playerIdx,action,!traded);
-      if(!game.tradeCard(playerIdx,action.cardId,action.target)){
+      if(!game.tradeCard(playerIdx,action.cardId,action.target,action)){
         action=await aiDecideAction(playerIdx,false);break;
       }
       traded=true;
@@ -12050,6 +12169,16 @@ function aiTestPercent(value,total){return total ? `${(value/total*100).toFixed(
 function aiTestTable(headings,rows){return `<table><thead><tr>${headings.map(label=>`<th>${ruleTextHtml(label)}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map(value=>`<td>${value}</td>`).join('')}</tr>`).join('')}</tbody></table>`;}
 function aiTestCardName(id){return ruleTextHtml(CARD[id]?.name || id);}
 function aiTestAbilityName(id){return ruleTextHtml(CARD_ABILITY_NAMES[id] || 'Other');}
+function aiTestAverage(sum,count){return count?((sum||0)/count).toFixed(2):'—';}
+function aiTestTradeRows(entries,pairs=false){
+  return entries.sort(([,a],[,b])=>b.trades-a.trades).map(([id,row])=>{
+    const label=pairs?id.split('>').map(aiTestCardName).join(' → '):id==='total'?ruleTextHtml('All trades'):aiTestCardName(id);
+    return [label,row.trades,row.placed||0,row.placedByOther||0,row.paidAsCost||0,row.retraded||0,row.returned||0,row.takenByOther||0,
+      row.discardedFromHand||0,row.heldAtEnd||0,row.otherExit||0,row.claimByBuyer||0,row.claimByOther||0,row.buyerGames||0,row.buyerWins||0,row.buyerTies||0,
+      aiTestPercent(row.buyerWins||0,row.buyerGames),aiTestAverage(row.waitTurnsSum,row.trades),aiTestAverage(row.forecastGainSum,row.forecastSamples),
+      row.kanakoSetup||0,row.pairCompletion||0,row.handImprovement||0,row.unclassified||0];
+  });
+}
 function aiTestEndingHtml(entry){
   const state=entry.state,reason=entry.reason==='error'?'Runtime error':entry.reason==='turn-limit'?'Turn limit':'Stalemate';
   const board=state.board.map((row,r)=>`<tr>${row.map((id,c)=>`<td class="${state.wasteland[r][c]?'snapshot-wasteland':''}">${id?aiTestCardName(id):'—'}${state.wasteland[r][c]?`<br>${ruleTextHtml('Wasteland')}`:''}</td>`).join('')}</tr>`).join('');
@@ -12070,11 +12199,19 @@ function renderAITestStats(){
     const row=s.factions[id] || {claims:0,games:0};return [faction.icon,row.claims,row.games,aiTestPercent(row.games,s.games),row.substituteClaims||0,aiTestPercent(row.substituteClaims||0,row.claims)];
   });
   el('ai-test-factions').innerHTML=aiTestTable(['Faction','Claims','Games claimed','Claim rate','Claims with substitutes','Substitution rate'],factionRows);
+  el('ai-test-faction-outcomes').innerHTML=aiTestTable(['Faction','Claimant games','Claimant wins','Claimant ties','Claims by winner','Claimant win rate','Non-claimant games','Non-claimant win rate','Average claimant points','Average first claim turn'],
+    Object.entries(FACTIONS).filter(([,f])=>f.size>0).map(([id,f])=>{const row=s.factionOutcomes?.[id]||{};
+      return [f.icon,row.claimantGames||0,row.claimantWins||0,row.claimantTies||0,row.claimsByWinner||0,aiTestPercent(row.claimantWins||0,row.claimantGames),
+        row.nonClaimantGames||0,aiTestPercent(row.nonClaimantWins||0,row.nonClaimantGames),aiTestAverage(row.claimantPointsSum,row.claimantGames),aiTestAverage(row.firstClaimTurnSum,row.timedClaimantGames)];}));
   const cardRows=CARDS.filter(card=>!card.shopkeeper).slice().sort((a,b)=>(s.cards[b.id]?.placements||0)-(s.cards[a.id]?.placements||0)).map(card=>{
     const row=s.cards[card.id] || {placements:0,seenGames:0,usedGames:0};
     return [ruleTextHtml(card.name),row.placements,row.seenGames,row.usedGames,aiTestPercent(row.usedGames,row.seenGames),aiTestPercent(row.placements,s.placements)];
   });
   el('ai-test-cards').innerHTML=aiTestTable(['Card','Placements','Games in hand','Games used','Use rate','Placement share'],cardRows);
+  el('ai-test-evaluations').innerHTML=aiTestTable(['Card','Decision samples','Scored samples','No rule destination','Rejected by strategy','Average score','Average hand gain estimate','Average claim size estimate','Low priority rate','Chosen placements','Average chosen-card score'],
+    Object.entries(s.evaluations||{}).sort(([,a],[,b])=>b.observations-a.observations).map(([id,row])=>[
+      aiTestCardName(id),row.observations,row.evaluated||0,row.noRuleSpace||0,row.strategyRejected||0,aiTestAverage(row.rateSum,row.evaluated),
+      aiTestAverage(row.handGainSum,row.evaluated),aiTestAverage(row.claimSizeSum,row.evaluated),aiTestPercent(row.lowPriority||0,row.evaluated),row.chosen||0,aiTestAverage(row.chosenRateSum,row.chosenEvaluated)]));
   const actionRows=CARDS.filter(card=>s.cards[card.id]).sort((a,b)=>(s.cards[b.id].abilityCalls||0)-(s.cards[a.id].abilityCalls||0));
   el('ai-test-abilities').innerHTML=aiTestTable(['Card','Resolutions','Effective','Effective rate','Cost paid','Own points','Opponent points','Points denied','Hand gained','Cards stolen','Own points lost','Ability skipped'],actionRows.filter(card=>s.cards[card.id].abilityCalls).map(card=>{
     const row=s.cards[card.id];return [aiTestCardName(card.id),row.abilityCalls,row.abilityEffective,aiTestPercent(row.abilityEffective,row.abilityCalls),row.costPaid,row.ownPoints,row.opponentPoints,row.deniedPoints,row.handGained||0,row.handStolen||0,row.ownPointsLost||0,row.abilitySkipped||0];
@@ -12087,6 +12224,17 @@ function renderAITestStats(){
   el('ai-test-score-sources').innerHTML=aiTestTable(['Source','Entries','Points gained','Points lost'],Object.entries(s.scoreSources).sort(([,a],[,b])=>b.points-a.points).map(([id,row])=>{
     const [kind,key]=id.split(':');return [kind==='faction'?`${ruleTextHtml('Faction')} ${FACTIONS[key]?.icon||'—'}`:aiTestAbilityName(key),row.cards,row.points,row.lostPoints];
   }));
+  const tradeHeadings=['Card','Trades','Placed by buyer','Placed by another AI','Paid as cost','Traded again','Returned to draw pile','Taken by another AI','Discarded from hand','Held at end','Other exit','Claimed by buyer','Claimed by another AI','Buyer games','Buyer wins','Buyer ties','Buyer win rate','Average wait turns','Average forecast trade gain','Kanako setup trades','Pair completion trades','Hand improvement trades','Unclassified trades'];
+  const trade=s.tradeStats||{};
+  el('ai-test-trade-summary').innerHTML=aiTestTable(tradeHeadings,trade.totals?.trades?aiTestTradeRows([['total',trade.totals]]):[]);
+  el('ai-test-trade-purchases').innerHTML=aiTestTable(tradeHeadings,aiTestTradeRows(Object.entries(trade.purchases||{})));
+  el('ai-test-trade-offers').innerHTML=aiTestTable(tradeHeadings,aiTestTradeRows(Object.entries(trade.offers||{})));
+  el('ai-test-trade-pairs').innerHTML=aiTestTable(['Trade pair',...tradeHeadings.slice(1)],aiTestTradeRows(Object.entries(trade.pairs||{}),true).slice(0,30));
+  const availability=s.tradeDecisions||{};
+  el('ai-test-trade-decisions').innerHTML=aiTestTable(['Decision state','Decisions'],[['Trading available','available'],['Already traded this turn','alreadyTraded'],['Forced placement','forced'],['Placement blocked','blocked'],['Shop unavailable','shopUnavailable'],['No tradable card','noTradableCard'],['Trade chosen','chosen']].map(([label,key])=>[ruleTextHtml(label),availability[key]||0]));
+  el('ai-test-forced').innerHTML=aiTestTable(['Card','Forced attempts','Forced placements','Strategy bypassed','No legal cell','Placement failures'],Object.entries(s.forcedPlacements||{}).map(([id,row])=>[
+    aiTestCardName(id),row.attempts,row.placed||0,row.bypassedStrategy||0,row.noLegalCell||0,row.attempts-(row.placed||0)-(row.noLegalCell||0)]));
+  el('ai-test-decisions').innerHTML=(s.latestDecisions||[]).map(seat=>`<details><summary>${ruleTextHtml(`AI ${seat.seat}`)} · ${escapeLogHtml(seat.policy)}</summary><pre>${escapeLogHtml(JSON.stringify(seat.events,null,2))}</pre></details>`).join('');
   el('ai-test-endings').innerHTML=s.endings.length?s.endings.slice().reverse().map(aiTestEndingHtml).join(''):`<p class="ai-test-note">${ruleTextHtml('No stalemates or errors recorded.')}</p>`;
   el('ai-test-seats').innerHTML=aiTestTable(['Seat','Games','Wins','Win rate','Average points'],Object.entries(s.seats).map(([index,row])=>[
     ruleTextHtml(`AI ${Number(index)+1}`),row.games,row.wins,aiTestPercent(row.wins,row.games),(row.points/row.games).toFixed(1)]));
@@ -12095,7 +12243,7 @@ function renderAITestStats(){
 }
 function openAITestDashboard(){closeDebugControls();el('ai-test-overlay').classList.add('show');renderAITestStats();el('ai-test-close').focus({preventScroll:true});}
 function closeAITestDashboard(){el('ai-test-overlay').classList.remove('show');}
-function aiTestExportData(){return {version:2,exportedAt:new Date().toISOString(),definitions:{
+function aiTestExportData(){return {version:3,exportedAt:new Date().toISOString(),definitions:{
   claimRate:'Completed games with at least one claim of this faction / completed games.',
   useRate:'Completed games in which this card was placed / completed games in which it entered any hand.',
   placementShare:'Actual placements of this card / all actual placements, including ability placements.',
@@ -12106,17 +12254,37 @@ function aiTestExportData(){return {version:2,exportedAt:new Date().toISOString(
   destinations:'Actual card movements, which may happen more than once. returnedFromHand excludes cost payments. heldAtEnd counts cards in hands at completed-game end; heldGames counts games.',
   substitutes:'Claims using a wild card whose physical faction differs from the claimed faction. Substitution rate divides these claims by total claims for that faction.',
   scoreSources:'Gross point value when a card enters a discard pile. Faction claims and abilities are separated; Rin records removed points. Passive-value changes can make these totals differ from final scores.',
+  factionOutcomes:'One claimant/non-claimant observation per AI, faction and completed game. Repeat claims by the same AI do not duplicate claimantGames. Wins include a sole highest-scoring stalemate leader; tied leaders are ties, not wins. ScoreSum awards a tied leader 1 / number of tied leaders. claimsByWinner counts actual claims. Conditional win rates show association, not causation; observations within a match are correlated.',
+  evaluations:'One observation per held card at each actual voluntary AI decision, including free trade decisions. evaluated excludes null best-placement evaluations; unavailable separates noRuleSpace from strategyRejected. rateSum / evaluated is the average best-placement heuristic score, NOT a win probability or the actual chosen-cell score. Other Sum fields use evaluated unless explicitly named chosenEvaluated. Forced placements and internal lookahead/payment evaluations are excluded. Repeated observations of the same card are correlated.',
+  tradeStats:'Successful trades only. Every receipt has exactly one first buyer-hand exit (placed, placedByOther, paidAsCost, retraded, returned, takenByOther, discardedFromHand, heldAtEnd or otherExit). claimByBuyer/claimByOther follow the received card after that first placement until its first board exit. These are uses, not guaranteed profitable trades. Purchases, offers and pairs each retain all receipts. Buyer win rate = buyerWins / buyerGames, counting each buyer once per category and completed game. wins/ties/losses are separate receipt-weighted counts. All outcome measures are correlations. Purpose distinguishes kanakoSetup, pairCompletion, handImprovement and unclassified. forecastGainSum / forecastSamples includes only general handImprovement heuristics, not actual points or other branches. Rate forecasts use forecastRateSamples separately. waitTurnsSum uses the first exit or game end.',
+  tradeDecisions:'Availability is sampled at each recorded actual AI action, not once per turn. After a free trade the next decision is alreadyTraded. Rule-level availability does not imply the AI found a worthwhile trade. chosen counts actual trade decisions.',
+  forcedPlacements:'Actual Reisen commands for held cards. attempts = placed + noLegalCell + placement failures. bypassedStrategy counts commands with rule-legal destinations but no ordinary AI-strategy destination. Rule checks still exclude blocked/forbidden terrain and the off-board shop.',
+  latestDecisions:'Final 16 diagnostic events per AI in the latest completed game. Aggregate counts include every event; the trace is capped separately.',
   endings:'Latest 30 stalemate/error/turn-limit snapshots, including full hands and draw-pile order. Aborted snapshots remain available but their action counts are excluded from completed-game rates.',
   abortedGames:'Runtime errors and games stopped at 600 turns are excluded from rate denominators.'},statistics:aiTestStats};}
 function aiTestCSV(){
   const s=aiTestStats,columns=['type','id','count','games','eligible_games','rate','placement_share','average_points','average_turns',
-    'abilityCalls','abilityEffective','costPaid','paidAsCost','tradedAway','returnedFromHand','heldAtEnd','heldGames','claimMembers','ownPoints','opponentPoints','deniedPoints','substituteClaims','substituteMembers','caster','ability','points','lostPoints','snapshot','handGained','handStolen','ownPointsLost','abilitySkipped','diagnostics'],rows=[];
+    'abilityCalls','abilityEffective','costPaid','paidAsCost','tradedAway','returnedFromHand','heldAtEnd','heldGames','claimMembers','ownPoints','opponentPoints','deniedPoints','substituteClaims','substituteMembers','caster','ability','points','lostPoints','snapshot','handGained','handStolen','ownPointsLost','abilitySkipped','diagnostics',
+    'observations','evaluated','unavailable','strategyRejected','noRuleSpace','average_rate','average_hand_gain','average_claim_size','low_priority_rate','chosen','chosenEvaluated','chosen_average_rate',
+    'claimantGames','claimantWins','claimantTies','claimantLosses','nonClaimantGames','nonClaimantWins','claimsByWinner','claimsByTiedLeader','claimsByLoser','claimant_win_rate','non_claimant_win_rate',
+    'trades','wins','ties','losses','placed','placedByOther','retraded','returned','takenByOther','discardedFromHand','otherExit','claimByBuyer','claimByOther','average_wait_turns','forecastSamples','average_trade_gain','kanakoSetup','pairCompletion','handImprovement','unclassified','buyerGames','buyerWins','buyerTies','buyerLosses','buyer_win_rate',
+    'attempts','bypassedStrategy','noLegalCell','placementFailures'],rows=[];
   for(const [id,count] of Object.entries(s))if(typeof count==='number')rows.push({type:'summary',id,count});
   for(const [id,faction] of Object.entries(FACTIONS))if(faction.size>0){const row=s.factions[id]||{claims:0,games:0};rows.push({type:'faction',id,count:row.claims,games:row.games,eligible_games:s.games,rate:aiTestPercent(row.games,s.games),substituteClaims:row.substituteClaims||0,substituteMembers:row.substituteMembers||0});}
   for(const card of CARDS){const row=s.cards[card.id]||{placements:0,seenGames:0,usedGames:0,...newTestCardActions()};rows.push({...row,type:'card',id:card.id,count:row.placements,games:row.usedGames,eligible_games:row.seenGames,rate:aiTestPercent(row.usedGames,row.seenGames),placement_share:aiTestPercent(row.placements,s.placements)});}
   for(const [id,row] of Object.entries(s.abilityDetails))rows.push({type:'ability',id,count:row.calls,abilityCalls:row.calls,abilityEffective:row.effective,rate:aiTestPercent(row.effective,row.calls),costPaid:row.costPaid,caster:row.caster,ability:row.ability});
   for(const [id,row] of Object.entries(s.scoreSources))rows.push({type:'score_source',id,count:row.cards,points:row.points,lostPoints:row.lostPoints});
   for(const [id,row] of Object.entries(s.diagnostics||{}))rows.push({type:'diagnostics',id,diagnostics:JSON.stringify(row)});
+  for(const [id,row] of Object.entries(s.factionOutcomes||{}))rows.push({...row,type:'faction_outcome',id,
+    claimant_win_rate:aiTestPercent(row.claimantWins||0,row.claimantGames),non_claimant_win_rate:aiTestPercent(row.nonClaimantWins||0,row.nonClaimantGames),diagnostics:JSON.stringify(row)});
+  for(const [id,row] of Object.entries(s.evaluations||{}))rows.push({...row,type:'evaluation',id,
+    average_rate:aiTestAverage(row.rateSum,row.evaluated),average_hand_gain:aiTestAverage(row.handGainSum,row.evaluated),average_claim_size:aiTestAverage(row.claimSizeSum,row.evaluated),
+    low_priority_rate:aiTestPercent(row.lowPriority||0,row.evaluated),chosen_average_rate:aiTestAverage(row.chosenRateSum,row.chosenEvaluated),diagnostics:JSON.stringify(row)});
+  for(const [kind,entries] of Object.entries(s.tradeStats||{}))for(const [id,row] of kind==='totals'?[['all',entries]]:Object.entries(entries))rows.push({...row,type:`trade_${kind}`,id,
+    average_wait_turns:aiTestAverage(row.waitTurnsSum,row.trades),average_trade_gain:aiTestAverage(row.forecastGainSum,row.forecastSamples),buyer_win_rate:aiTestPercent(row.buyerWins||0,row.buyerGames),diagnostics:JSON.stringify(row)});
+  for(const [id,count] of Object.entries(s.tradeDecisions||{}))rows.push({type:'trade_decision',id,count});
+  for(const [id,row] of Object.entries(s.forcedPlacements||{}))rows.push({...row,type:'forced_placement',id,placementFailures:row.attempts-(row.placed||0)-(row.noLegalCell||0)});
+  for(const entry of s.latestDecisions||[])rows.push({type:'latest_decisions',id:entry.seat,diagnostics:JSON.stringify(entry)});
   for(const entry of s.endings)rows.push({type:'ending',id:entry.match,count:entry.reason,average_turns:entry.turns,snapshot:JSON.stringify(entry)});
   for(const [id,row] of Object.entries(s.seats))rows.push({type:'seat',id:Number(id)+1,count:row.wins,games:row.games,eligible_games:row.games,rate:aiTestPercent(row.wins,row.games),average_points:row.points/row.games});
   for(const [id,row] of Object.entries(s.configurations))rows.push({type:'configuration',id,count:row.turns,games:row.games,eligible_games:row.games,average_turns:row.turns/row.games});
@@ -12158,8 +12326,8 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='ecc4140e528524b5f6699faf1033c056243c1fc4bb33976e19f5296a1be9b46c';
-const AI_EVALUATION_POLICY_DIGEST='9913191920081e060f5209c73761b6ce6ec0fa3f6ea19c39d2d3f6d27ab21ab1';
+const AI_EVALUATION_RULES_DIGEST='49bd6c6ecc5888bedcf7ab1eb745499ca5618988d25cc5915f6bc420903525ba';
+const AI_EVALUATION_POLICY_DIGEST='34b478dd559cdab4f749b69a4cae37a0a89cb9bbcdc10b25003a3212472eac34';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
   if(!source)throw new Error('Game source is unavailable.');
@@ -12364,6 +12532,7 @@ async function evalRunMatch(snapshot,roster,seed,forced=null){
     }
   }catch(error){if(evalCancelled)throw error;match.testAbortReason='error';match.testError=String(error?.stack||error);}
   evalConservation(match);
+  finalizeAITestDiagnostics(match);
   return {seed,roster:roster.slice(),reason:match.testAbortReason||(match.winner?'win':'stalemate'),winner:match.winner?.idx??null,
     points:match.players.map(p=>match.winCount(p)),turns:match.testMetrics.turns,error:match.testError||null,
     seats:match.players.map(p=>{const seat=match.testSeatMetrics(p.idx);return {seen:[...seat.seen],placements:seat.placements,claims:seat.claims,handTurns:seat.handTurns,held:p.hand.slice(),cardActions:seat.cardActions,abilityDetails:seat.abilityDetails,scoreSources:seat.scoreSources,diagnostics:seat.diagnostics};})};
@@ -12374,8 +12543,8 @@ function evalNewOpening(seed,n,size,difficulty){
 }
 async function evalCompare(config,send){
   evalValidateConfig(config);
-  const report={format:'tbg-ai-evaluation',version:1,type:'comparison',baselineCommit:'2b07010618c21eee6dfc6ffd4092c8b4bbb42e9b',baselineDigest:AI_BASELINE_DIGEST,previousCommit:'955c63140738e5cc9deae85802cec12f10c5d61a',previousDigest:AI_PREVIOUS_DIGEST,diagnosticsVersion:2,
-    currentPolicy:'difficulty-spread-2026-10-08',rules:'Shared current Game engine',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,startedAt:new Date().toISOString(),finished:false,blocks:[]};
+  const report={format:'tbg-ai-evaluation',version:1,type:'comparison',baselineCommit:'2b07010618c21eee6dfc6ffd4092c8b4bbb42e9b',baselineDigest:AI_BASELINE_DIGEST,previousCommit:'955c63140738e5cc9deae85802cec12f10c5d61a',previousDigest:AI_PREVIOUS_DIGEST,diagnosticsVersion:3,
+    currentPolicy:'forced-placement-diagnostics-2026-10-08',rules:'Shared current Game engine',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,startedAt:new Date().toISOString(),finished:false,blocks:[]};
   const lineups=evalMixedLineups(config.players,config.opponent);
   for(let i=0;i<config.blocks;i++){
     await evalYield();const seed=evalHashSeed(config.seed,config.phase||'development',i),size=config.size==='both'?(i%2?5:4):Number(config.size);
@@ -12390,7 +12559,7 @@ async function evalCompare(config,send){
 async function evalFork(snapshot,config,send){
   evalValidateSnapshot(snapshot);evalValidateConfig(config,'fork');const actor=snapshot.state.currentPlayerIdx;config={...config,actor};
   const continuations=config.continuations||['current','previous'];
-  const report={format:'tbg-ai-evaluation',version:1,diagnosticsVersion:2,currentPolicy:'difficulty-spread-2026-10-08',previousDigest:AI_PREVIOUS_DIGEST,type:'fork',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,snapshot,startedAt:new Date().toISOString(),finished:false,pairs:[],
+  const report={format:'tbg-ai-evaluation',version:1,diagnosticsVersion:3,currentPolicy:'forced-placement-diagnostics-2026-10-08',previousDigest:AI_PREVIOUS_DIGEST,type:'fork',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,snapshot,startedAt:new Date().toISOString(),finished:false,pairs:[],
     assumptions:'Unknown rival cards and deck order are re-sampled from the acting player information. Rival private clue memories are omitted. Continuations are finite AI policies, not optimal play.'};
   for(let i=0;i<config.trials;i++){
     const seed=evalHashSeed(config.seed,'fork',i),sample=evalSampleHidden(snapshot,actor,evalPRNG(seed));
@@ -12547,6 +12716,15 @@ function renderAILabReport(){
     const sides=Object.values(s.rows);
     html+=`<details><summary>${ruleTextHtml('Decision diagnostics')}</summary>`+aiTestTable(['Policy','Cost events','Cost cards','Assembly breaks','Trades','Yukari guard turns'],sides.map(row=>{const d=row.diagnostics||{};return [aiLabPolicyName(row.label),d.costEvents||0,d.costCards||0,d.costAssemblyBreaks||0,d.trades||0,d.yukariTradeGuardTurns||0];}));
     html+=aiTestTable(['Policy','Card','Taken cards','Points denied','Own points lost','Cards stolen'],sides.flatMap(row=>Object.entries(row.diagnostics?.retrievals||{}).map(([id,d])=>[aiLabPolicyName(row.label),ruleTextHtml(CARD[id].name),d.taken,d.deniedPoints,d.ownPointsLost,d.stolen])))+'</details>';
+    html+=`<details><summary>${ruleTextHtml('Faction claimant outcomes')}</summary>`+aiTestTable(['Policy','Faction','Claimant games','Claimant wins','Claimant ties','Claimant win rate','Non-claimant games','Non-claimant win rate'],
+      sides.flatMap(row=>Object.entries(row.diagnostics?.factionOutcomes||{}).map(([id,d])=>[aiLabPolicyName(row.label),FACTIONS[id]?.icon||id,d.claimantGames||0,d.claimantWins||0,d.claimantTies||0,
+        aiTestPercent(d.claimantWins||0,d.claimantGames),d.nonClaimantGames||0,aiTestPercent(d.nonClaimantWins||0,d.nonClaimantGames)])))+'</details>';
+    html+=`<details><summary>${ruleTextHtml('AI card evaluations')}</summary>`+aiTestTable(['Policy','Card','Decision samples','Scored samples','Average score','Average hand gain estimate','Low priority rate'],
+      sides.flatMap(row=>Object.entries(row.diagnostics?.evaluations||{}).map(([id,d])=>[aiLabPolicyName(row.label),aiTestCardName(id),d.observations,d.evaluated||0,
+        aiTestAverage(d.rateSum,d.evaluated),aiTestAverage(d.handGainSum,d.evaluated),aiTestPercent(d.lowPriority||0,d.evaluated)])))+'</details>';
+    html+=`<details><summary>${ruleTextHtml('Kourindou trading')}</summary>`+aiTestTable(['Policy','Card','Trades','Placed by buyer','Paid as cost','Traded again','Held at end','Claimed by buyer','Buyer win rate'],
+      sides.flatMap(row=>Object.entries(row.diagnostics?.tradeStats?.purchases||{}).map(([id,d])=>[aiLabPolicyName(row.label),aiTestCardName(id),d.trades,d.placed||0,d.paidAsCost||0,d.retraded||0,
+        d.heldAtEnd||0,d.claimByBuyer||0,aiTestPercent(d.buyerWins||0,d.buyerGames)])))+'</details>';
   }
   el('ai-lab-report').innerHTML=html;
   const matches=r.type==='comparison'?r.blocks.flatMap(block=>block.matches):r.pairs.flatMap(pair=>[pair.a,pair.b]);
@@ -12558,7 +12736,7 @@ function aiLabDownload(content,name,type='application/json'){
 }
 function aiLabExportCSV(report){
   const rows=[['test','seed','opening_size','continuation','branch','seat','policy','ending','winner','score_share','points','turns','seen','placements','claims','hand_turns','held','diagnostics_version','master_seed','phase','difficulty','current_policy','comparison_policy','match_seed','rules_digest','policy_digest','card_actions','ability_details','score_sources','diagnostics']];
-  const add=(m,seed,size,continuation='',branch='')=>{const shares=evalScoreShares(m);m.roster.forEach((policy,i)=>{const s=m.seats[i];rows.push([report.type,seed,size,continuation,branch,i+1,policy,m.reason,m.winner===null?'':m.winner+1,shares?.[i]??'',m.points[i],m.turns,JSON.stringify(s.seen),JSON.stringify(s.placements),JSON.stringify(s.claims),JSON.stringify(s.handTurns),JSON.stringify(s.held),report.diagnosticsVersion||2,report.config?.seed||'',report.config?.phase||'',report.config?.difficulty||report.snapshot?.state?.aiDifficulty||'',report.currentPolicy||'difficulty-spread-2026-10-08',report.config?.opponent||'',m.seed??seed,report.rulesDigest||'',report.policyDigest||'',JSON.stringify(s.cardActions||{}),JSON.stringify(s.abilityDetails||{}),JSON.stringify(s.scoreSources||{}),JSON.stringify(s.diagnostics||{})]);});};
+  const add=(m,seed,size,continuation='',branch='')=>{const shares=evalScoreShares(m);m.roster.forEach((policy,i)=>{const s=m.seats[i];rows.push([report.type,seed,size,continuation,branch,i+1,policy,m.reason,m.winner===null?'':m.winner+1,shares?.[i]??'',m.points[i],m.turns,JSON.stringify(s.seen),JSON.stringify(s.placements),JSON.stringify(s.claims),JSON.stringify(s.handTurns),JSON.stringify(s.held),report.diagnosticsVersion||2,report.config?.seed||'',report.config?.phase||'',report.config?.difficulty||report.snapshot?.state?.aiDifficulty||'',report.currentPolicy||'forced-placement-diagnostics-2026-10-08',report.config?.opponent||'',m.seed??seed,report.rulesDigest||'',report.policyDigest||'',JSON.stringify(s.cardActions||{}),JSON.stringify(s.abilityDetails||{}),JSON.stringify(s.scoreSources||{}),JSON.stringify(s.diagnostics||{})]);});};
   if(report.type==='comparison')for(const block of report.blocks)for(const m of block.matches)add(m,block.seed,block.size);
   else for(const pair of report.pairs){add(pair.a,pair.seed,report.snapshot.size,pair.continuation,'A');add(pair.b,pair.seed,report.snapshot.size,pair.continuation,'B');}
   return '\ufeff'+rows.map(row=>row.map(value=>'"'+String(value).replaceAll('"','""')+'"').join(',')).join('\r\n');

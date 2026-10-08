@@ -92,7 +92,7 @@ test('Evaluation exports fingerprint the changed engine and policy; historical p
  for(const [key,start,end]of [['AI_EVALUATION_RULES_DIGEST','const DIRS4','/* ===================== UI layer'],['AI_EVALUATION_POLICY_DIGEST','const NO_PLACED_ABILITY','async function doPlayerAction']]){
   const expected=js.match(new RegExp("const "+key+"='([a-f0-9]+)'"))[1];assert.equal(crypto.createHash('sha256').update(slice(start,end)).digest('hex'),expected);
  }
- assert(js.includes("currentPolicy:'difficulty-spread-2026-10-08'"));
+ assert(js.includes("currentPolicy:'forced-placement-diagnostics-2026-10-08'"));
  for(const [key,start,end,offset]of [['AI_PREVIOUS_DIGEST','const AI_PREVIOUS_POLICY=(()=>{\n','function aiEvaluateCard(...args)',0],['AI_BASELINE_DIGEST','const AI_FROZEN_POLICY=(()=>{\n','return {aiEvaluateCard',-1]]){
   const a=js.indexOf(start)+start.length,b=js.indexOf(end,a)+offset,expected=js.match(new RegExp("const "+key+"='([a-f0-9]+)'"))[1];
   assert.equal(crypto.createHash('sha256').update(js.slice(a,b)).digest('hex'),expected);
