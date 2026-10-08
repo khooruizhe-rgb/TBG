@@ -37,26 +37,46 @@ test('A complete physical Hell claim admits its three ordinary members before He
  g.checkClaims(0);assert.equal(g.cardAt(1,1),null);assert.equal(g.players[0].discard.length,4);assert.equal(g.winCount(g.players[0]),6);
  assert.equal(effects.discard.at(-1).cardId,'hell_hecatia');assert.equal(effects.claims[0].count,4);assert.equal(g.testMetrics.cardActions.hell_hecatia.claimMembers,1);assert.equal(effects.returned.length,0);
 });
-test('A substituted Hell claim with too few real Hell members collects the others and leaves Hecatia',()=>{
- const {g,effects}=setup({board:boardWith('sage_kasen'),waste:[[1,1]]});const before=state(g),claims=A.aiCurrentClaims(0);
- assert.equal(claims.find(c=>c.faction==='hell').points,3);assert.equal(state(g),before);g.checkClaims(0);
- assert.equal(g.cardAt(1,1),'hell_hecatia');assert(g.wastelandAt(1,1));assert.equal(g.players[0].discard.length,3);assert.equal(g.winCount(g.players[0]),3);assert.equal(g.drawPile.length,0);
- assert.equal(effects.discard.length,3);assert(!effects.discard.some(e=>e.cardId==='hell_hecatia'));assert.equal(effects.returned.length,0);assert.equal(effects.claims[0].count,3);
- assert.equal(g.testMetrics.cardActions.hell_hecatia,undefined);assert.equal(g.testMetrics.scoreSources['faction:hell'].cards,3);assert.equal(g.testMetrics.substituteClaims.hell,1);
- g.checkClaims(0);assert.equal(effects.claims.length,1,'The incomplete remainder cannot be claimed again');
+test('Kasen counts as Hell during the claim so all four members enter an initially empty pile',()=>{
+ for(const isAI of [false,true]){const {g,effects}=setup({board:boardWith('sage_kasen'),waste:[[1,1]]});g.players[0].isAI=isAI;const before=state(g),pile=g.players[0].discard,randomBefore=seed,claims=A.aiCurrentClaims(0);
+ assert.equal(claims.find(c=>c.faction==='hell').points,6);assert.equal(state(g),before);assert.equal(g.players[0].discard,pile);assert.equal(seed,randomBefore);g.checkClaims(0);
+ assert.equal(g.cardAt(1,1),null);assert(g.wastelandAt(1,1));assert.equal(g.players[0].discard.length,4);assert.equal(g.winCount(g.players[0]),6);assert.equal(g.drawPile.length,0);
+ assert.equal(effects.discard.length,4);assert.equal(effects.discard.at(-1).cardId,'hell_hecatia');assert.equal(effects.returned.length,0);assert.equal(effects.claims[0].count,4);
+ assert.equal(g.testMetrics.cardActions.hell_hecatia.claimMembers,1);assert.equal(g.testMetrics.scoreSources['faction:hell'].cards,4);assert.equal(g.testMetrics.substituteClaims.hell,1);
+ g.checkClaims(0);assert.equal(effects.claims.length,1,'The cleared group cannot be claimed twice');}
+});
+test('Kasen and Nue borrowing Kasen can both substitute in the same Hell claim',()=>{
+ const {g,effects}=setup({borrowed:{temple_nue:'sage_kasen'},board:[[1,1,'hell_hecatia'],[1,2,'hell_eiki'],[2,1,'sage_kasen'],[2,2,'temple_nue']]});const before=state(g);
+ assert.equal(A.aiCurrentClaims(0).find(c=>c.faction==='hell').points,6);assert.equal(state(g),before);g.checkClaims(0);
+ assert.equal(g.players[0].discard.length,4);assert.equal(g.winCount(g.players[0]),6);assert.equal(g.cardAt(1,1),null);assert.equal(effects.claims[0].count,4);assert.equal(g.testMetrics.substituteMembers.hell,2);
+});
+test('An old discarded Kasen does not count as Hell outside the current claim',()=>{
+ const {g,effects}=setup({discard:['hell_eiki','hell_clownpiece','sage_kasen'],board:[[1,1,'hell_hecatia']]});
+ assert.equal(g.canEnterDiscard(0,'hell_hecatia'),false);assert.equal(g.canEnterDiscard(0,'hell_hecatia',{claimFaction:'hell'}),false);assert.equal(g.moveBoardToDiscard(1,1,0,'yuyuko'),false);
+ assert.equal(g.cardAt(1,1),'hell_hecatia');assert.equal(effects.discard.length,0);assert.equal(effects.returned.length,0);
+});
+test('A successful substituted claim does not leave a permanent Hell identity or bypass behind',()=>{
+ const {g,effects}=setup({board:boardWith('sage_kasen')});g.checkClaims(0);
+ assert(g.players[0].discard.includes('hell_hecatia'));assert.equal(A.CARD.sage_kasen.faction,'sage');
+ g.players[0].discard=g.players[0].discard.filter(id=>id!=='hell_hecatia');g.setCardAt(1,1,'hell_hecatia');const departures=effects.discard.length;
+ assert.equal(g.canEnterDiscard(0,'hell_hecatia'),false);assert.equal(g.moveBoardToDiscard(1,1,0,'yuyuko'),false);assert.equal(g.cardAt(1,1),'hell_hecatia');assert.equal(effects.discard.length,departures);
 });
 test('Existing Hell cards plus newly claimed members can satisfy the threshold without counting Hecatia herself',()=>{
  const {g,effects}=setup({board:boardWith('sage_kasen'),discard:['hell_kutaka']});const claims=A.aiCurrentClaims(0);
  assert.equal(claims.find(c=>c.faction==='hell').points,6);g.checkClaims(0);assert.equal(g.cardAt(1,1),null);assert(g.players[0].discard.includes('hell_hecatia'));assert.equal(g.winCount(g.players[0]),7);assert.equal(g.winner.idx,0);assert.equal(effects.claims[0].count,4);
 });
-test('Current placement evaluation predicts a partial claim instead of a false Hecatia win',()=>{
+test('Every current difficulty predicts the real six-point Kasen claim and its winning outcome',()=>{
  for(const difficulty of ['easy','normal','hard']){const {g}=setup({board:boardWith('sage_kasen').slice(0,3),hand:['sage_kasen'],discard:['medicine']});g.aiDifficulty=difficulty;const before=state(g),pick=A.aiEvaluateCard(0,'sage_kasen');
-  assert(pick.claimsNow);assert.equal(pick.winsNow,false);assert.equal(pick.rate,3);assert.equal(state(g),before);}
+  assert(pick.claimsNow);assert.equal(pick.winsNow,true);assert.equal(pick.rate,6);assert.equal(state(g),before);g.setCardAt(pick.cell.r,pick.cell.c,'sage_kasen');g.checkClaims(0);assert.equal(g.winCount(g.players[0]),7);assert.equal(g.winner.idx,0);}
 });
 test('Nue borrowing Hecatia uses the same threshold and can remain after a Temple claim',()=>{
  const {g,effects}=setup({borrowed:{temple_nue:'hell_hecatia'},board:[[1,1,'temple_nue'],[1,2,'temple_byakuren'],[2,1,'temple_shou'],[2,2,'temple_murasa']]});
  assert.equal(g.canEnterDiscard(0,'temple_nue'),false);assert.equal(A.aiCurrentClaims(0).find(c=>c.faction==='temple').points,3);g.checkClaims(0);assert.equal(g.cardAt(1,1),'temple_nue');assert.equal(effects.claims[0].count,3);assert.equal(effects.returned.length,0);
  g.players[0].discard.push(...hell.slice(0,3));assert.equal(g.canEnterDiscard(0,'temple_nue'),true);
+});
+test('A substitute in another faction claim cannot count as a Hell substitute',()=>{
+ const {g,effects}=setup({borrowed:{temple_nue:'hell_hecatia'},board:[[1,1,'temple_nue'],[1,2,'temple_shou'],[2,1,'temple_murasa'],[2,2,'sage_kasen']]});
+ assert.equal(A.aiCurrentClaims(0).find(c=>c.faction==='temple').points,3);g.checkClaims(0);assert.equal(g.cardAt(1,1),'temple_nue');assert.equal(g.players[0].discard.length,3);assert.equal(effects.claims[0].count,3);
 });
 test('Eirin continues to disable both the discard restriction and triple scoring',()=>{
  const {g}=setup({board:[[1,1,'hell_hecatia'],[3,3,'hourai_eirin']]});assert.equal(g.canEnterDiscard(0,'hell_hecatia'),true);assert.equal(g.moveBoardToDiscard(1,1,0,'yuyuko'),true);assert.equal(g.winCount(g.players[0]),1);
