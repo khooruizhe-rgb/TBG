@@ -123,6 +123,14 @@ test('Dynamic text updates retain an English source and the observer settles aft
  A.setGameLanguage('zh-CN');
  const node=text('Draw pile: 6 cards remaining');A.localizeTextNode(node);assert.equal(node.nodeValue,'抽牌堆剩余 6 张牌');observer([{type:'characterData',target:node}]);assert.equal(node.nodeValue,'抽牌堆剩余 6 张牌');node.nodeValue='Draw pile: 2 cards remaining';observer([{type:'characterData',target:node}]);assert.equal(node.nodeValue,'抽牌堆剩余 2 张牌');A.setGameLanguage('en');assert.equal(node.nodeValue,'Draw pile: 2 cards remaining');
 });
+test('Kourindou milestone labels, opening logs and immediate-win trade statistics are bilingual',()=>{
+ A.setGameLanguage('zh-CN');
+ assert.equal(A.translateGameText('Opens at 5 total points'),'全场 5 分开启');
+ assert.equal(A.translateGameText('Opens at 10 total points'),'全场 10 分开启');
+ assert.equal(A.translateGameText('Kourindou opens a new merchandise slot at 5 total points.'),'全场总分达到 5 分，香霖堂开启了一个新商品栏位。');
+ assert.equal(A.translateGameText('Immediate win trades'),'即时获胜交易');
+ A.setGameLanguage('en');assert.equal(A.translateGameText('Opens at 5 total points'),'Opens at 5 total points');
+});
 test('Switching language during an ability preserves listeners and entered guess text',()=>{
  const button=el('choice-button');let clicks=0;button.addEventListener('click',()=>clicks++);const input=new Node('input');input.value='雾雨魔理沙';body.appendChild(input);const node=text('Choose card',button);A.setGameLanguage('zh-CN');assert.equal(node.nodeValue,'选择卡牌');button.events.click();A.setGameLanguage('en');button.events.click();assert.equal(clicks,2);assert.equal(input.value,'雾雨魔理沙');
 });

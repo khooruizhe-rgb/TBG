@@ -66,7 +66,7 @@ test('A full mixed-version seed block completes under the actual turn and abilit
 });
 test('Fork trials apply each requested move, pair hidden states, and finish without live-state mutation',async()=>{
  const s=plain(A.evalNewOpening(5,3,4,'hard'));s.state.board=Array.from({length:4},()=>Array(4).fill(null));s.state.drawPile=[];s.state.players.forEach(p=>{p.hand=[];p.discard=[];});s.state.players[0].hand=['sdm_flandre','mtn_aya'];s.state.players[0].discard=['haku_yuyuko','haku_youmu','hourai_mokou','hourai_reisen','palace_rin','palace_utsuho'];
- s.state.startingCardIds=[...s.state.shopCards,...s.state.players.flatMap(p=>[...p.hand,...p.discard])];const original=JSON.stringify(s);
+ s.state.startingCardIds=[...s.state.shopCards,...s.state.players.flatMap(p=>[...p.hand,...p.discard])].filter(Boolean);const original=JSON.stringify(s);
  const config={seed:'fork-regression',trials:2,continuations:['current','baseline'],a:{type:'place',cardId:'sdm_flandre',r:0,c:0},b:{type:'place',cardId:'mtn_aya',r:0,c:1}};
  const report=await A.evalFork(s,config,()=>{});assert.equal(JSON.stringify(s),original);assert.equal(report.pairs.length,4);assert.equal(report.summary.invalidPairs,0);assert(report.pairs.every(p=>p.a.seats[0].placements.sdm_flandre>=1 && p.b.seats[0].placements.mtn_aya>=1));assert(report.pairs.every(p=>p.a.reason==='win'));assert.equal(report.summary.conclusion,'insufficient');
 });
@@ -77,7 +77,7 @@ test('Mixed policies finish legal two- and four-player matches on both board siz
  }
 });
 test('Forced-placement forks honor the chosen coordinate without consuming another turn start',async()=>{
- const s=plain(A.evalNewOpening(5,3,4,'hard'));s.state.board=Array.from({length:4},()=>Array(4).fill(null));s.state.drawPile=[];s.state.players.forEach(p=>{p.hand=[];p.discard=[];});s.state.players[0].hand=['sdm_flandre','mtn_aya'];s.state.players[0].discard=['haku_yuyuko','haku_youmu','hourai_mokou','hourai_reisen','palace_rin','palace_utsuho'];s.state.forcedPlay={0:'sdm_flandre'};s.state.startingCardIds=[...s.state.shopCards,...s.state.players.flatMap(p=>[...p.hand,...p.discard])];
+ const s=plain(A.evalNewOpening(5,3,4,'hard'));s.state.board=Array.from({length:4},()=>Array(4).fill(null));s.state.drawPile=[];s.state.players.forEach(p=>{p.hand=[];p.discard=[];});s.state.players[0].hand=['sdm_flandre','mtn_aya'];s.state.players[0].discard=['haku_yuyuko','haku_youmu','hourai_mokou','hourai_reisen','palace_rin','palace_utsuho'];s.state.forcedPlay={0:'sdm_flandre'};s.state.startingCardIds=[...s.state.shopCards,...s.state.players.flatMap(p=>[...p.hand,...p.discard])].filter(Boolean);
  const result=await A.evalRunMatch(s,['current','baseline','current'],29,{type:'place',cardId:'sdm_flandre',r:2,c:3});assert.equal(result.reason,'win');assert.equal(A.getGame().cardAt(2,3),'sdm_flandre');assert.equal(result.turns,1);
 });
 test('CSV export preserves seeds, lineups, matched forks and observed card metrics',()=>{
@@ -104,5 +104,12 @@ test('The actual position UI offers legal choices and submits paired forks and e
  assert.equal(el('ai-lab-action-a').value,'0');assert.equal(el('ai-lab-action-b').value,'1');assert(el('ai-lab-position').innerHTML.includes('Turn-start position'));
  el('ai-lab-fork').click();const request=worker.messages.at(-1);assert.equal(request.type,'fork');assert.equal(request.config.trials,2);assert.deepEqual(request.config.a,actions[0]);assert.deepEqual(request.config.b,actions[1]);
  const r=fakeReport(20);r.type='comparison';r.summary=plain(A.evalCompareSummary(r));worker.onmessage({data:{type:'complete',report:r}});assert.equal(el('ai-lab-export').disabled,false);assert(el('ai-lab-report').innerHTML.includes('Current AI performs better'));el('ai-lab-export').click();el('ai-lab-export-csv').click();assert.equal(el('ai-lab-start').disabled,false);
+});
+test('Incremental report blocks remain complete when the UI stops or exports',()=>{
+ const {el,workers}=context.labTest;el('ai-lab-start').click();const worker=workers.at(-1),full=fakeReport(2);full.type='comparison';full.finished=false;full.summary=plain(A.evalCompareSummary(full));
+ for(const block of full.blocks)worker.onmessage({data:{type:'report',appendBlock:true,report:{...full,blocks:[block]}}});
+ const accumulated=vm.runInContext('aiLabReport',context);assert.equal(accumulated.blocks.length,2);assert.equal(accumulated.blocks.flatMap(b=>b.matches).length,12);assert.equal(context.aiLabExportCSV(accumulated).split('\r\n').length,37);
+ el('ai-lab-stop').click();assert.equal(vm.runInContext('aiLabReport.blocks.length',context),2);assert.equal(el('ai-lab-export').disabled,false);
+ full.finished=true;worker.onmessage({data:{type:'complete',report:full}});assert.equal(vm.runInContext('aiLabReport.blocks.length',context),2);
 });
 (async()=>{for(const [name,fn] of tests){await fn();console.log('PASS '+name);}console.log(`${tests.length}/${tests.length} AI evaluation checks passed`);})().catch(error=>{console.error(error);process.exitCode=1;});

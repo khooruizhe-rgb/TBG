@@ -78,13 +78,13 @@ const clickHand=id=>{const n=el('hand').children.find(n=>n.dataset.cardId===id);
 const place=(id,r,c)=>{clickHand(id);A.commitCellChoice(r,c);};
 const click=id=>{assert(!el(id).disabled,`${id} enabled`);for(const fn of el(id).events.click||[])fn();};
 const newLesson=async(step=0)=>{if(A.game()&&!A.state())A.returnToMainMenu();effects.length=0;A.openTutorial(step);await flush();};
-const assertConserved=g=>{const ids=[...g.board.flat().filter(Boolean),...g.shopCards,...g.drawPile,...g.players.flatMap(p=>[...p.hand,...p.discard])];assert.equal(new Set(ids).size,ids.length);assert.equal(ids.length,g.startingCardIds.size);};
+const assertConserved=g=>{const ids=[...g.board.flat().filter(Boolean),...g.shopCards,...g.drawPile,...g.players.flatMap(p=>[...p.hand,...p.discard])].filter(Boolean);assert.equal(new Set(ids).size,ids.length);assert.equal(ids.length,g.startingCardIds.size);};
 const tests=[];const test=(name,fn)=>tests.push([name,fn]);
 test('The unified tutorial opens the actual Game and table with a live human turn',async()=>{
   await newLesson();assert(A.game() instanceof A.Game);assert(context.window.__resolveHumanTurn);
   assert(el('game').classList.contains('active'));assert.equal(el('setup').style.display,'none');
   assert.equal(el('tutorial-coach').hidden,false);assert.equal(A.TUTORIALS.length,6);assert.equal(A.TUTORIALS.filter(page=>['offer','trade'].includes(page.goal)).length,2);
-  assert(A.game().kourindouEnabled);assert.equal(A.game().shopTiles.length,4);
+  assert(A.game().kourindouEnabled);assert.equal(A.game().shopTiles.length,6);
   assert(html.includes('id="tutorial-start"'));assert(!html.includes('tutorial-normal')&&!html.includes('tutorial-kourindou')&&!html.includes('kourindou-toggle'));
   assert(!html.includes('tutorial-dialog')&&!html.includes('tutorial-demo')&&!html.includes('data-tutorial-action'));
   assert.equal(normalStarts,0);assertConserved(A.game());
@@ -149,7 +149,7 @@ test('Exit during cost selection cancels the practice without late state writes 
   const settings={...A.settings()};A.returnToMainMenu();A.startNewGame();const live=A.game();await flush();
   assert(old.cancelled);assert.equal(A.state(),null);assert.equal(A.pending().hand,null);assert.equal(el('tutorial-coach').hidden,true);
   assert.equal(live.players[0].hand.length,6);assert.equal(live.board.flat().filter(Boolean).length,0);assert.deepEqual({...A.settings()},settings);
-  assert.equal(normalStarts,1);assert(live.kourindouEnabled);assert.equal(live.shopTiles.length,4);assertConserved(live);
+  assert.equal(normalStarts,1);assert(live.kourindouEnabled);assert.equal(live.shopTiles.length,6);assertConserved(live);
 });
 test('Exit during area selection clears the real pending rectangle',async()=>{
   await newLesson(3);place('heaven_iku',3,3);await flush();for(const id of ['hourai_mokou','hell_clownpiece','haku_youmu'])clickHand(id);
@@ -207,8 +207,8 @@ test('The coach moves above the real layout on mobile and returns to the side pa
 test('Every board size and player count includes Kourindou, even with an old disabled option',()=>{
   for(const size of [4,5]) for(const count of [2,3,4]) for(const options of [{},{kourindou:false},{kourindou:true}]){
     A.setSize(size);const g=new A.Game(count,{},null,options);
-    assert(g.kourindouEnabled);assert.equal(g.shopTiles.length,4);assert.equal(g.shopCards[0],'shop_rinnosuke');
-    assert.equal(g.shopCards.length,4);assert(g.shopCards.slice(1).every(id=>A.CARD[id].shopExpansion));
+    assert(g.kourindouEnabled);assert.equal(g.shopTiles.length,6);assert.equal(g.shopCards[0],'shop_rinnosuke');
+    assert.equal(g.shopCards.length,6);assert(g.shopCards.slice(1,4).every(id=>A.CARD[id].shopExpansion));
     assert(g.shopTiles.every(tile=>tile.r>=size&&!g.wastelandAt(tile.r,tile.c)));
     assert(g.players.every(p=>p.hand.length===6&&p.hand.every(id=>!A.CARD[id].shopExpansion&&!A.CARD[id].shopkeeper)));
     assert(g.drawPile.every(id=>!A.CARD[id].shopExpansion&&!A.CARD[id].shopkeeper));assertConserved(g);

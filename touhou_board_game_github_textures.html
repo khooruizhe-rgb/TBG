@@ -1819,6 +1819,12 @@
   #kourindou .cell:nth-child(2){grid-area:2/1;}
   #kourindou .cell:nth-child(3){grid-area:2/2;}
   #kourindou .cell:nth-child(4){grid-area:2/3;}
+  #kourindou .cell:nth-child(5){grid-area:1/1;}
+  #kourindou .cell:nth-child(6){grid-area:1/3;}
+  #kourindou .shop-locked{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+    border-style:dashed;border-color:#b89a6970;background:#21180f50;box-shadow:none;color:#e3c997;cursor:default;}
+  .shop-unlock-symbol{font-size:1.1rem;line-height:1;}
+  .shop-unlock-label{font-size:clamp(7px,.65vw,10px);line-height:1.3;text-align:center;}
   #kourindou .board-card{width:100%;height:100%;font-size:.64rem;}
   #kourindou .board-card .icon-row{font-size:.85rem;}
   #shop-status{font-size:.7rem;line-height:1.35;color:var(--muted);margin:7px 0 0;}
@@ -2953,7 +2959,7 @@ const AI_POLICY_PROFILES=Object.freeze({
 function aiPolicyHas(p,feature,match=game){
   const profile=AI_POLICY_PROFILES[match?.players[p]?.aiPolicy] || AI_POLICY_PROFILES.current;
   return profile!==AI_POLICY_PROFILES.baseline && profile.disabled!==feature
-    && !(profile===AI_POLICY_PROFILES.previous && ['rin','satori','yukari-trade','placement-space'].includes(feature));
+    && !(profile===AI_POLICY_PROFILES.previous && ['rin','satori','yukari-trade','placement-space','winning-trade'].includes(feature));
 }
 function captureAIEvaluationSnapshot(match,scheduledExtra=0){
   const state={};
@@ -3248,7 +3254,8 @@ class Game {
     this.wasteland = Array.from({length:SIZE},()=>Array(SIZE).fill(false));
     this.kourindouEnabled=true; // Kourindou is part of every match.
     this.shopCards=[];
-    this.shopTiles=[[0,1],[1,0],[1,1],[1,2]].map(([r,c],slot)=>({r:SIZE+2+r,c,slot,wasteland:false}));
+    this.shopUnlockedSlots=4;
+    this.shopTiles=[[0,1],[1,0],[1,1],[1,2],[0,0],[0,2]].map(([r,c],slot)=>({r:SIZE+2+r,c,slot,wasteland:false,unlockAt:slot===4?5:slot===5?10:0}));
     this.borrowedAbilities={};
     this.placementBlockTurns=Array(numPlayers).fill(0);
     this.placementBlockedForTurn=Array(numPlayers).fill(false);
@@ -3258,8 +3265,8 @@ class Game {
     this.cancelled=false;
     this.drawPile=shuffle(CARDS.filter(c=>!c.token && !c.shopkeeper && !c.shopExpansion).map(c=>c.id));
     const stock=shuffle(CARDS.filter(card=>card.shopExpansion).map(card=>card.id)).slice(0,3);
-    this.shopCards=['shop_rinnosuke',...stock];
-    this.startingCardIds=new Set([...this.drawPile,...this.shopCards]);
+    this.shopCards=['shop_rinnosuke',...stock,null,null];
+    this.startingCardIds=new Set([...this.drawPile,...this.shopCards.filter(Boolean)]);
     this.players = [];
     for(let i=0;i<numPlayers;i++){
       this.players.push({
@@ -3358,7 +3365,7 @@ class Game {
   }
   testEndingSnapshot(){
     return {currentSeat:this.currentPlayerIdx+1,drawPile:this.drawPile.slice(),board:this.board.map(row=>row.slice()),wasteland:this.wasteland.map(row=>row.slice()),
-      shop:this.shopTiles.map(tile=>({...tile,cardId:this.cardAt(tile.r,tile.c)})),borrowedAbilities:{...this.borrowedAbilities},
+      shop:this.shopTiles.map(tile=>({...tile,open:this.isShopOpen(tile.slot),cardId:this.cardAt(tile.r,tile.c)})),borrowedAbilities:{...this.borrowedAbilities},
       players:this.players.map(p=>{const forced=this.forcedPlay[p.idx],held=forced && p.hand.includes(forced) ? [forced] : p.hand;
         const legalPlacements=held.reduce((sum,id)=>{const spaces=this.emptyOrWastelandForCard(CARD[id],p.idx);return sum+(forced && held.length===1 && typeof aiForcedPlacementCells==='function'?aiForcedPlacementCells(this,id,spaces):typeof aiPlacementCells==='function'?aiPlacementCells(this,id,spaces):spaces).length;},0);
         const ruleLegalPlacements=held.reduce((sum,id)=>sum+this.emptyOrWastelandForCard(CARD[id],p.idx).filter(cell=>inBounds(cell.r,cell.c)).length,0);
@@ -3516,9 +3523,26 @@ class Game {
   allTiles(){
     const cells=[];
     for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++) cells.push({r,c});
-    return cells.concat(this.shopTiles.map(({r,c})=>({r,c})));
+    return cells.concat(this.shopTiles.filter(tile=>this.isShopOpen(tile.slot)).map(({r,c})=>({r,c})));
   }
-  shopTileAt(r,c){return this.shopTiles.find(tile=>tile.r===r && tile.c===c);}
+  isShopOpen(slot){return Number.isInteger(slot) && slot>=0 && slot<this.shopTiles.length && slot<(this.shopUnlockedSlots??4);}
+  unlockShopSlots(){
+    if(!this.kourindouEnabled)return 0;
+    const total=this.players.reduce((sum,p)=>sum+this.winCount(p),0);let opened=0;
+    for(let slot=this.shopUnlockedSlots??4;slot<this.shopTiles.length;slot++){
+      const tile=this.shopTiles[slot];
+      if(total<tile.unlockAt)break;
+      // New merchandise enters the match only when the slot opens. It is never
+      // dealt, guessed or included in hidden draw-pile samples beforehand.
+      const stock=CARDS.filter(card=>card.shopExpansion && !this.startingCardIds.has(card.id));
+      if(stock.length){const id=stock[Math.floor(Math.random()*stock.length)].id;this.shopCards[slot]=id;this.startingCardIds.add(id);}
+      else this.shopCards[slot]=null;
+      this.shopUnlockedSlots=slot+1;opened++;
+      this.log(`Kourindou opens a new merchandise slot at ${tile.unlockAt} total points.`);
+    }
+    return opened;
+  }
+  shopTileAt(r,c){return this.shopTiles.find(tile=>tile.r===r && tile.c===c && this.isShopOpen(tile.slot));}
   hasTile(r,c){return inBounds(r,c) || !!this.shopTileAt(r,c);}
   cardAt(r,c){
     if(inBounds(r,c)) return this.board[r][c];
@@ -3574,7 +3598,7 @@ class Game {
   canOverrideShop(playerIdx,slot){
     const forced=this.forcedPlay[playerIdx];
     return !this.cancelled && !this.winner && !this.isPlacementBlocked(playerIdx) && this.kourindouEnabled && Number.isInteger(slot)
-      && !!this.shopCards[slot] && !this.players[playerIdx].isAI
+      && this.isShopOpen(slot) && !!this.shopCards[slot] && !this.players[playerIdx].isAI
       && this.players[playerIdx].hand.includes('sage_yukari')
       && this.canOverrideTarget('sage_yukari',this.shopCards[slot])
       && this.canSelectBoardCard(this.shopTiles[slot].r,this.shopTiles[slot].c,true)
@@ -3680,7 +3704,7 @@ class Game {
       this.recordTestTradeExit(offeredId,'retraded',playerIdx);
       this.recordTestTradeBoardExit(boughtId);
       this.testSeatMetrics(playerIdx).tradeReceipts.push({offered:offeredId,received:boughtId,turn:this.testMetrics.turns,
-        purpose:!forecast?'unclassified':forecast.thenPlace?forecast.thenPlace.cardId==='mtn_kanako'?'kanakoSetup':'pairCompletion':'handImprovement',
+        purpose:!forecast?'unclassified':forecast.winningTrade?'immediateWin':forecast.thenPlace?forecast.thenPlace.cardId==='mtn_kanako'?'kanakoSetup':'pairCompletion':'handImprovement',
         forecastGain:Number.isFinite(forecast?.gain)?forecast.gain:null,forecastRate:Number.isFinite(forecast?.rate)?forecast.rate:null});
       this.recordTestDecision(playerIdx,'trade',{offered:testCardId(offeredId),received:testCardId(boughtId),target:{r,c}});}
     if(this.ui?.onShopTrade){try{this.ui.onShopTrade({playerIdx,offeredId,boughtId,r,c});}catch(_error){}}
@@ -3900,6 +3924,7 @@ class Game {
   }
 
   checkWin(){
+    this.unlockShopSlots();
     for(const p of this.players){
       if(this.winCount(p) >= 7){ this.winner = p; return true; }
     }
@@ -7153,7 +7178,7 @@ Object.assign(ZH_TEXT,{
   'Protected by Rinnosuke — no faction while protected':'受霖之助保护，保护期间不属于任何阵营',
   'This card will be the next card drawn. The other card goes beneath it.':'这张牌将是下一张抽到的牌，另一张放在它下面。',
 });
-Object.assign(ZH_TEXT,{'Kanako setup trades':'神奈子铺场交易','Pair completion trades':'二卡阵营凑牌交易','Hand improvement trades':'一般手牌改善交易','Unclassified trades':'未记录交易分支'});
+Object.assign(ZH_TEXT,{'Kanako setup trades':'神奈子铺场交易','Pair completion trades':'二卡阵营凑牌交易','Immediate win trades':'即时获胜交易','Hand improvement trades':'一般手牌改善交易','Unclassified trades':'未记录交易分支'});
 Object.assign(ZH_TEXT,{'Buyer games':'买家对局数','Buyer wins':'买家获胜局数','Buyer ties':'买家并列局数','Buyer win rates count each buyer once per category per game, even after repeated trades.':'买家胜率按每种类别每局各计一次，同局多次交易不会重复增加样本数。'});
 const languageTextSources=new WeakMap(),languageAttributeSources=new WeakMap(),abilityTitleSources=new WeakMap(),ruleTextSources=new Map();
 function canonicalCardName(value){
@@ -7217,6 +7242,8 @@ const ZH_DYNAMIC=[
   [/^\[Free\] (.+)$/,(_,text)=>`[免费] ${translateGameText(text)}`],
   [/^(.+) places (.+)\.$/,(_,p,card)=>`${p} 放置了 ${card}。`],
   [/^(.+) trades (.+) for (.+) at Kourindou\.$/,(_,p,offered,taken)=>`${p} 在香霖堂用 ${offered} 换取了 ${taken}。`],
+  [/^Opens at (\d+) total points$/,(_,n)=>`全场 ${n} 分开启`],
+  [/^Kourindou opens a new merchandise slot at (\d+) total points\.$/,(_,n)=>`全场总分达到 ${n} 分，香霖堂开启了一个新商品栏位。`],
   [/^(.+) claims the (.+) faction! \((\d+) cards\)$/,(_,p,f,n)=>`${p} 收取了 ${f} 阵营的 ${n} 张卡牌！`],
   [/^(.+) draws for (\d+) players? with room in hand\.$/,(_,p,n)=>`${p} 为 ${n} 名手牌未满的玩家抽了牌。`],
   [/^(.+) has no legal action and (passes|skips their turn)\.$/,(_,p)=>`${p} 无合法行动，跳过回合。`],
@@ -7949,7 +7976,7 @@ function renderShop(){
   const panel=el('shop-panel'),grid=el('kourindou');
   panel.hidden=!game.kourindouEnabled;
   if(panel.hidden){grid.replaceChildren();return;}
-  for(let slot=0;slot<4;slot++){
+  for(let slot=0;slot<game.shopTiles.length;slot++){
     let tile=grid.children[slot];
     if(!tile){
       tile=document.createElement('button');tile.type='button';tile.className='cell shop-tile';tile.dataset.slot=String(slot);
@@ -7963,8 +7990,13 @@ function renderShop(){
     }
     const {r,c}=game.shopTiles[slot];
     tile.dataset.r=String(r);tile.dataset.c=String(c);
-    const id=game.cardAt(r,c);
-    if(tile.dataset.cardId!==id){tile.innerHTML=id ? cardBoardHtml(id) : '';tile.dataset.cardId=id||'';}
+    const open=game.isShopOpen(slot),id=game.cardAt(r,c),faceKey=open?(id||''):'locked';
+    if(!open || tile.dataset.shopFace!==faceKey){
+      tile.innerHTML=open ? (id ? cardBoardHtml(id) : '') : `<span class="shop-unlock-symbol" aria-hidden="true">◇</span><span class="shop-unlock-label">${translateGameText(`Opens at ${game.shopTiles[slot].unlockAt} total points`)}</span>`;
+      tile.dataset.shopFace=faceKey;tile.dataset.cardId=id||'';
+    }
+    tile.disabled=!open;
+    tile.classList.toggle('shop-locked',!open);
     const selectable=isShopSelectable(slot);
     tile.classList.toggle('wasteland',game.wastelandAt(r,c));
     syncProtectionIndicator(tile,r,c);
@@ -7988,14 +8020,15 @@ function renderShop(){
     const face=tile.querySelector('.board-card');
     syncIllusionFace(face,id);
     if(face && id && CARD[id].crown) face.classList.toggle('eirin-muted',game.eirinActive());
-    tile.title=id ? `${CARD[id].name}${game.isProtected(r,c) ? ' · Protected by Rinnosuke; no faction' : ''}. Double-click or press I for details.` : 'Empty tile';
+    tile.title=!open ? translateGameText(`Opens at ${game.shopTiles[slot].unlockAt} total points`)
+      : id ? `${CARD[id].name}${game.isProtected(r,c) ? ' · Protected by Rinnosuke; no faction' : ''}. Double-click or press I for details.` : 'Empty tile';
     tile.setAttribute('aria-label',tile.title+(selectable ? ' Click to choose.' : ''));
   }
   el('shop-status').textContent=pendingCellChoice?.shopTrade ? 'Choose merchandise.' : '';
 }
 function isShopSelectable(slot){
   const cell=game?.shopTiles[slot];
-  return !!cell && !!pendingCellChoice && (!!pendingCellChoice.shopSlots?.includes(slot)
+  return !!cell && game.isShopOpen(slot) && !!pendingCellChoice && (!!pendingCellChoice.shopSlots?.includes(slot)
     || pendingCellChoice.cells.some(p=>p.r===cell.r && p.c===cell.c));
 }
 function commitShopChoice(slot){
@@ -9125,9 +9158,98 @@ function aiCostCanResolve(playerIdx, cardId, r, c){
 
 /* A trade must improve this AI's hand, so idle players never swap the same cards back
    and forth. Connected-faction progress matters more than an isolated crown. */
+function aiTradeWinSurvivesAbility(playerIdx,pick){
+  if(!pick?.winsNow || pick.losesNow)return false;
+  return aiWithPlacement(pick.cardId,pick.cell,()=>{
+    if(game.isCrownAbilityDisabled(pick.cardId) || pick.skipAbility)return true;
+    const ability=pick.copiedAbility || game.abilityId(pick.cardId);
+    const stillWins=()=>game.winCount(game.players[playerIdx])+aiCurrentClaims(playerIdx).reduce((n,claim)=>n+claim.points,0)>=7;
+    if(ability==='sdm_meiling'){
+      const moves=game.meilingPushes(pick.cell.r,pick.cell.c);
+      // Meiling must push if possible. A claim that vanishes after one of her
+      // legal pushes cannot be advertised as an immediate winning purchase.
+      return moves.every(move=>aiWithRulePreview(()=>{
+        const id=game.cardAt(move.r,move.c);game.setCardAt(move.r,move.c,null);game.setCardAt(move.toR,move.toC,id);
+        return stillWins();
+      },playerIdx));
+    }
+    if(ability==='palace_rin'){
+      const target=pick.retrieval?.target || aiAbilityPlan(playerIdx,ability,pick.cell.r,pick.cell.c).target;
+      if(target?.playerIdx===playerIdx)return aiWithRulePreview(()=>{
+        game.players[playerIdx].discard=game.players[playerIdx].discard.filter(id=>id!==target.id);
+        return stillWins();
+      },playerIdx);
+    }
+    return true;
+  },playerIdx);
+}
+
+function aiTradeCouldWin(playerIdx,cardId){
+  // Cheap optimistic bound: skip full hand/ability planning for purchases that
+  // cannot reach the winning score. Matara's bound allows copied removals and
+  // swaps/free placements to finish any faction that is one member short.
+  if(cardId==='sage_matara'){
+    const channels=game.selectableBoardCells(playerIdx).map(cell=>game.abilityId(game.cardAt(cell.r,cell.c)));
+    if(!channels.length)return false;
+    const payable=game.payableCards(playerIdx).filter(id=>id!==cardId).length;
+    const targets=game.mainBoardCells(cell=>game.canMoveBoardCard(cell.r,cell.c) && game.canSelectBoardCard(cell.r,cell.c)
+      && game.canEnterDiscard(playerIdx,cell.id));
+    const maxPoints=Math.max(1,...targets.map(cell=>game.pointValue(game.cardAt(cell.r,cell.c))));
+    let direct=0;
+    if(channels.includes('marisa'))direct=Math.max(0,...targets.filter(cell=>!CARD[game.cardAt(cell.r,cell.c)].crown).map(cell=>game.pointValue(game.cardAt(cell.r,cell.c))));
+    if(channels.includes('sdm_flandre'))direct=Math.max(direct,0,...game.players[playerIdx].hand.filter(id=>id!==cardId && game.canEnterDiscard(playerIdx,id)).map(id=>game.pointValue(id)));
+    if(channels.includes('haku_yuyuko') && payable)direct=Math.max(direct,Math.min(4,payable)*maxPoints);
+    if(channels.includes('heaven_iku') && payable>=3)direct=Math.max(direct,2*maxPoints);
+    if(channels.includes('palace_yuugi') && payable>=2)direct=Math.max(direct,maxPoints);
+    const claims=Object.entries(FACTIONS).reduce((sum,[faction,fac])=>{
+      const members=game.factionCells(faction);if(!fac.size || members.length<fac.size-1)return sum;
+      const points=members.map(cell=>game.pointValue(game.cardAt(cell.r,cell.c))).sort((a,b)=>b-a);
+      return sum+points.slice(0,fac.size).reduce((n,value)=>n+value,0)+(members.length<fac.size?3:0);
+    },0);
+    return game.winCount(game.players[playerIdx])+direct+claims>=7;
+  }
+  return aiPlacementCells(game,cardId,game.emptyOrWastelandForCard(CARD[cardId],playerIdx)).some(cell=>
+    aiWithPlacement(cardId,cell,()=>game.winCount(game.players[playerIdx])
+      +game.estimateDirectDiscardPoints(playerIdx,cardId,cell.r,cell.c)
+      +aiCurrentClaims(playerIdx).reduce((n,claim)=>n+claim.points,0)>=7,playerIdx));
+}
+
+function aiCurrentWinningTrade(playerIdx){
+  if(!aiPolicyHas(playerIdx,'winning-trade'))return null;
+  const player=game.players[playerIdx],stock=game.tradeCells();let best=null;
+  for(const offeredId of player.hand){
+    if(!aiCanOfferTrade(playerIdx,offeredId))continue;
+    const keepValue=aiMaterialValue(playerIdx,offeredId);
+    for(const target of stock){
+      const boughtId=game.cardAt(target.r,target.c);
+      if(!boughtId || CARD[boughtId].shopkeeper || CARD[boughtId].token)continue;
+      const plan=aiWithRulePreview(()=>{
+        game.players[playerIdx].hand=player.hand.map(id=>id===offeredId?boughtId:id);
+        game.setCardAt(target.r,target.c,offeredId);
+        // Evaluate the exchanged hand, not a hand that incorrectly retains the
+        // offered card as cost or faction material. The purchase is tried first.
+        for(const id of [boughtId,...game.players[playerIdx].hand.filter(id=>id!==boughtId)]){
+          if(!aiTradeCouldWin(playerIdx,id))continue;
+          const pick=aiEvaluateCard(playerIdx,id,{acceptCandidate:candidate=>aiTradeWinSurvivesAbility(playerIdx,candidate)});
+          if(pick?.winsNow && aiTradeWinSurvivesAbility(playerIdx,pick))return pick;
+        }
+        return null;
+      },playerIdx);
+      if(!plan)continue;
+      if(!best || aiBetterCandidate(plan,best.plan)
+        || !aiBetterCandidate(best.plan,plan) && keepValue<best.keepValue)
+        best={plan,keepValue,type:'trade',cardId:offeredId,target,winningTrade:true,winsNow:true,
+          rate:plan.rate,gain:0,thenPlace:{type:'place',cardId:plan.cardId,r:plan.cell.r,c:plan.cell.c}};
+    }
+  }
+  if(!best)return null;
+  const {plan,keepValue,...action}=best;return action;
+}
+
 function aiCurrentBestTrade(playerIdx){
   const player=game.players[playerIdx];
   if(!game.kourindouEnabled || !player.hand.some(id=>aiCanOfferTrade(playerIdx,id))) return null;
+  const winning=aiCurrentWinningTrade(playerIdx);if(winning)return winning;
   const handValue=hand=>{
     let value=hand.reduce((sum,id)=>sum+(CARD[id].token ? -2 : 1+(CARD[id].crown ? .4 : 0)),0);
     for(const [faction,fac] of Object.entries(FACTIONS)){
@@ -9707,7 +9829,7 @@ function aiBetterCandidate(a,b){
   return a.position>b.position;
 }
 
-function aiCurrentEvaluateCard(playerIdx,cardId,{worst=false,exclude=null}={}){
+function aiCurrentEvaluateCard(playerIdx,cardId,{worst=false,exclude=null,acceptCandidate=null}={}){
   if((cardId==='mtn_kanako' && !aiPolicyHas(playerIdx,'kanako'))
     || (cardId==='sage_yukari' && !aiPolicyHas(playerIdx,'yukari'))
     || (cardId==='sage_matara' && !aiPolicyHas(playerIdx,'matara')))return AI_FROZEN_POLICY.aiEvaluateCard(playerIdx,cardId);
@@ -9773,7 +9895,7 @@ function aiCurrentEvaluateCard(playerIdx,cardId,{worst=false,exclude=null}={}){
         retrieval:retrieval?{utility:retrieval.utility,payment:retrieval.payment,target:retrieval.target,skip:retrieval.skip}:null,
         copiedAbility:copy?.abilityId||null,copyTarget:copy?.cell||null,skipAbility:willSkip};
     },playerIdx);
-    if(!best || (worst ? aiBetterCandidate(best,candidate) : aiBetterCandidate(candidate,best)))best=candidate;
+    if((!acceptCandidate || acceptCandidate(candidate)) && (!best || (worst ? aiBetterCandidate(best,candidate) : aiBetterCandidate(candidate,best))))best=candidate;
   }
   return best;
 }
@@ -9870,6 +9992,9 @@ async function aiCurrentDecideHardAction(playerIdx,allowTrade=true){
     return game.canDrawNormally(playerIdx)?{type:'draw'}:{type:'pass'};
   }
   for(const cardId of player.hand){const candidate=aiEvaluateCard(playerIdx,cardId);if(candidate && aiBetterCandidate(candidate,best))best=candidate;}
+  if(best?.winsNow)return {type:'place',cardId:best.cardId,r:best.cell.r,c:best.cell.c};
+  const trade=allowTrade?aiBestTrade(playerIdx):null;
+  if(trade?.winningTrade)return trade;
   const canDraw=game.canDrawNormally(playerIdx),drawHandGain=aiDrawValue(playerIdx);
   const willPlace=best && ((best.rate>0 && !best.lowPriority)
     || !(canDraw && (best.lowPriority || drawHandGain>=best.handGain)));
@@ -9879,7 +10004,6 @@ async function aiCurrentDecideHardAction(playerIdx,allowTrade=true){
       || (best.cardId==='mtn_kanako' ? aiKanakoTrade(playerIdx,placement) : null);
     if(trade)return trade;
   }
-  const trade=allowTrade?aiBestTrade(playerIdx):null;
   if(!best?.winsNow && trade && (!best || best.lowPriority || trade.rate>best.rate || (best.rate===0 && trade.gain>=.8)))return trade;
   if(best && best.rate>0 && !best.lowPriority)return {type:'place',cardId:best.cardId,r:best.cell.r,c:best.cell.c};
   if(canDraw && (!best || best.lowPriority || drawHandGain>=best.handGain))return {type:'draw'};
@@ -9889,6 +10013,7 @@ async function aiCurrentDecideHardAction(playerIdx,allowTrade=true){
 
 async function aiCurrentDecideAction(playerIdx,allowTrade=true){
   const best=await aiDecideHardAction(playerIdx,allowTrade);
+  if(best.winningTrade)return best;
   if(!game.aiMakesMistake('action'))return (allowTrade && aiTwoCardFactionTrade(playerIdx,best)) || best;
   if(game.aiDifficulty==='easy'){
     if(game.isPlacementBlocked(playerIdx))return best;
@@ -12268,7 +12393,7 @@ function aiTestTradeRows(entries,pairs=false){
     return [label,row.trades,row.placed||0,row.placedByOther||0,row.paidAsCost||0,row.retraded||0,row.returned||0,row.takenByOther||0,
       row.discardedFromHand||0,row.heldAtEnd||0,row.otherExit||0,row.claimByBuyer||0,row.claimByOther||0,row.buyerGames||0,row.buyerWins||0,row.buyerTies||0,
       aiTestPercent(row.buyerWins||0,row.buyerGames),aiTestAverage(row.waitTurnsSum,row.trades),aiTestAverage(row.forecastGainSum,row.forecastSamples),
-      row.kanakoSetup||0,row.pairCompletion||0,row.handImprovement||0,row.unclassified||0];
+      row.kanakoSetup||0,row.pairCompletion||0,row.immediateWin||0,row.handImprovement||0,row.unclassified||0];
   });
 }
 function aiTestEndingHtml(entry){
@@ -12316,7 +12441,7 @@ function renderAITestStats(){
   el('ai-test-score-sources').innerHTML=aiTestTable(['Source','Entries','Points gained','Points lost'],Object.entries(s.scoreSources).sort(([,a],[,b])=>b.points-a.points).map(([id,row])=>{
     const [kind,key]=id.split(':');return [kind==='faction'?`${ruleTextHtml('Faction')} ${FACTIONS[key]?.icon||'—'}`:aiTestAbilityName(key),row.cards,row.points,row.lostPoints];
   }));
-  const tradeHeadings=['Card','Trades','Placed by buyer','Placed by another AI','Paid as cost','Traded again','Returned to draw pile','Taken by another AI','Discarded from hand','Held at end','Other exit','Claimed by buyer','Claimed by another AI','Buyer games','Buyer wins','Buyer ties','Buyer win rate','Average wait turns','Average forecast trade gain','Kanako setup trades','Pair completion trades','Hand improvement trades','Unclassified trades'];
+  const tradeHeadings=['Card','Trades','Placed by buyer','Placed by another AI','Paid as cost','Traded again','Returned to draw pile','Taken by another AI','Discarded from hand','Held at end','Other exit','Claimed by buyer','Claimed by another AI','Buyer games','Buyer wins','Buyer ties','Buyer win rate','Average wait turns','Average forecast trade gain','Kanako setup trades','Pair completion trades','Immediate win trades','Hand improvement trades','Unclassified trades'];
   const trade=s.tradeStats||{};
   el('ai-test-trade-summary').innerHTML=aiTestTable(tradeHeadings,trade.totals?.trades?aiTestTradeRows([['total',trade.totals]]):[]);
   el('ai-test-trade-purchases').innerHTML=aiTestTable(tradeHeadings,aiTestTradeRows(Object.entries(trade.purchases||{})));
@@ -12348,7 +12473,7 @@ function aiTestExportData(){return {version:3,exportedAt:new Date().toISOString(
   scoreSources:'Gross point value when a card enters a discard pile. Faction claims and abilities are separated; Rin records removed points. Passive-value changes can make these totals differ from final scores.',
   factionOutcomes:'One claimant/non-claimant observation per AI, faction and completed game. Repeat claims by the same AI do not duplicate claimantGames. Wins include a sole highest-scoring stalemate leader; tied leaders are ties, not wins. ScoreSum awards a tied leader 1 / number of tied leaders. claimsByWinner counts actual claims. Conditional win rates show association, not causation; observations within a match are correlated.',
   evaluations:'One observation per held card at each actual voluntary AI decision, including free trade decisions. evaluated excludes null best-placement evaluations; unavailable separates noRuleSpace from strategyRejected. rateSum / evaluated is the average best-placement heuristic score, NOT a win probability or the actual chosen-cell score. Other Sum fields use evaluated unless explicitly named chosenEvaluated. Forced placements and internal lookahead/payment evaluations are excluded. Repeated observations of the same card are correlated.',
-  tradeStats:'Successful trades only. Every receipt has exactly one first buyer-hand exit (placed, placedByOther, paidAsCost, retraded, returned, takenByOther, discardedFromHand, heldAtEnd or otherExit). claimByBuyer/claimByOther follow the received card after that first placement until its first board exit. These are uses, not guaranteed profitable trades. Purchases, offers and pairs each retain all receipts. Buyer win rate = buyerWins / buyerGames, counting each buyer once per category and completed game. wins/ties/losses are separate receipt-weighted counts. All outcome measures are correlations. Purpose distinguishes kanakoSetup, pairCompletion, handImprovement and unclassified. forecastGainSum / forecastSamples includes only general handImprovement heuristics, not actual points or other branches. Rate forecasts use forecastRateSamples separately. waitTurnsSum uses the first exit or game end.',
+  tradeStats:'Successful trades only. Every receipt has exactly one first buyer-hand exit (placed, placedByOther, paidAsCost, retraded, returned, takenByOther, discardedFromHand, heldAtEnd or otherExit). claimByBuyer/claimByOther follow the received card after that first placement until its first board exit. These are uses, not guaranteed profitable trades. Purchases, offers and pairs each retain all receipts. Buyer win rate = buyerWins / buyerGames, counting each buyer once per category and completed game. wins/ties/losses are separate receipt-weighted counts. All outcome measures are correlations. Purpose distinguishes kanakoSetup, pairCompletion, immediateWin, handImprovement and unclassified. immediateWin is a winning placement forecast after exchanging the hand, not a guaranteed result for fallible ability targets. forecastGainSum / forecastSamples includes only general handImprovement heuristics, not actual points or other branches. Rate forecasts use forecastRateSamples separately. waitTurnsSum uses the first exit or game end.',
   tradeDecisions:'Availability is sampled at each recorded actual AI action, not once per turn. After a free trade the next decision is alreadyTraded. Rule-level availability does not imply the AI found a worthwhile trade. chosen counts actual trade decisions.',
   forcedPlacements:'Actual Reisen commands for held cards. attempts = placed + noLegalCell + placement failures. bypassedStrategy counts commands with rule-legal destinations but no ordinary AI-strategy destination. Rule checks still exclude blocked/forbidden terrain and the off-board shop.',
   latestDecisions:'Final 16 diagnostic events per AI in the latest completed game. Aggregate counts include every event; the trace is capped separately.',
@@ -12360,7 +12485,7 @@ function aiTestCSV(){
     'observations','evaluated','unavailable','strategyRejected','noRuleSpace','average_rate','average_hand_gain','average_claim_size','low_priority_rate','chosen','chosenEvaluated','chosen_average_rate',
     'claimantGames','claimantWins','claimantTies','claimantLosses','nonClaimantGames','nonClaimantWins','claimsByWinner','claimsByTiedLeader','claimsByLoser','claimant_win_rate','non_claimant_win_rate',
     'trades','wins','ties','losses','placed','placedByOther','retraded','returned','takenByOther','discardedFromHand','otherExit','claimByBuyer','claimByOther','average_wait_turns','forecastSamples','average_trade_gain','kanakoSetup','pairCompletion','handImprovement','unclassified','buyerGames','buyerWins','buyerTies','buyerLosses','buyer_win_rate',
-    'attempts','bypassedStrategy','noLegalCell','placementFailures'],rows=[];
+    'attempts','bypassedStrategy','noLegalCell','placementFailures','immediateWin'],rows=[];
   for(const [id,count] of Object.entries(s))if(typeof count==='number')rows.push({type:'summary',id,count});
   for(const [id,faction] of Object.entries(FACTIONS))if(faction.size>0){const row=s.factions[id]||{claims:0,games:0};rows.push({type:'faction',id,count:row.claims,games:row.games,eligible_games:s.games,rate:aiTestPercent(row.games,s.games),substituteClaims:row.substituteClaims||0,substituteMembers:row.substituteMembers||0});}
   for(const card of CARDS){const row=s.cards[card.id]||{placements:0,seenGames:0,usedGames:0,...newTestCardActions()};rows.push({...row,type:'card',id:card.id,count:row.placements,games:row.usedGames,eligible_games:row.seenGames,rate:aiTestPercent(row.usedGames,row.seenGames),placement_share:aiTestPercent(row.placements,s.placements)});}
@@ -12418,8 +12543,8 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='1c21e24743099ea88a53497032cb396f5dbe14574aa31cf87b98eb845802768e';
-const AI_EVALUATION_POLICY_DIGEST='fbb3adf17fbff6a31011d3feffb1d18f231da64abb328eee71207fc709deca7a';
+const AI_EVALUATION_RULES_DIGEST='1ce03095566801b2789ac7fc2a9550c6ec4e2fe5b633535fdaf0033cc8791035';
+const AI_EVALUATION_POLICY_DIGEST='e953e4c566698d4c5adf9f5c9309169aab3a5d7f0c5444e489311f144832c4c0';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
   if(!source)throw new Error('Game source is unavailable.');
@@ -12636,7 +12761,7 @@ function evalNewOpening(seed,n,size,difficulty){
 async function evalCompare(config,send){
   evalValidateConfig(config);
   const report={format:'tbg-ai-evaluation',version:1,type:'comparison',baselineCommit:'2b07010618c21eee6dfc6ffd4092c8b4bbb42e9b',baselineDigest:AI_BASELINE_DIGEST,previousCommit:'955c63140738e5cc9deae85802cec12f10c5d61a',previousDigest:AI_PREVIOUS_DIGEST,diagnosticsVersion:3,
-    currentPolicy:'placement-space-2026-10-09',rules:'Shared current Game engine',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,startedAt:new Date().toISOString(),finished:false,blocks:[]};
+    currentPolicy:'shop-progression-2026-10-09',rules:'Shared current Game engine',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,startedAt:new Date().toISOString(),finished:false,blocks:[]};
   const lineups=evalMixedLineups(config.players,config.opponent);
   for(let i=0;i<config.blocks;i++){
     await evalYield();const seed=evalHashSeed(config.seed,config.phase||'development',i),size=config.size==='both'?(i%2?5:4):Number(config.size);
@@ -12651,7 +12776,7 @@ async function evalCompare(config,send){
 async function evalFork(snapshot,config,send){
   evalValidateSnapshot(snapshot);evalValidateConfig(config,'fork');const actor=snapshot.state.currentPlayerIdx;config={...config,actor};
   const continuations=config.continuations||['current','previous'];
-  const report={format:'tbg-ai-evaluation',version:1,diagnosticsVersion:3,currentPolicy:'placement-space-2026-10-09',previousDigest:AI_PREVIOUS_DIGEST,type:'fork',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,snapshot,startedAt:new Date().toISOString(),finished:false,pairs:[],
+  const report={format:'tbg-ai-evaluation',version:1,diagnosticsVersion:3,currentPolicy:'shop-progression-2026-10-09',previousDigest:AI_PREVIOUS_DIGEST,type:'fork',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,snapshot,startedAt:new Date().toISOString(),finished:false,pairs:[],
     assumptions:'Unknown rival cards and deck order are re-sampled from the acting player information. Rival private clue memories are omitted. Continuations are finite AI policies, not optimal play.'};
   for(let i=0;i<config.trials;i++){
     const seed=evalHashSeed(config.seed,'fork',i),sample=evalSampleHidden(snapshot,actor,evalPRNG(seed));
@@ -12760,7 +12885,9 @@ function aiLabActionLabel(action){
 function renderAILabPosition(recommendations={}){
   const s=aiLabPosition.state,p=s.currentPlayerIdx;
   const board=s.board.map((row,r)=>`<tr><th>${r+1}</th>${row.map((id,c)=>`<td>${id?ruleTextHtml(CARD[id].name):'—'}${s.wasteland[r][c]?`<br>${ruleTextHtml('Wasteland')}`:''}</td>`).join('')}</tr>`).join('');
-  el('ai-lab-position').innerHTML=`<p>${ruleTextHtml('Turn-start position')} · ${ruleTextHtml('Seat')} ${p+1} · ${s.drawPile.length} ${ruleTextHtml('Draw pile')}</p><div class="ai-test-table"><table><thead><tr><th></th>${s.board[0].map((_,c)=>`<th>${c+1}</th>`).join('')}</tr></thead><tbody>${board}</tbody></table></div><p>${s.players[p].hand.map(id=>ruleTextHtml(CARD[id].name)).join(' · ')}</p><p>${ruleTextHtml('Kourindou')} · ${s.shopCards.map(id=>ruleTextHtml(CARD[id].name)).join(' · ')}</p>`;
+  const stock=s.shopCards.map((id,slot)=>slot>=(s.shopUnlockedSlots??4)
+    ? ruleTextHtml(`Opens at ${s.shopTiles[slot]?.unlockAt||0} total points`) : id?ruleTextHtml(CARD[id].name):ruleTextHtml('Empty tile'));
+  el('ai-lab-position').innerHTML=`<p>${ruleTextHtml('Turn-start position')} · ${ruleTextHtml('Seat')} ${p+1} · ${s.drawPile.length} ${ruleTextHtml('Draw pile')}</p><div class="ai-test-table"><table><thead><tr><th></th>${s.board[0].map((_,c)=>`<th>${c+1}</th>`).join('')}</tr></thead><tbody>${board}</tbody></table></div><p>${s.players[p].hand.map(id=>ruleTextHtml(CARD[id].name)).join(' · ')}</p><p>${ruleTextHtml('Kourindou')} · ${stock.join(' · ')}</p>`;
   for(const id of ['ai-lab-action-a','ai-lab-action-b']){
     const select=el(id);select.replaceChildren();aiLabActions.forEach((action,index)=>{const option=document.createElement('option');option.value=index;option.textContent=aiLabActionLabel(action);select.appendChild(option);});
   }
