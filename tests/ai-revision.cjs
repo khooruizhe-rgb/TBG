@@ -294,8 +294,14 @@ test('Koishi is preserved for her trigger and automatically chooses a claiming t
   g=setup({hand:['palace_koishi'],board:[[2,2,'palace_satori'],[2,3,'palace_rin'],[3,2,'palace_utsuho']]});
   await g.resolveKoishiCascade(0);assert.equal(g.players[1].discard.length,4);
 });
-test('Kaguya places a partial known guess adjacent even without a complete claim plan',async()=>{
+test('Kaguya restricts a guessed card when public discards make its faction impossible',async()=>{
   const g=setup({opponents:[['hourai_mokou']],board:[[2,2,'hourai_kaguya']],discards:[['hourai_eirin','hourai_reisen']]});
+  g.revealHand(0,['hourai_mokou'],[1]);assert.equal(g.planKaguyaClaim(null,1),null);
+  await g.resolveAbility('hourai_kaguya',2,2,1,0);
+  const tile=g.boardCells(t=>t.id==='hourai_mokou')[0];assert.deepEqual([tile.r,tile.c],[0,0]);
+});
+test('Kaguya still connects a partial known guess when further own faction material remains',async()=>{
+  const g=setup({hand:['hourai_reisen'],opponents:[['hourai_mokou']],board:[[2,2,'hourai_kaguya']]});
   g.revealHand(0,['hourai_mokou'],[1]);assert.equal(g.planKaguyaClaim(null,1),null);
   await g.resolveAbility('hourai_kaguya',2,2,1,0);
   const tile=g.boardCells(t=>t.id==='hourai_mokou')[0];assert.equal(Math.abs(tile.r-2)+Math.abs(tile.c-2),1);

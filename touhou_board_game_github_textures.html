@@ -2953,7 +2953,7 @@ const AI_POLICY_PROFILES=Object.freeze({
 function aiPolicyHas(p,feature,match=game){
   const profile=AI_POLICY_PROFILES[match?.players[p]?.aiPolicy] || AI_POLICY_PROFILES.current;
   return profile!==AI_POLICY_PROFILES.baseline && profile.disabled!==feature
-    && !(profile===AI_POLICY_PROFILES.previous && ['rin','satori','yukari-trade'].includes(feature));
+    && !(profile===AI_POLICY_PROFILES.previous && ['rin','satori','yukari-trade','placement-space'].includes(feature));
 }
 function captureAIEvaluationSnapshot(match,scheduledExtra=0){
   const state={};
@@ -9633,6 +9633,66 @@ function aiDrawValue(playerIdx){
   return others.length ? 1-recipients/others.length : 1;
 }
 
+function aiPlacementSpace(playerIdx,cardId,cell,preferredFaction=null){
+  if(!aiPolicyHas(playerIdx,'placement-space'))return null;
+  const usable=inBounds(cell.r,cell.c) && !game.isProtected(cell.r,cell.c);
+  if(!usable)return {usable:false,forClaim:false,connected:false,canFinish:false,room:0,frontier:0,region:0};
+  const options=preferredFaction ? [preferredFaction] : game.cardClaimFactions(cardId);
+  const key=(r,c)=>r+','+c;let best=null;
+  for(const faction of options){
+    const size=FACTIONS[faction]?.size||0;
+    const matches=(r,c)=>inBounds(r,c) && game.boardMatchesFaction(r,c,faction);
+    const empty=(r,c)=>inBounds(r,c) && !game.cardAt(r,c) && !game.wastelandAt(r,c) && !game.isProtected(r,c);
+    const group=[cell],seen=new Set([key(cell.r,cell.c)]);
+    for(let i=0;i<group.length;i++)for(const [dr,dc] of DIRS4){
+      const r=group[i].r+dr,c=group[i].c+dc,k=key(r,c);
+      if(matches(r,c) && !seen.has(k)){seen.add(k);group.push({r,c});}
+    }
+    const remaining=new Set(game.players[playerIdx].hand.filter(id=>id!==cardId && game.cardMatchesFaction(id,faction)));
+    if(faction==='hourai' && game.hasActiveAbility('hourai_kaguya'))
+      for(const known of game.knownHandCards(playerIdx,faction))if(known.id!==cardId)remaining.add(known.id);
+    const forClaim=!!size && (group.length>=size || remaining.size>0 && aiFactionStillPossible(faction));
+    // Empty spaces cost one future placement to reach; existing matching cards
+    // cost none. Count room within the remaining faction placements, and the
+    // whole reachable region separately to distinguish a pocket from a corridor.
+    const missing=Math.max(0,size-group.length),limit=Math.max(1,missing||size-1||3);
+    const distance=new Map(group.map(t=>[key(t.r,t.c),0])),queue=group.map(t=>({...t,d:0}));
+    for(let i=0;i<queue.length;i++){
+      const cur=queue[i];if(distance.get(key(cur.r,cur.c))!==cur.d)continue;
+      for(const [dr,dc] of DIRS4){
+        const r=cur.r+dr,c=cur.c+dc,isEmpty=empty(r,c);
+        if(!isEmpty && !matches(r,c))continue;
+        const k=key(r,c),d=cur.d+(isEmpty?1:0);
+        if(distance.has(k) && distance.get(k)<=d)continue;
+        distance.set(k,d);queue.push({r,c,d});
+      }
+    }
+    let room=0,frontier=0,region=0;
+    for(const [k,d] of distance){const [r,c]=k.split(',').map(Number);if(!empty(r,c))continue;
+      region++;if(d<=limit)room++;
+      if(DIRS4.some(([dr,dc])=>seen.has(key(r+dr,c+dc))))frontier++;
+    }
+    const next={usable:true,faction,forClaim,connected:group.length>1,canFinish:room>=missing,
+      room,frontier,region,members:group.length,material:remaining.size};
+    if(!best || next.forClaim && !best.forClaim || next.forClaim===best.forClaim
+      && (next.forClaim && next.material!==best.material ? next.material>best.material : aiComparePlacementSpace(next,best)>0))best=next;
+  }
+  return best;
+}
+
+function aiComparePlacementSpace(a,b){
+  if(!a || !b)return 0;
+  if(a.usable!==b.usable)return a.usable?1:-1;
+  if(a.forClaim!==b.forClaim)return a.forClaim?1:-1;
+  if(a.forClaim){
+    if(a.canFinish!==b.canFinish)return a.canFinish?1:-1;
+    if(a.connected!==b.connected)return a.connected?1:-1;
+  }
+  const direction=a.forClaim?1:-1;
+  for(const field of ['room','frontier','region'])if(a[field]!==b[field])return Math.sign(a[field]-b[field])*direction;
+  return 0;
+}
+
 function aiBetterCandidate(a,b){
   if(!b)return true;
   if(a.winsNow!==b.winsNow)return a.winsNow;
@@ -9643,6 +9703,7 @@ function aiBetterCandidate(a,b){
   if(a.rate!==b.rate)return a.rate>b.rate;
   if(a.handGain!==b.handGain)return a.handGain>b.handGain;
   if(a.noAbility!==b.noAbility)return !a.noAbility;
+  if(a.cardId===b.cardId){const space=aiComparePlacementSpace(a.spacePlan,b.spacePlan);if(space)return space>0;}
   return a.position>b.position;
 }
 
@@ -9705,9 +9766,10 @@ function aiCurrentEvaluateCard(playerIdx,cardId,{worst=false,exclude=null}={}){
         || (retrieval && retrieval.utility<=0 && !skippedForAssembly) || (cardId==='marisa' && !game.marisaTargets(cell.r,cell.c,true).length) || reserveCombo
         || (!game.drawPile.length && DRAW_ABILITY_CARDS.has(cardId) && !((cardId==='yuuka' || cardId==='temple_shou') && game.payableCards(playerIdx).length)));
       const position=DIRS4.reduce((n,[dr,dc])=>n+(game.boardMatchesFaction(cell.r+dr,cell.c+dc,forecast.faction||card.faction)?1:0),0);
+      const spacePlan=aiPlacementSpace(playerIdx,cardId,cell,forecast.faction);
       return {cardId,cell,rate:Math.max(0,direct+points+denial+sealValue+abilityValue+setupValue,forecast.rate+setupValue),handGain,
         noAbility:NO_PLACED_ABILITY.has(cardId) || (cardId==='mtn_nitori' && !aiPolicyHas(playerIdx,'nitori')) || (cardId==='hell_hecatia' && !aiPolicyHas(playerIdx,'hecatia')),lowPriority,suppressedCrown,winsNow,losesNow,
-        claimSize:Math.max(0,...claims.map(claim=>claim.size),forecast.size),claimsNow,reserveCombo,position,setupValue,
+        claimSize:Math.max(0,...claims.map(claim=>claim.size),forecast.size),claimsNow,reserveCombo,position,setupValue,spacePlan,
         retrieval:retrieval?{utility:retrieval.utility,payment:retrieval.payment,target:retrieval.target,skip:retrieval.skip}:null,
         copiedAbility:copy?.abilityId||null,copyTarget:copy?.cell||null,skipAbility:willSkip};
     },playerIdx);
@@ -9758,19 +9820,27 @@ function aiCurrentFactionPlacement(playerIdx,cardId,cells,faction=CARD[cardId].f
   if(!cells.length)return null;
   const mistake=game.aiMakesMistake('target'),poor=mistake && game.aiDifficulty==='easy';
   if(mistake && !poor)return cells[Math.floor(Math.random()*cells.length)];
-  let best=null,bestScore=poor ? Infinity : -Infinity;
+  let best=null,bestScore=poor ? Infinity : -Infinity,bestPlan=null;
   for(const cell of cells){
-    const score=aiWithPlacement(cardId,cell,()=>{
-      if(game.isProtected(cell.r,cell.c))return -10000;
+    const plan=aiWithPlacement(cardId,cell,()=>{
+      if(game.isProtected(cell.r,cell.c))return {score:-10000,points:0,claim:false,space:null};
       const claim=game.findFactionClaim(faction);
       const neighbors=DIRS4.filter(([dr,dc])=>game.boardMatchesFaction(cell.r+dr,cell.c+dc,faction)).length;
       const others=game.factionCells(faction).filter(t=>t.r!==cell.r || t.c!==cell.c);
       const distance=others.length?Math.min(...others.map(t=>Math.abs(t.r-cell.r)+Math.abs(t.c-cell.c))):0;
       const liberties=DIRS4.filter(([dr,dc])=>game.hasTile(cell.r+dr,cell.c+dc) && !game.cardAt(cell.r+dr,cell.c+dc)
         && !game.wastelandAt(cell.r+dr,cell.c+dc) && !game.isProtected(cell.r+dr,cell.c+dc)).length;
-      return (claim.length?1000+aiClaimValue(faction,claim,playerIdx)*100:0)+neighbors*20-distance*3+liberties;
+      const points=claim.length?aiClaimValue(faction,claim,playerIdx):0;
+      return {score:(claim.length?1000+points*100:0)+neighbors*20-distance*3+liberties,
+        points,claim:!!claim.length,space:aiPlacementSpace(playerIdx,cardId,cell,faction)};
     });
-    if(poor ? score<bestScore : score>bestScore){best=cell;bestScore=score;}
+    const score=plan.score;
+    let better=poor ? score<bestScore : score>bestScore;
+    if(bestPlan && plan.space && bestPlan.space && plan.claim===bestPlan.claim && plan.points===bestPlan.points){
+      const space=aiComparePlacementSpace(plan.space,bestPlan.space);
+      if(space)better=poor?space<0:space>0;
+    }
+    if(better){best=cell;bestScore=score;bestPlan=plan;}
   }
   return best;
 }
@@ -12348,8 +12418,8 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='5c21c73c3803eb95ecb866da560ceef98000d11fce54759c151c8d6628fe8b26';
-const AI_EVALUATION_POLICY_DIGEST='b4c6ad2940e99b09dc701adcf6693ac953932bdcd6334186e3440fff0d61199a';
+const AI_EVALUATION_RULES_DIGEST='1c21e24743099ea88a53497032cb396f5dbe14574aa31cf87b98eb845802768e';
+const AI_EVALUATION_POLICY_DIGEST='fbb3adf17fbff6a31011d3feffb1d18f231da64abb328eee71207fc709deca7a';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
   if(!source)throw new Error('Game source is unavailable.');
@@ -12566,7 +12636,7 @@ function evalNewOpening(seed,n,size,difficulty){
 async function evalCompare(config,send){
   evalValidateConfig(config);
   const report={format:'tbg-ai-evaluation',version:1,type:'comparison',baselineCommit:'2b07010618c21eee6dfc6ffd4092c8b4bbb42e9b',baselineDigest:AI_BASELINE_DIGEST,previousCommit:'955c63140738e5cc9deae85802cec12f10c5d61a',previousDigest:AI_PREVIOUS_DIGEST,diagnosticsVersion:3,
-    currentPolicy:'hecatia-kasen-2026-10-09',rules:'Shared current Game engine',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,startedAt:new Date().toISOString(),finished:false,blocks:[]};
+    currentPolicy:'placement-space-2026-10-09',rules:'Shared current Game engine',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,startedAt:new Date().toISOString(),finished:false,blocks:[]};
   const lineups=evalMixedLineups(config.players,config.opponent);
   for(let i=0;i<config.blocks;i++){
     await evalYield();const seed=evalHashSeed(config.seed,config.phase||'development',i),size=config.size==='both'?(i%2?5:4):Number(config.size);
@@ -12581,7 +12651,7 @@ async function evalCompare(config,send){
 async function evalFork(snapshot,config,send){
   evalValidateSnapshot(snapshot);evalValidateConfig(config,'fork');const actor=snapshot.state.currentPlayerIdx;config={...config,actor};
   const continuations=config.continuations||['current','previous'];
-  const report={format:'tbg-ai-evaluation',version:1,diagnosticsVersion:3,currentPolicy:'hecatia-kasen-2026-10-09',previousDigest:AI_PREVIOUS_DIGEST,type:'fork',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,snapshot,startedAt:new Date().toISOString(),finished:false,pairs:[],
+  const report={format:'tbg-ai-evaluation',version:1,diagnosticsVersion:3,currentPolicy:'placement-space-2026-10-09',previousDigest:AI_PREVIOUS_DIGEST,type:'fork',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,snapshot,startedAt:new Date().toISOString(),finished:false,pairs:[],
     assumptions:'Unknown rival cards and deck order are re-sampled from the acting player information. Rival private clue memories are omitted. Continuations are finite AI policies, not optimal play.'};
   for(let i=0;i<config.trials;i++){
     const seed=evalHashSeed(config.seed,'fork',i),sample=evalSampleHidden(snapshot,actor,evalPRNG(seed));
@@ -12758,7 +12828,7 @@ function aiLabDownload(content,name,type='application/json'){
 }
 function aiLabExportCSV(report){
   const rows=[['test','seed','opening_size','continuation','branch','seat','policy','ending','winner','score_share','points','turns','seen','placements','claims','hand_turns','held','diagnostics_version','master_seed','phase','difficulty','current_policy','comparison_policy','match_seed','rules_digest','policy_digest','card_actions','ability_details','score_sources','diagnostics']];
-  const add=(m,seed,size,continuation='',branch='')=>{const shares=evalScoreShares(m);m.roster.forEach((policy,i)=>{const s=m.seats[i];rows.push([report.type,seed,size,continuation,branch,i+1,policy,m.reason,m.winner===null?'':m.winner+1,shares?.[i]??'',m.points[i],m.turns,JSON.stringify(s.seen),JSON.stringify(s.placements),JSON.stringify(s.claims),JSON.stringify(s.handTurns),JSON.stringify(s.held),report.diagnosticsVersion||2,report.config?.seed||'',report.config?.phase||'',report.config?.difficulty||report.snapshot?.state?.aiDifficulty||'',report.currentPolicy||'hecatia-kasen-2026-10-09',report.config?.opponent||'',m.seed??seed,report.rulesDigest||'',report.policyDigest||'',JSON.stringify(s.cardActions||{}),JSON.stringify(s.abilityDetails||{}),JSON.stringify(s.scoreSources||{}),JSON.stringify(s.diagnostics||{})]);});};
+  const add=(m,seed,size,continuation='',branch='')=>{const shares=evalScoreShares(m);m.roster.forEach((policy,i)=>{const s=m.seats[i];rows.push([report.type,seed,size,continuation,branch,i+1,policy,m.reason,m.winner===null?'':m.winner+1,shares?.[i]??'',m.points[i],m.turns,JSON.stringify(s.seen),JSON.stringify(s.placements),JSON.stringify(s.claims),JSON.stringify(s.handTurns),JSON.stringify(s.held),report.diagnosticsVersion||2,report.config?.seed||'',report.config?.phase||'',report.config?.difficulty||report.snapshot?.state?.aiDifficulty||'',report.currentPolicy||'placement-space-2026-10-09',report.config?.opponent||'',m.seed??seed,report.rulesDigest||'',report.policyDigest||'',JSON.stringify(s.cardActions||{}),JSON.stringify(s.abilityDetails||{}),JSON.stringify(s.scoreSources||{}),JSON.stringify(s.diagnostics||{})]);});};
   if(report.type==='comparison')for(const block of report.blocks)for(const m of block.matches)add(m,block.seed,block.size);
   else for(const pair of report.pairs){add(pair.a,pair.seed,report.snapshot.size,pair.continuation,'A');add(pair.b,pair.seed,report.snapshot.size,pair.continuation,'B');}
   return '\ufeff'+rows.map(row=>row.map(value=>'"'+String(value).replaceAll('"','""')+'"').join(',')).join('\r\n');
