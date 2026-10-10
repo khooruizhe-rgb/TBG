@@ -20,7 +20,7 @@ test('Temple has four starting cards, a crown, and one shop-only fifth card',()=
  for(let i=0;i<25;i++){const g=new A.Game(3,{});const starting=[...g.drawPile,...g.players.flatMap(p=>p.hand)];assert(!starting.includes('temple_ichirin'));for(const id of ['temple_byakuren','temple_shou','temple_nue','temple_murasa'])assert(starting.includes(id));assert(g.shopCards.slice(1,4).every(id=>A.CARD[id].shopExpansion));}
 });
 test('Kourindou starts as four open normal tiles with two milestone slots and its menu option is removed',()=>{
- const g=setup();assert.equal(g.shopTiles.length,6);assert(g.shopTiles.every(t=>!g.wastelandAt(t.r,t.c)));assert(!html.includes('shop-option'));assert(!html.includes('Cost X'));assert(A.CARD.haku_yuyuko.costN);assert(A.CARD.haku_yuyuko.desc.includes('Send N random'));assert.equal(A.romanNumeral(7),'VII');
+ const g=setup();assert.equal(g.shopTiles.length,4);assert(g.shopTiles.every(t=>!g.wastelandAt(t.r,t.c)));assert(!html.includes('shop-option'));assert(!html.includes('Cost X'));assert(A.CARD.haku_yuyuko.costN);assert(A.CARD.haku_yuyuko.desc.includes('Send N random'));assert.equal(A.romanNumeral(7),'VII');
 });
 test('Byakuren discounts all three options using other physical Temple cards, excluding herself, protected stock and wild Kasen',()=>{
  const g=setup({board:[[1,1,'temple_byakuren'],[1,2,'temple_nue'],[1,3,'sage_kasen']]});assert.equal(g.byakurenCost(),3);assert.equal(g.byakurenCost({r:1,c:1},3),2);assert.equal(g.byakurenCost({r:1,c:1},2),1);

@@ -67,14 +67,10 @@ test('An actual AI turn trades for a partner first, then keeps its planned place
   const action=await A.aiDecideAction(1);assert.equal(action.type,'trade');assert.equal(action.thenPlace.cardId,'medicine');
   const flags=await A.doPlayerAction(1);assert.deepEqual(events,[['trade','yuuka'],['place','medicine']]);assert.equal(g.mainBoardCells().length,1);assert(g.players[1].hand.includes('yuuka'));assert(!g.players[1].hand.includes('medicine'));assert.equal(g.currentPlayerIdx,1);assert(g.tradedThisTurn[1]);assert(!flags.skipAdvance);
 });
-test('Normal retains the old Easy preparatory trade when a mistake changes its placement',async()=>{
-  for(const difficulty of ['normal']){
-    const g=setup({hand:['medicine','sdm_meiling'],deck:['hourai_mokou']});g.aiDifficulty=difficulty;g.shopCards=['shop_rinnosuke','yuuka','hourai_tewi','hell_kutaka'];g.aiMakesMistake=kind=>kind==='action';let prepared=0;
-    for(let i=0;i<35;i++){
-      const action=await A.aiDecideAction(1);if(action.thenPlace?.cardId==='medicine'){prepared++;assert.equal(action.type,'trade');assert.equal(action.cardId,'sdm_meiling');assert.equal(g.cardAt(action.target.r,action.target.c),'yuuka');}
-      assert(!(action.type==='place' && action.cardId==='medicine'));
-    }
-    assert(prepared>0);
+test('Normal can make profitable trades while Easy never trades',async()=>{
+  for(const difficulty of ['easy','normal']){
+    const g=setup({hand:['sage_kasen'],board:[[0,0,'yuuka']],discards:[[],six.slice(0,5),[],[]]});g.aiDifficulty=difficulty;g.shopCards=['shop_rinnosuke','medicine','hourai_tewi','hell_kutaka'];
+    const action=await A.aiDecideAction(1);if(difficulty==='normal'){assert.equal(action.type,'trade');assert(action.winningTrade);}else assert.notEqual(action.type,'trade');
   }
 });
 
@@ -339,23 +335,14 @@ test('Patchouli can genuinely miss without altering either hand',async()=>{
   assert.deepEqual(Array.from(g.players[0].hand),['mtn_aya']);assert.deepEqual(Array.from(g.players[1].hand),['sdm_patchouli']);
   assert(g.logLines.some(line=>line.includes('guess was wrong')));
 });
-test('Difficulty defaults to Hard and Easy/Normal take progressively more legal weaker actions',async()=>{
-  const counts={};
+test('Difficulty defaults to Hard and all tiers complete a basic visible claim',async()=>{
   for(const difficulty of ['hard','normal','easy']){
-    const g=setup({hand:['mtn_aya','mtn_suwako'],deck:['hourai_mokou','hourai_reisen','reimu']});
-    assert.equal(g.aiDifficulty,'hard');g.aiDifficulty=difficulty;let mistakes=0;
-    for(let i=0;i<160;i++){
-      const action=await A.aiDecideAction(1,false);
-      if(action.type==='place'){
-        mistakes++;assert(g.players[1].hand.includes(action.cardId));
-        assert(A.aiPlacementCells(g,action.cardId,g.emptyOrWastelandForCard(A.CARD[action.cardId])).some(t=>t.r===action.r && t.c===action.c));
-      }else assert.equal(action.type,'draw');
-    }
-    counts[difficulty]=mistakes;
+    const g=setup({hand:['haku_youmu'],board:[[0,0,'haku_yuyuko']],deck:['hourai_mokou']});assert.equal(g.aiDifficulty,'hard');g.aiDifficulty=difficulty;
+    const before=JSON.stringify(g.testRuleState());for(let i=0;i<10;i++){const action=await A.aiDecideAction(1,false);assert.equal(action.type,'place');assert(g.wouldCompleteFaction(action.cardId,action.r,action.c));assert(!g.aiMakesMistake('action'));}
+    assert.equal(JSON.stringify(g.testRuleState()),before);
   }
-  assert.equal(counts.hard,0);assert(counts.normal>0);assert(counts.easy>counts.normal);
-  console.log('  Weaker action samples: '+JSON.stringify(counts));
 });
+
 test('Spring physics has bounded lag, settles, and respects reduced motion',()=>{
   const start=js.indexOf('function stepHandDragPhysics('),end=js.indexOf('function onHandCardPointerDown(',start);
   vm.runInContext(js.slice(start,end)+'\nthis.api.stepPhysics=stepHandDragPhysics;',context);

@@ -30,7 +30,7 @@ const context={tutorialAllowsAction:()=>true,tutorialAllowsTrade:()=>true,update
   requestAnimationFrame:fn=>{frames.set(++nextFrame,fn);return nextFrame;},cancelAnimationFrame:id=>frames.delete(id),
   renderBoard(){},renderStatus(){},syncHandSelection(){},renderAll(){},playGameCue(){},speakRinnosuke(){},queueMobileViewport(){},
   tileElement:(r,c)=>elements.find(e=>['board','shop'].includes(e.kind) && Number(e.dataset.r)===r && Number(e.dataset.c)===c),
-  CARD:{plain:{name:'Plain',id:'plain'}},canAct:()=>true};
+  localSeat:()=>0,localTurnReady:()=>!!window.__resolveHumanTurn,online:null,CARD:{plain:{name:'Plain',id:'plain'}},canAct:()=>true};
 vm.createContext(context);
 const choice=js.slice(js.indexOf('function isShopSelectable'),js.indexOf('function onCellDragOver'));
 const hand=js.slice(js.indexOf('/* Keep a hand card visible'),js.indexOf('/* Clicking anywhere outside the board/hand/cancel-button'));
@@ -44,7 +44,7 @@ function fixture(shop=false){
   A.reset();elements=[];animations=[];frames.clear();now=0;reduced=false;
   const cards=new Map();const g={cancelled:false,currentPlayerIdx:0,players:[{hand:['plain']}],forcedPlay:{},isPlacementBlocked:()=>false,
     shopTiles:shop?[{r:6,c:1,slot:0}]:[],shopCards:shop?['shop_rinnosuke']:[],
-    emptyOrWastelandForCard:()=>[{r:0,c:0}],canTrade:()=>shop,boardCells:()=>shop?[{r:6,c:1,id:'shop_rinnosuke'}]:[],
+    isShopOpen:slot=>slot===0&&shop,emptyOrWastelandForCard:()=>[{r:0,c:0}],canTrade:()=>shop,boardCells:()=>shop?[{r:6,c:1,id:'shop_rinnosuke'}]:[],
     cardAt:(r,c)=>r===6?'shop_rinnosuke':cards.get(`${r},${c}`),
     removeFromHand(p,id){this.players[p].hand=this.players[p].hand.filter(x=>x!==id);},
     async internalPlace(id,r,c){

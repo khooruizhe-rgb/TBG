@@ -22,7 +22,7 @@ function dimensions(){
 }
 el('table-wrap').getBoundingClientRect=()=>{const d=dimensions();return {width:d.centreWidth,height:d.contentHeight-10-27-30-6};};
 el('hand').getBoundingClientRect=()=>{const d=dimensions();return {width:d.handWidth-6,height:d.contentHeight-10-20-choiceHeight};};
-const context={dockTutorialCoach(){},console,Math,document,window,el,SIZE:5,game:{kourindouEnabled:false,players:[{hand:Array(7).fill('card')}],cancelled:false},screen:{orientation:{}},navigator:{userActivation:{isActive:false}},setTimeout,clearTimeout,
+const context={closeOnlineSession(){},pendingRemoteTurn:null,pendingRemoteChoice:null,online:null,localSeat:()=>0,localTurnReady:()=>!!context.window?.__resolveHumanTurn,displaySeatIndex:idx=>idx,publishSnapshot(){},broadcastOnlineEffect(){},dockTutorialCoach(){},console,Math,document,window,el,SIZE:5,game:{kourindouEnabled:false,players:[{hand:Array(7).fill('card')}],cancelled:false},screen:{orientation:{}},navigator:{userActivation:{isActive:false}},setTimeout,clearTimeout,
   getComputedStyle:()=>({paddingLeft:String(safe.left+6),paddingRight:String(safe.right+6)}),
   requestAnimationFrame:fn=>{pendingFrame=fn;return 1;},positionRinnosukeBubble(){},repositionYuukaBlooms(){},touchHandDrag:null,
   resetGameView(){},closeAITestDashboard(){},updateAITestControls(){},renderTitleTableCards(){},updateStartButtonState(){},

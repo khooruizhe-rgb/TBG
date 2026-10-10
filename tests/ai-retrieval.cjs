@@ -82,8 +82,8 @@ test('Trading has a final AI guard, and human trading rules remain available',()
 test('Previous and trade ablation policies retain the buggy offer for a fair control',()=>{
  for(const policy of ['previous','no-yukari-trade']){const g=setup({policy,hand:['sage_yukari'],stock:['medicine','mtn_nitori','hell_kutaka']});assert.equal(g.tradeCard(0,'sage_yukari',1),true);}
 });
-test('Every difficulty preserves the Yukari trade invariant',async()=>{
- for(const difficulty of ['easy','normal','hard']){const g=setup({hand:['sage_yukari','yuuka'],stock:['medicine','mtn_nitori','hell_kutaka']});g.aiDifficulty=difficulty;const action=await A.aiDecideAction(0);assert(!(action.type==='trade' && action.cardId==='sage_yukari'));assert.equal(g.testSeatMetrics(0).diagnostics.events.length,0);A.aiRecordDecision(0,action,true);assert.equal(g.testSeatMetrics(0).diagnostics.yukariTradeGuardTurns,1);}
+test('Every difficulty protects Yukari; diagnostics count the guard only for trading tiers',async()=>{
+ for(const difficulty of ['easy','normal','hard']){const g=setup({hand:['sage_yukari','yuuka'],stock:['medicine','mtn_nitori','hell_kutaka']});g.aiDifficulty=difficulty;const action=await A.aiDecideAction(0);assert(!(action.type==='trade' && action.cardId==='sage_yukari'));assert.equal(g.testSeatMetrics(0).diagnostics.events.length,0);A.aiRecordDecision(0,action,true);assert.equal(g.testSeatMetrics(0).diagnostics.yukariTradeGuardTurns,difficulty==='easy'?0:1);}
 });
 test('Real payment, theft and ability observations survive the per-seat export',async()=>{
  const g=setup({hand:['palace_satori','mtn_aya'],others:[['medicine'],[]]});await place(g,'palace_satori');const seat=g.testSeatMetrics(0);assert.equal(seat.cardActions.mtn_aya.paidAsCost,1);assert.equal(seat.abilityDetails['palace_satori:palace_satori'].costPaid,1);assert.equal(seat.abilityDetails['palace_satori:palace_satori'].effective,1);assert.equal(seat.diagnostics.retrievals.palace_satori.stolen,1);assert(seat.diagnostics.events.some(e=>e.type==='cost' && e.paid.includes('mtn_aya')));assert(seat.diagnostics.events.some(e=>e.type==='ability-result' && e.stolen.includes('medicine')));

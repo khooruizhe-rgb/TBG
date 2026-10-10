@@ -22,7 +22,7 @@ vm.runInContext(slice('const DIRS4','/* ===================== UI layer')+'\nvar 
  slice('async function doPlayerAction','/* Wire human hand-card')+
  slice('const CARD_ABILITY_NAMES','/* ---------- Language selection')+
  slice('function openDebugControls','let chosenPlayerCount = 3;')+`
-this.api={Game,CARD,CARDS,FACTIONS,createAITestStats,recordCompletedAITest,doPlayerAction,resolveFollowups,canAct,runNextTurn,endStalemate,aiDecideAction,
+this.api={Game,CARD,CARDS,FACTIONS,createAITestStats,recordCompletedAITest,doPlayerAction,resolveFollowups,canAct,runNextTurn,endStalemate,aiDecideAction,aiRecordDecision,aiEvaluateCard,aiPlacementCells,aiForcedPlacementCells,
  waitAITestReady,toggleAITestPause,cancelAITestAutomation,finishAITestRound,renderAITestStats,openAITestDashboard,openDebugControls,closeDebugControls,aiTestExportData,aiTestCSV,
  setGame:g=>game=g,setSize:n=>SIZE=n,stats:()=>aiTestStats,resetStats:()=>aiTestStats=createAITestStats(),paused:()=>aiTestPaused,
  mode:()=>chosenAITestMode,setPaused:v=>aiTestPaused=v,choices:()=>({chosenAITestMode,chosenFastAITest})};`,ctx);
@@ -179,8 +179,101 @@ test('Ending snapshots preserve restrictions and exact zones, survive restarts a
 test('Expanded dashboard and both exports retain cost outcomes, score sources, wild claims and snapshots',async()=>{
  const g=blank();A.resetStats();g.setCardAt(1,1,'palace_yuugi');g.setCardAt(1,2,'sdm_patchouli');g.players[0].hand=['medicine','sage_ran'];g.selectCostCards=async()=>['medicine','sage_ran'];g.chooseBoardCell=async()=>({r:1,c:2});await g.resolveAbility('palace_yuugi',1,1,0,0);g.setCardAt(2,1,'sage_kasen');g.setCardAt(2,2,'sdm_remilia');g.setCardAt(3,1,'sdm_flandre');g.setCardAt(3,2,'sdm_sakuya');g.checkClaims(0);g.stalemateMessage='tie';A.recordCompletedAITest(A.stats(),g);A.openAITestDashboard();
  assert(el('ai-test-abilities').innerHTML.includes('Yuugi'));assert(el('ai-test-ability-details').innerHTML.includes('Impossible Strength'));assert(el('ai-test-destinations').innerHTML.includes('Paid as cost'));assert(el('ai-test-score-sources').innerHTML.includes('Points gained'));assert(el('ai-test-endings').innerHTML.includes('#1'));
- const exportData=JSON.parse(JSON.stringify(A.aiTestExportData()));assert.equal(exportData.version,2);assert.equal(exportData.statistics.cards.palace_yuugi.costPaid,2);assert.equal(exportData.statistics.cards.palace_yuugi.ownPoints,1);assert.equal(exportData.statistics.factions.sdm.substituteClaims,1);assert.equal(exportData.statistics.endings.length,1);assert(exportData.definitions.abilityEffective.includes('Cost payments'));
+ const exportData=JSON.parse(JSON.stringify(A.aiTestExportData()));assert.equal(exportData.version,3);assert.equal(exportData.statistics.cards.palace_yuugi.costPaid,2);assert.equal(exportData.statistics.cards.palace_yuugi.ownPoints,1);assert.equal(exportData.statistics.factions.sdm.substituteClaims,1);assert.equal(exportData.statistics.endings.length,1);assert(exportData.definitions.abilityEffective.includes('Cost payments'));
  const csv=A.aiTestCSV();assert(csv.includes('"paidAsCost"'));assert(csv.includes('"ability","palace_yuugi:palace_yuugi","1"'));assert(csv.includes('"score_source","faction:sdm","4"'));assert(csv.includes('"ending","1","stalemate"'));assert(csv.includes('""drawPile""'));
+});
+test('Reisen forces Yuyuko onto an empty board even though ordinary AI strategy rejects her',async()=>{
+ const g=blank();g.players[0].hand=['haku_yuyuko','medicine'];g.forcedPlay[0]='haku_yuyuko';
+ assert.equal(A.aiEvaluateCard(0,'haku_yuyuko'),null);assert.equal(g.testEndingSnapshot().players[0].legalPlacements,16);
+ await A.doPlayerAction(0);assert(!g.players[0].hand.includes('haku_yuyuko'));assert(g.isOnBoard('haku_yuyuko'));
+ assert.equal(g.testMetrics.placements.haku_yuyuko,1);assert.equal(g.forcedPlay[0],null);assert.equal(g.testMetrics.cardActions.haku_yuyuko.costPaid,0);
+ const row=g.testSeatMetrics(0).diagnostics.forcedPlacements.haku_yuyuko;assert.equal(row.attempts,1);assert.equal(row.placed,1);assert.equal(row.bypassedStrategy,1);
+ assert.equal(Object.keys(g.testSeatMetrics(0).diagnostics.evaluations).length,0);
+});
+test('Reisen places Reimu without a crown target and Marisa without a safe blast',async()=>{
+ let g=blank();g.players[0].hand=['reimu'];g.forcedPlay[0]='reimu';assert.equal(A.aiEvaluateCard(0,'reimu'),null);await A.doPlayerAction(0);assert(g.isOnBoard('reimu'));
+ g=blank();g.wasteland=g.wasteland.map(row=>row.map(()=>true));g.wasteland[1][1]=false;g.setCardAt(1,2,'reimu');g.players[0].hand=['marisa'];g.forcedPlay[0]='marisa';
+ assert.equal(A.aiPlacementCells(g,'marisa',g.emptyOrWastelandForCard(A.CARD.marisa)).length,0);
+ await A.doPlayerAction(0);assert.equal(g.testMetrics.placements.marisa,1);assert(!g.players[0].hand.includes('marisa'));
+ assert.equal(g.testMetrics.claims.hakurei,1);assert(g.players[0].discard.includes('marisa'));assert(g.players[0].discard.includes('reimu'));
+});
+test('A truly impossible forced placement keeps the card, records the reason and never uses a shop tile',async()=>{
+ const g=blank();g.board=g.board.map(row=>row.map(()=>'sdm_remilia'));g.players[0].hand=['haku_yuyuko'];g.forcedPlay[0]='haku_yuyuko';const stock=g.shopCards.slice();
+ await A.doPlayerAction(0);assert(g.players[0].hand.includes('haku_yuyuko'));assert.deepEqual(Array.from(g.shopCards),Array.from(stock));assert.equal(g.testMetrics.placements.haku_yuyuko,undefined);
+ const row=g.testSeatMetrics(0).diagnostics.forcedPlacements.haku_yuyuko;assert.equal(row.attempts,1);assert.equal(row.noLegalCell,1);assert.equal(row.placed,undefined);
+ assert(g.testSeatMetrics(0).diagnostics.events.some(event=>event.type==='forced-unavailable'));assert.equal(g.forcedPlay[0],null);
+});
+test('Forced placements still respect wasteland legality and override rule checks',async()=>{
+ const g=blank();g.wasteland=g.wasteland.map(row=>row.map(()=>true));g.players[0].hand=['haku_yuyuko'];g.forcedPlay[0]='haku_yuyuko';
+ await A.doPlayerAction(0);assert.equal(g.testMetrics.placements.haku_yuyuko,undefined);assert(g.players[0].hand.includes('haku_yuyuko'));
+ assert.equal(g.testSeatMetrics(0).diagnostics.forcedPlacements.haku_yuyuko.noLegalCell,1);
+});
+test('Faction outcomes deduplicate repeat claims by one seat and distinguish unclaimed seats',()=>{
+ const g=blank(),s=A.createAITestStats();g.testMetrics.claims.sdm=2;g.testSeatMetrics(0).claims.sdm=2;g.testSeatMetrics(0).firstClaimTurns.sdm=5;g.winner=g.players[0];
+ assert(A.recordCompletedAITest(s,g));assert(!A.recordCompletedAITest(s,g));const row=s.factionOutcomes.sdm;
+ assert.equal(row.claimantGames,1);assert.equal(row.claimantWins,1);assert.equal(row.claimsByWinner,2);assert.equal(row.nonClaimantGames,2);assert.equal(row.nonClaimantWins,0);assert.equal(row.firstClaimTurnSum,5);
+ assert.equal(s.diagnostics.current.factionOutcomes.sdm.claimantGames,1);assert.equal(s.latestDecisions.length,3);
+});
+test('Final faction outcomes count sole stalemate leaders as wins and tied leaders as ties',()=>{
+ let g=blank(),s=A.createAITestStats();g.players[0].discard=['medicine','sage_ran'];g.players[1].discard=['sdm_meiling'];g.testSeatMetrics(0).claims.sunflower=1;g.stalemateMessage='stalemate';A.recordCompletedAITest(s,g);
+ assert.equal(s.factionOutcomes.sunflower.claimantWins,1);assert.equal(s.factionOutcomes.sunflower.claimantScoreSum,1);
+ g=blank();s=A.createAITestStats();g.players[0].discard=['medicine'];g.players[1].discard=['sage_ran'];g.testSeatMetrics(0).claims.sunflower=1;g.stalemateMessage='tie';A.recordCompletedAITest(s,g);
+ assert.equal(s.factionOutcomes.sunflower.claimantWins,0);assert.equal(s.factionOutcomes.sunflower.claimantTies,1);assert.equal(s.factionOutcomes.sunflower.claimantScoreSum,.5);assert.equal(s.factionOutcomes.sunflower.nonClaimantTies,1);
+});
+test('Card evaluations sample real decisions, separate unavailable cards and do not consume randomness',async()=>{
+ const g=blank();g.players[0].hand=['reimu','medicine'];const before=snapshot(g);await A.aiDecideAction(0);assert.equal(snapshot(g),before);
+ const randomBefore=seed;A.aiRecordDecision(0,{type:'place',cardId:'medicine',r:0,c:0},true);assert.equal(seed,randomBefore);
+ const rows=g.testSeatMetrics(0).diagnostics.evaluations;assert.equal(rows.reimu.observations,1);assert.equal(rows.reimu.unavailable,1);assert.equal(rows.reimu.strategyRejected,1);assert.equal(rows.reimu.evaluated,undefined);
+ assert.equal(rows.medicine.evaluated,1);assert.equal(rows.medicine.chosen,1);assert(Number.isFinite(rows.medicine.rateSum));assert.equal(g.testSeatMetrics(0).diagnostics.tradeDecisions.available,1);
+ g.winner=g.players[0];const s=A.createAITestStats();A.recordCompletedAITest(s,g);assert.equal(s.evaluations.medicine.evaluated,1);assert.equal(s.evaluations.reimu.strategyRejected,1);
+});
+test('Purchased-card use and claim attribution come from actual first placement and final buyer outcome',async()=>{
+ const g=blank();g.players[0].hand=['medicine'];g.testMetrics.turns=3;assert(g.tradeCard(0,'medicine',1,{gain:1.25,rate:4}));g.testMetrics.turns=6;
+ g.removeFromHand(0,'sdm_meiling');await g.internalPlace('sdm_meiling',1,1,0,0);
+ for(const [r,c,id] of [[1,2,'sdm_remilia'],[2,1,'sdm_patchouli'],[2,2,'sdm_sakuya']])g.setCardAt(r,c,id);g.checkClaims(0);
+ g.winner=g.players[1];const s=A.createAITestStats();A.recordCompletedAITest(s,g);const row=s.tradeStats.purchases.sdm_meiling;
+ assert.equal(row.trades,1);assert.equal(row.placed,1);assert.equal(row.claimByBuyer,1);assert.equal(row.wins,0);assert.equal(row.losses,1);assert.equal(row.waitTurnsSum,3);assert.equal(row.forecastSamples,1);assert.equal(row.forecastGainSum,1.25);
+ assert.equal(s.tradeStats.pairs['medicine>sdm_meiling'].claimByBuyer,1);assert.equal(s.tradeStats.offers.medicine.placed,1);
+});
+test('Diagnostic sampling for every card and policy preserves the rule state and random stream',()=>{
+ for(const policy of ['current','previous','baseline'])for(const occupied of [false,true]){
+  const ids=A.CARDS.filter(card=>!card.shopkeeper).map(card=>card.id);
+  for(let start=0;start<ids.length;start+=6){const g=blank(3,{aiPolicies:[policy,policy,policy]});g.players[0].hand=ids.slice(start,start+6);
+   g.drawPile=['mtn_sanae','hourai_mokou','sage_ran'];g.players[1].hand=['medicine','haku_youmu'];
+   if(occupied)for(const [r,c,id] of [[0,0,'sdm_sakuya'],[0,1,'palace_satori'],[2,2,'mtn_nitori'],[3,3,'hourai_eirin']])g.setCardAt(r,c,id);
+   const before=JSON.stringify(g.testRuleState()),randomBefore=seed;A.aiRecordDecision(0,{type:'draw'},true);
+   assert.equal(JSON.stringify(g.testRuleState()),before,policy+'/'+occupied+'/'+start);assert.equal(seed,randomBefore,policy+'/'+occupied+'/'+start);
+  }
+ }
+});
+test('Trade-purpose counters keep preparatory gains out of ordinary hand-improvement averages',()=>{
+ const g=blank();g.players[0].hand=['medicine'];g.tradeCard(0,'medicine',1,{gain:99,thenPlace:{cardId:'mtn_kanako',r:0,c:0}});g.winner=g.players[0];const s=A.createAITestStats();A.recordCompletedAITest(s,g);
+ assert.equal(s.tradeStats.totals.kanakoSetup,1);assert.equal(s.tradeStats.totals.forecastSamples,0);assert.equal(s.tradeStats.totals.forecastGainSum,0);assert.equal(s.tradeStats.totals.forecastRateSamples,0);
+});
+test('Bought cards paid as cost and bought cards traded again have distinct exclusive first exits',()=>{
+ let g=blank();g.players[0].hand=['medicine'];g.tradeCard(0,'medicine',1);assert(g.commitCostCards(0,['sdm_meiling'],1,1));g.winner=g.players[0];let s=A.createAITestStats();A.recordCompletedAITest(s,g);
+ assert.equal(s.tradeStats.totals.paidAsCost,1);assert.equal(s.tradeStats.totals.placed,undefined);assert.equal(s.tradeStats.totals.heldAtEnd,undefined);
+ g=blank();g.players[0].hand=['medicine'];g.tradeCard(0,'medicine',1);g.tradedThisTurn[0]=false;g.testMetrics.turns=1;g.tradeCard(0,'sdm_meiling',2);g.winner=g.players[0];s=A.createAITestStats();A.recordCompletedAITest(s,g);
+ assert.equal(s.tradeStats.totals.trades,2);assert.equal(s.tradeStats.totals.retraded,1);assert.equal(s.tradeStats.totals.heldAtEnd,1);assert.equal(s.tradeStats.purchases.sdm_meiling.retraded,1);assert.equal(s.tradeStats.purchases.hourai_tewi.heldAtEnd,1);
+ assert.equal(s.tradeStats.totals.wins,2);assert.equal(s.tradeStats.totals.buyerGames,1);assert.equal(s.tradeStats.totals.buyerWins,1);
+});
+test('A bought card stolen from hand is not later credited as the buyer placing it',async()=>{
+ const g=blank();g.players[0].hand=['medicine'];g.tradeCard(0,'medicine',1);g.removeFromHand(0,'sdm_meiling');g.addToHand(1,'sdm_meiling');g.removeFromHand(1,'sdm_meiling');await g.internalPlace('sdm_meiling',0,0,1,0);
+ g.winner=g.players[0];const s=A.createAITestStats();A.recordCompletedAITest(s,g);assert.equal(s.tradeStats.totals.takenByOther,1);assert.equal(s.tradeStats.totals.placed,undefined);assert.equal(s.tradeStats.totals.placedByOther,undefined);
+});
+test('A purchase placed from its buyer hand by another player records that player and their claim',async()=>{
+ const g=blank();g.players[0].hand=['medicine'];g.tradeCard(0,'medicine',1);g.removeFromHand(0,'sdm_meiling');await g.internalPlace('sdm_meiling',1,1,1,0);
+ for(const [r,c,id] of [[1,2,'sdm_remilia'],[2,1,'sdm_patchouli'],[2,2,'sdm_sakuya']])g.setCardAt(r,c,id);g.checkClaims(1);g.winner=g.players[1];const s=A.createAITestStats();A.recordCompletedAITest(s,g);
+ assert.equal(s.tradeStats.totals.placedByOther,1);assert.equal(s.tradeStats.totals.claimByOther,1);assert.equal(s.tradeStats.totals.claimByBuyer,0);
+});
+test('Debug dashboard and both exports expose new diagnostic tables with explicit sample definitions',async()=>{
+ const g=blank();A.resetStats();g.players[0].hand=['medicine'];A.aiRecordDecision(0,{type:'trade',cardId:'medicine',target:g.shopTiles[1]},true);g.tradeCard(0,'medicine',1,{gain:.8,rate:0});A.aiRecordDecision(0,{type:'draw'},false);g.winner=g.players[0];A.recordCompletedAITest(A.stats(),g);A.openAITestDashboard();
+ for(const id of ['ai-test-faction-outcomes','ai-test-evaluations','ai-test-trade-summary','ai-test-trade-purchases','ai-test-trade-offers','ai-test-trade-pairs','ai-test-trade-decisions','ai-test-forced'])assert(el(id).innerHTML.includes('<table>'),id);
+ assert(el('ai-test-trade-pairs').innerHTML.includes('Medicine'));assert(el('ai-test-evaluations').innerHTML.includes('Average score'));assert(el('ai-test-decisions').innerHTML.includes('forecast'));
+ const data=A.aiTestExportData();assert.equal(data.version,3);assert(data.definitions.evaluations.includes('NOT a win probability'));assert(data.definitions.factionOutcomes.includes('association, not causation'));
+ assert.equal(data.statistics.tradeDecisions.available,1);assert.equal(data.statistics.tradeDecisions.alreadyTraded,1);assert.equal(data.statistics.tradeStats.totals.trades,data.statistics.trades);
+ const csv=A.aiTestCSV();for(const type of ['evaluation','faction_outcome','trade_purchases','trade_pairs','trade_decision','latest_decisions'])assert(csv.includes('"'+type+'"'),type);assert(csv.includes('"average_rate"'));
+ assert(!JSON.stringify(data).includes('NaN'));assert(!el('ai-test-evaluations').innerHTML.includes('NaN'));
 });
 test('The real turn loop finishes a no-move match and schedules the next without human input',async()=>{
  const g=blank(2);A.resetStats();g.players.forEach(p=>p.hand=[]);await A.runNextTurn();await flush();assert(g.stalemateMessage);assert.equal(A.stats().games,1);assert.equal(A.stats().stalemates,1);assert.equal(timers.size,1);assert.equal(ctx.window.__resolveHumanTurn,undefined);
