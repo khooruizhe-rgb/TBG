@@ -2414,6 +2414,13 @@ body:not(:has(#game.active)) #setup{pointer-events:auto}
 .menu-divider{margin:12px 20% 10px}
 .menu-settings{gap:8px;margin-bottom:16px}
 .menu-advanced{margin-top:10px}
+@media(min-width:900px) and (min-height:601px){
+  #setup.menu-paper{width:min(680px,calc(100vw - 96px));max-width:680px;padding:28px 30px 24px}
+  #setup .menu-settings{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.25fr);gap:16px}
+  #setup .menu-setting .pill-btn{min-width:max-content;padding:11px 8px;font-size:14px}
+  #setup #start-btn{padding:14px 22px;font-size:16px}
+  #setup #tutorial-start{padding:13px 18px;font-size:14px}
+}
 @media(orientation:landscape) and (max-height:600px){
   #setup.menu-paper{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.2fr);gap:8px 16px;width:min(600px,calc(100vw - 112px));max-width:600px;max-height:calc(100dvh - 48px);padding:14px 18px}
   #setup .menu-intro{grid-column:1;grid-row:1 / span 3;margin:0;align-self:center;text-align:left}
@@ -2675,7 +2682,6 @@ body.mobile-landscape #online-box{padding:10px 14px;font-size:12px;}.online-room
       <p class="menu-kicker">A Touhou board game</p>
       <h1><span class="menu-japanese" lang="ja">幻想郷</span>Boundary of Fates</h1>
       <div class="menu-divider" aria-hidden="true"><span>☯</span></div>
-      <p class="menu-description">Claim factions. Trade at Kourindou. Make your move.<br><span id="menu-mode-description">You take the first seat. The other seats are AI.</span></p>
     </div>
     <label class="language-setting">Language / 语言
       <select id="menu-language" aria-label="Language / 语言"><option value="en">English</option><option value="zh-CN">简体中文</option></select>
@@ -2705,7 +2711,6 @@ body.mobile-landscape #online-box{padding:10px 14px;font-size:12px;}.online-room
       </fieldset>
     </div>
 
-    <p id="ai-difficulty-description" class="menu-footnote">Adds clue tracking, card preservation and follow-up planning.</p>
     <div class="menu-actions">
       <button class="big-btn" id="start-btn" type="button">Begin the Game</button>
       <button class="pill-btn" id="tutorial-start" type="button">Learn to Play</button>
@@ -13072,7 +13077,6 @@ document.querySelectorAll('#game-mode-opts .pill-btn').forEach(button=>button.ad
   chosenAITestMode=button.dataset.mode==='ai-test';
   document.querySelectorAll('#game-mode-opts .pill-btn').forEach(option=>{const active=option===button;option.classList.toggle('selected',active);option.setAttribute('aria-pressed',String(active));});
   el('menu-ai-test-settings').hidden=!chosenAITestMode;
-  setRuleText(el('menu-mode-description'),chosenAITestMode ? 'Every seat is AI. Finished games restart automatically and contribute to the test data.' : 'You take the first seat. The other seats are AI.');
   updateStartButtonState();
 }));
 el('menu-ai-test-fast').addEventListener('change',event=>chosenFastAITest=event.target.checked);
@@ -13531,7 +13535,6 @@ let chosenAIDifficulty='hard';
 document.querySelectorAll('#ai-difficulty-opts .pill-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{
     chosenAIDifficulty=btn.dataset.difficulty;
-    setRuleText(el('ai-difficulty-description'),AI_DIFFICULTIES[chosenAIDifficulty].description);
     document.querySelectorAll('#ai-difficulty-opts .pill-btn').forEach(option=>{
       const selected=option===btn;option.classList.toggle('selected',selected);option.setAttribute('aria-pressed',String(selected));
     });
