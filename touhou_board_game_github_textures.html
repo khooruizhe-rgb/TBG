@@ -1692,6 +1692,19 @@
   .card-detail-faction-icon.icon-hell{ width:104%; height:104%; left:-2%; top:-2%; }
   .card-detail-faction-icon.icon-heaven{ width:104%; height:104%; left:-2%; top:-2%; }
   .card-detail-faction-icon.icon-temple{ width:95.5%; height:95.5%; left:2.25%; top:2.25%; object-fit:contain; }
+  /* Compact card badges reuse the detail artwork and its crop inside a fixed box. */
+  :is(.board-card,.hand-card,.custom-card-tile) > .icon-row{ align-items:center; flex-shrink:0; line-height:1; }
+  .card-faction-badge{
+    --card-faction-icon-size:clamp(14px,1.3vw,20px);
+    position:relative; display:inline-flex; align-items:center; justify-content:center;
+    width:var(--card-faction-icon-size); height:var(--card-faction-icon-size);
+    flex:0 0 var(--card-faction-icon-size); overflow:hidden; pointer-events:none;
+    font-size:var(--card-faction-icon-size); line-height:1;
+  }
+  .hand-card .card-faction-badge{ --card-faction-icon-size:clamp(18px,1.7vw,24px); }
+  .custom-card-tile .card-faction-badge{ --card-faction-icon-size:18px; }
+  body.mobile-landscape .board-card .card-faction-badge{ --card-faction-icon-size:clamp(12px,2.4vh,16px); }
+  body.mobile-landscape #hand .hand-card .card-faction-badge{ --card-faction-icon-size:clamp(14px,3.6vh,18px); }
   #card-detail-icon.card-detail-faction-emoji{
     display:flex; align-items:center; justify-content:center; overflow:visible;
     font-size:3rem; line-height:1;
@@ -2351,7 +2364,7 @@ body:not(:has(#game.active)) #setup{pointer-events:auto}
 .table-scatter-card .board-card{width:100%;height:100%;padding:9px;border:3px solid var(--faction-edge,#e7d6b8);border-radius:8px;box-shadow:inset 0 0 0 1px #fff5df66,1px 2px 0 #aa8b65;pointer-events:none}
 .table-scatter-card .board-card .cname{font-size:clamp(13px,1.25vw,18px);text-shadow:0 2px 3px #080510}
 .table-scatter-card .board-card .icon-row{font-size:20px}
-.table-scatter-card .board-card .icon-row img{width:30px;height:30px;object-fit:contain}
+.table-scatter-card .board-card .card-faction-badge{--card-faction-icon-size:30px}
 .table-card-back{height:100%;display:grid;place-items:center;border:5px solid #e8d9bf;border-radius:8px;color:#dac08c;background:repeating-linear-gradient(45deg,#cda26c18 0 1px,transparent 1px 10px),repeating-linear-gradient(-45deg,#cda26c18 0 1px,transparent 1px 10px),#34213c;box-shadow:inset 0 0 0 2px #c1a36c,1px 2px 0 #aa8b65}
 .table-card-back span{display:grid;place-items:center;width:70%;aspect-ratio:1;border:1px solid #b59660;border-radius:50%;font-size:46px;background:#34213c;box-shadow:0 0 0 7px #34213c,0 0 0 8px #b5966055}
 .table-scatter-card:not(.byakuren-peek-card){perspective:900px}
@@ -2435,7 +2448,7 @@ body.title-memory-active:not(:has(#game.active)) #setup{visibility:hidden;pointe
 .title-memory-table-card .board-card{padding:5px;border-width:2px}
 .title-memory-table-card .board-card .cname{font-size:clamp(8px,calc(var(--memory-card-width)*.10),16px)}
 .title-memory-table-card .board-card .icon-row{font-size:clamp(12px,calc(var(--memory-card-width)*.18),24px)}
-.title-memory-table-card .board-card .icon-row img{width:clamp(12px,calc(var(--memory-card-width)*.18),28px);height:clamp(12px,calc(var(--memory-card-width)*.18),28px)}
+.title-memory-table-card .board-card .card-faction-badge{--card-faction-icon-size:clamp(12px,calc(var(--memory-card-width)*.18),28px)}
 .title-memory-table-card .table-card-back{border-width:3px}
 .title-memory-table-card .table-card-back span{font-size:clamp(22px,calc(var(--memory-card-width)*.3),46px)}
 .title-memory-arranging{transition:left .42s cubic-bezier(.2,.7,.2,1),top .42s cubic-bezier(.2,.7,.2,1),transform .42s cubic-bezier(.2,.7,.2,1),width .42s ease;pointer-events:none}
@@ -7031,6 +7044,13 @@ CARD_DETAIL_FACTION_ICONS.hell = "https://raw.githubusercontent.com/khooruizhe-r
 CARD_DETAIL_FACTION_ICONS.sunflower = "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/icons/sunflower_field.png";
 CARD_DETAIL_FACTION_ICONS.heaven = "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/icons/heaven.png";
 CARD_DETAIL_FACTION_ICONS.temple="https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/icons/myouren_temple.webp";
+function cardFactionBadgeHtml(faction){
+  const f=FACTIONS[faction],src=CARD_DETAIL_FACTION_ICONS[faction];
+  const label=escapeLogHtml(typeof translateGameText==='function'?translateGameText(f.name):f.name);
+  return `<span class="card-faction-badge" role="img" aria-label="${label}" title="${label}">`
+    +(src?`<img class="card-detail-faction-icon icon-${faction}" src="${escapeLogHtml(src)}" alt="" draggable="false" decoding="async">`:escapeLogHtml(f.icon))
+    +'</span>';
+}
 const CARD_DETAIL_PORTRAITS = {
   sdm_remilia: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/scarlet_devil_mansion/remilia_scarlet.webp",
   sdm_sakuya: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/scarlet_devil_mansion/izayoi_sakuya.png",
@@ -8100,7 +8120,6 @@ document.addEventListener('keydown', e => {
 
 function cardBoardHtml(cardId){
   const c = CARD[cardId];
-  const f = FACTIONS[c.faction];
   const bgClass = cardBgClass(c, cardId);
   const illusion=illusionCardStyle(cardId);
   const style=[c.crown ? `--crown-light-main:${crownLightFor(cardId).main};--crown-light-rgb:${crownLightFor(cardId).rgb}` : '',illusion].filter(Boolean).join(';');
@@ -8108,7 +8127,7 @@ function cardBoardHtml(cardId){
   const illusionClass=illusion ? ' card-art-illusion' : '';
   const muted = c.crown && game && typeof game.isOnBoard==='function' && game.eirinActive() ? ' eirin-muted' : '';
   return `<div class="board-card ${c.crown?'crown':''} ${bgClass}${muted}${illusionClass}"${crownStyle}>
-    <div class="icon-row"><span>${f.icon}</span>${c.crown?'<span class="crown-mark">👑</span>':''}</div>
+    <div class="icon-row">${cardFactionBadgeHtml(c.faction)}${c.crown?'<span class="crown-mark">👑</span>':''}</div>
     <div class="cname">${c.name}</div>
   </div>`;
 }
@@ -8696,7 +8715,6 @@ function renderHand(){
   const forced = game.isPlacementBlocked(localSeat()) ? null : game.forcedPlay[localSeat()];
   me.hand.forEach(cardId => {
     const c = CARD[cardId];
-    const f = FACTIONS[c.faction];
     const div = document.createElement('div');
     const handChoice = pendingHandChoice;
     const choiceEligible = !!handChoice && handChoice.allowed.has(cardId);
@@ -8723,7 +8741,7 @@ function renderHand(){
     }
     syncRemiliaArrival(div,cardId);
     if(mindArrivals.get(cardId)>Date.now()) div.style.setProperty('--mind-age',`${-Math.max(0,1000-(mindArrivals.get(cardId)-Date.now()))}ms`);
-    div.innerHTML = `<div class="icon-row"><span>${f.icon}</span>${c.crown?'<span class="crown-mark">👑</span>':''}</div>
+    div.innerHTML = `<div class="icon-row">${cardFactionBadgeHtml(c.faction)}${c.crown?'<span class="crown-mark">👑</span>':''}</div>
       <div class="cname">${c.name}</div>`;
     if(forced===cardId){
       const marker=document.createElement('span');marker.className='reisen-forced-marker';
@@ -9198,7 +9216,7 @@ const ui = {
         tile.style.setProperty('--read-delay',`${tiles.length*65}ms`);
         tile.setAttribute('aria-label', `${card.name}. Select card; double-click to inspect.`);
         tile.setAttribute('aria-pressed', 'false');
-        tile.innerHTML = `<div class="icon-row"><span>${FACTIONS[card.faction].icon}</span>${card.crown?'<span class="crown-mark">👑</span>':''}</div><div class="cname">${card.name}</div>`;
+        tile.innerHTML = `<div class="icon-row">${cardFactionBadgeHtml(card.faction)}${card.crown?'<span class="crown-mark">👑</span>':''}</div><div class="cname">${card.name}</div>`;
         tile.addEventListener('click', () => {
           if(Number(tile.dataset.ignoreClickUntil || 0)>Date.now())return;
           selected = cardId;
@@ -13532,8 +13550,6 @@ document.querySelectorAll('#board-size-opts .pill-btn').forEach(btn => {
 let customizeOn = false;
 const customSelected = new Set();
 
-function factionIcon(faction){ return FACTIONS[faction].icon; }
-
 function renderCustomGrid(){
   const grid = el('custom-hand-grid');
   grid.innerHTML = '';
@@ -13542,7 +13558,7 @@ function renderCustomGrid(){
     const isSelected = customSelected.has(c.id);
     const atCap = customSelected.size>=6 && !isSelected;
     tile.className = 'custom-card-tile' + (cardBgClass(c, c.id) ? ' '+cardBgClass(c, c.id) : '') + (isSelected ? ' selected' : '') + (atCap ? ' locked' : '');
-    tile.innerHTML = `<div class="icon-row"><span>${factionIcon(c.faction)}</span>${c.crown?'<span class="crown-mark">👑</span>':''}</div>
+    tile.innerHTML = `<div class="icon-row">${cardFactionBadgeHtml(c.faction)}${c.crown?'<span class="crown-mark">👑</span>':''}</div>
       <div class="cname">${c.name}</div>`;
     tile.title = ruleTooltip(c.desc);
     tile.addEventListener('click', () => {
