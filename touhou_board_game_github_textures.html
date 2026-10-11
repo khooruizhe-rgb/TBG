@@ -13046,9 +13046,7 @@ function openAITestDashboard(){
 }
 function closeAITestDashboard(){el('ai-test-overlay').classList.remove('show');}
 document.addEventListener('keydown',event=>{
-  if(event.repeat || event.ctrlKey || event.metaKey || event.altKey || !game?.aiTestMode)return;
-  const target=event.target;
-  if(target?.isContentEditable || target?.closest?.('input,textarea,select'))return;
+  if(event.repeat || event.isComposing || event.ctrlKey || event.metaKey || event.altKey || !game?.aiTestMode)return;
   if(event.key==='F8'){
     event.preventDefault();
     if(el('ai-test-overlay').classList.contains('show'))closeAITestDashboard();else openAITestDashboard();
