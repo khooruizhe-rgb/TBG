@@ -83,5 +83,12 @@
     "maximumTokens": 2,
     "endSnapshots": 1
   },
-  "finishedAt": "2026-10-11T11:06:24.395Z"
+  "finishedAt": "2026-10-11T11:06:24.395Z",
+  "finalSourceSha256": "a9b20f0fdf460840bb1bf74043592bf0f8b26933a3ba56c3e9d1dfdf7b6df671",
+  "unchangedTestedSections": {
+    "rules": "089f9c15c07ce33c7612346e5b57e0aad9b4aea3553558dc4a70993a9b64fdc7",
+    "AI": "7fc8de65f2ab17eb1f68cefe3ad280c33b43d91210795a118c29498581ebb1cd",
+    "scheduler": "45b8e548304a6524e02516fa5df588d690077d959c0ac9587f51c4e28bd7e23b"
+  },
+  "finalShortcutRegression": "47 AI mode checks passed, including F8 from a focused checkbox; this final change is outside the continuously tested rules, AI and rendering scheduler"
 }
