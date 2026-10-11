@@ -107,7 +107,8 @@ test('F8 opens and pauses statistics before a queued restart; closing does not r
  el('ai-test-overlay').classList.remove('show');dispatch(key());assert(A.paused());assert(el('ai-test-overlay').classList.contains('show'));assert.equal(prevented,1);
  const pending=restart();await flush();assert.equal(restarts,0);
  dispatch(key());assert(!el('ai-test-overlay').classList.contains('show'));assert(A.paused());
- dispatch(key({repeat:true}));dispatch(key({target:{closest:()=>({tagName:'INPUT'})}}));assert(!el('ai-test-overlay').classList.contains('show'));
+ dispatch(key({repeat:true}));dispatch(key({isComposing:true}));assert(!el('ai-test-overlay').classList.contains('show'));
+ dispatch(key({target:{tagName:'INPUT',type:'checkbox',closest:()=>({tagName:'INPUT'})}}));assert(el('ai-test-overlay').classList.contains('show'));assert(A.paused());
  A.toggleAITestPause();await pending;assert.equal(restarts,1);assert(!A.paused());
 });
 test('Dashboard and CSV/JSON use completed real counts and show definitions and settings',()=>{
