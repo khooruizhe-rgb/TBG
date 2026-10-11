@@ -2816,7 +2816,7 @@ body.mobile-landscape #online-box{padding:10px 14px;font-size:12px;}.online-room
           <span>🔍 Playtest: reveal hands &amp; discards</span>
         </label>
       <button id="debug-ai-lab" class="pill-btn" type="button">AI evaluation lab</button>
-      <button id="ai-test-stats-btn" class="pill-btn" type="button" hidden>Test data</button>
+      <button id="ai-test-stats-btn" class="pill-btn" type="button" title="F8: open test data and pause" hidden>Test data · F8</button>
       <button id="ai-test-pause-btn" class="pill-btn" type="button" hidden>Pause test</button>
       <label id="ai-test-fast-label" hidden><input id="ai-test-fast" type="checkbox"> <span>Fast test</span></label>
     </div>
@@ -2865,6 +2865,7 @@ body.mobile-landscape #online-box{padding:10px 14px;font-size:12px;}.online-room
   <section id="ai-test-panel">
     <div class="ai-test-heading"><h2 id="ai-test-title">AI test data</h2><button id="ai-test-close" class="pill-btn" type="button">Back to game</button></div>
     <p id="ai-test-data-state" role="status"></p>
+    <p class="ai-test-note">F8 opens test data and pauses the test. Closing this window keeps it paused.</p>
     <div class="ai-test-actions">
       <button id="ai-test-data-pause" class="pill-btn" type="button">Pause test</button>
       <button id="ai-test-export-csv" class="pill-btn" type="button">Export CSV</button>
@@ -3187,7 +3188,11 @@ function possessive(name){ return name === 'You' ? 'Your' : `${name}'s`; }
 /* Rule-result counts come from real mutations. Decision scores are a separate,
    explicitly labelled sample taken only at an actual AI decision. */
 const AI_TEST_SNAPSHOT_LIMIT=30;
-function testCardId(id){return CARD[id]?.token ? 'trap_token' : id;}
+function testCardId(id){return CARD[id]?.token || /^trap_token_\d+$/.test(id) ? 'trap_token' : id;}
+function clearGeneratedTrapCards(){
+  for(const id of Object.keys(CARD))if(CARD[id].token && id!=='trap_token')delete CARD[id];
+  nextTrapToken=0;
+}
 function newTestCardActions(){return {handGained:0,handStolen:0,ownPointsLost:0,abilitySkipped:0,abilityCalls:0,abilityEffective:0,costPaid:0,paidAsCost:0,tradedAway:0,returnedFromHand:0,heldAtEnd:0,heldGames:0,claimMembers:0,ownPoints:0,opponentPoints:0,deniedPoints:0};}
 function createAITestMetrics(){return {bySeat:{},turns:0,drawActions:0,trades:0,placements:{},claims:{},substituteClaims:{},substituteMembers:{},cardActions:{},abilityDetails:{},scoreSources:{},seen:new Set(),recorded:false};}
 function createAITestStats(){return {diagnostics:{},games:0,wins:0,stalemates:0,aborted:0,errors:0,turns:0,drawActions:0,trades:0,placements:0,factions:{},factionOutcomes:{},evaluations:{},tradeStats:{},tradeDecisions:{},forcedPlacements:{},cards:{},seats:{},configurations:{},abilityDetails:{},scoreSources:{},endings:[],lastResult:null};}
@@ -7557,7 +7562,9 @@ Object.assign(ZH_TEXT,{
 });
 Object.assign(ZH_TEXT,{'Kanako setup trades':'神奈子铺场交易','Pair completion trades':'二卡阵营凑牌交易','Immediate win trades':'即时获胜交易','Hand improvement trades':'一般手牌改善交易','Unclassified trades':'未记录交易分支'});
 Object.assign(ZH_TEXT,{'Buyer games':'买家对局数','Buyer wins':'买家获胜局数','Buyer ties':'买家并列局数','Buyer win rates count each buyer once per category per game, even after repeated trades.':'买家胜率按每种类别每局各计一次，同局多次交易不会重复增加样本数。'});
-const languageTextSources=new WeakMap(),languageAttributeSources=new WeakMap(),abilityTitleSources=new WeakMap(),ruleTextSources=new Map();
+// Removed cards and choice panels must be collectible between renders and matches.
+const languageTextSources=new WeakMap(),languageAttributeSources=new WeakMap(),abilityTitleSources=new WeakMap(),ruleTextSources=new WeakMap();
+Object.assign(ZH_TEXT,{'Test data · F8':'测试数据 · F8','F8: open test data and pause':'F8：打开测试数据并暂停','F8 opens test data and pauses the test. Closing this window keeps it paused.':'按 F8 打开测试数据并暂停。关闭窗口后仍会暂停，点击继续测试即可恢复。'});
 function canonicalCardName(value){
   const text=String(value).trim();
   const entry=CARDS.find(card=>card.name.toLowerCase()===text.toLowerCase() || ZH_CARDS[card.id]?.[0]===text);
@@ -7795,6 +7802,11 @@ function localizeTextNode(node){
 }
 function localizeElement(node){
   if(node.matches?.('script,style,#menu-language,#game-language,option'))return;
+  const ruleSource=ruleTextSources.get(node);
+  if(ruleSource){
+    const rendered=ruleTextHtml(ruleSource.value,ruleSource.options);
+    if(node.innerHTML!==rendered)node.innerHTML=rendered;
+  }
   renderCardAbilityTitle(node);
   for(const attribute of ['aria-label','title','placeholder']){
     const value=node.getAttribute?.(attribute);if(!value)continue;
@@ -7817,7 +7829,6 @@ function setGameLanguage(language){
   document.documentElement.lang=gameLanguage;
   document.title=translateGameText('幻想郷 · Boundary of Fates');
   for(const id of ['menu-language','game-language'])el(id).value=gameLanguage;
-  for(const [node,source] of ruleTextSources){if(node.isConnected)setRuleText(node,source.value,source.options);else ruleTextSources.delete(node);}
   if(game && !game.cancelled)renderLog();
   refreshRuleTerm();
   const list=el('card-name-list');list.replaceChildren();
@@ -8937,8 +8948,28 @@ function renderStatus(){
 }
 
 let announcedGameResult=null;
-function renderAll(){
+const FAST_AI_TEST_RENDER_INTERVAL=200;
+let fastAITestRenderTimer=null,fastAITestLastRender=0;
+function cancelFastAITestRender(){
+  clearTimeout(fastAITestRenderTimer);fastAITestRenderTimer=null;fastAITestLastRender=0;
+}
+function deferFastAITestRender(){
+  if(!game?.aiTestMode || !game.fastAITest || aiTestPaused)return false;
+  const wait=FAST_AI_TEST_RENDER_INTERVAL-(Date.now()-fastAITestLastRender);
+  if(wait<=0)return false;
+  if(fastAITestRenderTimer===null){
+    const owner=game;
+    fastAITestRenderTimer=setTimeout(()=>{
+      fastAITestRenderTimer=null;
+      if(game===owner && !owner.cancelled)renderAll(true);
+    },wait);
+  }
+  return true;
+}
+function renderAll(force=false){
   if(!game || game.cancelled) return;
+  if(force!==true && deferFastAITestRender())return;
+  clearTimeout(fastAITestRenderTimer);fastAITestRenderTimer=null;fastAITestLastRender=Date.now();
   publishSnapshot();
   renderBoard();
   renderHand();
@@ -8967,7 +8998,7 @@ function renderAll(){
 /* generic UI choosers used by the engine */
 const ui = {
   onPlacementArrival:prepareHandPlacementArrival,
-  onLog(){ renderLog(); },
+  onLog(){ if(game?.aiTestMode && game.fastAITest)renderAll();else renderLog(); },
   onAbilityEffect:showMindAbility,
   onDiscard:showDiscardVanish,
   onCostPaid(){playGameCue('cost');},
@@ -12904,6 +12935,7 @@ let aiTestStats=createAITestStats(),aiTestPaused=false,aiTestRestartTimer=null,a
 const aiTestPauseWaiters=new Set();
 function cancelAITestAutomation(){
   clearTimeout(aiTestRestartTimer);aiTestRestartTimer=null;
+  cancelFastAITestRender();
   if(aiTestStatsFrame!==null)cancelAnimationFrame(aiTestStatsFrame);aiTestStatsFrame=null;
   for(const resolve of [...aiTestPauseWaiters])resolve(false);aiTestPauseWaiters.clear();
 }
@@ -12920,19 +12952,21 @@ function updateAITestControls(){
   for(const id of ['ai-test-pause-btn','ai-test-data-pause'])setRuleText(el(id),aiTestPaused ? 'Resume test' : 'Pause test');
   document.body.classList.toggle('ai-test-fast',testing && game.fastAITest);
 }
-function toggleAITestPause(){
+function setAITestPaused(paused){
   if(!game?.aiTestMode)return;
-  aiTestPaused=!aiTestPaused;
+  aiTestPaused=!!paused;
   if(!aiTestPaused){for(const resolve of [...aiTestPauseWaiters])resolve(true);aiTestPauseWaiters.clear();}
-  updateAITestControls();renderAITestStats();
+  updateAITestControls();renderAll(true);renderAITestStats();
 }
+function toggleAITestPause(){setAITestPaused(!aiTestPaused);}
 function queueAITestStatsRender(){
+  if(game?.fastAITest && !aiTestPaused)return;
   if(aiTestStatsFrame!==null || !el('ai-test-overlay').classList.contains('show'))return;
   aiTestStatsFrame=requestAnimationFrame(()=>{aiTestStatsFrame=null;renderAITestStats();});
 }
 function aiTestPercent(value,total){return total ? `${(value/total*100).toFixed(1)}%` : '—';}
 function aiTestTable(headings,rows){return `<table><thead><tr>${headings.map(label=>`<th>${ruleTextHtml(label)}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map(value=>`<td>${value}</td>`).join('')}</tr>`).join('')}</tbody></table>`;}
-function aiTestCardName(id){return ruleTextHtml(CARD[id]?.name || id);}
+function aiTestCardName(id){return ruleTextHtml(CARD[testCardId(id)]?.name || id);}
 function aiTestAbilityName(id){return ruleTextHtml(CARD_ABILITY_NAMES[id] || 'Other');}
 function aiTestAverage(sum,count){return count?((sum||0)/count).toFixed(2):'—';}
 function aiTestTradeRows(entries,pairs=false){
@@ -13006,8 +13040,20 @@ function renderAITestStats(){
   el('ai-test-settings').innerHTML=aiTestTable(['Players','Board size','AI difficulty','Games','Average turns'],Object.values(s.configurations).map(row=>[
     row.players,`${row.board}×${row.board}`,ruleTextHtml(AI_DIFFICULTIES[row.difficulty].name),row.games,(row.turns/row.games).toFixed(1)]));
 }
-function openAITestDashboard(){closeDebugControls();el('ai-test-overlay').classList.add('show');renderAITestStats();el('ai-test-close').focus({preventScroll:true});}
+function openAITestDashboard(){
+  closeDebugControls();setAITestPaused(true);
+  el('ai-test-overlay').classList.add('show');renderAITestStats();el('ai-test-close').focus({preventScroll:true});
+}
 function closeAITestDashboard(){el('ai-test-overlay').classList.remove('show');}
+document.addEventListener('keydown',event=>{
+  if(event.repeat || event.ctrlKey || event.metaKey || event.altKey || !game?.aiTestMode)return;
+  const target=event.target;
+  if(target?.isContentEditable || target?.closest?.('input,textarea,select'))return;
+  if(event.key==='F8'){
+    event.preventDefault();
+    if(el('ai-test-overlay').classList.contains('show'))closeAITestDashboard();else openAITestDashboard();
+  }else if(event.key==='Escape' && el('ai-test-overlay').classList.contains('show'))closeAITestDashboard();
+});
 function aiTestExportData(){return {version:3,exportedAt:new Date().toISOString(),definitions:{
   claimRate:'Completed games with at least one claim of this faction / completed games.',
   useRate:'Completed games in which this card was placed / completed games in which it entered any hand.',
@@ -13209,7 +13255,7 @@ function evalForcedCell(p,id,cells){
   return cells[Math.floor(evalDecisionRNG()*cells.length)];
 }
 function evalResetTokens(snapshot){
-  for(const id of Object.keys(CARD))if(CARD[id].token && id!=='trap_token')delete CARD[id];
+  clearGeneratedTrapCards();
   nextTrapToken=snapshot?.tokenCounter||0;
   for(const token of snapshot?.tokens||[])CARD[token.id]={...CARD.trap_token,id:token.id};
 }
@@ -13621,6 +13667,7 @@ function resetGameView(){
   el('modal-box').classList.remove('chimera-mode');
   el('modal-options').classList.remove('chimera-options');
   game=null;
+  clearGeneratedTrapCards();
   announcedGameResult=null;
   if(pendingPlayerChoice){document.removeEventListener('keydown',pendingPlayerChoice.onEscape);pendingPlayerChoice=null;}
   if(pendingHandChoice?.onEscape) document.removeEventListener('keydown',pendingHandChoice.onEscape);
@@ -13698,7 +13745,7 @@ function startNewGame({testContinuation=false,onlineHost=false}={}){
   updateAITestControls();
   renderAll();
   const openingGame=game;
-  rinnosukeOpeningTimer=setTimeout(()=>{
+  if(!game.fastAITest)rinnosukeOpeningTimer=setTimeout(()=>{
     rinnosukeOpeningTimer=null;
     if(game===openingGame && !openingGame.cancelled && !rinnosukeLastSpoke)
       speakRinnosuke('welcome');
