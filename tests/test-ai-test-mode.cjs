@@ -17,6 +17,7 @@ const ctx={console,Math:math,Date,document,el,window:{},setTimeout:(fn,ms)=>{if(
  startNewGame:opts=>{restarts++;assert.equal(opts.testContinuation,true);},ui:{}};
 vm.createContext(ctx);
 vm.runInContext(slice('const DIRS4','/* ===================== UI layer')+'\nvar game=null;\n'+
+ slice('const FAST_AI_TEST_RENDER_INTERVAL','function renderAll')+
  slice('const NO_PLACED_ABILITY','async function doPlayerAction')+
  slice('function canTakeTurnAction','/* Cards with no "Placed:')+
  slice('async function doPlayerAction','/* Wire human hand-card')+
@@ -97,6 +98,17 @@ test('Wins and stalemates auto-restart once, keep statistics and obey pause',asy
 });
 test('Manual exit cancels scheduled restarts and retired matches cannot add data',async()=>{
  const g=blank();g.winner=g.players[0];await A.finishAITestRound(g);assert.equal(timers.size,1);const stale=[...timers.values()][0];A.cancelAITestAutomation();g.cancelled=true;A.setGame(null);assert.equal(timers.size,0);await stale();const count=A.stats().games;await A.finishAITestRound(g);assert.equal(A.stats().games,count);
+});
+test('F8 opens and pauses statistics before a queued restart; closing does not resume',async()=>{
+ A.resetStats();restarts=0;const g=blank();g.winner=g.players[0];await A.finishAITestRound(g);
+ const restart=[...timers.values()][0];timers.clear();let prevented=0;
+ const key=overrides=>({key:'F8',target:{},preventDefault(){prevented++;},...overrides});
+ const dispatch=event=>document.events.keydown.forEach(fn=>fn(event));
+ el('ai-test-overlay').classList.remove('show');dispatch(key());assert(A.paused());assert(el('ai-test-overlay').classList.contains('show'));assert.equal(prevented,1);
+ const pending=restart();await flush();assert.equal(restarts,0);
+ dispatch(key());assert(!el('ai-test-overlay').classList.contains('show'));assert(A.paused());
+ dispatch(key({repeat:true}));dispatch(key({target:{closest:()=>({tagName:'INPUT'})}}));assert(!el('ai-test-overlay').classList.contains('show'));
+ A.toggleAITestPause();await pending;assert.equal(restarts,1);assert(!A.paused());
 });
 test('Dashboard and CSV/JSON use completed real counts and show definitions and settings',()=>{
  const g=blank();A.resetStats();g.winner=g.players[0];g.testMetrics.seen.add('medicine');g.testMetrics.placements.medicine=1;g.testMetrics.claims.sunflower=1;A.recordCompletedAITest(A.stats(),g);
