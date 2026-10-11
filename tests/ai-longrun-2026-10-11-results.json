@@ -1,0 +1,87 @@
+{
+  "startedAt": "2026-10-11T11:03:32.594Z",
+  "sourceSha256": "19f9fd5f01573905eb4c61bd95af7dea8476441a08dac473f88a424850ba16e7",
+  "checks": [
+    {
+      "name": "Detached rule-text nodes are collected",
+      "created": 10000,
+      "collected": 10000
+    },
+    {
+      "name": "Ten thousand render requests coalesce; paused view flushes and stale matches cannot draw",
+      "requests": 10000,
+      "renderedBeforeFlush": 1,
+      "maximumPendingTimers": 1
+    },
+    {
+      "name": "Ordinary game logging is immediate"
+    },
+    {
+      "name": "One thousand restarts release generated tokens and old snapshots retain token labels",
+      "restarts": 1000,
+      "remainingDefinitions": 45
+    },
+    {
+      "name": "Continuous real three-player Hard games conserve cards and complete",
+      "games": 30,
+      "turns": 746,
+      "errors": 0,
+      "aborted": 0
+    }
+  ],
+  "checkpoints": [
+    {
+      "games": 1,
+      "turns": 22,
+      "wins": 1,
+      "stalemates": 0,
+      "heapUsedMiB": 14.02,
+      "statsBytes": 54909,
+      "tokenDefinitions": 0,
+      "seconds": 5.27
+    },
+    {
+      "games": 10,
+      "turns": 280,
+      "wins": 10,
+      "stalemates": 0,
+      "heapUsedMiB": 15.17,
+      "statsBytes": 117660,
+      "tokenDefinitions": 0,
+      "seconds": 64.33
+    },
+    {
+      "games": 20,
+      "turns": 495,
+      "wins": 20,
+      "stalemates": 0,
+      "heapUsedMiB": 15.76,
+      "statsBytes": 150317,
+      "tokenDefinitions": 2,
+      "seconds": 122.94
+    },
+    {
+      "games": 30,
+      "turns": 746,
+      "wins": 29,
+      "stalemates": 1,
+      "heapUsedMiB": 15.82,
+      "statsBytes": 183317,
+      "tokenDefinitions": 0,
+      "seconds": 171.7
+    }
+  ],
+  "scope": "Exact shipped rule/AI engine, Node GC and DOM scheduler fixtures; no rendered-browser or GPU test",
+  "matches": {
+    "games": 30,
+    "wins": 29,
+    "stalemates": 1,
+    "errors": 0,
+    "aborted": 0,
+    "turns": 746,
+    "placements": 595,
+    "maximumTokens": 2,
+    "endSnapshots": 1
+  },
+  "finishedAt": "2026-10-11T11:06:24.395Z"
+}
