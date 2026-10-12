@@ -1,0 +1,26 @@
+{
+  "status": "pass",
+  "count": 19,
+  "checks": [
+    "Board cards distinguish low-ink copies, worn retrieved cards and ordinary originals",
+    "Copying an overwritten card retains its worn appearance, draw effect and surcharge",
+    "The real hand renderer applies the same print and wear layers without copy labels",
+    "The print filter and dropout lines cover the complete card, including detail header and claim squares",
+    "Inspection shows 覆盖 / Overwrite with the draw effect and retains both material states",
+    "Inspecting and rendering ordinary cards clears material state from reused elements",
+    "Only Sage muting applies Eirin desaturation; unpaid copies and non-Sage crowns retain color",
+    "Copy inspection preserves the portrait crop and returns to an unfiltered ordinary card",
+    "Creation preview inspection retains printing through reference navigation and clears it afterward",
+    "The real creation chooser prints every candidate and its inspected image without creating extra cards",
+    "Nue ability choices keep original art, while existing copies retain their own material",
+    "The actual creation engine waits for the flight and then puts exactly one independent copy into the hand",
+    "Closing at printing, ready or flying resolves the choice and releases every timer, listener and hand placeholder",
+    "Keyboard focus stays inside the choice, inspection blocks accidental selection, and Enter selects only once",
+    "Reduced motion and a one-card source complete safely without inventing extra choices",
+    "Watched AI prints the same options, keeps its original choice and finishes without user input",
+    "The AI creation engine awaits the watched animation and fast tests bypass it without changing the chosen card",
+    "Replacing the match during printing prevents a stale result, and resizing during flight finishes the selected choice",
+    "Online choices preserve the actor and presentation flags while validating only the offered source IDs"
+  ],
+  "scope": "Actual renderers, creation engine and fake-clock DOM fixtures; browser pixels not verified"
+}

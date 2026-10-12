@@ -2705,6 +2705,36 @@ body:not(:has(#game.active)):not(.title-memory-active) #app{position:relative;z-
 #log .news-subscription-note{font-size:.64rem;line-height:1.4;margin:8px 0}
 #log .news-subscribe{width:100%;padding:6px;border:1px solid #80613a;color:#46351e;background:#f7e7c3;font:700 .65rem Georgia,'Times New Roman',serif;cursor:pointer}
 #log .news-subscribe:disabled{opacity:.5;cursor:default}
+
+/* Created cards emerge from the print slot before they can be selected. */
+#creation-overlay{display:none;position:fixed;inset:0;z-index:410;isolation:isolate;align-items:center;justify-content:center;padding:14px;background:#120c079c;transition:background .25s ease}
+#creation-overlay.show{display:flex}
+#creation-panel{width:min(650px,94vw);max-height:94dvh;padding:20px;border:2px solid #b99a70;border-radius:12px;background:repeating-linear-gradient(3deg,#704b2603 0 1px,transparent 1px 5px),#efdfc2;box-shadow:0 18px 65px #0008;color:#503724;text-align:center;overflow:visible}
+#creation-title{margin:0 0 9px;font-size:clamp(16px,2.2vw,22px)}
+#creation-status{margin:12px 0 0;font-size:13px;line-height:1.4;min-height:2.8em}
+.creation-printer{position:relative;height:30px;margin:0 auto 5px;width:92%;border:1px solid #665848;border-radius:8px 8px 3px 3px;background:linear-gradient(#c8c1b5,#928b7d);box-shadow:0 5px 9px #291c1640}
+.creation-printer::before{content:'';position:absolute;left:4%;right:4%;bottom:2px;height:5px;border-radius:3px;background:#261f1b;box-shadow:inset 0 1px 2px #000}
+.creation-printer::after{content:'';position:absolute;right:8px;top:6px;width:36px;height:6px;border-radius:2px;background:linear-gradient(90deg,#599aa3 0 24%,#d47e97 25% 49%,#d7b965 50% 74%,#4b4640 75%)}
+#creation-cards{display:flex;justify-content:center;align-items:flex-start;gap:clamp(8px,2vw,20px)}
+.creation-option{width:min(23vw,30dvh,176px);min-width:0;display:flex;flex-direction:column;align-items:center;gap:10px}
+.creation-face{position:relative;width:100%;aspect-ratio:3/4;flex:none;cursor:pointer;outline-offset:5px;transform-origin:center;box-shadow:3px 7px 10px #271d134d;border-radius:8px;background:#f7f1e4}
+.creation-face>.board-card{width:100%;height:100%;padding:8px 6px;box-sizing:border-box;position:relative}
+.creation-face>.board-card .cname{font-size:clamp(11px,1.5vw,16px);line-height:1.15}
+.creation-face:focus-visible{outline:3px solid #9b643c}
+.creation-printing{cursor:wait;animation:creationPaperFeed .78s linear both;animation-delay:var(--creation-print-delay,0ms)}
+.creation-printing::after{content:'';position:absolute;z-index:25;left:0;right:0;top:0;height:2px;background:#fff7e4;box-shadow:0 -2px 5px #b1a49380;pointer-events:none;animation:creationPrintHead .78s linear both;animation-delay:var(--creation-print-delay,0ms)}
+.creation-inspect{padding:6px 14px;border:1px solid #ae8d64;border-radius:5px;background:#f8ecd2;color:#65472e;font:inherit;font-size:12px;cursor:pointer}
+.creation-inspect:disabled{opacity:.45;cursor:wait}
+#creation-overlay[data-phase="ready"] .creation-face:hover{box-shadow:0 0 0 2px #d2a85a,4px 9px 14px #271d135c}
+.creation-face.creation-flying{position:fixed;margin:0;z-index:3;aspect-ratio:auto;pointer-events:none;transition:left .65s cubic-bezier(.5,0,.8,.25),top .65s cubic-bezier(.5,0,.8,.25),transform .65s ease-in;transform:translate(-50%,-50%) rotate(var(--creation-flight-angle,0deg)) scale(var(--creation-flight-scale,1))}
+#creation-overlay[data-phase="departing"]{background:transparent;pointer-events:none}
+#creation-overlay[data-phase="departing"] #creation-panel{background:transparent;border-color:transparent;box-shadow:none}
+#creation-overlay[data-phase="departing"] :is(#creation-title,#creation-status,.creation-printer,.creation-inspect){visibility:hidden}
+.creation-hand-placeholder{visibility:hidden!important;pointer-events:none!important}
+@keyframes creationPaperFeed{0%{clip-path:inset(0 0 100% 0);transform:translateY(-12px)}100%{clip-path:inset(0);transform:translateY(0)}}
+@keyframes creationPrintHead{from{top:0}to{top:100%}}
+@media(orientation:landscape) and (max-height:500px){#creation-panel{padding:12px}#creation-title{font-size:15px;margin-bottom:6px}.creation-printer{height:24px}.creation-option{width:min(22vw,28dvh,150px);gap:5px}.creation-inspect{padding:4px 10px;font-size:11px}#creation-status{margin-top:6px;font-size:11px;min-height:1.4em}}
+@media(prefers-reduced-motion:reduce){.creation-printing,.creation-printing::after{animation:none}.creation-face.creation-flying,#creation-overlay{transition:none}}
 </style>
 </head>
 <body>
@@ -2998,6 +3028,15 @@ body:not(:has(#game.active)):not(.title-memory-active) #app{position:relative;z-
   </section>
 </div>
 <datalist id="card-name-list"></datalist>
+
+<div id="creation-overlay" role="dialog" aria-modal="true" aria-labelledby="creation-title" aria-describedby="creation-status">
+  <section id="creation-panel">
+    <h3 id="creation-title" tabindex="-1">Create: choose one of three cards</h3>
+    <div class="creation-printer" aria-hidden="true"></div>
+    <div id="creation-cards"></div>
+    <p id="creation-status" role="status" aria-live="polite"></p>
+  </section>
+</div>
 
 <div id="card-detail-overlay" role="dialog" aria-modal="true" aria-labelledby="card-detail-name">
   <div id="card-detail" tabindex="-1">
@@ -5472,7 +5511,10 @@ Game.prototype.createCard=async function(p,sourceIds,{double=false,template=fals
   let chosen;
   if(this.players[p].isAI){
     chosen=choices.slice().sort((a,b)=>aiCreatedValue(p,b,{double,template})-aiCreatedValue(p,a,{double,template}))[0];
-  }else chosen=await this.pickUI(p,'pickAbilityCards',[title,choices,{createdPreview:true}]);
+    if(!this.fastAITest && this.ui?.onCreationChoices){
+      try{await this.ui.onCreationChoices({playerIdx:p,ids:choices,chosen,title});}catch(_error){ /* Presentation must not interrupt the rules. */ }
+    }
+  }else chosen=await this.pickUI(p,'pickAbilityCards',[title,choices,{createdPreview:true,playerIdx:p}]);
   if(this.cancelled || !choices.includes(chosen))return null;
   const ability=template ? cardBaseId(chosen) : this.abilityId(chosen);
   const id=`created_card_${++nextCreatedCard}`;
@@ -7863,6 +7905,12 @@ Object.assign(ZH_TEXT,{
 });
 Object.assign(ZH_TEXT,{'Kanako setup trades':'神奈子铺场交易','Pair completion trades':'二卡阵营凑牌交易','Immediate win trades':'即时获胜交易','Hand improvement trades':'一般手牌改善交易','Unclassified trades':'未记录交易分支'});
 Object.assign(ZH_TEXT,{'Buyer games':'买家对局数','Buyer wins':'买家获胜局数','Buyer ties':'买家并列局数','Buyer win rates count each buyer once per category per game, even after repeated trades.':'买家胜率按每种类别每局各计一次，同局多次交易不会重复增加样本数。'});
+Object.assign(ZH_TEXT,{
+  'Printing your card choices…':'正在打印候选卡牌……',
+  'Choose one printed card to put into your hand. Press I or use Inspect to read its ability.':'选择一张打印好的卡牌加入手牌。按 I 或点击查看来阅读技能。',
+  'Choose this printed card. Press I to inspect.':'选择这张打印好的卡牌。按 I 查看详情。',
+  'The chosen card is going into the hand.':'选中的卡牌正在飞入手牌。'
+});
 const languageTextSources=new WeakMap(),languageAttributeSources=new WeakMap(),abilityTitleSources=new WeakMap(),ruleTextSources=new WeakMap();
 function pruneRuleTextSources(){
   // WeakMap entries are released automatically when their DOM nodes are collected.
@@ -9354,6 +9402,107 @@ function renderAll(immediate=false){
   }
 }
 
+/* Printed creation choices: presentation owns previews, never card definitions. */
+let creationChoiceSession=null;
+function closeCreationChoice(){creationChoiceSession?.finish(null);}
+function openCreationChoice(title,ids,{playerIdx=localSeat(),chosen=null}={}){
+  closeCreationChoice();
+  if(!game || game.cancelled || !ids.length)return Promise.resolve(null);
+  return new Promise(resolve=>{
+    const owner=game,overlay=el('creation-overlay'),host=el('creation-cards'),focusBefore=document.activeElement;
+    const reduced=!!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    const automatic=ids.includes(chosen);
+    const session={owner,phase:'printing',cards:[],timers:new Set(),placeholder:null,chosen:null,finish:null};
+    creationChoiceSession=session;
+    const finish=value=>{
+      if(session.phase==='finished')return;
+      session.phase='finished';for(const timer of session.timers)clearTimeout(timer);session.timers.clear();
+      if(detailCreatedPreview || detailHistory.some(entry=>entry.createdPreview))closeCardDetails();
+      session.placeholder?.remove();session.placeholder=null;
+      overlay.classList.remove('show');delete overlay.dataset.phase;overlay.removeAttribute('aria-busy');host.replaceChildren();
+      document.removeEventListener('keydown',onKey);window.removeEventListener('resize',onResize);
+      if(creationChoiceSession===session)creationChoiceSession=null;
+      if(focusBefore?.isConnected && game===owner && !owner.cancelled)focusBefore.focus({preventScroll:true});
+      resolve(game===owner && !owner.cancelled ? value : null);
+    };
+    session.finish=finish;
+    const queue=(fn,delay)=>{
+      const timer=setTimeout(()=>{
+        session.timers.delete(timer);
+        if(creationChoiceSession!==session || game!==owner || owner.cancelled){finish(null);return;}
+        fn();
+      },delay);session.timers.add(timer);
+    };
+    const inspect=card=>{
+      if(session.phase==='ready' && !automatic)openCardDetails(card.id,{createdPreview:true});
+    };
+    const choose=(card,automaticStep=false)=>{
+      if(session.phase!=='ready' || (automatic && !automaticStep) || game!==owner || owner.cancelled || (!automatic && el('card-detail-overlay').classList.contains('show')))return;
+      session.phase='departing';session.chosen=card.id;playGameCue('select');
+      const rects=session.cards.map(entry=>entry.face.getBoundingClientRect());
+      let destination=handOrSeatRect(playerIdx);
+      if(playerIdx===localSeat()){
+        const placeholder=document.createElement('div');placeholder.className='hand-card creation-hand-placeholder';
+        placeholder.setAttribute('aria-hidden','true');el('hand').appendChild(placeholder);session.placeholder=placeholder;
+        const slot=placeholder.getBoundingClientRect();
+        if(slot.width>0 && slot.height>0 && slot.left>=0 && slot.right<=window.innerWidth && slot.top>=0 && slot.bottom<=window.innerHeight)destination=slot;
+      }
+      session.cards.forEach((entry,index)=>{
+        const face=entry.face,rect=rects[index];entry.inspect.disabled=true;face.setAttribute('aria-disabled','true');face.tabIndex=-1;
+        Object.assign(face.style,{left:`${rect.left+rect.width/2}px`,top:`${rect.top+rect.height/2}px`,width:`${rect.width}px`,height:`${rect.height}px`});
+        face.classList.add('creation-flying');face.getBoundingClientRect();
+      });
+      overlay.dataset.phase='departing';overlay.setAttribute('aria-busy','true');
+      let unused=0;
+      session.cards.forEach((entry,index)=>{
+        const face=entry.face,rect=rects[index];
+        if(entry===card && destination?.width){
+          face.style.left=`${destination.left+destination.width/2}px`;face.style.top=`${destination.top+destination.height/2}px`;
+          face.style.setProperty('--creation-flight-scale',String(Math.min(1,destination.width/Math.max(1,rect.width),destination.height/Math.max(1,rect.height))));
+        }else if(entry===card){
+          face.style.left=`${window.innerWidth*.25}px`;face.style.top=`${window.innerHeight*.9}px`;face.style.setProperty('--creation-flight-scale','.5');
+        }else{
+          const left=unused++%2===0,margin=layoutFlightMargin(face);
+          face.style.left=`${left?-margin:window.innerWidth+margin}px`;face.style.top=`${-margin}px`;
+          face.style.setProperty('--creation-flight-angle',`${left?-55:55}deg`);
+        }
+      });
+      queue(()=>finish(card.id),reduced?0:700);
+    };
+    const onResize=()=>{if(session.phase==='departing')finish(session.chosen);};
+    const onKey=event=>{
+      if(el('card-detail-overlay').classList.contains('show') || event.key!=='Tab')return;
+      const targets=session.phase==='ready' && !automatic?session.cards.flatMap(card=>[card.face,card.inspect]):[el('creation-title')];
+      const index=targets.indexOf(document.activeElement),next=index<0?(event.shiftKey?targets.length-1:0):event.shiftKey?(index-1+targets.length)%targets.length:(index+1)%targets.length;
+      event.preventDefault();targets[next].focus({preventScroll:true});
+    };
+    setRuleText(el('creation-title'),title);setRuleText(el('creation-status'),'Printing your card choices…');host.replaceChildren();
+    ids.forEach((id,index)=>{
+      const option=document.createElement('div'),face=document.createElement('div'),button=document.createElement('button');
+      option.className='creation-option';face.className='creation-face creation-printing';face.dataset.cardId=id;face.tabIndex=-1;
+      face.setAttribute('role','button');face.setAttribute('aria-disabled','true');face.setAttribute('aria-label',automatic?CARD[id].name:`${CARD[id].name}. Choose this printed card. Press I to inspect.`);
+      face.style.setProperty('--creation-print-delay',`${index*180}ms`);face.innerHTML=cardBoardHtml(id,{createdPreview:true});
+      button.className='creation-inspect';button.type='button';button.disabled=true;setRuleText(button,'Inspect');
+      const card={id,face,inspect:button};session.cards.push(card);
+      face.addEventListener('click',()=>choose(card));
+      face.addEventListener('keydown',event=>{
+        if(event.key==='Enter' || event.key===' '){event.preventDefault();choose(card);}
+        else if(event.key.toLowerCase()==='i'){event.preventDefault();inspect(card);}
+      });
+      button.addEventListener('click',()=>inspect(card));option.append(face,button);host.appendChild(option);
+    });
+    overlay.dataset.phase='printing';overlay.setAttribute('aria-busy','true');overlay.classList.add('show');
+    if(!automatic)el('creation-title').focus({preventScroll:true});document.addEventListener('keydown',onKey);window.addEventListener('resize',onResize);
+    queue(()=>{
+      session.phase='ready';overlay.dataset.phase='ready';overlay.setAttribute('aria-busy','false');
+      session.cards.forEach(card=>{card.face.classList.remove('creation-printing');card.face.tabIndex=automatic?-1:0;card.face.setAttribute('aria-disabled',String(automatic));card.inspect.disabled=automatic;});
+      setRuleText(el('creation-status'),automatic?'The chosen card is going into the hand.':'Choose one printed card to put into your hand. Press I or use Inspect to read its ability.');
+      if(automatic)queue(()=>choose(session.cards.find(card=>card.id===chosen),true),reduced?0:260);
+      else session.cards[0].face.focus({preventScroll:true});
+    },reduced?0:780+(ids.length-1)*180);
+  });
+}
+
 /* generic UI choosers used by the engine */
 const ui = {
   onPlacementArrival:prepareHandPlacementArrival,
@@ -9368,6 +9517,11 @@ const ui = {
   onRemiliaGather:showRemiliaGather,
   onPointsGained:playPointGainSound,
   onDrawCard:handleCardDraw,
+  async onCreationChoices({playerIdx,ids,chosen,title}){
+    const owner=game;
+    if(!owner || owner.cancelled || owner.fastAITest || !await waitForVisualEffects(owner))return;
+    return openCreationChoice(title,ids,{playerIdx,chosen});
+  },
   onDrawPileReturn:showDrawPileReturn,
   onTimeStop:showTimeStop,
   onRinReturn:showRinReturn,
@@ -9423,7 +9577,8 @@ const ui = {
       renderPlayers();
     });
   },
-  pickAbilityCards(title,ids,{createdPreview=false}={}){
+  pickAbilityCards(title,ids,{createdPreview=false,playerIdx=localSeat()}={}){
+    if(createdPreview)return openCreationChoice(title,ids,{playerIdx});
     return new Promise(resolve=>{
       setRuleText(el('modal-title'),title);
       el('modal-box').classList.add('chimera-mode');
@@ -13615,7 +13770,7 @@ document.addEventListener('keydown',event=>{
   if(game?.aiTestMode && key==='d'){
     event.preventDefault();if(el('ai-test-overlay').classList.contains('show'))closeAITestDashboard();else openAITestDashboard();return;
   }
-  if(document.querySelector('#ai-test-overlay.show,#ai-lab-overlay.show,#modal-overlay.show,#card-detail-overlay.show,#debug-overlay.show,#look-into-overlay.show'))return;
+  if(document.querySelector('#ai-test-overlay.show,#ai-lab-overlay.show,#modal-overlay.show,#creation-overlay.show,#card-detail-overlay.show,#debug-overlay.show,#look-into-overlay.show'))return;
   if(game?.aiTestMode && key==='p'){event.preventDefault();toggleAITestPause();}
   if(key==='n' && game && !game.cancelled){
     if(game.aiTestMode && aiTestWaitingForNext){event.preventDefault();nextAITestRound();}
@@ -13632,7 +13787,7 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='96859aa2e148168ef7d89fcc25393cb05aa14c69993da70f1395a8260cba6ced';
+const AI_EVALUATION_RULES_DIGEST='1176cb1ea955a0ad3c0a75734ecfdeddb3ecfe17d8c945dfc70f9cfb3e5aae8b';
 const AI_EVALUATION_POLICY_DIGEST='6faf3361a1b251468fc3e1ba603e0290ca6f3a2c2dae5fe632ef947cc75b905b';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
@@ -14152,6 +14307,7 @@ function resetGameView(){
   cancelAITestAutomation();
   closeDebugControls();
   if(typeof cancelByakurenPeek==='function')cancelByakurenPeek();
+  if(typeof closeCreationChoice==='function')closeCreationChoice();
   finishTitleCardDrag(true);
   clearTableCardSlides(false);
   clearTutorialPractice();
