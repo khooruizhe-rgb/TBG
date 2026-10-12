@@ -40,13 +40,13 @@ const match={players:[{idx:0,name:'You',isAI:false,hand:['haku_yuyuko',copy,worn
 A.setGame(match);
 test('Board cards distinguish printed copies, worn retrieved cards and ordinary originals',()=>{
   const printed=A.cardBoardHtml(copy),worn=A.cardBoardHtml('haku_yuyuko'),plain=A.cardBoardHtml('mtn_sanae');
-  assert.match(printed,/card-copy-print/);assert.match(printed,/card-print-ink card-art-mokou/);assert.match(printed,/Copy · Cost \+1/);
+  assert.match(printed,/card-copy-print/);assert.match(printed,/card-print-ink card-art-mokou/);assert(!printed.includes('instance-badge'));
   assert.match(worn,/card-rin-worn/);assert.match(worn,/card-wear-overlay/);assert.match(worn,/Ability: Overwrite/);
   assert(!plain.includes('card-copy-print'));assert(!plain.includes('card-rin-worn'));assert(!worn.includes('card-copy-print'));
 });
 test('Copying an overwritten card retains its worn appearance, draw effect and surcharge',()=>{
   const markup=A.cardBoardHtml(wornCopy);assert.match(markup,/card-copy-print card-rin-worn/);assert.match(markup,/card-wear-overlay/);
-  assert.match(markup,/Copy · Cost \+1 · ×2/);assert.match(markup,/Ability: Overwrite/);assert(A.dynamicCardDescription(wornCopy).startsWith('Placed: Draw a card.'));
+  assert(!markup.includes('instance-badge'));assert(!markup.includes('Cost +'));assert(A.dynamicCardDescription(wornCopy).startsWith('Placed: Draw a card.'));
   assert.equal(A.CARD[wornCopy].faction,'hakugyokurou');assert.equal(A.CARD.haku_yuyuko.faction,'hakugyokurou');
 });
 test('The real hand renderer applies the same paper and wear layers and Chinese skill badge',()=>{
@@ -54,7 +54,15 @@ test('The real hand renderer applies the same paper and wear layers and Chinese 
   assert.equal(cards.length,4);assert(cards[0].classList.contains('card-rin-worn'));assert(cards[1].classList.contains('card-copy-print'));
   assert(cards[2].classList.contains('card-rin-worn'));assert(cards[2].classList.contains('card-copy-print'));
   assert.match(cards[0].innerHTML,/技能：覆盖/);assert.match(cards[1].innerHTML,/card-print-ink/);assert.match(cards[2].innerHTML,/card-wear-overlay/);
+  assert(!cards[1].innerHTML.includes('instance-badge'));assert(!cards[2].innerHTML.includes('instance-badge'));
   assert(!cards[3].classList.contains('card-rin-worn'));assert(!cards[3].classList.contains('card-copy-print'));
+});
+test('Small printed portraits retain explicit image sizes, positions and no-repeat inside their paper margin',()=>{
+  const rule=html.slice(html.indexOf('.card-print-ink{')).split('}')[0];
+  assert.match(rule,/inset:6%/);assert.match(rule,/background-size:100% 100%,auto 106%,cover,cover/);
+  assert.match(rule,/background-position:center,bottom center,center,center/);assert.match(rule,/background-repeat:no-repeat/);
+  assert.match(html,/\.card-print-ink\.card-art-mokou\{background-position:center,38% bottom,center,center\}/);
+  assert.match(html,/\.card-print-ink\.card-art-hecatia\{background-size:100% 100%,auto 125%,cover,cover\}/);
 });
 test('Inspection shows 覆盖 / Overwrite with the draw effect and retains both material states',()=>{
   A.openCardDetails(wornCopy);assert(el('card-detail').classList.contains('card-rin-worn'));assert(el('card-detail').classList.contains('card-copy-print'));

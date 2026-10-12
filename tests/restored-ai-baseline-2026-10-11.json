@@ -1,0 +1,11 @@
+{
+  "commit": "cef7bb6ccc090336b3b26b1ba9df9372f4ae3470",
+  "gameBlob": "ac824111db28e4739ae76f02b19a3da7e3a8f60f",
+  "functions": {
+    "aiBetterCandidate": "85670850ca5bee539830689dd66b5f1112ecc79c629eeeebe94842618dfa4396",
+    "aiCurrentDecideHardAction": "a62182ec8789c7befb8e66c3e8451c536c53ca9c5a5a7eaad3e1c05f4fc3f570",
+    "aiCurrentDecideAction": "ed527f32a88aaf8bbba3a4848e9ef606e2a768e840f3e50fbc39760b4beaa82d",
+    "aiCurrentChooseCostCards": "e969defc050a2cd039f31e0745b64d27c99114cdaa89b4bdc73508a68ae2583c",
+    "aiCurrentBestTrade": "57b2b8406442ee9ce8cc1ec94d213edb2490ff8ef6e6509c345d3233fc3967e1"
+  }
+}

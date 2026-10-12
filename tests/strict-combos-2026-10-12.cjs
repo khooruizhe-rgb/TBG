@@ -2,6 +2,10 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const root=require('node:path').resolve(__dirname,'..');
 const html=fs.readFileSync(root+'/touhou_board_game_github_textures.html','utf8');
+if(!html.includes('function aiStrictComboPlan(')){
+  console.log('SKIP: strict-combo policy was rolled back. This suite documents commit 8575afe; run opening-restored-ai-2026-10-12.cjs for the active policy.');
+  process.exit(0);
+}
 const build=vm.createContext({});
 vm.runInContext(html.slice(html.indexOf('function buildAIEvaluationWorkerSource'),html.indexOf('\nfunction evalHashSeed')),build);
 build.html=html;
