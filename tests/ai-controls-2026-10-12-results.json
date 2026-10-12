@@ -12,7 +12,9 @@
     "Rule-text tracking uses weak references for detached nodes",
     "Fifteen hundred in-place restarts retain only the current two trap definitions",
     "Fifteen hundred restarts release copied cards and hidden-choice aliases",
-    "Cumulative 1500-game totals remain available through JSON and CSV export"
+    "Cumulative 1500-game totals remain available through JSON and CSV export",
+    "Reset resolves a pending human action only after retiring its match",
+    "Returning to the menu removes leftover overlays and the start button works across repeated games"
   ],
   "tokenDefinitions": 2,
   "snapshotTokens": 2

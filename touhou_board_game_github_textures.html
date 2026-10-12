@@ -2661,6 +2661,32 @@ body.mobile-landscape #online-box{padding:10px 14px;font-size:12px;}.online-room
 
 
 .instance-badge{font-size:9px;line-height:1.2;padding:2px 4px;background:rgba(0,0,0,.8);color:#ffe49b;border-radius:4px;position:absolute;top:24px;right:3px;max-width:92%;pointer-events:none}
+
+/* Keep draggable title cards below the menu, while leaving the memory table usable. */
+body:not(:has(#game.active)):not(.title-memory-active) #app{position:relative;z-index:10;isolation:isolate}
+.byakuren-peek-card>.table-card-back{width:100%;height:100%;border-width:3px}
+.byakuren-peek-card>.table-card-back span{font-size:clamp(18px,calc(var(--peek-card-width)*.3),46px)}
+/* Created copies are ink printed inside a pale sheet with an unprinted margin. */
+.card-copy-print{position:relative;isolation:isolate;overflow:hidden;border-radius:2px!important;background:repeating-linear-gradient(0deg,#81776a0b 0 1px,transparent 1px 3px),#faf8ef!important;color:#292724!important}
+.card-copy-print:not(.selected){border-color:#b7b2a4}
+.card-print-ink{position:absolute;inset:6%;z-index:0;pointer-events:none;border-radius:0;filter:grayscale(.85) contrast(.85);opacity:.72;mix-blend-mode:multiply}
+.card-copy-print>.icon-row,.card-copy-print>.cname{position:relative;z-index:3}
+.card-copy-print>.cname{color:#292724!important;background:#faf8efe8!important;text-shadow:none!important;border-radius:0!important;border-top:1px solid #867b6d66;padding:3px 1px!important}
+.card-copy-print>.icon-row{color:#292724;background:#faf8efb8}
+.card-copy-print>.instance-badge{z-index:4;background:#faf8eff0;color:#3b342c;border:1px solid #c1b8a8;border-radius:0}
+/* Rin's retrieved cards keep their art, with faded ink, scuffed edges and creases. */
+.card-rin-worn{position:relative;isolation:isolate;overflow:hidden;filter:sepia(.28) saturate(.72)}
+.card-wear-overlay{position:absolute;inset:0;z-index:2;pointer-events:none;border-radius:inherit;background:linear-gradient(130deg,#eddbbba6 0 4%,#68432d88 4.5%,transparent 6%),linear-gradient(315deg,#e5cda791 0 3%,#633c2866 3.8%,transparent 6%),linear-gradient(22deg,transparent 42%,#eddcc161 42.5%,#4b2d213b 43%,transparent 44%),radial-gradient(ellipse at 8% 82%,#67412a70,transparent 32%),repeating-linear-gradient(82deg,transparent 0 19px,#efdfbe21 20px,transparent 21px);box-shadow:inset 0 0 0 1px #dfc8a777,inset 0 0 9px 3px #3c261f8c}
+.card-rin-worn>.icon-row,.card-rin-worn>.cname{position:relative;z-index:3}
+.card-rin-worn>.instance-badge{z-index:4}
+#card-detail.card-copy-print{--detail-ink:#302c26;--detail-accent:#766044;border:7px solid #f6f2e7!important;border-radius:2px!important;box-shadow:0 14px 45px #0008,inset 0 0 0 1px #b5ac9c}
+#card-detail.card-copy-print .card-detail-portrait{filter:grayscale(.85) contrast(.85);opacity:.8;mix-blend-mode:multiply}
+#card-detail.card-copy-print .card-detail-name{color:#302c26;text-shadow:none}
+#card-detail.card-copy-print .card-detail-effect{background:#f4efe4;color:#302c26;box-shadow:none;border-top:1px solid #b5ac9c}
+#card-detail.card-copy-print .card-detail-ability{color:#65523b;text-shadow:none}
+#card-detail.card-copy-print .card-detail-description{color:#302c26;text-shadow:none}
+#card-detail.card-rin-worn{border-color:#b8a17c;box-shadow:0 14px 45px #0008,inset 0 0 20px 7px #4027188a}
+#card-detail.card-rin-worn::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(132deg,#ead6b6bb 0 3%,#58342266 3.8%,transparent 5%),linear-gradient(24deg,transparent 40%,#ead7b64d 40.5%,transparent 41.5%),radial-gradient(ellipse at 2% 84%,#432b2177,transparent 24%)}
 </style>
 </head>
 <body>
@@ -3067,7 +3093,7 @@ const CARDS = [
   { id:'hourai_kaguya', faction:'hourai', name:'Kaguya Houraisan', crown:true,
     desc:"Placed: Guess an Eientei card in another player’s hand. Each correct guess lets you place that card on the board and guess again." },
   { id:'hourai_eirin',  faction:'hourai', name:'Eirin Yagokoro',
-    desc:"Placed: Create an Eientei card and immediately play it. While this card is on the board, all Sage card abilities are disabled." },
+    desc:"Placed: Create an Eientei card other than Eirin Yagokoro and immediately play it. While this card is on the board, all Sage card abilities are disabled." },
   { id:'hourai_reisen', faction:'hourai', name:'Reisen Udongein Inaba',
     desc:"Placed: Choose a card in another player’s hand. They must place that card on their next turn." },
   { id:'hourai_mokou',  faction:'hourai', name:'Fujiwara no Mokou',
@@ -3085,7 +3111,7 @@ const CARDS = [
   { id:'palace_satori', faction:'palace', name:'Satori Komeiji', crown:true, cost1:true,
     desc:"[Cost I] Placed: Randomly reveal four cards in another player’s hand, then take any one card from that hand. Unrevealed cards remain selectable." },
   { id:'palace_rin',    faction:'palace', name:'Rin Kaenbyou',
-    desc:"Placed: Take a card from any discard pile into your hand. Replace its ability with “Placed: Draw a card” for the rest of this match." },
+    desc:"Placed: Take a card from any discard pile into your hand. Replace its ability with “Overwrite — Placed: Draw a card” for the rest of this match." },
   { id:'palace_utsuho', faction:'palace', name:'Utsuho Reiuji',
     desc:"Placed: Turn a 2×2 area of the board into wasteland." },
   { id:'palace_koishi', faction:'palace', name:'Koishi Komeiji', trigger:true,
@@ -3096,7 +3122,7 @@ const CARDS = [
   { id:'sage_kasen',  faction:'sage', name:'Kasen Ibara', crown:true, wild:true,
     desc:"This card counts as any four-card faction when claiming cards." },
   { id:'sage_matara', faction:'sage', name:'Matara Okina', crown:true,
-    desc:"Placed: Create a card currently on the board. The created copy gains double abilities." },
+    desc:"Placed: Create a card currently on the board other than Matara Okina. The created copy gains double abilities." },
   { id:'sage_ran',    faction:'sage', name:'Ran Yakumo',
     desc:"Placed: Draw one card. If Yukari Yakumo is on the board, immediately place that card." },
 
@@ -5131,7 +5157,7 @@ class Game {
       }
       case 'sage_matara': {
         const ids=self.selectableBoardCells(playerIdx,cell=>inBounds(cell.r,cell.c)).map(cell=>self.cardAt(cell.r,cell.c));
-        await self.createCard(playerIdx,ids,{double:true,title:'Matara Okina: create a board card with double abilities'});
+        await self.createCard(playerIdx,ids,{double:true,excludeBaseId:'sage_matara',title:'Matara Okina: create a board card with double abilities'});
         break;
       }
       case 'sage_ran': {
@@ -5351,7 +5377,7 @@ class Game {
         break;
       }
       case 'hourai_eirin': {
-        const copy=await self.createCard(playerIdx,CARDS.filter(x=>x.faction==='hourai'&&!x.token).map(x=>x.id),{template:true,title:'Eirin: create an Eientei card'});
+        const copy=await self.createCard(playerIdx,CARDS.filter(x=>x.faction==='hourai'&&!x.token).map(x=>x.id),{template:true,excludeBaseId:'hourai_eirin',title:'Eirin: create an Eientei card'});
         if(copy){
           const spaces=self.emptyOrWastelandForCard(CARD[copy],playerIdx);
           const cells=self.players[playerIdx].isAI?aiForcedPlacementCells(self,copy,spaces):spaces;
@@ -5377,11 +5403,13 @@ class Game {
 }
 
 /* 2026-10-12: creation, private newspapers and instance ability changes. */
-const REWORK_RULES_VERSION='2026-10-12-create-news-v1';
+const REWORK_RULES_VERSION='2026-10-12-create-news-v2';
 let nextCreatedCard=0,nextHiddenChoice=0;
 const COPY_PASSIVES=new Set(['sage_yukari','sage_kasen','mtn_nitori','hell_hecatia','palace_koishi']);
-CARD.__draw_one={id:'__draw_one',name:'Draw a card',faction:'token',desc:'Placed: Draw a card.'};
+CARD.__draw_one={id:'__draw_one',name:'Overwrite',faction:'token',desc:'Placed: Draw a card.'};
 function cardBaseId(id){return CARD[id]?.baseId || id;}
+function cardHasOverwrite(id){return (game?.permanentAbilities?.[id] || CARD[id]?.copiedAbility)==='__draw_one';}
+function cardMaterialClasses(id){return [CARD[id]?.createdCopy?'card-copy-print':'',cardHasOverwrite(id)?'card-rin-worn':''].filter(Boolean).join(' ');}
 function generatedCard(id){return /^created_card_\d+$/.test(id) || /^trap_token_\d+$/.test(id);}
 function copyDefinitions(match){return [...match.startingCardIds].filter(id=>CARD[id]?.createdCopy).map(id=>({...CARD[id]}));}
 function mergeAbilityFlags(a={},b={}){
@@ -5394,9 +5422,9 @@ function blueprintCopy(sourceId,id,ability,multiplier=1){
   return {...source,id,baseId,createdCopy:true,copiedAbility:ability,costBonus:(source.costBonus||0)+1,
     abilityMultiplier:multiplier===2?2:1,token:false,shopExpansion:false};
 }
-Game.prototype.createCard=async function(p,sourceIds,{double=false,template=false,title='Create: choose one of three cards'}={}){
+Game.prototype.createCard=async function(p,sourceIds,{double=false,template=false,excludeBaseId=null,title='Create: choose one of three cards'}={}){
   if(this.cancelled)return null;
-  const pool=[...new Set(sourceIds)].filter(id=>CARD[id]&&!CARD[id].token&&!CARD[id].shopkeeper);
+  const pool=[...new Set(sourceIds)].filter(id=>CARD[id]&&!CARD[id].token&&!CARD[id].shopkeeper && cardBaseId(id)!==excludeBaseId);
   const choices=shuffle(pool).slice(0,3);if(!choices.length)return null;
   let chosen;
   if(this.players[p].isAI){
@@ -7254,7 +7282,15 @@ const CARD_ART_CLASS = {
   heaven_tenshi: 'card-art-tenshi',
   heaven_iku: 'card-art-iku',
 }; // per-card portrait art, takes priority over the faction-level background
-function cardBgClass(c, cardId){ return `${CARD_ART_CLASS[cardBaseId(cardId)] || FACTION_BG_CLASS[c.faction] || ''} card-faction-${c.faction}`.trim(); }
+function cardArtworkClass(c,cardId){return `${CARD_ART_CLASS[cardBaseId(cardId)] || FACTION_BG_CLASS[c.faction] || ''} card-faction-${c.faction}`.trim();}
+function cardBgClass(c,cardId){return `${cardArtworkClass(c,cardId)} ${cardMaterialClasses(cardId)}`.trim();}
+function cardMaterialLayersHtml(id){
+  const card=CARD[id];
+  return (card?.createdCopy?`<div class="card-print-ink ${cardArtworkClass(card,id)}" aria-hidden="true"></div>`:'')
+    +(cardHasOverwrite(id)?'<div class="card-wear-overlay" aria-hidden="true"></div>':'');
+}
+function cardBackHtml(){return '<div class="table-card-back" aria-hidden="true"><span>☯</span></div>';}
+function inspectTableCard(node){if(!CARD[node.dataset.cardId]?.hiddenChoice)openCardDetails(node.dataset.cardId);}
 
 const CARD_DETAIL_FACTION_ICONS = {
   sdm: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/icons/scarlet_devil_mansion.png",
@@ -7393,7 +7429,7 @@ const CARD_ABILITY_NAMES = {
 /* ---------- Language selection: canonical rules stay language-independent. ---------- */
 let gameLanguage='en';
 try{const saved=window.localStorage?.getItem('boundary-language');if(saved==='zh-CN')gameLanguage=saved;}catch(_error){}
-const ZH_CARDS={"sdm_remilia": ["蕾米莉亚·斯卡蕾特", "命运操纵", "放置：将其他玩家手中的所有红魔馆卡牌加入你的手牌。"], "sdm_flandre": ["芙兰朵露·斯卡蕾特", "「目」之破坏", "放置：选择任意玩家的一张手牌，将其送入该玩家的弃牌堆。"], "sdm_patchouli": ["帕秋莉·诺蕾姬", "魔法风云", "放置：猜测另一名玩家手中的一张卡牌。猜对后，将该卡牌加入你的手牌。"], "sdm_sakuya": ["十六夜咲夜", "Zawarudo", "放置：获得两个额外回合，然后将你的手牌洗入抽牌堆。"], "haku_yuyuko": ["西行寺幽幽子", "幽冥缠身", "[代价 N] 放置：将 N 张随机的正交相邻卡牌送入你的弃牌堆。"], "haku_youmu": ["魂魄妖梦", "先之先", "放置：放置此卡不消耗你的回合。"], "hourai_kaguya": ["蓬莱山辉夜", "看我操作！", "放置：猜测另一名玩家手中的一张永远亭卡牌。每次猜对，你可以将该卡牌放到棋盘上并继续猜测。"], "hourai_eirin": ["八意永琳", "思兼装置", "放置：创造一张永远亭的卡牌，并将其立刻打出。此卡在棋盘上时，所有贤者卡牌的能力均被禁用。"], "hourai_reisen": ["铃仙·优昙华院·因幡", "狂气之瞳", "放置：选择另一名玩家的一张手牌。该玩家必须在下个回合放置这张卡牌。"], "hourai_mokou": ["藤原妹红", "凤凰复生", "放置：你的弃牌堆中每有一张卡牌，就抽一张牌。"], "mtn_kanako": ["八坂神奈子", "风神之神德", "此卡可以放在荒地上。此卡在棋盘上时，其他妖怪之山卡牌的放置能力发动两次。\n放置：将你手中的一张妖怪之山卡牌放到棋盘上。"], "mtn_suwako": ["洩矢诹访子", "诅咒之地", "放置：将三个棋盘格变为荒地。"], "mtn_sanae": ["东风谷早苗", "八坂之神风", "放置：抽一张牌。如果八坂神奈子在棋盘上，再抽一张牌。"], "mtn_aya": ["射命丸文", "才不是道听途说呢！", "放置：查看其他每名玩家的四张手牌，并记录于报纸中。只有你能阅读。其他玩家须将一张手牌付款给你订阅，才能观看情报。"], "palace_satori": ["古明地觉", "恐怖催眠术", "[代价 I] 放置：随机展示另一名玩家手牌中的四张卡牌，然后从其手牌中选取一张加入你的手牌。未展示的卡牌仍可选取。"], "palace_rin": ["火焰猫燐", "猫之步伐", "放置：将任意弃牌堆中的一张卡牌加入你的手牌，并将其技能改为“放置：抽一张牌”。"], "palace_utsuho": ["灵乌路空", "核裂变", "放置：将棋盘上的一个 2×2 区域变为荒地。"], "palace_koishi": ["古明地恋", "无意识的哲学", "棋盘上有三张地灵殿卡牌时，此卡会自动从你的手牌移到棋盘上。"], "sage_yukari": ["八云紫", "境界操纵", "你可以将此卡放在另一张棋盘卡牌上，并将被覆盖的卡牌加入你的手牌。"], "sage_kasen": ["茨木华扇", "无拘无束", "收取阵营卡牌时，此卡可视为任意4卡阵营的卡牌。"], "sage_matara": ["摩多罗隐岐奈", "/op", "放置：创造一张棋盘上的卡牌，使其获得双倍的能力。"], "sage_ran": ["八云蓝", "式神召回", "放置：抽一张牌。如果八云紫在棋盘上，立即放置抽到的卡牌。"], "reimu": ["博丽灵梦", "梦想天生", "放置：将棋盘上的一张领主卡牌加入你的手牌。"], "marisa": ["雾雨魔理沙", "极限火花", "放置：将棋盘上的一张非领主卡牌送入你的弃牌堆。"], "yuuka": ["风见幽香", "花之主宰", "放置：清除一个 3×3 区域中的荒地，然后将你的手牌洗入抽牌堆并抽四张牌。"], "medicine": ["梅蒂欣·梅兰可莉", "铃兰中毒", "放置：选择一名玩家，将其两张随机手牌放回抽牌堆。"], "hell_hecatia": ["赫卡提亚·拉碧斯拉祖利", "三位一体狂想曲", "此卡计为 3 点弃牌分数。只有弃牌堆已有 3 张及以上地狱卡牌时，此卡才能进入该弃牌堆。"], "hell_clownpiece": ["克劳恩皮丝", "污秽耐受", "此卡可以放在荒地上。\n放置：清除此卡周围的荒地。"], "hell_eiki": ["四季映姬", "黑白的判决", "[代价 I] 放置：将棋盘上数量最多的阵营的所有卡牌放回抽牌堆。"], "hell_komachi": ["小野塚小町", "距离操控", "放置：将此卡与另一张棋盘卡牌交换位置。如果棋盘上有另一张地狱卡牌，此次放置不消耗你的回合。"], "heaven_tenshi": ["比那名居天子", "全卡牌的绯想天！", "[代价 II] 放置：将棋盘上的所有非天界卡牌放回抽牌堆。"], "heaven_iku": ["永江衣玖", "驾驭雷云", "[代价 III] 放置：选择一个 2×2 区域，将其中最多两张随机的非天界卡牌送入你的弃牌堆。"], "temple_byakuren": ["圣白莲", "魔界幻想", "放置：你可以按任意顺序使用每个效果一次。\n[代价 IV] 获得三个额外回合。\n[代价 III] 将另外三张棋盘卡牌放回抽牌堆，并将其所在格变为荒地。\n[代价 II] 查看抽牌堆顶的三张牌，拿取一张，并按任意顺序放回其余卡牌。\n棋盘上每有一张其他命莲寺卡牌，每个效果的代价减少一。"], "temple_shou": ["寅丸星", "光辉宝藏", "[代价 I] 放置：棋盘上每有一块荒地，就抽一张牌，然后清除所有荒地。"], "temple_nue": ["封兽鵺", "能力奇美拉", "放置：从三张随机卡牌中选择一个能力，使用它的能力。"], "temple_murasa": ["村纱水蜜", "无底漩涡", "放置：你在接下来的一个回合中不能放置卡牌或交易。选择一名玩家。该玩家在接下来的两个回合中不能放置卡牌或交易。"], "temple_ichirin": ["云居一轮", "再打一轮！", "[代价 II] 放置：将每张非命莲寺卡牌向远离此卡的方向推一格。被推出棋盘的卡牌放回抽牌堆。"], "sdm_meiling": ["红美铃", "内劲", "放置：将一张相邻卡牌向远离此卡的方向移动一格。"], "hourai_tewi": ["因幡帝", "远古骗术", "放置：向其他每名玩家的手牌中加入一张陷阱。"], "mtn_nitori": ["河城荷取", "光学迷彩", "以此卡为中心的 3×3 区域中的卡牌不能被选中。"], "palace_yuugi": ["星熊勇仪", "怪力乱神", "[代价 II] 放置：将一张正交相邻的卡牌送入你的弃牌堆。"], "sage_mai_satono": ["丁礼田舞与尔子田里乃", "驱动活力", "放置：在你的下个回合获得一个额外回合。"], "hell_kutaka": ["庭渡久侘歌", "异界的护卫", "放置：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。反之，将正交相邻的位置变为荒地。"], "shop_rinnosuke": ["森近霖之助", "香霖堂", "此卡及其周围的卡牌不能被选中、移动或使用能力。\n先选择一张手牌，再点击森近霖之助即可交易。每回合限一次，且不消耗回合。"], "trap_token": ["陷阱", "嗯……这是陷阱！", "此卡在手牌中时，不能交易、弃置或放回抽牌堆。\n放置：将另一张手牌放回抽牌堆。"]};
+const ZH_CARDS={"sdm_remilia": ["蕾米莉亚·斯卡蕾特", "命运操纵", "放置：将其他玩家手中的所有红魔馆卡牌加入你的手牌。"], "sdm_flandre": ["芙兰朵露·斯卡蕾特", "「目」之破坏", "放置：选择任意玩家的一张手牌，将其送入该玩家的弃牌堆。"], "sdm_patchouli": ["帕秋莉·诺蕾姬", "魔法风云", "放置：猜测另一名玩家手中的一张卡牌。猜对后，将该卡牌加入你的手牌。"], "sdm_sakuya": ["十六夜咲夜", "Zawarudo", "放置：获得两个额外回合，然后将你的手牌洗入抽牌堆。"], "haku_yuyuko": ["西行寺幽幽子", "幽冥缠身", "[代价 N] 放置：将 N 张随机的正交相邻卡牌送入你的弃牌堆。"], "haku_youmu": ["魂魄妖梦", "先之先", "放置：放置此卡不消耗你的回合。"], "hourai_kaguya": ["蓬莱山辉夜", "看我操作！", "放置：猜测另一名玩家手中的一张永远亭卡牌。每次猜对，你可以将该卡牌放到棋盘上并继续猜测。"], "hourai_eirin": ["八意永琳", "思兼装置", "放置：创造一张永远亭的卡牌（永琳除外），并将其立刻打出。此卡在棋盘上时，所有贤者卡牌的能力均被禁用。"], "hourai_reisen": ["铃仙·优昙华院·因幡", "狂气之瞳", "放置：选择另一名玩家的一张手牌。该玩家必须在下个回合放置这张卡牌。"], "hourai_mokou": ["藤原妹红", "凤凰复生", "放置：你的弃牌堆中每有一张卡牌，就抽一张牌。"], "mtn_kanako": ["八坂神奈子", "风神之神德", "此卡可以放在荒地上。此卡在棋盘上时，其他妖怪之山卡牌的放置能力发动两次。\n放置：将你手中的一张妖怪之山卡牌放到棋盘上。"], "mtn_suwako": ["洩矢诹访子", "诅咒之地", "放置：将三个棋盘格变为荒地。"], "mtn_sanae": ["东风谷早苗", "八坂之神风", "放置：抽一张牌。如果八坂神奈子在棋盘上，再抽一张牌。"], "mtn_aya": ["射命丸文", "才不是道听途说呢！", "放置：查看其他每名玩家的四张手牌，并记录于报纸中。只有你能阅读。其他玩家须将一张手牌付款给你订阅，才能观看情报。"], "palace_satori": ["古明地觉", "恐怖催眠术", "[代价 I] 放置：随机展示另一名玩家手牌中的四张卡牌，然后从其手牌中选取一张加入你的手牌。未展示的卡牌仍可选取。"], "palace_rin": ["火焰猫燐", "猫之步伐", "放置：将任意弃牌堆中的一张卡牌加入你的手牌。该卡牌的技能替换为“覆盖：放置时抽一张牌”，持续到本局结束。"], "palace_utsuho": ["灵乌路空", "核裂变", "放置：将棋盘上的一个 2×2 区域变为荒地。"], "palace_koishi": ["古明地恋", "无意识的哲学", "棋盘上有三张地灵殿卡牌时，此卡会自动从你的手牌移到棋盘上。"], "sage_yukari": ["八云紫", "境界操纵", "你可以将此卡放在另一张棋盘卡牌上，并将被覆盖的卡牌加入你的手牌。"], "sage_kasen": ["茨木华扇", "无拘无束", "收取阵营卡牌时，此卡可视为任意4卡阵营的卡牌。"], "sage_matara": ["摩多罗隐岐奈", "/op", "放置：创造一张棋盘上的卡牌（摩多罗除外），使其获得双倍的能力。"], "sage_ran": ["八云蓝", "式神召回", "放置：抽一张牌。如果八云紫在棋盘上，立即放置抽到的卡牌。"], "reimu": ["博丽灵梦", "梦想天生", "放置：将棋盘上的一张领主卡牌加入你的手牌。"], "marisa": ["雾雨魔理沙", "极限火花", "放置：将棋盘上的一张非领主卡牌送入你的弃牌堆。"], "yuuka": ["风见幽香", "花之主宰", "放置：清除一个 3×3 区域中的荒地，然后将你的手牌洗入抽牌堆并抽四张牌。"], "medicine": ["梅蒂欣·梅兰可莉", "铃兰中毒", "放置：选择一名玩家，将其两张随机手牌放回抽牌堆。"], "hell_hecatia": ["赫卡提亚·拉碧斯拉祖利", "三位一体狂想曲", "此卡计为 3 点弃牌分数。只有弃牌堆已有 3 张及以上地狱卡牌时，此卡才能进入该弃牌堆。"], "hell_clownpiece": ["克劳恩皮丝", "污秽耐受", "此卡可以放在荒地上。\n放置：清除此卡周围的荒地。"], "hell_eiki": ["四季映姬", "黑白的判决", "[代价 I] 放置：将棋盘上数量最多的阵营的所有卡牌放回抽牌堆。"], "hell_komachi": ["小野塚小町", "距离操控", "放置：将此卡与另一张棋盘卡牌交换位置。如果棋盘上有另一张地狱卡牌，此次放置不消耗你的回合。"], "heaven_tenshi": ["比那名居天子", "全卡牌的绯想天！", "[代价 II] 放置：将棋盘上的所有非天界卡牌放回抽牌堆。"], "heaven_iku": ["永江衣玖", "驾驭雷云", "[代价 III] 放置：选择一个 2×2 区域，将其中最多两张随机的非天界卡牌送入你的弃牌堆。"], "temple_byakuren": ["圣白莲", "魔界幻想", "放置：你可以按任意顺序使用每个效果一次。\n[代价 IV] 获得三个额外回合。\n[代价 III] 将另外三张棋盘卡牌放回抽牌堆，并将其所在格变为荒地。\n[代价 II] 查看抽牌堆顶的三张牌，拿取一张，并按任意顺序放回其余卡牌。\n棋盘上每有一张其他命莲寺卡牌，每个效果的代价减少一。"], "temple_shou": ["寅丸星", "光辉宝藏", "[代价 I] 放置：棋盘上每有一块荒地，就抽一张牌，然后清除所有荒地。"], "temple_nue": ["封兽鵺", "能力奇美拉", "放置：从三张随机卡牌中选择一个能力，使用它的能力。"], "temple_murasa": ["村纱水蜜", "无底漩涡", "放置：你在接下来的一个回合中不能放置卡牌或交易。选择一名玩家。该玩家在接下来的两个回合中不能放置卡牌或交易。"], "temple_ichirin": ["云居一轮", "再打一轮！", "[代价 II] 放置：将每张非命莲寺卡牌向远离此卡的方向推一格。被推出棋盘的卡牌放回抽牌堆。"], "sdm_meiling": ["红美铃", "内劲", "放置：将一张相邻卡牌向远离此卡的方向移动一格。"], "hourai_tewi": ["因幡帝", "远古骗术", "放置：向其他每名玩家的手牌中加入一张陷阱。"], "mtn_nitori": ["河城荷取", "光学迷彩", "以此卡为中心的 3×3 区域中的卡牌不能被选中。"], "palace_yuugi": ["星熊勇仪", "怪力乱神", "[代价 II] 放置：将一张正交相邻的卡牌送入你的弃牌堆。"], "sage_mai_satono": ["丁礼田舞与尔子田里乃", "驱动活力", "放置：在你的下个回合获得一个额外回合。"], "hell_kutaka": ["庭渡久侘歌", "异界的护卫", "放置：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。反之，将正交相邻的位置变为荒地。"], "shop_rinnosuke": ["森近霖之助", "香霖堂", "此卡及其周围的卡牌不能被选中、移动或使用能力。\n先选择一张手牌，再点击森近霖之助即可交易。每回合限一次，且不消耗回合。"], "trap_token": ["陷阱", "嗯……这是陷阱！", "此卡在手牌中时，不能交易、弃置或放回抽牌堆。\n放置：将另一张手牌放回抽牌堆。"]};
 const ZH_FACTIONS={"sdm":"红魔馆","hakugyokurou":"白玉楼","hourai":"永远亭","mountain":"妖怪之山","palace":"地灵殿","sage":"贤者","hakurei":"博丽","sunflower":"太阳花田","hell":"地狱","heaven":"天界","temple":"命莲寺","kourindou":"香霖堂","token":"衍生物"};
 const ZH_TEXT={
   "Boundary of Fates": "命运的境界",
@@ -7984,7 +8020,7 @@ const ZH_LOG_ALIASES={Remilia:'蕾米莉亚',Flandre:'芙兰朵露',Patchouli:'�
 const localizedTextCache=new Map();
 const ZH_NAMES=Object.entries(ZH_TEXT).filter(([en])=>CARDS.some(card=>card.name===en) || Object.values(FACTIONS).some(f=>f.name===en))
   .sort((a,b)=>b[0].length-a[0].length).map(([en,zh])=>[new RegExp('(^|[^A-Za-z])'+en.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=$|[^A-Za-z])','g'),zh]);
-Object.assign(ZH_TEXT,{"Create": "创造", "Choose one of three randomly offered cards of the specified type. Add a copy to your hand; the original is unchanged. The copy’s ability costs one additional card. Double abilities resolve twice, with costs paid separately.": "从三张随机提供的同类型卡牌中选择一张，将其复制加入手牌。原卡不移动。复制卡的技能代价增加一张。双倍能力结算两次，各次分别付款。", "Placed: Draw a card.": "放置：抽一张牌。", "Draw a card": "抽一张牌", "Eirin: create an Eientei card": "永琳：创造一张永远亭卡牌", "Eirin: immediately play the created card": "永琳：立刻打出创造的卡牌", "Matara Okina: create a board card with double abilities": "摩多罗：创造一张棋盘卡牌，获得双倍能力", "Create: choose one of three cards": "创造：三选一", "Four random cards are face up. Other cards remain face down and can still be selected.": "随机四张卡牌正面展示。其余卡牌保持背面，仍可盲选。", "Subscribe: pay one card to Aya’s player": "订阅：将一张手牌付款给文的玩家", "Subscribe": "订阅", "Placed: Create an Eientei card and immediately play it. While this card is on the board, all Sage card abilities are disabled.": "放置：创造一张永远亭的卡牌，并将其立刻打出。此卡在棋盘上时，所有贤者卡牌的能力均被禁用。", "Placed: Create a card currently on the board. The created copy gains double abilities.": "放置：创造一张棋盘上的卡牌，使其获得双倍的能力。", "[Cost I] Placed: Randomly reveal four cards in another player’s hand, then take any one card from that hand. Unrevealed cards remain selectable.": "[代价 I] 放置：随机展示另一名玩家手牌中的四张卡牌，然后从其手牌中选取一张加入你的手牌。未展示的卡牌仍可选取。", "Placed: Take a card from any discard pile into your hand. Replace its ability with “Placed: Draw a card” for the rest of this match.": "放置：将任意弃牌堆中的一张卡牌加入你的手牌，并将其技能改为“放置：抽一张牌”。", "Placed: If this card is on wasteland, take a Hell card from the draw pile into your hand. Otherwise turn orthogonally adjacent positions into wasteland.": "放置：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。反之，将正交相邻的位置变为荒地。", "Placed: You cannot place cards or trade on your next turn. Choose a player who cannot place cards or trade on their next two turns.": "放置：你在接下来的一个回合中不能放置卡牌或交易。选择一名玩家。该玩家在接下来的两个回合中不能放置卡牌或交易。", "Placed: Look at four cards from each other player’s hand and record them in a private newspaper. Other players can read it only by paying one hand card to you to subscribe.": "放置：查看其他每名玩家的四张手牌，并记录于报纸中。只有你能阅读。其他玩家须将一张手牌付款给你订阅，才能观看情报。", "Placed: Choose an ability from three random cards. Use its ability.": "放置：从三张随机卡牌中选择一个能力，使用它的能力。"});
+Object.assign(ZH_TEXT,{"Create": "创造", "Choose one of three randomly offered cards of the specified type. Add a copy to your hand; the original is unchanged. The copy’s ability costs one additional card. Double abilities resolve twice, with costs paid separately.": "从三张随机提供的同类型卡牌中选择一张，将其复制加入手牌。原卡不移动。复制卡的技能代价增加一张。双倍能力结算两次，各次分别付款。", "Placed: Draw a card.": "放置：抽一张牌。", "Draw a card": "抽一张牌", "Overwrite": "覆盖", "Face-down card. Select or drag to take it.": "背面牌。可选择或拖动来取走。", "Eirin: create an Eientei card": "永琳：创造一张永远亭卡牌", "Eirin: immediately play the created card": "永琳：立刻打出创造的卡牌", "Matara Okina: create a board card with double abilities": "摩多罗：创造一张棋盘卡牌，获得双倍能力", "Create: choose one of three cards": "创造：三选一", "Four random cards are face up. Other cards remain face down and can still be selected.": "随机四张卡牌正面展示。其余卡牌保持背面，仍可盲选。", "Subscribe: pay one card to Aya’s player": "订阅：将一张手牌付款给文的玩家", "Subscribe": "订阅", "Placed: Create an Eientei card other than Eirin Yagokoro and immediately play it. While this card is on the board, all Sage card abilities are disabled.": "放置：创造一张永远亭的卡牌（永琳除外），并将其立刻打出。此卡在棋盘上时，所有贤者卡牌的能力均被禁用。", "Placed: Create a card currently on the board other than Matara Okina. The created copy gains double abilities.": "放置：创造一张棋盘上的卡牌（摩多罗除外），使其获得双倍的能力。", "[Cost I] Placed: Randomly reveal four cards in another player’s hand, then take any one card from that hand. Unrevealed cards remain selectable.": "[代价 I] 放置：随机展示另一名玩家手牌中的四张卡牌，然后从其手牌中选取一张加入你的手牌。未展示的卡牌仍可选取。", "Placed: Take a card from any discard pile into your hand. Replace its ability with “Overwrite — Placed: Draw a card” for the rest of this match.": "放置：将任意弃牌堆中的一张卡牌加入你的手牌。该卡牌的技能替换为“覆盖：放置时抽一张牌”，持续到本局结束。", "Placed: If this card is on wasteland, take a Hell card from the draw pile into your hand. Otherwise turn orthogonally adjacent positions into wasteland.": "放置：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。反之，将正交相邻的位置变为荒地。", "Placed: You cannot place cards or trade on your next turn. Choose a player who cannot place cards or trade on their next two turns.": "放置：你在接下来的一个回合中不能放置卡牌或交易。选择一名玩家。该玩家在接下来的两个回合中不能放置卡牌或交易。", "Placed: Look at four cards from each other player’s hand and record them in a private newspaper. Other players can read it only by paying one hand card to you to subscribe.": "放置：查看其他每名玩家的四张手牌，并记录于报纸中。只有你能阅读。其他玩家须将一张手牌付款给你订阅，才能观看情报。", "Placed: Choose an ability from three random cards. Use its ability.": "放置：从三张随机卡牌中选择一个能力，使用它的能力。"});
 ZH_DYNAMIC.unshift([/^Create copy: ability cost \+(\d+)(.*)$/,(_,n,tail)=>`创造复制：技能代价 +${n}。${tail.includes("Double abilities")?"双倍能力结算两次，每次分别支付代价。":""}`]);
 Object.assign(ZH_TEXT,{"F8 opens test data and pauses the test. Closing this window keeps it paused.": "按 F8 打开测试数据并暂停。关闭窗口后保持暂停。", "D / F8: open test data and pause": "D / F8：打开测试数据并暂停", "Test data (D / F8)": "测试数据（D / F8）"});
 function translateGameText(value){
@@ -8006,7 +8042,7 @@ function translateGameText(value){
 }
 function setCardAbilityTitle(node,cardId){
   // Pick once for this view; translation and observer updates keep the same title.
-  abilityTitleSources.set(node,{title:(game?.abilityId(cardId)==='__draw_one'?'Draw a card':CARD_ABILITY_NAMES[cardBaseId(cardId)]) || 'Card Ability',tenshiAlternative:cardId==='heaven_tenshi' && Math.random()<0.2});
+  abilityTitleSources.set(node,{title:(game?.abilityId(cardId)==='__draw_one'?'Overwrite':CARD_ABILITY_NAMES[cardBaseId(cardId)]) || 'Card Ability',tenshiAlternative:cardId==='heaven_tenshi' && Math.random()<0.2});
   renderCardAbilityTitle(node);
 }
 function renderCardAbilityTitle(node){
@@ -8263,6 +8299,7 @@ function openCardDetails(cardId,{followReference=false}={}){
     ? `${c.faction} detail-card-${cardId}`
     : `other-faction detail-card-${cardId}`;
   detail.classList.add(`card-faction-${c.faction}`);
+  for(const name of cardMaterialClasses(cardId).split(' ').filter(Boolean))detail.classList.add(name);
   if(game && game.isCardAbilityDisabled(cardId)) detail.classList.add('eirin-muted');
   const factionIcon = CARD_DETAIL_FACTION_ICONS[c.faction];
   const iconHost = el('card-detail-icon');
@@ -8374,7 +8411,7 @@ function cardBoardHtml(cardId){
   const illusionClass=illusion ? ' card-art-illusion' : '';
   const muted = game && typeof game.isOnBoard==='function' && game.isCardAbilityDisabled(cardId) ? ' eirin-muted' : '';
   return `<div class="board-card ${c.crown?'crown':''} ${bgClass}${muted}${illusionClass}"${crownStyle}>
-    <div class="icon-row">${cardFactionBadgeHtml(c.faction)}${c.crown?'<span class="crown-mark">👑</span>':''}</div>
+    ${cardMaterialLayersHtml(cardId)}<div class="icon-row">${cardFactionBadgeHtml(c.faction)}${c.crown?'<span class="crown-mark">👑</span>':''}</div>
     <div class="cname">${c.name}</div>${instanceBadgeHtml(cardId)}
   </div>`;
 }
@@ -8988,7 +9025,7 @@ function renderHand(){
     }
     syncRemiliaArrival(div,cardId);
     if(mindArrivals.get(cardId)>Date.now()) div.style.setProperty('--mind-age',`${-Math.max(0,1000-(mindArrivals.get(cardId)-Date.now()))}ms`);
-    div.innerHTML = `<div class="icon-row">${cardFactionBadgeHtml(c.faction)}${c.crown?'<span class="crown-mark">👑</span>':''}</div>
+    div.innerHTML = `${cardMaterialLayersHtml(cardId)}<div class="icon-row">${cardFactionBadgeHtml(c.faction)}${c.crown?'<span class="crown-mark">👑</span>':''}</div>
       <div class="cname">${c.name}</div>${instanceBadgeHtml(cardId)}`;
     if(forced===cardId){
       const marker=document.createElement('span');marker.className='reisen-forced-marker';
@@ -9137,7 +9174,7 @@ function escapeLogHtml(value){
 function instanceBadgeHtml(id){
   const card=CARD[id],labels=[];
   if(card?.createdCopy)labels.push((gameLanguage==='zh-CN'?'复制 · 代价 +':'Copy · Cost +')+card.costBonus+(card.abilityMultiplier===2?' · ×2':''));
-  if(game?.permanentAbilities?.[id]==='__draw_one')labels.push(gameLanguage==='zh-CN'?'技能：抽一张牌':'Ability: Draw a card');
+  if(cardHasOverwrite(id))labels.push(gameLanguage==='zh-CN'?'技能：覆盖':'Ability: Overwrite');
   return labels.length?`<div class="instance-badge">${labels.join(' · ')}</div>`:'';
 }
 function dynamicCardDescription(id,inHand=false){
@@ -12048,8 +12085,9 @@ function aiCreatedValue(p,id,{double=false,template=false}={}){
 }
 function aiNewCreationPlan(p,actor,r,c){
   const ability=game.abilityId(actor),isEirin=ability==='hourai_eirin';
-  const pool=isEirin?CARDS.filter(x=>x.faction==='hourai'&&!x.token).map(x=>x.id)
+  const candidates=isEirin?CARDS.filter(x=>x.faction==='hourai'&&!x.token).map(x=>x.id)
     :game.selectableBoardCells(p,x=>inBounds(x.r,x.c)).map(x=>game.cardAt(x.r,x.c)).filter(id=>CARD[id]&&!CARD[id].token&&!CARD[id].shopkeeper);
+  const pool=candidates.filter(id=>cardBaseId(id)!==ability);
   if(!pool.length)return {abilityId:ability,utility:0,direct:0,handGain:0,bonus:0,skip:true};
   const values=pool.map(id=>aiCreatedValue(p,id,{double:!isEirin,template:isEirin}));
   const expected=aiExpectedBestAcquisition(values,Math.min(3,values.length),0);
@@ -13032,7 +13070,7 @@ function finishTitleCardDrag(cancelled=false,releasedAt=performance.now()){
   if(previous?.node===drag.node && previous.pointerType===drag.pointerType && time-previous.time<=500 &&
     Math.hypot(drag.startX-previous.x,drag.startY-previous.y)<=16){
     lastTitleCardTap=null;drag.node.dataset.ignoreClickUntil=String(time+450);
-    openCardDetails(drag.node.dataset.cardId);
+    inspectTableCard(drag.node);
   }else if(drag.node.dataset.titlePreview==='true'){
     // Pointer release also handles phones that suppress a compatibility click after preventDefault.
     drag.node.dataset.pointerClickUntil=String(time+450);flipTitleCard(drag.node,true);
@@ -13087,7 +13125,7 @@ function onTitleCardDoubleClick(event){
   event.preventDefault();event.stopPropagation();const node=event.currentTarget;
   if(!movableTableCardEnabled(node) || Number(node.dataset.ignoreClickUntil || 0)>Date.now())return;
   stopTableCardSlide(node);
-  lastTitleCardTap=null;node.dataset.ignoreClickUntil=String(Date.now()+450);openCardDetails(node.dataset.cardId);
+  lastTitleCardTap=null;node.dataset.ignoreClickUntil=String(Date.now()+450);inspectTableCard(node);
 }
 function onTitleCardKeyDown(event){
   if(!movableTableCardEnabled(event.currentTarget))return;
@@ -13096,7 +13134,12 @@ function onTitleCardKeyDown(event){
   if(event.currentTarget.dataset.titlePreview==='true' && ['f','enter',' '].includes(event.key.toLowerCase())){
     event.preventDefault();flipTitleCard(event.currentTarget);return;
   }
-  if(event.key.toLowerCase()==='i' || event.key==='Enter' || event.key===' '){event.preventDefault();openCardDetails(event.currentTarget.dataset.cardId);return;}
+  if(event.key.toLowerCase()==='i' || event.key==='Enter' || event.key===' '){
+    event.preventDefault();
+    if(CARD[event.currentTarget.dataset.cardId]?.hiddenChoice){if(event.key.toLowerCase()!=='i')peekCardSession?.update(event.currentTarget);}
+    else inspectTableCard(event.currentTarget);
+    return;
+  }
   const directions={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};
   const delta=directions[event.key];if(!delta)return;
   event.preventDefault();const center=liftTitleCard(event.currentTarget),step=event.shiftKey?40:12;
@@ -13256,7 +13299,7 @@ function renderTitleTableCards(){
     const faceDown=index===6 || index===7,turn=document.createElement('div'),front=document.createElement('div'),reverse=document.createElement('div');
     card.dataset.faceDown=String(faceDown);card.classList.toggle('table-card-facedown',faceDown);card.setAttribute('aria-pressed',String(faceDown));
     turn.className='table-card-turn';front.className='table-card-front';reverse.className='table-card-reverse';
-    front.innerHTML=cardBoardHtml(preview.id);reverse.innerHTML='<div class="table-card-back"><span>☯</span></div>';
+    front.innerHTML=cardBoardHtml(preview.id);reverse.innerHTML=cardBackHtml();
     front.setAttribute('aria-hidden',String(faceDown));reverse.setAttribute('aria-hidden',String(!faceDown));
     turn.appendChild(front);turn.appendChild(reverse);card.appendChild(turn);
     card.addEventListener('pointerdown',onTitleCardPointerDown);card.addEventListener('pointermove',onTitleCardPointerMove);
@@ -13390,8 +13433,11 @@ function openByakurenPeek(ids,opts={}){
     host.replaceChildren();
     ids.forEach((id,index)=>{
       const node=document.createElement('div');node.className='table-scatter-card byakuren-peek-card table-card-moved';node.dataset.cardId=id;node.dataset.peekCard='true';node.dataset.angle=String((index-1)*4);
-      node.setAttribute('role','button');node.tabIndex=0;node.setAttribute('aria-label',`${CARD[id].name}. Drag to move; double-click or double-tap to inspect.`);
-      node.style.setProperty('--table-angle',`${(index-1)*4}deg`);node.innerHTML=CARD[id]?.hiddenChoice?'<div class="card-face faction-bg-token"><div class="cname">？</div><div class="cdesc">Face down · 可盲选</div></div>':cardBoardHtml(id)+'<span class="peek-order"></span>';
+      const hidden=!!CARD[id]?.hiddenChoice;
+      node.classList.toggle('peek-card-facedown',hidden);
+      node.setAttribute('role','button');node.tabIndex=0;
+      node.setAttribute('aria-label',hidden ? translateGameText('Face-down card. Select or drag to take it.') : `${CARD[id].name}. Drag to move; double-click or double-tap to inspect.`);
+      node.style.setProperty('--table-angle',`${(index-1)*4}deg`);node.innerHTML=(hidden?cardBackHtml():cardBoardHtml(id))+'<span class="peek-order"></span>';
       node.addEventListener('pointerdown',onTitleCardPointerDown);node.addEventListener('pointermove',onTitleCardPointerMove);node.addEventListener('pointerup',onTitleCardPointerUp);node.addEventListener('pointercancel',onTitleCardPointerCancel);node.addEventListener('lostpointercapture',onTitleCardPointerCancel);
       node.addEventListener('click',event=>{event.stopPropagation();update(node);});node.addEventListener('dblclick',onTitleCardDoubleClick);node.addEventListener('keydown',onTitleCardKeyDown);
       host.appendChild(node);nodes.push(node);
@@ -13454,7 +13500,7 @@ function queueAITestStatsRender(){
 function aiTestPercent(value,total){return total ? `${(value/total*100).toFixed(1)}%` : '—';}
 function aiTestTable(headings,rows){return `<table><thead><tr>${headings.map(label=>`<th>${ruleTextHtml(label)}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map(value=>`<td>${value}</td>`).join('')}</tr>`).join('')}</tbody></table>`;}
 function aiTestCardName(id){return ruleTextHtml(CARD[testCardId(id)]?.name || id);}
-function aiTestAbilityName(id){return ruleTextHtml(CARD_ABILITY_NAMES[id] || 'Other');}
+function aiTestAbilityName(id){return ruleTextHtml(id==='__draw_one'?'Overwrite':CARD_ABILITY_NAMES[id] || 'Other');}
 function aiTestAverage(sum,count){return count?((sum||0)/count).toFixed(2):'—';}
 function aiTestTradeRows(entries,pairs=false){
   return entries.sort(([,a],[,b])=>b.trades-a.trades).map(([id,row])=>{
@@ -13648,8 +13694,8 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='b4b9b4c49ae2a629ed4d8000ab7a4988932158511ab9a0ded72bbe7df395b84a';
-const AI_EVALUATION_POLICY_DIGEST='fcd27d97501a20da382690c22a4c1fd2dfa788db3ac19743606ec09961da2337';
+const AI_EVALUATION_RULES_DIGEST='cda2fc12883dfdc9049aac5cce0ce446dcefe80a605f29744a8b570624c21185';
+const AI_EVALUATION_POLICY_DIGEST='93ac8f19473b9e79b18b6e52f59c8efa35d26d9bc8a124e4eacb7946468e40e6';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
   if(!source)throw new Error('Game source is unavailable.');
@@ -14161,6 +14207,9 @@ el('customize-toggle').addEventListener('click', () => {
 });
 
 function resetGameView(){
+  if(game)game.cancelled=true;
+  const resolveHumanTurn=window.__resolveHumanTurn;window.__resolveHumanTurn=null;
+  resolveHumanTurn?.({});
   closeTitleMemoryGame(false);
   cancelAITestAutomation();
   closeDebugControls();
@@ -14168,8 +14217,6 @@ function resetGameView(){
   finishTitleCardDrag(true);
   clearTableCardSlides(false);
   clearTutorialPractice();
-  // Retire the old match before clearing its controls, animations, or pending input.
-  if(game) game.cancelled=true;
   pendingRemoteTurn?.resolve({});pendingRemoteTurn=null;
   pendingRemoteChoice?.resolve(null);pendingRemoteChoice=null;
   for(const cancel of [...presentationWaiters])cancel();
@@ -14233,6 +14280,8 @@ function returnToMainMenu(){
   closeOnlineSession();
   resetGameView();
   closeAITestDashboard();
+  closeAILab();
+  el('online-overlay').classList.remove('show');
   updateAITestControls();
   el('game').classList.remove('active');
   el('setup').style.display='';

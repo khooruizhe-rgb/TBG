@@ -24,6 +24,8 @@ const context=vm.createContext({console,Date:FixtureDate,document,window:{scroll
   renderBoard(){context.drawCalls++;},renderHand(){},renderPlayers(){},renderLog(){},renderStatus(){},updateTutorialProgress(){},publishSnapshot(){},playGameCue(){},drawCalls:0,
   runNextTurn(){context.turnStarts++;},turnStarts:0,speakRinnosuke(){},queueMobileViewport(){},closeAITestDashboard(){element('ai-test-overlay').classList.remove('show');},
   closeOnlineSession(){},startOnlineHost(){},showOnlineError(){},clearTitleTableSlides(){}});
+context.closeAILab=()=>element('ai-lab-overlay').classList.remove('show');
+context.renderTitleTableCards=()=>{};context.updateStartButtonState=()=>{};context.fullscreenElement=()=>null;
 vm.runInContext(html.slice(html.indexOf('const DIRS4 ='),html.indexOf('/* ===================== UI layer')),context);
 vm.runInContext(`var game=null,online=null,ui={},customizeOn=false,customSelected=new Set(),chosenBoardSize=4,chosenPlayerCount=3,chosenAIDifficulty='hard';
 var pendingRemoteTurn=null,pendingRemoteChoice=null,pendingPlayerChoice=null,pendingHandChoice=null,pendingRectChoice=null,cancelLookIntoView=null;
@@ -36,8 +38,9 @@ for(const name of ['closeTitleMemoryGame','closeDebugControls','cancelByakurenPe
 vm.runInContext(html.slice(html.indexOf('function pruneRuleTextSources()'),html.indexOf('\nfunction canonicalCardName')),context);
 vm.runInContext(html.slice(html.indexOf('let announcedGameResult='),html.indexOf('/* generic UI choosers')),context);
 vm.runInContext(html.slice(html.indexOf('/* Completed-game statistics'),html.indexOf('/* AI evaluation engine start */')),context);
-vm.runInContext(html.slice(html.indexOf('function resetGameView()'),html.indexOf('\nfunction returnToMainMenu')),context);
+vm.runInContext(html.slice(html.indexOf('function resetGameView()'),html.indexOf('\nfunction startNewGame')),context);
 vm.runInContext(html.slice(html.indexOf('function startNewGame('),html.indexOf('/* Rinnosuke speaks')),context);
+vm.runInContext(html.slice(html.indexOf("el('start-btn').addEventListener('click'"),html.indexOf('\nrenderTitleTableCards();',html.indexOf("el('start-btn').addEventListener('click'"))),context);
 function flushFrames(){const timer=vm.runInContext('fastAITestRenderTimer',context);if(timers.has(timer)){const job=timers.get(timer);timers.delete(timer);clock=job.due;job.fn();}const jobs=[...frames.values()];frames.clear();for(const fn of jobs)fn();}
 function press(key,options={}){const event={key,repeat:false,isComposing:false,target:{closest(){return options.input?{}:null;}},preventDefault(){this.prevented=true;},...options};for(const fn of documentListeners.get('keydown')||[])fn(event);return event;}
 const result={checks:[]};
@@ -76,5 +79,16 @@ const check=(label,fn)=>{fn();result.checks.push(label);};
   vm.runInContext('aiTestStats=importedStats;',context);
   assert.strictEqual(vm.runInContext('aiTestExportData().statistics.games',context),1500);
   fs.writeFileSync(root+'/tests/ai-controls-2026-10-12-reexport.csv',vm.runInContext('aiTestCSV()',context));result.checks.push('Cumulative 1500-game totals remain available through JSON and CSV export');
+  const retired=vm.runInContext('game',context);let retiredAtResolve=false;
+  const humanWait=new Promise(resolve=>{context.window.__resolveHumanTurn=value=>{retiredAtResolve=retired.cancelled;resolve(value);};});
+  vm.runInContext('resetGameView()',context);assert.deepStrictEqual({...await humanWait},{});assert(retiredAtResolve);assert.strictEqual(context.window.__resolveHumanTurn,null);
+  result.checks.push('Reset resolves a pending human action only after retiring its match');
+  for(let i=0;i<3;i++){
+    const before=context.turnStarts;element('start-btn').emit('click',{});flushFrames();assert.strictEqual(context.turnStarts,before+1);assert(element('game').classList.contains('active'));
+    element('ai-lab-overlay').classList.add('show');element('online-overlay').classList.add('show');element('ai-test-overlay').classList.add('show');
+    vm.runInContext('returnToMainMenu()',context);assert.strictEqual(vm.runInContext('game',context),null);assert(!element('game').classList.contains('active'));assert.strictEqual(element('setup').style.display,'');
+    for(const id of ['ai-lab-overlay','online-overlay','ai-test-overlay'])assert(!element(id).classList.contains('show'));
+  }
+  result.checks.push('Returning to the menu removes leftover overlays and the start button works across repeated games');
   fs.writeFileSync(root+'/tests/ai-controls-2026-10-12-results.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));
 })().catch(e=>{console.error(e.stack);process.exitCode=1});

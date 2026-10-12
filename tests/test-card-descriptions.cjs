@@ -219,7 +219,7 @@ test('Placed is the only colon label and Mountain descriptions do not repeat Kan
   assert.equal(A.CARD.haku_youmu.desc,'Placed: Placing this card does not use your turn.');
   assert.equal(A.CARD.mtn_sanae.desc,'Placed: Draw a card. If Kanako Yasaka is on the board, draw another card.');
   assert.equal(A.CARD.hourai_mokou.desc,'Placed: Draw a card for each card in your discard pile.');
-  assert.equal(A.CARD.hourai_eirin.desc,'Placed: Create an Eientei card and immediately play it. While this card is on the board, all Sage card abilities are disabled.');
+  assert.equal(A.CARD.hourai_eirin.desc,'Placed: Create an Eientei card other than Eirin Yagokoro and immediately play it. While this card is on the board, all Sage card abilities are disabled.');
 });
 test('Ability headings in both languages fit on open and resize rather than wrapping or truncating',()=>{
   const heading=el('card-detail-ability');heading.baseFontSize=36;
