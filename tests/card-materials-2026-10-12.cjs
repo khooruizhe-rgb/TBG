@@ -36,7 +36,7 @@ const copy='created_card_910',wornCopy='created_card_911';
 A.CARD[copy]={...A.CARD.hourai_mokou,id:copy,baseId:'hourai_mokou',createdCopy:true,copiedAbility:'hourai_mokou',costBonus:1,abilityMultiplier:1};
 A.CARD[wornCopy]={...A.CARD.haku_yuyuko,id:wornCopy,baseId:'haku_yuyuko',createdCopy:true,copiedAbility:'__draw_one',costBonus:1,abilityMultiplier:2};
 const match={players:[{idx:0,name:'You',isAI:false,hand:['haku_yuyuko',copy,wornCopy,'mtn_sanae']}],currentPlayerIdx:0,forcedPlay:{},permanentAbilities:{haku_yuyuko:'__draw_one'},
-  isPlacementBlocked:()=>false,isCardAbilityDisabled:()=>false,isOnBoard:()=>false,abilityId(id){return this.permanentAbilities[id]||A.CARD[id].copiedAbility||id;}};
+  isPlacementBlocked:()=>false,isCardAbilityDisabled:()=>false,isSageMuted:()=>false,isOnBoard:()=>false,abilityId(id){return this.permanentAbilities[id]||A.CARD[id].copiedAbility||id;}};
 A.setGame(match);
 test('Board cards distinguish printed copies, worn retrieved cards and ordinary originals',()=>{
   const printed=A.cardBoardHtml(copy),worn=A.cardBoardHtml('haku_yuyuko'),plain=A.cardBoardHtml('mtn_sanae');
@@ -65,5 +65,20 @@ test('Inspection shows 覆盖 / Overwrite with the draw effect and retains both 
 test('Inspecting and rendering ordinary cards clears material state from reused elements',()=>{
   A.openCardDetails('mtn_sanae');assert(!el('card-detail').classList.contains('card-rin-worn'));assert(!el('card-detail').classList.contains('card-copy-print'));
   match.permanentAbilities={};A.renderHand();assert(!el('hand').children[0].classList.contains('card-rin-worn'));
+});
+test('Only Sage muting applies Eirin desaturation; unpaid copies and non-Sage crowns retain color',()=>{
+  match.isCardAbilityDisabled=()=>true;
+  match.isSageMuted=id=>A.CARD[id]?.faction==='sage';
+  match.players[0].hand=['mtn_kanako','sdm_remilia','hourai_tewi',copy,'sage_kasen'];
+  A.renderHand();
+  const cards=el('hand').children;
+  assert(cards.slice(0,4).every(card=>!card.classList.contains('eirin-muted')));
+  assert(cards[4].classList.contains('eirin-muted'));
+  A.openCardDetails(copy);assert(!el('card-detail').classList.contains('eirin-muted'));
+  A.openCardDetails('sage_kasen');assert(el('card-detail').classList.contains('eirin-muted'));
+  A.openCardDetails('mtn_kanako');assert(!el('card-detail').classList.contains('eirin-muted'));
+  for(const selector of ['.card-print-ink','#card-detail.card-copy-print .card-detail-portrait']){
+    const rule=html.slice(html.indexOf(selector+'{')).split('}')[0];assert(!rule.includes('grayscale'));
+  }
 });
 console.log(`${tests.length}/${tests.length} card material checks passed`);

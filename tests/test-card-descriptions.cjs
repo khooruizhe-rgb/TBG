@@ -51,7 +51,7 @@ const document={get activeElement(){return activeElement;},createElement:tag=>ne
 const windowListeners=[];
 const context={console,document,el,requestAnimationFrame:fn=>fn(),getComputedStyle:node=>({fontSize:`${node.baseFontSize||22}px`}),
   window:{innerWidth:360,innerHeight:640,addEventListener:(type,fn)=>windowListeners.push({type,fn})},KOURINDOU_PORTRAITS:{},CARD_DETAIL_PORTRAITS:{},TEMPLE_UNZAN_PORTRAIT:"https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/myouren_temple/unzan.webp",
-  game:{players:[{hand:['shop_rinnosuke']}],isActiveOnBoard:()=>false,eirinActive:()=>false,isCardAbilityDisabled:()=>false,abilityId:id=>id,permanentAbilities:{}},
+  game:{players:[{hand:['shop_rinnosuke']}],isActiveOnBoard:()=>false,eirinActive:()=>false,isCardAbilityDisabled:()=>false,isSageMuted:()=>false,abilityId:id=>id,permanentAbilities:{}},
   pendingCellChoice:{cancellable:true},cancelHandSelection(){context.cancelledSelection=true;context.pendingCellChoice=null;}};
 vm.createContext(context);
 const data=js.slice(js.indexOf('const FACTIONS ='),js.indexOf('const NORMAL_HAND_LIMIT'));
