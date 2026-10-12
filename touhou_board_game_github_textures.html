@@ -481,11 +481,11 @@
   .cell.rect-pickable:hover{ box-shadow:0 0 0 2px rgba(242,166,193,0.4) inset; }
   .cell.drag-hover{ background:rgba(232,200,116,0.22); box-shadow:0 0 0 3px var(--gold) inset, 0 0 18px rgba(232,200,116,0.7) !important; animation:none; }
   @keyframes cardStandUp{
-    0%   { transform:translateY(-42px) rotateX(78deg) scale(1.1); opacity:0; filter:brightness(1.3); box-shadow:0 30px 20px rgba(0,0,0,0.5); }
+    0%   { transform:translateY(-42px) rotateX(78deg) scale(1.1); opacity:0; filter:var(--card-copy-filter,) brightness(1.3); box-shadow:0 30px 20px rgba(0,0,0,0.5); }
     40%  { transform:translateY(4px) rotateX(72deg) scale(1.1); opacity:1; box-shadow:0 18px 16px rgba(0,0,0,0.45); }
-    72%  { transform:translateY(-2px) rotateX(-12deg) scale(1.03); filter:brightness(1.15); box-shadow:0 6px 10px rgba(0,0,0,0.4); }
+    72%  { transform:translateY(-2px) rotateX(-12deg) scale(1.03); filter:var(--card-copy-filter,) brightness(1.15); box-shadow:0 6px 10px rgba(0,0,0,0.4); }
     88%  { transform:translateY(0) rotateX(4deg) scale(1.0); box-shadow:0 3px 6px rgba(0,0,0,0.32); }
-    100% { transform:translateY(0) rotateX(0deg) scale(1); filter:brightness(1); box-shadow:0 2px 4px rgba(0,0,0,0.28); }
+    100% { transform:translateY(0) rotateX(0deg) scale(1); filter:var(--card-copy-filter,) brightness(1); box-shadow:0 2px 4px rgba(0,0,0,0.28); }
   }
   .cell.just-placed .board-card{
     animation: cardStandUp 0.65s cubic-bezier(.22,.9,.32,1.1);
@@ -524,11 +524,11 @@
     animation:crownRayBurst .95s ease-out both;
   }
   @keyframes crownCardArrival{
-    0%{ transform:translateY(-56px) rotateX(78deg) scale(.82); opacity:0; filter:brightness(1.8) saturate(1.35); }
-    36%{ transform:translateY(-5px) rotateX(42deg) scale(1.08); opacity:1; filter:brightness(1.48) saturate(1.25); }
-    57%{ transform:translateY(3px) rotateX(-10deg) scale(1.055); filter:brightness(1.3) saturate(1.18); box-shadow:0 0 22px 7px rgba(var(--crown-light-rgb),.58); }
-    76%{ transform:translateY(-2px) rotateX(4deg) scale(1.025); filter:brightness(1.16); }
-    100%{ transform:translateY(0) rotateX(0) scale(1); filter:brightness(1); box-shadow:inset 0 0 0 2px var(--crown-light-main),0 0 12px rgba(var(--crown-light-rgb),.52); }
+    0%{ transform:translateY(-56px) rotateX(78deg) scale(.82); opacity:0; filter:var(--card-copy-filter,) brightness(1.8) saturate(1.35); }
+    36%{ transform:translateY(-5px) rotateX(42deg) scale(1.08); opacity:1; filter:var(--card-copy-filter,) brightness(1.48) saturate(1.25); }
+    57%{ transform:translateY(3px) rotateX(-10deg) scale(1.055); filter:var(--card-copy-filter,) brightness(1.3) saturate(1.18); box-shadow:0 0 22px 7px rgba(var(--crown-light-rgb),.58); }
+    76%{ transform:translateY(-2px) rotateX(4deg) scale(1.025); filter:var(--card-copy-filter,) brightness(1.16); }
+    100%{ transform:translateY(0) rotateX(0) scale(1); filter:var(--card-copy-filter,) brightness(1); box-shadow:inset 0 0 0 2px var(--crown-light-main),0 0 12px rgba(var(--crown-light-rgb),.52); }
   }
   @keyframes crownRoyalSeal{
     0%{ transform:scale(.12) rotate(-24deg); opacity:0; }
@@ -1410,7 +1410,7 @@
     85%{opacity:1;transform:scale(1.1) rotate(-2deg)}
     100%{opacity:0;transform:scale(1)}
   }
-  @keyframes gapHandReveal{0%{opacity:0;filter:brightness(2) hue-rotate(40deg)} 100%{opacity:1;filter:none} }
+  @keyframes gapHandReveal{0%{opacity:0;filter:var(--card-copy-filter,) brightness(2) hue-rotate(40deg)} 100%{opacity:1;filter:var(--card-copy-filter,) brightness(1)} }
   .ability-flight.ability-reimu{ box-shadow:0 0 20px #ff353c,0 0 35px #fff0e4; border-radius:8px; }
   .reimu-mandala{
     position:absolute; inset:-38%; pointer-events:none; border:2px solid rgba(254,83,85,.86);
@@ -2666,11 +2666,25 @@ body.mobile-landscape #online-box{padding:10px 14px;font-size:12px;}.online-room
 body:not(:has(#game.active)):not(.title-memory-active) #app{position:relative;z-index:10;isolation:isolate}
 .byakuren-peek-card>.table-card-back{width:100%;height:100%;border-width:3px}
 .byakuren-peek-card>.table-card-back span{font-size:clamp(18px,calc(var(--peek-card-width)*.3),46px)}
-/* Copies retain the original artwork with alternating inverted-color blocks. */
-.card-copy-inverted{position:relative;isolation:isolate;overflow:hidden}
-.card-copy-invert-mask{position:absolute;inset:0;z-index:1;pointer-events:none;border-radius:inherit;background-image:conic-gradient(#fff 0 25%,transparent 25% 50%,#fff 50% 75%,transparent 75% 100%);background-size:66.6667% 50%;background-repeat:repeat;mix-blend-mode:difference}
-.card-copy-inverted>.icon-row,.card-copy-inverted>.cname{position:relative;z-index:3}
-#card-detail.card-copy-inverted .card-detail-portrait>.card-copy-invert-mask{z-index:3}
+/* Process the completed card, including its background, badges, claim squares and text.
+   One shared, static ink filter avoids duplicate portraits and per-card image generation. */
+:is(.board-card,.hand-card,.custom-card-tile,#card-detail).card-copy-low-ink{
+  --card-copy-filter:url(#card-copy-low-ink-filter) var(--copy-wear-filter,opacity(1)) var(--copy-mute-filter,opacity(1));
+  position:relative;isolation:isolate;overflow:hidden;filter:var(--card-copy-filter);
+}
+.card-copy-low-ink.card-rin-worn{--copy-wear-filter:sepia(.28) saturate(.72)}
+.card-copy-low-ink.eirin-muted{--copy-mute-filter:saturate(.26) grayscale(.24)}
+.card-low-ink-lines{display:none}
+.card-copy-low-ink>.card-low-ink-lines{
+  display:block;position:absolute;inset:0;z-index:20;pointer-events:none;border-radius:inherit;
+  background-image:
+    repeating-linear-gradient(to bottom,transparent 0 6px,#ffffffa8 6px 7px,transparent 7px 11px),
+    linear-gradient(to bottom,transparent 0 15%,#fffffff0 15% 15.5%,transparent 15.5% 38.2%,#ffffffb8 38.2% 39%,transparent 39% 64.5%,#ffffffeb 64.5% 65%,transparent 65% 83%,#ffffff9c 83% 83.7%,transparent 83.7%),
+    repeating-linear-gradient(103deg,transparent 0 3px,#ffffff18 3px 3.5px,transparent 3.5px 7px);
+}
+/* Names remain part of the print; darker source ink keeps small faded type readable. */
+:is(.board-card,.hand-card,.custom-card-tile).card-copy-low-ink .cname,
+#card-detail.card-copy-low-ink .card-detail-name{color:#211b20;text-shadow:0 1px 1px #ffffffbd}
 /* Rin's retrieved cards keep their art, with faded ink, scuffed edges and creases. */
 .card-rin-worn{position:relative;isolation:isolate;overflow:hidden;filter:sepia(.28) saturate(.72)}
 .card-wear-overlay{position:absolute;inset:0;z-index:2;pointer-events:none;border-radius:inherit;background:linear-gradient(130deg,#eddbbba6 0 4%,#68432d88 4.5%,transparent 6%),linear-gradient(315deg,#e5cda791 0 3%,#633c2866 3.8%,transparent 6%),linear-gradient(22deg,transparent 42%,#eddcc161 42.5%,#4b2d213b 43%,transparent 44%),radial-gradient(ellipse at 8% 82%,#67412a70,transparent 32%),repeating-linear-gradient(82deg,transparent 0 19px,#efdfbe21 20px,transparent 21px);box-shadow:inset 0 0 0 1px #dfc8a777,inset 0 0 9px 3px #3c261f8c}
@@ -2694,6 +2708,22 @@ body:not(:has(#game.active)):not(.title-memory-active) #app{position:relative;z-
 </style>
 </head>
 <body>
+<!-- Low cyan and black ink: muted colour, warm drift, grey shadows and lost highlights.
+     sRGB keeps the channel tables predictable; the alpha channel is unchanged. -->
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute;pointer-events:none">
+  <defs>
+    <filter id="card-copy-low-ink-filter" x="-2%" y="-2%" width="104%" height="104%" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="0.16"/>
+      <feColorMatrix type="saturate" values="0.32"/>
+      <feComponentTransfer>
+        <feFuncR type="table" tableValues="0.35 0.57 0.75 0.92 1 1"/>
+        <feFuncG type="table" tableValues="0.32 0.45 0.61 0.81 1 1"/>
+        <feFuncB type="table" tableValues="0.33 0.43 0.58 0.77 1 1"/>
+        <feFuncA type="identity"/>
+      </feComponentTransfer>
+    </filter>
+  </defs>
+</svg>
 <div id="title-table" aria-hidden="true"></div>
 <div class="crown-backdrop" id="crown-backdrop-a" aria-hidden="true"></div>
 <div class="crown-backdrop" id="crown-backdrop-b" aria-hidden="true"></div>
@@ -2971,6 +3001,7 @@ body:not(:has(#game.active)):not(.title-memory-active) #app{position:relative;z-
 
 <div id="card-detail-overlay" role="dialog" aria-modal="true" aria-labelledby="card-detail-name">
   <div id="card-detail" tabindex="-1">
+    <div class="card-low-ink-lines" aria-hidden="true"></div>
     <div class="card-detail-header">
       <span id="card-detail-icon"></span>
       <h2 class="card-detail-name" id="card-detail-name"></h2>
@@ -5412,7 +5443,7 @@ const COPY_PASSIVES=new Set(['sage_yukari','sage_kasen','mtn_nitori','hell_hecat
 CARD.__draw_one={id:'__draw_one',name:'Overwrite',faction:'token',desc:'Placed: Draw a card.'};
 function cardBaseId(id){return CARD[id]?.baseId || id;}
 function cardHasOverwrite(id){return (game?.permanentAbilities?.[id] || CARD[id]?.copiedAbility)==='__draw_one';}
-function cardMaterialClasses(id){return [CARD[id]?.createdCopy?'card-copy-inverted':'',cardHasOverwrite(id)?'card-rin-worn':''].filter(Boolean).join(' ');}
+function cardMaterialClasses(id){return [CARD[id]?.createdCopy?'card-copy-low-ink':'',cardHasOverwrite(id)?'card-rin-worn':''].filter(Boolean).join(' ');}
 function generatedCard(id){return /^created_card_\d+$/.test(id) || /^trap_token_\d+$/.test(id);}
 function copyDefinitions(match){return [...match.startingCardIds].filter(id=>CARD[id]?.createdCopy).map(id=>({...CARD[id]}));}
 function mergeAbilityFlags(a={},b={}){
@@ -7296,7 +7327,7 @@ function cardArtworkClass(c,cardId){return `${CARD_ART_CLASS[cardBaseId(cardId)]
 function cardBgClass(c,cardId){return `${cardArtworkClass(c,cardId)} ${cardMaterialClasses(cardId)}`.trim();}
 function cardMaterialLayersHtml(id){
   const card=CARD[id];
-  return (card?.createdCopy?'<div class="card-copy-invert-mask" aria-hidden="true"></div>':'')
+  return (card?.createdCopy?'<div class="card-low-ink-lines" aria-hidden="true"></div>':'')
     +(cardHasOverwrite(id)?'<div class="card-wear-overlay" aria-hidden="true"></div>':'');
 }
 function cardBackHtml(){return '<div class="table-card-back" aria-hidden="true"><span>☯</span></div>';}
@@ -8357,10 +8388,6 @@ function openCardDetails(cardId,{followReference=false}={}){
     const fallback = document.createElement('span');
     fallback.textContent = FACTIONS[c.faction].icon;
     portrait.appendChild(fallback);
-  }
-  if(c.createdCopy){
-    const blocks=document.createElement('div');blocks.className='card-copy-invert-mask';
-    blocks.setAttribute('aria-hidden','true');portrait.appendChild(blocks);
   }
   setCardAbilityTitle(el('card-detail-ability'),c.token ? 'trap_token' : cardId);
   const borrowed=game?.borrowedAbilities?.[cardId];
@@ -9573,7 +9600,7 @@ const ui = {
         tile.style.setProperty('--read-delay',`${tiles.length*65}ms`);
         tile.setAttribute('aria-label', `${card.name}. Select card; double-click to inspect.`);
         tile.setAttribute('aria-pressed', 'false');
-        tile.innerHTML = `<div class="icon-row">${cardFactionBadgeHtml(card.faction)}${card.crown?'<span class="crown-mark">👑</span>':''}</div><div class="cname">${card.name}</div>`;
+        tile.innerHTML = `${cardMaterialLayersHtml(cardId)}<div class="icon-row">${cardFactionBadgeHtml(card.faction)}${card.crown?'<span class="crown-mark">👑</span>':''}</div><div class="cname">${card.name}</div>`;
         tile.addEventListener('click', () => {
           if(Number(tile.dataset.ignoreClickUntil || 0)>Date.now())return;
           selected = cardId;
@@ -13542,7 +13569,7 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='e6d47bc7990b73188d7b4d07e3bc82c94902cb0b3b73ef3aefef25bf53fb06ef';
+const AI_EVALUATION_RULES_DIGEST='37557882a1da0d2199e568f31ea52ab5f65d99de61408d1ac223b53809716a01';
 const AI_EVALUATION_POLICY_DIGEST='7349a2671428ed40a722e4bae412ddf460289b7a9c34181a4526f932619a9a08';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
@@ -14017,7 +14044,7 @@ function renderCustomGrid(){
     const isSelected = customSelected.has(c.id);
     const atCap = customSelected.size>=6 && !isSelected;
     tile.className = 'custom-card-tile' + (cardBgClass(c, c.id) ? ' '+cardBgClass(c, c.id) : '') + (isSelected ? ' selected' : '') + (atCap ? ' locked' : '');
-    tile.innerHTML = `<div class="icon-row">${cardFactionBadgeHtml(c.faction)}${c.crown?'<span class="crown-mark">👑</span>':''}</div>
+    tile.innerHTML = `${cardMaterialLayersHtml(c.id)}<div class="icon-row">${cardFactionBadgeHtml(c.faction)}${c.crown?'<span class="crown-mark">👑</span>':''}</div>
       <div class="cname">${c.name}</div>${instanceBadgeHtml(c.id)}`;
     tile.title = ruleTooltip(c.desc);
     tile.addEventListener('click', () => {

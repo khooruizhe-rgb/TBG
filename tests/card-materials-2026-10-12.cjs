@@ -38,41 +38,44 @@ A.CARD[wornCopy]={...A.CARD.haku_yuyuko,id:wornCopy,baseId:'haku_yuyuko',created
 const match={players:[{idx:0,name:'You',isAI:false,hand:['haku_yuyuko',copy,wornCopy,'mtn_sanae']}],currentPlayerIdx:0,forcedPlay:{},permanentAbilities:{haku_yuyuko:'__draw_one'},
   isPlacementBlocked:()=>false,isCardAbilityDisabled:()=>false,isSageMuted:()=>false,isOnBoard:()=>false,abilityId(id){return this.permanentAbilities[id]||A.CARD[id].copiedAbility||id;}};
 A.setGame(match);
-test('Board cards distinguish block-inverted copies, worn retrieved cards and ordinary originals',()=>{
+test('Board cards distinguish low-ink copies, worn retrieved cards and ordinary originals',()=>{
   const printed=A.cardBoardHtml(copy),worn=A.cardBoardHtml('haku_yuyuko'),plain=A.cardBoardHtml('mtn_sanae');
-  assert.match(printed,/card-copy-inverted/);assert.match(printed,/card-copy-invert-mask/);assert(!printed.includes('instance-badge'));
+  assert.match(printed,/card-copy-low-ink/);assert.match(printed,/card-low-ink-lines/);assert(!printed.includes('instance-badge'));
   assert.match(worn,/card-rin-worn/);assert.match(worn,/card-wear-overlay/);assert.match(worn,/Ability: Overwrite/);
-  assert(!plain.includes('card-copy-inverted'));assert(!plain.includes('card-rin-worn'));assert(!worn.includes('card-copy-inverted'));
+  assert(!plain.includes('card-copy-low-ink'));assert(!plain.includes('card-rin-worn'));assert(!worn.includes('card-copy-low-ink'));
 });
 test('Copying an overwritten card retains its worn appearance, draw effect and surcharge',()=>{
-  const markup=A.cardBoardHtml(wornCopy);assert.match(markup,/card-copy-inverted card-rin-worn/);assert.match(markup,/card-wear-overlay/);
+  const markup=A.cardBoardHtml(wornCopy);assert.match(markup,/card-copy-low-ink card-rin-worn/);assert.match(markup,/card-wear-overlay/);
   assert(!markup.includes('instance-badge'));assert(!markup.includes('Cost +'));assert(A.dynamicCardDescription(wornCopy).startsWith('Placed: Draw a card.'));
   assert.equal(A.CARD[wornCopy].faction,'hakugyokurou');assert.equal(A.CARD.haku_yuyuko.faction,'hakugyokurou');
 });
-test('The real hand renderer applies the same inversion and wear layers without copy labels',()=>{
+test('The real hand renderer applies the same print and wear layers without copy labels',()=>{
   A.setLanguage('zh-CN');A.renderHand();const cards=el('hand').children;
-  assert.equal(cards.length,4);assert(cards[0].classList.contains('card-rin-worn'));assert(cards[1].classList.contains('card-copy-inverted'));
-  assert(cards[2].classList.contains('card-rin-worn'));assert(cards[2].classList.contains('card-copy-inverted'));
-  assert.match(cards[0].innerHTML,/技能：覆盖/);assert.match(cards[1].innerHTML,/card-copy-invert-mask/);assert.match(cards[2].innerHTML,/card-wear-overlay/);
+  assert.equal(cards.length,4);assert(cards[0].classList.contains('card-rin-worn'));assert(cards[1].classList.contains('card-copy-low-ink'));
+  assert(cards[2].classList.contains('card-rin-worn'));assert(cards[2].classList.contains('card-copy-low-ink'));
+  assert.match(cards[0].innerHTML,/技能：覆盖/);assert.match(cards[1].innerHTML,/card-low-ink-lines/);assert.match(cards[2].innerHTML,/card-wear-overlay/);
   assert(!cards[1].innerHTML.includes('instance-badge'));assert(!cards[2].innerHTML.includes('instance-badge'));
-  assert(!cards[3].classList.contains('card-rin-worn'));assert(!cards[3].classList.contains('card-copy-inverted'));
+  assert(!cards[3].classList.contains('card-rin-worn'));assert(!cards[3].classList.contains('card-copy-low-ink'));
 });
-test('Copies invert alternating blocks over the original art without a paper background or resized second image',()=>{
-  const mask=html.slice(html.indexOf('.card-copy-invert-mask{')).split('}')[0];
-  const surface=html.slice(html.indexOf('.card-copy-inverted{')).split('}')[0];
-  assert.match(mask,/mix-blend-mode:difference/);assert.match(mask,/background-size:66.6667% 50%/);
-  assert.match(mask,/conic-gradient/);assert.match(mask,/pointer-events:none/);assert.match(mask,/transparent/);
-  assert(!surface.includes('background:'));assert(!surface.includes('color:'));assert(!html.includes('card-print-ink'));
-  const markup=A.cardBoardHtml(copy);assert.match(markup,/card-art-mokou/);assert.equal((markup.match(/card-copy-invert-mask/g)||[]).length,1);
+test('The print filter and dropout lines cover the complete card, including detail header and claim squares',()=>{
+  const surface=html.slice(html.indexOf(':is(.board-card,.hand-card,.custom-card-tile,#card-detail).card-copy-low-ink{')).split('}')[0];
+  const lines=html.slice(html.indexOf('.card-copy-low-ink>.card-low-ink-lines{')).split('}')[0];
+  assert.match(surface,/filter:var\(--card-copy-filter\)/);assert.match(surface,/url\(#card-copy-low-ink-filter\)/);
+  assert.match(lines,/inset:0/);assert.match(lines,/z-index:20/);assert.match(lines,/pointer-events:none/);assert.match(lines,/repeating-linear-gradient\(to bottom/);
+  assert(!surface.includes('background:'));assert(!html.includes('card-copy-invert'));assert(!html.includes('card-print-ink'));
+  const detail=html.slice(html.indexOf('<div id="card-detail" tabindex="-1">'),html.indexOf('<div id="rule-term-popover"'));
+  assert.match(detail,/<div id="card-detail"[^>]*>\s*<div class="card-low-ink-lines" aria-hidden="true"><\/div>\s*<div class="card-detail-header">/);
+  assert.match(detail,/id="card-detail-icon"/);assert.match(detail,/id="card-detail-claim-size"/);assert.match(detail,/id="card-detail-crown"/);
+  const markup=A.cardBoardHtml(copy);assert.match(markup,/card-art-mokou/);assert.equal((markup.match(/card-low-ink-lines/g)||[]).length,1);
 });
 test('Inspection shows 覆盖 / Overwrite with the draw effect and retains both material states',()=>{
-  A.openCardDetails(wornCopy);assert(el('card-detail').classList.contains('card-rin-worn'));assert(el('card-detail').classList.contains('card-copy-inverted'));
+  A.openCardDetails(wornCopy);assert(el('card-detail').classList.contains('card-rin-worn'));assert(el('card-detail').classList.contains('card-copy-low-ink'));
   assert.equal(el('card-detail-ability').textContent,'覆盖');assert.match(el('card-detail-description').innerHTML,/抽一张牌/);assert.match(el('card-detail-description').innerHTML,/代价/);
   A.setLanguage('en');A.openCardDetails('haku_yuyuko');assert.equal(el('card-detail-ability').textContent,'Overwrite');assert.match(el('card-detail-description').innerHTML,/Draw a card/);
-  assert(el('card-detail').classList.contains('card-rin-worn'));assert(!el('card-detail').classList.contains('card-copy-inverted'));
+  assert(el('card-detail').classList.contains('card-rin-worn'));assert(!el('card-detail').classList.contains('card-copy-low-ink'));
 });
 test('Inspecting and rendering ordinary cards clears material state from reused elements',()=>{
-  A.openCardDetails('mtn_sanae');assert(!el('card-detail').classList.contains('card-rin-worn'));assert(!el('card-detail').classList.contains('card-copy-inverted'));
+  A.openCardDetails('mtn_sanae');assert(!el('card-detail').classList.contains('card-rin-worn'));assert(!el('card-detail').classList.contains('card-copy-low-ink'));
   match.permanentAbilities={};A.renderHand();assert(!el('hand').children[0].classList.contains('card-rin-worn'));
 });
 test('Only Sage muting applies Eirin desaturation; unpaid copies and non-Sage crowns retain color',()=>{
@@ -86,14 +89,15 @@ test('Only Sage muting applies Eirin desaturation; unpaid copies and non-Sage cr
   A.openCardDetails(copy);assert(!el('card-detail').classList.contains('eirin-muted'));
   A.openCardDetails('sage_kasen');assert(el('card-detail').classList.contains('eirin-muted'));
   A.openCardDetails('mtn_kanako');assert(!el('card-detail').classList.contains('eirin-muted'));
-  assert(!html.slice(html.indexOf('.card-copy-invert-mask{')).split('}')[0].includes('grayscale'));
+  assert.match(html,/\.card-copy-low-ink\.eirin-muted\{--copy-mute-filter:saturate/);
 });
-test('Copy inspection shares the original portrait crop and clears its inversion overlay when changing cards',()=>{
+test('Copy inspection preserves the portrait crop and returns to an unfiltered ordinary card',()=>{
   A.openCardDetails(copy);assert(el('card-detail').classList.contains('detail-card-hourai_mokou'));
   const children=el('card-detail-portrait').children;
   assert(children.some(node=>node.className==='detail-art-hourai_mokou'));
-  assert.equal(children.filter(node=>node.className==='card-copy-invert-mask').length,1);
+  assert(!children.some(node=>node.className==='card-low-ink-lines')); // printing belongs to the whole card, never the portrait
   assert.match(el('card-detail-description').innerHTML,/cost|代价/);
-  A.openCardDetails('mtn_sanae');assert(!el('card-detail-portrait').children.some(node=>node.className==='card-copy-invert-mask'));
+  A.openCardDetails('mtn_sanae');assert(!el('card-detail').classList.contains('card-copy-low-ink'));
+  assert(!el('card-detail-portrait').children.some(node=>node.className==='card-low-ink-lines'));
 });
 console.log(`${tests.length}/${tests.length} card material checks passed`);
