@@ -2676,7 +2676,7 @@ body:not(:has(#game.active)):not(.title-memory-active) #app{position:relative;z-
 .card-copy-low-ink.eirin-muted{--copy-mute-filter:saturate(.26) grayscale(.24)}
 .card-low-ink-lines{display:none}
 .card-copy-low-ink>.card-low-ink-lines{
-  display:block;position:absolute;inset:0;z-index:20;pointer-events:none;border-radius:inherit;
+  display:block;position:absolute;inset:0;z-index:20;pointer-events:none;border-radius:inherit;opacity:.8;
   background-image:
     repeating-linear-gradient(to bottom,transparent 0 6px,#ffffffa8 6px 7px,transparent 7px 11px),
     linear-gradient(to bottom,transparent 0 15%,#fffffff0 15% 15.5%,transparent 15.5% 38.2%,#ffffffb8 38.2% 39%,transparent 39% 64.5%,#ffffffeb 64.5% 65%,transparent 65% 83%,#ffffff9c 83% 83.7%,transparent 83.7%),
@@ -2713,12 +2713,12 @@ body:not(:has(#game.active)):not(.title-memory-active) #app{position:relative;z-
 <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute;pointer-events:none">
   <defs>
     <filter id="card-copy-low-ink-filter" x="-2%" y="-2%" width="104%" height="104%" color-interpolation-filters="sRGB">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="0.16"/>
-      <feColorMatrix type="saturate" values="0.32"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="0.12"/>
+      <feColorMatrix type="saturate" values="0.46"/>
       <feComponentTransfer>
-        <feFuncR type="table" tableValues="0.35 0.57 0.75 0.92 1 1"/>
-        <feFuncG type="table" tableValues="0.32 0.45 0.61 0.81 1 1"/>
-        <feFuncB type="table" tableValues="0.33 0.43 0.58 0.77 1 1"/>
+        <feFuncR type="table" tableValues="0.28 0.496 0.68 0.856 0.96 1"/>
+        <feFuncG type="table" tableValues="0.256 0.4 0.568 0.768 0.96 1"/>
+        <feFuncB type="table" tableValues="0.264 0.384 0.544 0.736 0.96 1"/>
         <feFuncA type="identity"/>
       </feComponentTransfer>
     </filter>
@@ -5452,7 +5452,7 @@ const COPY_PASSIVES=new Set(['sage_yukari','sage_kasen','mtn_nitori','hell_hecat
 CARD.__draw_one={id:'__draw_one',name:'Overwrite',faction:'token',desc:'Placed: Draw a card.'};
 function cardBaseId(id){return CARD[id]?.baseId || id;}
 function cardHasOverwrite(id){return (game?.permanentAbilities?.[id] || CARD[id]?.copiedAbility)==='__draw_one';}
-function cardMaterialClasses(id){return [CARD[id]?.createdCopy?'card-copy-low-ink':'',cardHasOverwrite(id)?'card-rin-worn':''].filter(Boolean).join(' ');}
+function cardMaterialClasses(id,{createdPreview=false}={}){return [CARD[id]?.createdCopy||createdPreview?'card-copy-low-ink':'',cardHasOverwrite(id)?'card-rin-worn':''].filter(Boolean).join(' ');}
 function generatedCard(id){return /^created_card_\d+$/.test(id) || /^trap_token_\d+$/.test(id);}
 function copyDefinitions(match){return [...match.startingCardIds].filter(id=>CARD[id]?.createdCopy).map(id=>({...CARD[id]}));}
 function mergeAbilityFlags(a={},b={}){
@@ -5472,7 +5472,7 @@ Game.prototype.createCard=async function(p,sourceIds,{double=false,template=fals
   let chosen;
   if(this.players[p].isAI){
     chosen=choices.slice().sort((a,b)=>aiCreatedValue(p,b,{double,template})-aiCreatedValue(p,a,{double,template}))[0];
-  }else chosen=await this.pickUI(p,'pickAbilityCards',[title,choices]);
+  }else chosen=await this.pickUI(p,'pickAbilityCards',[title,choices,{createdPreview:true}]);
   if(this.cancelled || !choices.includes(chosen))return null;
   const ability=template ? cardBaseId(chosen) : this.abilityId(chosen);
   const id=`created_card_${++nextCreatedCard}`;
@@ -7333,10 +7333,10 @@ const CARD_ART_CLASS = {
   heaven_iku: 'card-art-iku',
 }; // per-card portrait art, takes priority over the faction-level background
 function cardArtworkClass(c,cardId){return `${CARD_ART_CLASS[cardBaseId(cardId)] || FACTION_BG_CLASS[c.faction] || ''} card-faction-${c.faction}`.trim();}
-function cardBgClass(c,cardId){return `${cardArtworkClass(c,cardId)} ${cardMaterialClasses(cardId)}`.trim();}
-function cardMaterialLayersHtml(id){
+function cardBgClass(c,cardId,options){return `${cardArtworkClass(c,cardId)} ${cardMaterialClasses(cardId,options)}`.trim();}
+function cardMaterialLayersHtml(id,{createdPreview=false}={}){
   const card=CARD[id];
-  return (card?.createdCopy?'<div class="card-low-ink-lines" aria-hidden="true"></div>':'')
+  return (card?.createdCopy||createdPreview?'<div class="card-low-ink-lines" aria-hidden="true"></div>':'')
     +(cardHasOverwrite(id)?'<div class="card-wear-overlay" aria-hidden="true"></div>':'');
 }
 function cardBackHtml(){return '<div class="table-card-back" aria-hidden="true"><span>☯</span></div>';}
@@ -8294,6 +8294,7 @@ document.addEventListener('click',event=>{
 
 let detailReturnFocus = null;
 let detailCardId=null;
+let detailCreatedPreview=false;
 const detailHistory=[];
 let cancelLookIntoView=null;
 
@@ -8332,7 +8333,7 @@ function renderCardClaimSize(card){
   marker.innerHTML=`<svg viewBox="0 0 18 18" aria-hidden="true">${squares.map(([x,y],i)=>`<rect x="${x}" y="${y}" width="7" height="7" rx=".5" fill="${colours[i]}"/>`).join('')}</svg>`;
 }
 
-function openCardDetails(cardId,{followReference=false}={}){
+function openCardDetails(cardId,{followReference=false,createdPreview=false}={}){
   const c = CARD[cardId];
   if(!c) return;
   closeRuleTerm();
@@ -8341,15 +8342,16 @@ function openCardDetails(cardId,{followReference=false}={}){
     detailReturnFocus=document.activeElement;
     detailHistory.length=0;
   } else if(followReference && detailCardId && detailCardId!==cardId){
-    detailHistory.push({cardId:detailCardId,scrollTop:el('card-detail-description').parentElement.scrollTop});
+    detailHistory.push({cardId:detailCardId,createdPreview:detailCreatedPreview,scrollTop:el('card-detail-description').parentElement.scrollTop});
   }
   detailCardId=cardId;
+  detailCreatedPreview=createdPreview;
   const detail = el('card-detail');
   detail.className = ['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower','hell','heaven','temple'].includes(c.faction)
     ? `${c.faction} detail-card-${cardBaseId(cardId)}`
     : `other-faction detail-card-${cardBaseId(cardId)}`;
   detail.classList.add(`card-faction-${c.faction}`);
-  for(const name of cardMaterialClasses(cardId).split(' ').filter(Boolean))detail.classList.add(name);
+  for(const name of cardMaterialClasses(cardId,{createdPreview}).split(' ').filter(Boolean))detail.classList.add(name);
   if(game && game.isSageMuted(cardId)) detail.classList.add('eirin-muted');
   const factionIcon = CARD_DETAIL_FACTION_ICONS[c.faction];
   const iconHost = el('card-detail-icon');
@@ -8410,7 +8412,7 @@ function openCardDetails(cardId,{followReference=false}={}){
 function backCardDetails(){
   const previous=detailHistory.pop();
   if(!previous) return;
-  openCardDetails(previous.cardId);
+  openCardDetails(previous.cardId,{createdPreview:previous.createdPreview});
   el('card-detail-description').parentElement.scrollTop=previous.scrollTop;
 }
 
@@ -8420,6 +8422,7 @@ function closeCardDetails(){
   if(detailReturnFocus && detailReturnFocus.isConnected) detailReturnFocus.focus();
   detailReturnFocus = null;
   detailCardId=null;
+  detailCreatedPreview=false;
   detailHistory.length=0;
 }
 el('card-detail').addEventListener('dblclick',event=>{
@@ -8452,16 +8455,16 @@ document.addEventListener('keydown', e => {
   }
 });
 
-function cardBoardHtml(cardId){
+function cardBoardHtml(cardId,options){
   const c = CARD[cardId];
-  const bgClass = cardBgClass(c, cardId);
+  const bgClass = cardBgClass(c, cardId,options);
   const illusion=illusionCardStyle(cardId);
   const style=[c.crown ? `--crown-light-main:${crownLightFor(cardId).main};--crown-light-rgb:${crownLightFor(cardId).rgb}` : '',illusion].filter(Boolean).join(';');
   const crownStyle=style ? ` style="${escapeLogHtml(style)}"` : '';
   const illusionClass=illusion ? ' card-art-illusion' : '';
   const muted = game && typeof game.isOnBoard==='function' && game.isSageMuted(cardId) ? ' eirin-muted' : '';
   return `<div class="board-card ${c.crown?'crown':''} ${bgClass}${muted}${illusionClass}"${crownStyle}>
-    ${cardMaterialLayersHtml(cardId)}<div class="icon-row">${cardFactionBadgeHtml(c.faction)}${c.crown?'<span class="crown-mark">👑</span>':''}</div>
+    ${cardMaterialLayersHtml(cardId,options)}<div class="icon-row">${cardFactionBadgeHtml(c.faction)}${c.crown?'<span class="crown-mark">👑</span>':''}</div>
     <div class="cname">${c.name}</div>${instanceBadgeHtml(cardId)}
   </div>`;
 }
@@ -9420,20 +9423,20 @@ const ui = {
       renderPlayers();
     });
   },
-  pickAbilityCards(title,ids){
+  pickAbilityCards(title,ids,{createdPreview=false}={}){
     return new Promise(resolve=>{
       setRuleText(el('modal-title'),title);
       el('modal-box').classList.add('chimera-mode');
       const box=el('modal-options');box.replaceChildren();box.classList.add('chimera-options');
       for(const id of ids){
         const option=document.createElement('div');option.className='chimera-option';
-        const face=document.createElement('div');face.className='chimera-card';face.innerHTML=cardBoardHtml(id);face.title='Inspect card';face.tabIndex=0;face.setAttribute('role','button');face.setAttribute('aria-label',`Inspect ${CARD[id].name}`);
-        face.addEventListener('click',()=>openCardDetails(id));
-        face.addEventListener('keydown',event=>{if(event.key==='Enter' || event.key===' '){event.preventDefault();openCardDetails(id);}});
+        const face=document.createElement('div');face.className='chimera-card';face.innerHTML=cardBoardHtml(id,{createdPreview});face.title='Inspect card';face.tabIndex=0;face.setAttribute('role','button');face.setAttribute('aria-label',`Inspect ${CARD[id].name}`);
+        face.addEventListener('click',()=>openCardDetails(id,{createdPreview}));
+        face.addEventListener('keydown',event=>{if(event.key==='Enter' || event.key===' '){event.preventDefault();openCardDetails(id,{createdPreview});}});
         const name=document.createElement('h4');name.className='chimera-ability';setCardAbilityTitle(name,id);
         const description=document.createElement('p');description.className='chimera-description';setRuleText(description,CARD[id].desc);
         const actions=document.createElement('div');actions.className='chimera-actions';
-        const inspect=document.createElement('button');inspect.className='modal-opt';inspect.textContent='Inspect';inspect.addEventListener('click',()=>openCardDetails(id));
+        const inspect=document.createElement('button');inspect.className='modal-opt';inspect.textContent='Inspect';inspect.addEventListener('click',()=>openCardDetails(id,{createdPreview}));
         const pick=document.createElement('button');pick.className='modal-opt chimera-use';pick.textContent='Use ability';
         pick.addEventListener('click',()=>{playGameCue('select');box.classList.remove('chimera-options');el('modal-box').classList.remove('chimera-mode');el('modal-overlay').classList.remove('show');resolve(id);});
         actions.append(inspect,pick);option.append(face,name,description,actions);box.append(option);
@@ -13629,7 +13632,7 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='52c407f7986bc9a1b70bdf97ff3477d4f4c2a1522cfd9d2cb4ea2793d9def7f4';
+const AI_EVALUATION_RULES_DIGEST='96859aa2e148168ef7d89fcc25393cb05aa14c69993da70f1395a8260cba6ced';
 const AI_EVALUATION_POLICY_DIGEST='6faf3361a1b251468fc3e1ba603e0290ca6f3a2c2dae5fe632ef947cc75b905b';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;

@@ -9,6 +9,7 @@ class Element{
   set className(v){this.names=new Set(v.split(/\s+/).filter(Boolean));}get className(){return [...this.names].join(' ');}
   set innerHTML(v){this.markup=v;this.replaceChildren();}get innerHTML(){return this.markup||'';}
   appendChild(node){this.children.push(node);node.parentElement=this;return node;}
+  append(...nodes){nodes.forEach(node=>this.appendChild(node));}
   replaceChildren(){this.children.forEach(n=>n.parentElement=null);this.children=[];}
   querySelectorAll(){return [];}querySelector(){return null;}
   addEventListener(k,fn){(this.events[k]||=[]).push(fn);}setAttribute(k,v){this.attributes[k]=v;}removeAttribute(k){delete this.attributes[k];}
@@ -18,6 +19,7 @@ const nodes=new Map(),el=id=>{if(!nodes.has(id))nodes.set(id,new Element());retu
 el('card-detail').appendChild(el('card-detail-description'));
 const ctx=vm.createContext({console,el,document:{activeElement:null,documentElement:new Element(),createElement:()=>new Element(),addEventListener(){},querySelectorAll:()=>[]},window:{innerWidth:1200,innerHeight:800,addEventListener(){}},
   requestAnimationFrame:()=>1,localSeat:()=>0,localTurnReady:()=>true,syncRemiliaArrival(){},updateTutorialProgress(){},queueMobileViewport(){},onHandCardDragEnd(){},
+  playGameCue(){},
   illusionCardStyle:()=>'',crownLightFor:()=>({main:'#aaa',rgb:'1,2,3'})});
 const slice=(start,end)=>js.slice(js.indexOf(start),js.indexOf(end,js.indexOf(start)));
 vm.runInContext(slice('const DIRS4 =','/* ===================== UI layer')+'\nlet game=null;\n'+
@@ -28,8 +30,10 @@ vm.runInContext(slice('const DIRS4 =','/* ===================== UI layer')+'\nle
   slice('function renderHand()','function cardNameListHtml(')+`
   var pendingHandChoice=null,selectedHandCard=null,pendingCellChoice=null;
   var mindArrivals=new Map(),sanaeArrivalUntil=new Map(),mokouArrivalUntil=new Map(),yukariArrivalUntil=new Map();
-  this.api={CARD,cardBoardHtml,renderHand,openCardDetails,dynamicCardDescription,cardHasOverwrite,cardBgClass,
+  this.api={CARD,cardBoardHtml,renderHand,openCardDetails,closeCardDetails,backCardDetails,dynamicCardDescription,cardHasOverwrite,cardBgClass,
     setGame:g=>game=g,setLanguage:l=>gameLanguage=l};`,ctx);
+vm.runInContext('this.materialChoice={'+slice('  pickAbilityCards(title,ids','  pickFromList(title, options')+'};',ctx);
+ctx.api.pickAbilityCards=ctx.materialChoice.pickAbilityCards;
 const A=ctx.api,tests=[];
 function test(name,fn){fn();tests.push(name);console.log('PASS '+name);}
 const copy='created_card_910',wornCopy='created_card_911';
@@ -100,4 +104,46 @@ test('Copy inspection preserves the portrait crop and returns to an unfiltered o
   A.openCardDetails('mtn_sanae');assert(!el('card-detail').classList.contains('card-copy-low-ink'));
   assert(!el('card-detail-portrait').children.some(node=>node.className==='card-low-ink-lines'));
 });
-console.log(`${tests.length}/${tests.length} card material checks passed`);
+test('Creation preview inspection retains printing through reference navigation and clears it afterward',()=>{
+  const before=JSON.stringify(A.CARD.hourai_mokou);
+  A.closeCardDetails();A.openCardDetails('hourai_mokou',{createdPreview:true});
+  assert(el('card-detail').classList.contains('card-copy-low-ink'));
+  assert(el('card-detail-portrait').children.some(node=>node.className==='detail-art-hourai_mokou'));
+  A.openCardDetails('mtn_sanae',{followReference:true});assert(!el('card-detail').classList.contains('card-copy-low-ink'));
+  A.backCardDetails();assert(el('card-detail').classList.contains('card-copy-low-ink'));
+  A.closeCardDetails();A.openCardDetails('hourai_mokou');assert(!el('card-detail').classList.contains('card-copy-low-ink'));
+  assert.equal(JSON.stringify(A.CARD.hourai_mokou),before);
+});
+async function choiceTest(name,fn){await fn();tests.push(name);console.log('PASS '+name);}
+(async()=>{
+  await choiceTest('The real creation chooser prints every candidate and its inspected image without creating extra cards',async()=>{
+    const before=JSON.stringify(A.CARD),handBefore=JSON.stringify(match.players[0].hand);
+    const selected=A.pickAbilityCards('Create: choose one of three cards',['hourai_mokou','mtn_sanae',wornCopy],{createdPreview:true});
+    const options=el('modal-options').children;
+    assert.equal(options.length,3);
+    for(const option of options){
+      const face=option.children[0],inspect=option.children[3].children[0];
+      assert.match(face.innerHTML,/card-copy-low-ink/);assert.equal((face.innerHTML.match(/card-low-ink-lines/g)||[]).length,1);
+      assert(!face.innerHTML.includes('instance-badge'));
+      face.events.click[0]();assert(el('card-detail').classList.contains('card-copy-low-ink'));
+      A.closeCardDetails();face.events.keydown[0]({key:'Enter',preventDefault(){}});assert(el('card-detail').classList.contains('card-copy-low-ink'));
+      A.closeCardDetails();inspect.events.click[0]();assert(el('card-detail').classList.contains('card-copy-low-ink'));
+      A.closeCardDetails();
+    }
+    assert.match(options[2].children[0].innerHTML,/card-rin-worn/);
+    options[0].children[3].children[1].events.click[0]();assert.equal(await selected,'hourai_mokou');
+    assert(!el('modal-overlay').classList.contains('show'));assert(!el('modal-box').classList.contains('chimera-mode'));
+    assert.equal(JSON.stringify(A.CARD),before);assert.equal(JSON.stringify(match.players[0].hand),handBefore);
+    assert(!A.cardBoardHtml('hourai_mokou').includes('card-copy-low-ink'));
+  });
+  await choiceTest('Nue ability choices keep original art, while existing copies retain their own material',async()=>{
+    const selected=A.pickAbilityCards('Nue — choose an ability',['hourai_mokou',copy]);
+    const options=el('modal-options').children;
+    assert(!options[0].children[0].innerHTML.includes('card-copy-low-ink'));
+    assert.match(options[1].children[0].innerHTML,/card-copy-low-ink/);
+    options[0].children[0].events.click[0]();assert(!el('card-detail').classList.contains('card-copy-low-ink'));
+    A.closeCardDetails();options[1].children[0].events.click[0]();assert(el('card-detail').classList.contains('card-copy-low-ink'));
+    A.closeCardDetails();options[0].children[3].children[1].events.click[0]();assert.equal(await selected,'hourai_mokou');
+  });
+  console.log(`${tests.length}/${tests.length} card material checks passed`);
+})().catch(error=>{console.error(error.stack);process.exitCode=1;});
