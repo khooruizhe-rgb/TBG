@@ -51,7 +51,7 @@ const document={get activeElement(){return activeElement;},createElement:tag=>ne
 const windowListeners=[];
 const context={console,document,el,requestAnimationFrame:fn=>fn(),getComputedStyle:node=>({fontSize:`${node.baseFontSize||22}px`}),
   window:{innerWidth:360,innerHeight:640,addEventListener:(type,fn)=>windowListeners.push({type,fn})},KOURINDOU_PORTRAITS:{},CARD_DETAIL_PORTRAITS:{},TEMPLE_UNZAN_PORTRAIT:"https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/portraits/myouren_temple/unzan.webp",
-  game:{players:[{hand:['shop_rinnosuke']}],isActiveOnBoard:()=>false,eirinActive:()=>false},
+  game:{players:[{hand:['shop_rinnosuke']}],isActiveOnBoard:()=>false,eirinActive:()=>false,isCardAbilityDisabled:()=>false,abilityId:id=>id,permanentAbilities:{}},
   pendingCellChoice:{cancellable:true},cancelHandSelection(){context.cancelledSelection=true;context.pendingCellChoice=null;}};
 vm.createContext(context);
 const data=js.slice(js.indexOf('const FACTIONS ='),js.indexOf('const NORMAL_HAND_LIMIT'));
@@ -60,7 +60,8 @@ const abilities=js.slice(js.indexOf('const CARD_ABILITY_NAMES ='),js.indexOf('/*
 const escape=js.slice(js.indexOf('function escapeLogHtml('),js.indexOf('function renderLog('));
 const inspection=js.slice(js.indexOf('/* Only trusted rule text'),js.indexOf('function cardBoardHtml('));
 const outside=js.slice(js.indexOf('/* Clicking anywhere outside the board/hand/cancel-button'),js.indexOf("el('draw-btn').addEventListener"));
-vm.runInContext(data+icons+abilities+escape+inspection+outside+`
+const baseHelper=js.slice(js.indexOf('function cardBaseId'),js.indexOf('function generatedCard'));
+vm.runInContext(data+baseHelper+icons+abilities+escape+inspection+outside+`
   this.api={CARDS,CARD,FACTIONS,ruleTextHtml,ruleTooltip,ruleReferencePattern,openCardDetails,closeCardDetails,backCardDetails,
     state:()=>({id:detailCardId,history:detailHistory.map(x=>({...x})),returnFocus:detailReturnFocus})};`,context);
 const A=context.api;
@@ -186,7 +187,7 @@ test('Placed is the only colon label and Mountain descriptions do not repeat Kan
   assert.equal(A.CARD.haku_youmu.desc,'Placed: Placing this card does not use your turn.');
   assert.equal(A.CARD.mtn_sanae.desc,'Placed: Draw a card. If Kanako Yasaka is on the board, draw another card.');
   assert.equal(A.CARD.hourai_mokou.desc,'Placed: Draw a card for each card in your discard pile.');
-  assert.equal(A.CARD.hourai_eirin.desc,'While this card is on the board, all Crown abilities are disabled.');
+  assert.equal(A.CARD.hourai_eirin.desc,'Placed: Create an Eientei card and immediately play it. While this card is on the board, all Sage card abilities are disabled.');
 });
 test('Ability headings in both languages fit on open and resize rather than wrapping or truncating',()=>{
   const heading=el('card-detail-ability');heading.baseFontSize=36;

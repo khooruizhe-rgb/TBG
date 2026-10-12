@@ -1,0 +1,19 @@
+{
+  "checks": [
+    "N does not abandon an unfinished round",
+    "P pauses and releases waiting actions",
+    "D opens a paused dashboard and closing it retains pause",
+    "Manual restart is the default and records the round once",
+    "Typing, held keys and modifiers do not restart a game",
+    "N starts the next round and retains cumulative statistics",
+    "Continuous mode resumes and dashboard opening cancels pending restart",
+    "A cancelled round cannot restart through a stale callback",
+    "Thirty fast render requests coalesce into one frame",
+    "Rule-text tracking uses weak references for detached nodes",
+    "Fifteen hundred in-place restarts retain only the current two trap definitions",
+    "Fifteen hundred restarts release copied cards and hidden-choice aliases",
+    "Cumulative 1500-game totals remain available through JSON and CSV export"
+  ],
+  "tokenDefinitions": 2,
+  "snapshotTokens": 2
+}

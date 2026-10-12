@@ -2589,7 +2589,10 @@ body.crown-scene-active #title-table{background-image:linear-gradient(rgb(var(--
 #menu-ai-test-settings{margin:-8px 0 18px;font-size:12px;color:#74583f}
 #menu-ai-test-settings p{margin:6px 0 0;line-height:1.4}
 #menu-ai-test-settings[hidden],#game-toolbar [hidden]{display:none!important}
-#ai-test-fast-label{font-size:12px;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
+#ai-test-round-state{font-size:12px;color:var(--gold)}
+body.mobile-landscape.ai-test-mode #game-toolbar{height:auto;min-height:32px;flex-wrap:wrap;gap:4px}
+body.mobile-landscape.ai-test-mode #ai-test-round-state{flex-basis:100%}
+#ai-test-fast-label,#ai-test-continuous-label{font-size:12px;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
 #ai-test-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:2dvh 2vw;background:#0c080bc4}
 #ai-test-overlay.show{display:flex}
 #ai-test-panel{width:min(1060px,96vw);max-height:94dvh;overflow:auto;padding:20px;border:1px solid #c4a16e;border-radius:7px;color:#4c3223;background:#f4e5cd;box-shadow:0 18px 60px #120a08aa}
@@ -2656,6 +2659,8 @@ body.tutorial-practice #debug-menu-btn{display:none}
 body.mobile-landscape #online-box{padding:10px 14px;font-size:12px;}.online-room-actions{justify-content:center;}
 @media(max-height:460px){#online-box .online-help{margin:5px 0;font-size:10px;}#online-box h2{font-size:17px;}.online-row{margin:5px 0;}.online-row input{padding:5px;}#online-box .pill-btn,#online-box .big-btn{padding:6px 10px;font-size:12px;}#room-info{margin:5px 0;}}
 
+
+.instance-badge{font-size:9px;line-height:1.2;padding:2px 4px;background:rgba(0,0,0,.8);color:#ffe49b;border-radius:4px;position:absolute;top:24px;right:3px;max-width:92%;pointer-events:none}
 </style>
 </head>
 <body>
@@ -2726,7 +2731,8 @@ body.mobile-landscape #online-box{padding:10px 14px;font-size:12px;}.online-room
       </fieldset>
     <div id="menu-ai-test-settings" hidden>
       <label><input id="menu-ai-test-fast" type="checkbox" checked> <span>Fast test (skip effects)</span></label>
-      <p>Finished games restart automatically. Open Test data to pause or export the results.</p>
+      <label><input id="menu-ai-test-continuous" type="checkbox"> <span>Continuous test</span></label>
+      <p>Finished games wait for N or Next game. D opens Test data and pauses the test. P pauses or resumes.</p>
     </div>
       <button id="menu-ai-lab" class="pill-btn" type="button">AI evaluation lab</button>
     </details>
@@ -2747,6 +2753,12 @@ body.mobile-landscape #online-box{padding:10px 14px;font-size:12px;}.online-room
       <select id="game-language" class="pill-btn" aria-label="Language / 语言"><option value="en">English</option><option value="zh-CN">简体中文</option></select>
       <button id="journal-btn" class="pill-btn" type="button" aria-expanded="false" aria-controls="log-panel">Log</button>
       <button id="debug-menu-btn" class="pill-btn" type="button" aria-expanded="false" aria-controls="debug-panel" aria-label="Debug tools">⚙</button>
+      <button id="ai-test-stats-btn" class="pill-btn" type="button" title="D / F8: open test data and pause" hidden>Test data (D / F8)</button>
+      <button id="ai-test-pause-btn" class="pill-btn" type="button" hidden>Pause test</button>
+      <button id="ai-test-next-btn" class="pill-btn" type="button" hidden disabled>Next game (N)</button>
+      <label id="ai-test-fast-label" hidden><input id="ai-test-fast" type="checkbox"> <span>Fast test</span></label>
+      <label id="ai-test-continuous-label" hidden><input id="ai-test-continuous" type="checkbox"> <span>Continuous test</span></label>
+      <span id="ai-test-round-state" role="status" hidden></span>
       <span id="mobile-screen-message" role="status"></span>
     </div>
     <div id="mobile-landscape-hint">Turn your phone sideways for one-screen play. Tap Fullscreen for more space.</div>
@@ -2816,9 +2828,7 @@ body.mobile-landscape #online-box{padding:10px 14px;font-size:12px;}.online-room
           <span>🔍 Playtest: reveal hands &amp; discards</span>
         </label>
       <button id="debug-ai-lab" class="pill-btn" type="button">AI evaluation lab</button>
-      <button id="ai-test-stats-btn" class="pill-btn" type="button" title="F8: open test data and pause" hidden>Test data · F8</button>
-      <button id="ai-test-pause-btn" class="pill-btn" type="button" hidden>Pause test</button>
-      <label id="ai-test-fast-label" hidden><input id="ai-test-fast" type="checkbox"> <span>Fast test</span></label>
+
     </div>
   </section>
 </div>
@@ -3017,8 +3027,8 @@ function captureAIEvaluationSnapshot(match,scheduledExtra=0){
     else if(key==='startingCardIds')state[key]=[...value];
     else state[key]=JSON.parse(JSON.stringify(value));
   }
-  return {format:'tbg-ai-position',version:1,boundary:'regular-turn-start',size:match.board.length,
-    scheduledExtra,state,tokenCounter:nextTrapToken,tokens:Object.values(CARD).filter(c=>c.token && c.id!=='trap_token')};
+  return {format:'tbg-ai-position',version:2,rulesVersion:REWORK_RULES_VERSION,generatedCards:copyDefinitions(match),copyCounter:nextCreatedCard,boundary:'regular-turn-start',size:match.board.length,
+    scheduledExtra,state,tokenCounter:nextTrapToken,tokens:[...match.startingCardIds].filter(id=>/^trap_token_\d+$/.test(id)).map(id=>CARD[id]).filter(Boolean)};
 }
 
 let SIZE = 4; // board is SIZE x SIZE; changeable at setup time before a game starts
@@ -3057,7 +3067,7 @@ const CARDS = [
   { id:'hourai_kaguya', faction:'hourai', name:'Kaguya Houraisan', crown:true,
     desc:"Placed: Guess an Eientei card in another player’s hand. Each correct guess lets you place that card on the board and guess again." },
   { id:'hourai_eirin',  faction:'hourai', name:'Eirin Yagokoro',
-    desc:"While this card is on the board, all Crown abilities are disabled." },
+    desc:"Placed: Create an Eientei card and immediately play it. While this card is on the board, all Sage card abilities are disabled." },
   { id:'hourai_reisen', faction:'hourai', name:'Reisen Udongein Inaba',
     desc:"Placed: Choose a card in another player’s hand. They must place that card on their next turn." },
   { id:'hourai_mokou',  faction:'hourai', name:'Fujiwara no Mokou',
@@ -3070,12 +3080,12 @@ const CARDS = [
   { id:'mtn_sanae',  faction:'mountain', name:'Sanae Kochiya',
     desc:"Placed: Draw a card. If Kanako Yasaka is on the board, draw another card." },
   { id:'mtn_aya',    faction:'mountain', name:'Aya Shameimaru',
-    desc:"Placed: Every other player reveals four cards from their hand." },
+    desc:"Placed: Look at four cards from each other player’s hand and record them in a private newspaper. Other players can read it only by paying one hand card to you to subscribe." },
 
   { id:'palace_satori', faction:'palace', name:'Satori Komeiji', crown:true, cost1:true,
-    desc:"[Cost I] Placed: Look at another player’s hand and take one card into your hand." },
+    desc:"[Cost I] Placed: Randomly reveal four cards in another player’s hand, then take any one card from that hand. Unrevealed cards remain selectable." },
   { id:'palace_rin',    faction:'palace', name:'Rin Kaenbyou',
-    desc:"Placed: Take one card from any discard pile into your hand." },
+    desc:"Placed: Take a card from any discard pile into your hand. Replace its ability with “Placed: Draw a card” for the rest of this match." },
   { id:'palace_utsuho', faction:'palace', name:'Utsuho Reiuji',
     desc:"Placed: Turn a 2×2 area of the board into wasteland." },
   { id:'palace_koishi', faction:'palace', name:'Koishi Komeiji', trigger:true,
@@ -3086,7 +3096,7 @@ const CARDS = [
   { id:'sage_kasen',  faction:'sage', name:'Kasen Ibara', crown:true, wild:true,
     desc:"This card counts as any four-card faction when claiming cards." },
   { id:'sage_matara', faction:'sage', name:'Matara Okina', crown:true,
-    desc:"Placed: This card uses the Placed ability of another board card you choose." },
+    desc:"Placed: Create a card currently on the board. The created copy gains double abilities." },
   { id:'sage_ran',    faction:'sage', name:'Ran Yakumo',
     desc:"Placed: Draw one card. If Yukari Yakumo is on the board, immediately place that card." },
 
@@ -3121,9 +3131,9 @@ CARDS.push(
   {id:'temple_shou',faction:'temple',name:'Toramaru Shou',cost1:true,
     desc:'[Cost I] Placed: Draw a card for each wasteland on the board, then clear all wasteland.'},
   {id:'temple_nue',faction:'temple',name:'Houjuu Nue',
-    desc:'Placed: Choose an ability from three random cards. Briefly take its appearance and use its ability.'},
+    desc:'Placed: Choose an ability from three random cards. Use its ability.'},
   {id:'temple_murasa',faction:'temple',name:'Murasa Minamitu',
-    desc:'Placed: Choose a player. They cannot place cards or trade on their next two turns.'},
+    desc:"Placed: You cannot place cards or trade on your next turn. Choose a player who cannot place cards or trade on their next two turns."},
   {id:'temple_ichirin',faction:'temple',name:'Kumoi Ichirin',shopExpansion:true,cost2:true,
     desc:'[Cost II] Placed: Push every non-Myouren Temple card one tile farther from this card. Return cards pushed off the board to the draw pile.'},
   { id:'sdm_meiling', faction:'sdm', name:'Hong Meiling', shopExpansion:true,
@@ -3137,7 +3147,7 @@ CARDS.push(
   { id:'sage_mai_satono', faction:'sage', name:'Mai and Satono', shopExpansion:true,
     desc:"Placed: Gain an extra turn on your next turn." },
   { id:'hell_kutaka', faction:'hell', name:'Niwatari Kutaka', shopExpansion:true, wasteOK:true,
-    desc:"This card can be placed on wasteland.\nPlaced: If this card is on wasteland, take a Hell card from the draw pile into your hand." },
+    desc:"Placed: If this card is on wasteland, take a Hell card from the draw pile into your hand. Otherwise turn orthogonally adjacent positions into wasteland." },
   { id:'shop_rinnosuke', faction:'kourindou', name:'Morichika Rinnosuke', shopkeeper:true, wasteOK:true,
     desc:"This card and the cards around it cannot be selected or moved, and cannot use abilities.\nSelect a hand card, then click Rinnosuke to trade once per turn without using your turn.",
     handDesc:'Wait, place me back! You can’t just put me into your hand!' },
@@ -3188,11 +3198,7 @@ function possessive(name){ return name === 'You' ? 'Your' : `${name}'s`; }
 /* Rule-result counts come from real mutations. Decision scores are a separate,
    explicitly labelled sample taken only at an actual AI decision. */
 const AI_TEST_SNAPSHOT_LIMIT=30;
-function testCardId(id){return CARD[id]?.token || /^trap_token_\d+$/.test(id) ? 'trap_token' : id;}
-function clearGeneratedTrapCards(){
-  for(const id of Object.keys(CARD))if(CARD[id].token && id!=='trap_token')delete CARD[id];
-  nextTrapToken=0;
-}
+function testCardId(id){return CARD[id]?.token || /^trap_token_\d+$/.test(id) ? 'trap_token' : CARD[id]?.baseId||id;}
 function newTestCardActions(){return {handGained:0,handStolen:0,ownPointsLost:0,abilitySkipped:0,abilityCalls:0,abilityEffective:0,costPaid:0,paidAsCost:0,tradedAway:0,returnedFromHand:0,heldAtEnd:0,heldGames:0,claimMembers:0,ownPoints:0,opponentPoints:0,deniedPoints:0};}
 function createAITestMetrics(){return {bySeat:{},turns:0,drawActions:0,trades:0,placements:{},claims:{},substituteClaims:{},substituteMembers:{},cardActions:{},abilityDetails:{},scoreSources:{},seen:new Set(),recorded:false};}
 function createAITestStats(){return {diagnostics:{},games:0,wins:0,stalemates:0,aborted:0,errors:0,turns:0,drawActions:0,trades:0,placements:0,factions:{},factionOutcomes:{},evaluations:{},tradeStats:{},tradeDecisions:{},forcedPlacements:{},cards:{},seats:{},configurations:{},abilityDetails:{},scoreSources:{},endings:[],lastResult:null};}
@@ -3236,8 +3242,8 @@ function finalizeAITestDiagnostics(match){
         forecastGainSum:receipt.purpose==='handImprovement'?receipt.forecastGain||0:0,
         forecastRateSamples:receipt.forecastRate==null?0:1,forecastRateSum:receipt.forecastRate||0};
       const trades=d.tradeStats ||= {totals:{},offers:{},purchases:{},pairs:{}};
-      for(const row of [trades.totals,trades.offers[receipt.offered] ||= {},trades.purchases[receipt.received] ||= {},
-        trades.pairs[`${receipt.offered}>${receipt.received}`] ||= {}])addTestFields(row,fields);
+      for(const row of [trades.totals,trades.offers[testCardId(receipt.offered)] ||= {},trades.purchases[testCardId(receipt.received)] ||= {},
+        trades.pairs[`${testCardId(receipt.offered)}>${testCardId(receipt.received)}`] ||= {}])addTestFields(row,fields);
     }
     if(d.tradeStats)for(const row of [d.tradeStats.totals,...Object.values(d.tradeStats.offers),...Object.values(d.tradeStats.purchases),...Object.values(d.tradeStats.pairs)])
       addTestFields(row,{buyerGames:1,buyerWins:outcome.kind==='wins'?1:0,buyerTies:outcome.kind==='ties'?1:0,buyerLosses:outcome.kind==='losses'?1:0,buyerScoreSum:outcome.share});
@@ -3307,6 +3313,8 @@ class Game {
     this.shopCards=[];
     this.shopTiles=[[0,1],[1,0],[1,1],[1,2]].map(([r,c],slot)=>({r:SIZE+2+r,c,slot,wasteland:false}));
     this.borrowedAbilities={};
+    this.permanentAbilities={};this.createdActivations={};this.paperReports=[];this.nextPaperId=0;
+    this.reserveAges=Array.from({length:numPlayers},()=>({}));this.ruleContext=null;this.activeRuleAbility=null;this.triggerDeclines={};
     this.placementBlockTurns=Array(numPlayers).fill(0);
     this.placementBlockedForTurn=Array(numPlayers).fill(false);
     this.pendingExtraTurns={};
@@ -3359,7 +3367,7 @@ class Game {
   recordTestSeen(cardId,p=this.currentPlayerIdx){if(this.testMetrics && CARD[cardId]){this.testMetrics.seen.add(testCardId(cardId));this.testSeatMetrics(p).seen.add(testCardId(cardId));}}
   recordTestPlacement(cardId,p=this.currentPlayerIdx){
     if(!this.testMetrics)return;
-    this.recordTestSeen(cardId,p);const id=CARD[cardId].token ? 'trap_token' : cardId;
+    this.recordTestSeen(cardId,p);const id=testCardId(cardId);
     this.testMetrics.placements[id]=(this.testMetrics.placements[id] || 0)+1;
     const seat=this.testSeatMetrics(p);seat.placements[id]=(seat.placements[id]||0)+1;
     this.recordTestTradeExit(cardId,'placed',p);
@@ -3414,7 +3422,7 @@ class Game {
     if(frame){for(const card of [this.testCardActions(frame.caster),this.testSeatCardActions(frame.playerIdx,frame.caster)]){if(lost){card[p===frame.playerIdx?'ownPointsLost':'deniedPoints']+=points;}else card[p===frame.playerIdx?'ownPoints':'opponentPoints']+=points;}}
   }
   testEndingSnapshot(){
-    return {currentSeat:this.currentPlayerIdx+1,drawPile:this.drawPile.slice(),board:this.board.map(row=>row.slice()),wasteland:this.wasteland.map(row=>row.slice()),
+    return {rulesVersion:REWORK_RULES_VERSION,generatedCards:copyDefinitions(this),permanentAbilities:{...this.permanentAbilities},createdActivations:{...this.createdActivations},currentSeat:this.currentPlayerIdx+1,drawPile:this.drawPile.slice(),board:this.board.map(row=>row.slice()),wasteland:this.wasteland.map(row=>row.slice()),
       shop:this.shopTiles.map(tile=>({...tile,open:this.isShopOpen(tile.slot),cardId:this.cardAt(tile.r,tile.c)})),borrowedAbilities:{...this.borrowedAbilities},
       players:this.players.map(p=>{const forced=this.forcedPlay[p.idx],held=forced && p.hand.includes(forced) ? [forced] : p.hand;
         const legalPlacements=held.reduce((sum,id)=>{const spaces=this.emptyOrWastelandForCard(CARD[id],p.idx);return sum+(forced && held.length===1 && typeof aiForcedPlacementCells==='function'?aiForcedPlacementCells(this,id,spaces):typeof aiPlacementCells==='function'?aiPlacementCells(this,id,spaces):spaces).length;},0);
@@ -3423,8 +3431,8 @@ class Game {
       recentLog:JSON.parse(JSON.stringify(this.logLines.slice(-20)))};
   }
   async resolveAbility(cardId,r,c,playerIdx,depth){
-    const ability=this.abilityId(cardId),passive=new Set(['sage_yukari','sage_kasen','hourai_eirin','mtn_nitori','hell_hecatia','palace_koishi']);
-    if(!this.testMetrics || this.cancelled || depth>=6 || passive.has(ability) || (this.isProtected(r,c) && ability!=='sage_yukari') || (CARD[ability]?.crown && this.eirinActive() && ability!=='hourai_eirin'))
+    const ability=this.abilityId(cardId),passive=new Set(['sage_yukari','sage_kasen','mtn_nitori','hell_hecatia','palace_koishi']);
+    if(!this.testMetrics || this.cancelled || depth>=6 || passive.has(ability) || (this.isProtected(r,c) && ability!=='sage_yukari') || this.isSageMuted(this.cardAt(r,c)||cardId))
       return await this.resolveAbilityRules(cardId,r,c,playerIdx,depth);
     const caster=this.cardAt(r,c)||cardId,parent=this.activeTestAbility();
     const frame={caster,ability,playerIdx,paid:[],gained:[],stolen:[],information:false,countCard:parent?.caster!==caster,before:this.testRuleState()};
@@ -3457,6 +3465,9 @@ class Game {
   eirinActive(){return this.boardCells(cell=>this.abilityId(cell.id)==='hourai_eirin' && !this.isProtected(cell.r,cell.c)).length>0;}
   isPlacementBlocked(p=this.currentPlayerIdx){return !!this.placementBlockedForTurn[p] || (p!==this.currentPlayerIdx && this.placementBlockTurns[p]>0);}
   beginPlayerTurn(p){
+    this.triggerDeclines={};
+    const ages=this.reserveAges[p];for(const id of Object.keys(ages))if(!this.players[p].hand.includes(id))delete ages[id];
+    for(const id of this.players[p].hand)ages[id]=(ages[id]||0)+1;
     if(this.testMetrics){this.testMetrics.turns++;const seat=this.testSeatMetrics(p);for(const id of this.players[p].hand){const key=testCardId(id);seat.handTurns[key]=(seat.handTurns[key]||0)+1;}}
     this.placementBlockedForTurn[p]=this.placementBlockTurns[p]>0;
     if(this.placementBlockedForTurn[p]) this.placementBlockTurns[p]--;
@@ -3567,7 +3578,7 @@ class Game {
     if(mistake && this.aiDifficulty!=='easy')return ids[Math.floor(Math.random()*ids.length)];
     const score=id=>{
       const cost=this.abilityCost(id,{r,c});
-      if(this.payableCards(p).length<cost || (CARD[id].crown && this.eirinActive()))return -10;
+      if(this.payableCards(p).length<cost || this.isCardAbilityDisabled(id))return -10;
       if(id==='temple_byakuren')return Math.max(0,...this.byakurenOptions(p,r,c).filter(option=>!option.disabled).map(option=>this.byakurenOptionValue(p,r,c,option)));
       if(id==='temple_shou')return Math.min(this.drawPile.length+cost,this.templeWasteland(p).length);
       if(id==='temple_murasa')return 2;
@@ -3675,7 +3686,7 @@ class Game {
       || this.wastelandAt(cell.r,cell.c) || (placement && placement.r===cell.r && placement.c===cell.c))).length;
   }
   isActiveOnBoard(cardId){
-    return this.boardCells(cell=>cell.id===cardId && (cardId==='sage_yukari' || !this.isProtected(cell.r,cell.c))).length>0;
+    return this.hasActiveAbility(cardId);
   }
   hasOtherHellCard(casterId='hell_komachi'){
     return this.boardCells(cell=>cell.id!==casterId && this.boardFaction(cell.r,cell.c)==='hell').length>0;
@@ -3846,7 +3857,7 @@ class Game {
     if(placement){
       if(this.players[observerIdx]?.isAI && !inBounds(placement.r,placement.c))return null;
       if(this.cardAt(placement.r,placement.c) || this.wastelandAt(placement.r,placement.c) || this.isProtected(placement.r,placement.c)
-        || this.isOnBoard('hourai_kaguya') || this.eirinActive()) return null;
+        || this.isOnBoard('hourai_kaguya')) return null;
       members.push({...placement,id:'hourai_kaguya'});
     }
     const kaguya=members.find(cell=>cell.id==='hourai_kaguya');
@@ -3950,7 +3961,7 @@ class Game {
       case 'temple_shou': return Math.min(this.drawPile.length+1,this.templeWasteland(playerIdx).length);
       case 'temple_byakuren': {
         const caster=this.boardCells(cell=>cell.id===cardId)[0] || {r:-1,c:-1};
-        return !this.eirinActive() && this.byakurenOptions(playerIdx,caster.r,caster.c).some(option=>option.value==='look' && !option.disabled) ? 1 : 0;
+        return this.byakurenOptions(playerIdx,caster.r,caster.c).some(option=>option.value==='look' && !option.disabled) ? 1 : 0;
       }
       case 'mtn_sanae': return this.sanaeDrawCount();
       case 'hourai_mokou': return player.discard.length;
@@ -4386,7 +4397,7 @@ class Game {
     }
     await sleep(600);
     const frame=this.activeTestAbility();
-    if(frame?.ability==='palace_satori' && aiPolicyHas(playerIdx,'satori',this)){
+    if(maxCount===1 && frame?.ability==='palace_satori' && aiPolicyHas(playerIdx,'satori',this)){
       if(this.aiMakesMistake('cost'))return shuffle(eligible.slice()).slice(0,maxCount);
       const planned=aiSatoriPayment(playerIdx,frame.caster);return planned?[planned.id]:null;
     }
@@ -4490,7 +4501,7 @@ class Game {
     const palaceCount = this.factionCells('palace').length;
     if(palaceCount!==3) return null;
     for(const p of this.players){
-      const triggerId=p.hand.find(id=>CARD[this.abilityId(id)]?.trigger && !this.isCrownAbilityDisabled(id));
+      const triggerId=p.hand.find(id=>CARD[this.abilityId(id)]?.trigger && !this.triggerDeclines[id] && !this.isCrownAbilityDisabled(id));
       if(!this.isPlacementBlocked(p.idx) && triggerId){
         const cells = this.emptyCells(p.idx);
         if(!cells.length) return null;
@@ -4512,6 +4523,11 @@ class Game {
       guard++;
       const cell = koishi.cellCandidates.length===1 ? koishi.cellCandidates[0]
         : (this.players[koishi.ownerIdx].isAI ? aiFactionPlacement(koishi.ownerIdx,koishi.cardId,koishi.cellCandidates,CARD[koishi.cardId].faction) : await this.chooseCell(koishi.ownerIdx, koishi.cellCandidates, `${CARD[koishi.cardId].name} wanders onto the board — choose where`));
+      if(CARD[koishi.cardId]?.createdCopy){
+        const paid=await rawPayCost.call(this,koishi.ownerIdx,CARD[koishi.cardId].costBonus*(CARD[koishi.cardId].abilityMultiplier||1));
+        this.createdActivations[koishi.cardId]=!!paid;
+        if(!paid){this.addToHand(koishi.ownerIdx,koishi.cardId,true);this.triggerDeclines[koishi.cardId]=true;return;}
+      }
       this.setCardAt(cell.r,cell.c,koishi.cardId);
       this.recordTestPlacement(koishi.cardId,koishi.ownerIdx);
       this.recordTestAbility(koishi.cardId,'palace_koishi',true);
@@ -4565,7 +4581,7 @@ class Game {
     const eirinActive = this.eirinActive() && cardId !== 'hourai_eirin';
     let flags = {};
     const card = CARD[cardId];
-    if(eirinActive && card.crown){
+    if(this.isSageMuted(cardId)){
       this.log(`Eirin Yagokoro's passive disables ${CARD[cardId].name}'s abilities — it has no effect while Eirin is on the board.`);
     } else if(depth<6){
       flags = await this.resolveAbility(cardId, r, c, playerIdx, depth) || {};
@@ -4583,9 +4599,9 @@ class Game {
     const me = self.players[playerIdx].name;
     const meS = possessive(me);
     if(this.cancelled || depth>=6 || (this.players[playerIdx].isAI && !inBounds(r,c))) return {};
-    cardId=this.abilityId(cardId);
+    cardId=this.activeRuleAbility || this.abilityId(cardId);
     if(this.isProtected(r,c) && cardId!=='sage_yukari'){ this.log(`${CARD[cardId].name} is silenced by Rinnosuke.`); return {}; }
-    if(CARD[cardId].crown && this.eirinActive() && cardId!=='hourai_eirin')return {};
+    if(this.isSageMuted(this.cardAt(r,c)||cardId))return {};
     if(this.players[playerIdx].isAI && aiKnows(playerIdx,'value',this) && !aiKnows(playerIdx,'forecast',this)
       && AI_OPTIONAL_COST_ABILITIES.has(cardId) && aiImmediateAbilityUtility(playerIdx,cardId,r,c)<=0){
       this.log(me+' skips '+CARD[cardId].name+"'s ability to preserve cards and faction progress.");return {};
@@ -4695,9 +4711,12 @@ class Game {
         return await self.resolveAbility(ability,r,c,playerIdx,depth+1);
       }
       case 'temple_murasa': {
-        const target=await self.choosePlayer(playerIdx,'Murasa — choose a player to seal for two turns',{preferOpponent:true});
+        const planned=self.players[playerIdx].isAI&&aiKnows(playerIdx,'forecast',self)?aiAbilityPlan(playerIdx,self.cardAt(r,c),r,c).target:null;
+        const target=planned??await self.choosePlayer(playerIdx,'Murasa — choose a player to seal for two turns',{preferOpponent:true});
         if(target==null || self.cancelled)break;
+        self.placementBlockTurns[playerIdx]=Math.max(self.placementBlockTurns[playerIdx],1);
         self.placementBlockTurns[target]=Math.max(self.placementBlockTurns[target],2);
+        self.log(`${me} cannot place cards or trade on their next turn.`);
         self.presentTemple('murasa',{r,c,playerIdx:target});
         self.log(`${self.players[target].name} cannot place cards or trade on their next two turns.`);
         break;
@@ -4723,7 +4742,8 @@ class Game {
       }
       case 'sdm_meiling': {
         const moves=self.meilingPushes(r,c,!self.players[playerIdx].isAI);
-        const target=await self.chooseBoardCell(playerIdx,moves,'Meiling: choose an adjacent card to push away');
+        const best=self.players[playerIdx].isAI&&aiKnows(playerIdx,'value',self)?aiBestMeilingMove(playerIdx,r,c,moves):null;
+        const target=await self.chooseBoardCell(playerIdx,best?[best.move]:moves,'Meiling: choose an adjacent card to push away');
         const move=target && moves.find(option=>option.r===target.r && option.c===target.c);
         if(move){
           const id=self.cardAt(move.r,move.c);
@@ -4781,7 +4801,12 @@ class Game {
       }
       case 'hell_kutaka': {
         const hellCards=self.drawPile.filter(id=>CARD[id].faction==='hell');
-        if(!self.wastelandAt(r,c) || !hellCards.length){self.log(`${meS} Kutaka needs wasteland and a Hell card in the draw pile.`);break;}
+        if(!self.wastelandAt(r,c)){
+          const cells=DIRS4.map(([dr,dc])=>({r:r+dr,c:c+dc})).filter(x=>self.hasTile(x.r,x.c));
+          for(const cell of cells)self.setWastelandAt(cell.r,cell.c,true);
+          self.log(`${meS} Kutaka turns ${cells.length} orthogonally adjacent positions into wasteland.`);break;
+        }
+        if(!hellCards.length){self.log(`${meS} Kutaka finds no Hell card in the draw pile.`);break;}
         const id=!self.players[playerIdx].isAI && self.ui?.pickCardPool
           ? await self.pickUI(playerIdx,'pickCardPool',['Kutaka: take a Hell card from the draw pile',hellCards.map(id=>({id,source:'Draw pile'}))])
           : await self.chooseFromList(playerIdx,hellCards.map(id=>({label:CARD[id].name,value:id})),'Kutaka: take a Hell card from the draw pile');
@@ -4930,7 +4955,7 @@ class Game {
           const targetName=self.players[targetIdx].name;
           const poolIds=self.players[targetIdx].hand.filter(id=>CARD[id].faction==='hourai');
           self.presentAbility('kaguya',{stage:'focus',r,c,playerIdx,targetIdx,streak:guard-1});
-          const guessedId=isAI ? (poolIds.includes(guess.id) ? guess.id : null)
+          const guessedId=isAI ? (poolIds.find(id=>CARD[id].name===CARD[guess.id].name) || null)
             : await self.guessCardName(playerIdx,poolIds,`Kaguya: name an Eientei card you believe ${targetName} holds`);
           if(!guessedId){
             self.presentAbility('kaguya',{stage:'miss',r,c,playerIdx,targetIdx,streak:guard-1});
@@ -4995,7 +5020,7 @@ class Game {
       }
       case 'mtn_suwako': {
         const targets = self.emptyCells(playerIdx);
-        const count = 3 * (self.hasActiveAbility('mtn_kanako') ? 2 : 1);
+        const count = 3 * (self.kanakoMultiplier());
         const chosen = await self.chooseCells(playerIdx, Math.min(count, targets.length), targets, 'Suwako: designate wasteland');
         if(chosen.length && self.ui && self.ui.onWastelandCreate){
           try{ self.ui.onWastelandCreate({effect:'mishaguji',origin:{r,c},cells:chosen}); }catch(_error){}
@@ -5012,15 +5037,14 @@ class Game {
         break;
       }
       case 'mtn_aya': {
-        const reports = [];
+        const reports=[];
         for(const pl of self.players){
-          if(pl.idx===playerIdx) continue;
-          const n = Math.min(self.hasActiveAbility('mtn_kanako') ? 8 : 4, pl.hand.length);
-          self.revealHand(pl.idx,pl.hand.slice(0,n));
-          const shown = pl.hand.slice(0,n).map(id=>CARD[id].name);
-          reports.push({player:pl.name,cards:shown});
+          if(pl.idx===playerIdx)continue;
+          const ids=shuffle(pl.hand.slice()).slice(0,4*self.kanakoMultiplier());
+          self.revealHand(pl.idx,ids,[playerIdx]);
+          reports.push({targetIdx:pl.idx,player:pl.name,cardIds:ids,names:Object.fromEntries(ids.map(id=>[id,CARD[id].name]))});
         }
-        self.log({kind:'aya-report',reporter:me,edition:self.hasActiveAbility('mtn_kanako') ? 'Extended Edition' : 'Special Edition',reports});
+        self.addNewspaper(playerIdx,reports,self.hasActiveAbility('mtn_kanako')?'Extended Edition':'Special Edition');
         break;
       }
       case 'palace_satori': {
@@ -5086,7 +5110,9 @@ class Game {
             const pile = self.players[pick.idx].discard;
             self.recordTestScore(pick.idx,pick.id,{effect:'palace_rin'},true);
             pile.splice(pile.indexOf(pick.id),1);
+            self.permanentAbilities[pick.id]='__draw_one';
             self.addToHand(playerIdx, pick.id,true);
+            self.log(`${CARD[pick.id].name}'s ability is now permanently: Placed — draw a card.`);
             self.log(`${meS} Rin takes ${CARD[pick.id].name} from ${possessive(self.players[pick.idx].name)} discard pile.`);
           }
         } else {
@@ -5104,27 +5130,8 @@ class Game {
         break;
       }
       case 'sage_matara': {
-        const cells = self.selectableBoardCells(playerIdx,cell=>!(cell.r===r && cell.c===c));
-        if(cells.length){
-          const best=self.players[playerIdx].isAI && aiPolicyHas(playerIdx,'matara',self) && !self.aiMakesMistake('target') ? aiBestChannel(playerIdx,r,c) : null;
-          const target = await self.chooseBoardCell(playerIdx, best?[best.cell]:cells, 'Matara Okina: choose a card to trigger again');
-          if(target){
-            if(self.isProtected(target.r,target.c)){self.reportBlocked(target.r,target.c);break;}
-            if(depth<5){
-              const targetCardId = self.cardAt(target.r,target.c);
-              // The selected card supplies the ability; Matara remains its caster.
-              // Target exclusions, nearby areas, and effect origins use Matara's tile.
-              self.log(`${meS} Matara Okina channels ${CARD[targetCardId].name}'s ability from her own position.`);
-              const repeatedFlags=await self.resolveAbility(targetCardId, r, c, playerIdx, depth+2);
-              self.checkClaims(playerIdx);
-              return repeatedFlags || {};
-            } else {
-              self.log(`${meS} Matara Okina's chain of triggers has gone too deep — this trigger fizzles.`);
-            }
-          }
-        } else {
-          self.log(`${meS} Matara Okina finds no other card on the board to trigger.`);
-        }
+        const ids=self.selectableBoardCells(playerIdx,cell=>inBounds(cell.r,cell.c)).map(cell=>self.cardAt(cell.r,cell.c));
+        await self.createCard(playerIdx,ids,{double:true,title:'Matara Okina: create a board card with double abilities'});
         break;
       }
       case 'sage_ran': {
@@ -5344,7 +5351,14 @@ class Game {
         break;
       }
       case 'hourai_eirin': {
-        self.log(`${meS} Eirin Yagokoro takes the board — every Crown card's abilities are disabled while she remains.`);
+        const copy=await self.createCard(playerIdx,CARDS.filter(x=>x.faction==='hourai'&&!x.token).map(x=>x.id),{template:true,title:'Eirin: create an Eientei card'});
+        if(copy){
+          const spaces=self.emptyOrWastelandForCard(CARD[copy],playerIdx);
+          const cells=self.players[playerIdx].isAI?aiForcedPlacementCells(self,copy,spaces):spaces;
+          const cell=cells.length?await self.chooseCell(playerIdx,cells,'Eirin: immediately play the created card'):null;
+          if(cell&&!self.cancelled){self.removeFromHand(playerIdx,copy);return await self.internalPlace(copy,cell.r,cell.c,playerIdx,depth+1);}
+          self.log('There is no chosen legal position; the created card stays in hand.');
+        }
         break;
       }
       case 'sage_yukari': {
@@ -5361,6 +5375,202 @@ class Game {
     return {};
   }
 }
+
+/* 2026-10-12: creation, private newspapers and instance ability changes. */
+const REWORK_RULES_VERSION='2026-10-12-create-news-v1';
+let nextCreatedCard=0,nextHiddenChoice=0;
+const COPY_PASSIVES=new Set(['sage_yukari','sage_kasen','mtn_nitori','hell_hecatia','palace_koishi']);
+CARD.__draw_one={id:'__draw_one',name:'Draw a card',faction:'token',desc:'Placed: Draw a card.'};
+function cardBaseId(id){return CARD[id]?.baseId || id;}
+function generatedCard(id){return /^created_card_\d+$/.test(id) || /^trap_token_\d+$/.test(id);}
+function copyDefinitions(match){return [...match.startingCardIds].filter(id=>CARD[id]?.createdCopy).map(id=>({...CARD[id]}));}
+function mergeAbilityFlags(a={},b={}){
+  const callbacks=(x,y)=>x&&y?()=>{x();y();}:x||y;
+  return {...a,...b,extraTurns:(a.extraTurns||0)+(b.extraTurns||0),skipAdvance:!!(a.skipAdvance||b.skipAdvance),
+    afterExtra:callbacks(a.afterExtra,b.afterExtra),cancelExtra:callbacks(a.cancelExtra,b.cancelExtra)};
+}
+function blueprintCopy(sourceId,id,ability,multiplier=1){
+  const source=CARD[sourceId],baseId=cardBaseId(sourceId);
+  return {...source,id,baseId,createdCopy:true,copiedAbility:ability,costBonus:(source.costBonus||0)+1,
+    abilityMultiplier:multiplier===2?2:1,token:false,shopExpansion:false};
+}
+Game.prototype.createCard=async function(p,sourceIds,{double=false,template=false,title='Create: choose one of three cards'}={}){
+  if(this.cancelled)return null;
+  const pool=[...new Set(sourceIds)].filter(id=>CARD[id]&&!CARD[id].token&&!CARD[id].shopkeeper);
+  const choices=shuffle(pool).slice(0,3);if(!choices.length)return null;
+  let chosen;
+  if(this.players[p].isAI){
+    chosen=choices.slice().sort((a,b)=>aiCreatedValue(p,b,{double,template})-aiCreatedValue(p,a,{double,template}))[0];
+  }else chosen=await this.pickUI(p,'pickAbilityCards',[title,choices]);
+  if(this.cancelled || !choices.includes(chosen))return null;
+  const ability=template ? cardBaseId(chosen) : this.abilityId(chosen);
+  const id=`created_card_${++nextCreatedCard}`;
+  CARD[id]=blueprintCopy(chosen,id,ability,double?2:1);
+  this.startingCardIds.add(id);this.addToHand(p,id,true);
+  if(this.testMetrics){const d=this.testSeatMetrics(p).diagnostics;d.creations ||= {};d.creations[cardBaseId(chosen)]=(d.creations[cardBaseId(chosen)]||0)+1;}
+  this.recordTestDecision(p,'create',{source:testCardId(chosen),copy:id,costBonus:CARD[id].costBonus,double});
+  this.log(`${this.players[p].name} creates a copy of ${CARD[chosen].name}${double?' with double abilities':''}. Its ability costs increase by ${CARD[id].costBonus}.`);
+  this.render();return id;
+};
+Game.prototype.isSageMuted=function(id){return CARD[id]?.faction==='sage' && this.eirinActive();};
+Game.prototype.isCardAbilityDisabled=function(id){
+  const ability=this.abilityId(id),copy=CARD[id]?.createdCopy;
+  const inactive=copy && (COPY_PASSIVES.has(ability)||ability==='hourai_eirin'||ability==='mtn_kanako') && this.isOnBoard(id) && this.createdActivations[id]!==true;
+  return this.isSageMuted(id)||inactive;
+};
+Game.prototype.isCrownAbilityDisabled=function(id){return this.isCardAbilityDisabled(id);};
+Game.prototype.canOverrideTarget=function(id,targetId){
+  return !!CARD[this.abilityId(id)]?.override && !this.isSageMuted(id)
+    && (!CARD[id]?.createdCopy || this.createdActivations[id]===true || this.players.some(p=>p.hand.includes(id) && this.payableCards(p.idx).filter(other=>other!==id).length>=CARD[id].costBonus*(COPY_PASSIVES.has(this.abilityId(id))?(CARD[id].abilityMultiplier||1):1)));
+};
+Game.prototype.eirinActive=function(){
+  return this.boardCells(cell=>this.abilityId(cell.id)==='hourai_eirin' && !this.isProtected(cell.r,cell.c)
+    && (!CARD[cell.id].createdCopy || this.createdActivations[cell.id]===true)).length>0;
+};
+Game.prototype.abilityId=function(id){return this.permanentAbilities?.[id] || this.borrowedAbilities?.[id] || CARD[id]?.copiedAbility || (CARD[id]?.token&&/^trap_token/.test(id)?'trap_token':cardBaseId(id));};
+const originalPointValue=Game.prototype.pointValue;
+Game.prototype.pointValue=function(id){if(CARD[id]?.createdCopy&&CARD[this.abilityId(id)]?.triple&&this.createdActivations[id]!==true)return 1;const n=originalPointValue.call(this,id);return n===3 && CARD[id]?.abilityMultiplier===2 ? 6:n;};
+Game.prototype.copySurcharge=function(){
+  const ctx=this.ruleContext;return ctx ? Math.max(0,ctx.extra-(ctx.credit?.remaining||0)) : 0;
+};
+const rawByakurenCost=Game.prototype.byakurenCost;
+Game.prototype.byakurenCost=function(placement=null,base=4){
+  const actor=placement && this.cardAt(placement.r,placement.c);
+  const extra=this.ruleContext?.actor===actor ? this.copySurcharge() : CARD[actor]?.costBonus||0;
+  return rawByakurenCost.call(this,placement,base)+extra;
+};
+Game.prototype.abilityCost=function(id,placement=null){
+  const actor=placement && this.cardAt(placement.r,placement.c) || id,ability=this.abilityId(id!==actor?id:actor),card=CARD[ability]||CARD[id];
+  if(ability==='temple_byakuren')return this.byakurenCost(placement,2);
+  return (card.cost3?3:card.cost2?2:card.cost1?1:0)+(CARD[actor]?.costBonus||0);
+};
+const rawPayCost=Game.prototype.payCost;
+Game.prototype.payCost=async function(p,count){
+  const ctx=this.ruleContext,extra=ctx?.ability==='temple_byakuren'?0:this.copySurcharge();
+  const paid=await rawPayCost.call(this,p,count+extra);
+  if(paid && ctx){ctx.credit.remaining=0;if(CARD[ctx.actor]?.createdCopy)this.createdActivations[ctx.actor]=true;}
+  return paid;
+};
+const rawPayCostN=Game.prototype.payCostN;
+Game.prototype.payCostN=async function(p,maxCount){
+  const extra=this.copySurcharge();if(!extra)return rawPayCostN.call(this,p,maxCount);
+  const effects=Math.min(maxCount,this.payableCards(p).length-extra);if(effects<1)return 0;
+  const min=extra+1,max=extra+effects;
+  const selected=await this.selectCostCards(p,min,max,`Yuyuko: pay ${min}–${max} cards; ${extra} pays the creation surcharge, the rest choose the target count`);
+  const paid=this.commitCostCards(p,selected,min,max);
+  if(paid){this.ruleContext.credit.remaining=0;this.createdActivations[this.ruleContext.actor]=true;}
+  return paid?paid-extra:0;
+};
+const rawInternalPlace=Game.prototype.internalPlace;
+Game.prototype.internalPlace=async function(id,r,c,p,depth=0,crownEffectId=null){
+  if(CARD[id]?.createdCopy)this.createdActivations[id]=false;
+  if(CARD[id]?.createdCopy && COPY_PASSIVES.has(this.abilityId(id))){
+    this.createdActivations[id]=false;
+    if(!this.isSageMuted(id) && !this.isProtected(r,c)){
+      const ability=this.abilityId(id),frame={caster:id,ability,playerIdx:p,paid:[],gained:[],stolen:[],information:false};
+      if(this.testMetrics)(this.testAbilityFrames ||= []).push(frame);
+      let paid=false;try{paid=await rawPayCost.call(this,p,CARD[id].costBonus*(CARD[id].abilityMultiplier||1));}finally{if(this.testMetrics)this.testAbilityFrames.pop();}
+      this.createdActivations[id]=!!paid;if(this.testMetrics)this.recordTestAbility(id,ability,paid);
+    }
+    if(this.cardAt(r,c) && !this.createdActivations[id]){
+      if(!this.players[p].hand.includes(id))this.addToHand(p,id,true);
+      this.log(`${this.players[p].name} cannot activate this copy's override and keeps it in hand.`);
+      return this.players[p].isAI?{}:{skipAdvance:true};
+    }
+  }
+  return rawInternalPlace.call(this,id,r,c,p,depth,crownEffectId);
+};
+const rawResolveRules=Game.prototype.resolveAbilityRules;
+Game.prototype.resolveAbilityRules=async function(id,r,c,p,depth=0){
+  const actor=this.cardAt(r,c)||id,parent=this.ruleContext,same=parent?.actor===actor;
+  const ability=same && id!==actor ? (CARD[id]?.copiedAbility||cardBaseId(id)) : this.abilityId(id);
+  if(this.cancelled || depth>=6 || this.isSageMuted(actor) || (this.isProtected(r,c)&&ability!=='sage_yukari'))return {};
+  const extra=CARD[actor]?.costBonus||0,repeats=same?1:CARD[actor]?.abilityMultiplier||1;
+  let flags={};
+  for(let repeat=0;repeat<repeats;repeat++){
+    if(this.cancelled || this.winner || !this.isOnBoard(actor))break;
+    const ctx={actor,ability,extra,credit:same?parent.credit:{remaining:0}},prior=this.activeRuleAbility;
+    this.ruleContext=ctx;this.activeRuleAbility=ability;
+    try{
+      const paidPassive=COPY_PASSIVES.has(ability) && this.createdActivations[actor]===true;
+      const explicitCost=['haku_yuyuko','palace_satori','heaven_tenshi','heaven_iku','hell_eiki','palace_yuugi','temple_shou','temple_ichirin','temple_byakuren'].includes(ability);
+      if(COPY_PASSIVES.has(ability) && extra && !paidPassive)continue;
+      if(extra && !explicitCost && !paidPassive && !same){
+        if(!await rawPayCost.call(this,p,extra)){
+          this.createdActivations[actor]=false;this.log(`${this.players[p].name} declines the copy's creation surcharge.`);continue;
+        }
+        this.createdActivations[actor]=true;ctx.credit.remaining=extra;
+      }
+      if(ability==='__draw_one'){
+        if(this.drawPile.length){const drawn=this.takeFromDrawPile(p);this.addToHand(p,drawn);this.ui?.onDrawCard?.({playerIdx:p,cardId:drawn,effect:'rin'});}
+        this.log(`${this.players[p].name} draws a card with the rewritten ability.`);this.render();continue;
+      }
+      flags=mergeAbilityFlags(flags,await rawResolveRules.call(this,id,r,c,p,depth)||{});
+    }finally{this.ruleContext=parent;this.activeRuleAbility=prior;}
+  }
+  return flags;
+};
+Game.prototype.addNewspaper=function(p,reports,edition){
+  const paper={kind:'aya-report',paperId:++this.nextPaperId,ownerIdx:p,reporter:this.players[p].name,edition,subscribers:[],reports};
+  this.paperReports.push(paper);this.log(paper);
+  const inLog=new Set(this.logLines.filter(x=>x?.kind==='aya-report').map(x=>x.paperId));
+  this.paperReports=this.paperReports.filter(x=>inLog.has(x.paperId));return paper;
+};
+Game.prototype.newsForSeat=function(paper,seat){
+  const allowed=paper.ownerIdx===seat || paper.subscribers.includes(seat);
+  const view={kind:paper.kind,paperId:paper.paperId,ownerIdx:paper.ownerIdx,reporter:paper.reporter,edition:paper.edition,
+    subscribed:allowed,subscribers:paper.subscribers.slice(),reportCounts:paper.reports.map(x=>({player:x.player,count:x.cardIds.length}))};
+  if(allowed)view.reports=paper.reports.map(x=>({player:x.player,targetIdx:x.targetIdx,cards:x.cardIds.map(id=>CARD[id]?.name||x.names?.[id]||'Card')}));
+  return view;
+};
+Game.prototype.newsPayments=function(p){return this.players[p].hand.filter(id=>this.canHandEnterPile(id)&&id!==this.forcedPlay[p]);};
+Game.prototype.subscribeNews=function(p,paperId,payment){
+  const paper=this.paperReports.find(x=>x.paperId===paperId);
+  if(this.cancelled || p!==this.currentPlayerIdx || !paper || paper.ownerIdx===p || paper.subscribers.includes(p) || !this.newsPayments(p).includes(payment))return false;
+  this.recordTestTradeExit(payment,'takenByOther',p);this.removeFromHand(p,payment);this.addToHand(paper.ownerIdx,payment,true);
+  paper.subscribers.push(p);
+  for(const report of paper.reports)this.revealHand(report.targetIdx,report.cardIds.filter(id=>this.players[report.targetIdx].hand.includes(id)),[p]);
+  if(this.testMetrics){const d=this.testSeatMetrics(p).diagnostics;d.newsSubscriptions=(d.newsSubscriptions||0)+1;}
+  this.recordTestDecision(p,'subscribe',{paperId,payment:testCardId(payment),editorSeat:paper.ownerIdx+1});
+  this.log(`${this.players[p].name} subscribes to Bunbunmaru News and pays ${CARD[payment].name} to ${this.players[paper.ownerIdx].name}.`);
+  this.render();return true;
+};
+const originalChooseHandCard=Game.prototype.chooseHandCard;
+Game.prototype.chooseHandCard=async function(p,target,title,opts={}){
+  if(opts.presentation!=='satori')return originalChooseHandCard.call(this,p,target,title,opts);
+  const hand=this.players[target].hand.slice();if(!hand.length)return null;
+  const displayed=shuffle(hand.slice()).slice(0,4),visible=new Set(displayed);
+  this.revealHand(target,displayed,[p]);
+  this.recordTestDecision(p,'satori-reveal',{targetSeat:target+1,revealed:displayed.map(testCardId),hiddenSlots:hand.length-displayed.length});
+  if(this.players[p].isAI){
+    const best=aiBestSatoriCard(p,target,displayed),hidden=hand.filter(id=>!visible.has(id));
+    const pool=this.handGuessOptions(p).candidates,mean=pool.length?pool.reduce((sum,id)=>sum+aiSatoriRevealedValue(p,target,id).value,0)/pool.length:0;
+    const blind=hidden.length && (!best || mean>best.value+.05);
+    const chosen=blind?hidden[Math.floor(Math.random()*hidden.length)]:best?.id||displayed[0];
+    this.recordTestDecision(p,'satori-card',{targetSeat:target+1,chosen:testCardId(chosen),blind:!!blind,visibleChoices:displayed.map(testCardId),hiddenSlots:hidden.length});
+    return chosen;
+  }
+  // Surrogate IDs protect face-down names in DOM attributes and online choice payloads.
+  const mapping=new Map(),hiddenIds=[],hiddenProfiles={};
+  const safe=shuffle(hand.slice()).map(id=>{
+    if(visible.has(id))return id;
+    const alias=`satori_hidden_${++nextHiddenChoice}`;
+    CARD[alias]={id:alias,name:'Unknown card',faction:'token',token:true,hiddenChoice:true,desc:'This card is face down. You may select it without seeing its identity.'};
+    mapping.set(alias,id);hiddenIds.push(alias);hiddenProfiles[alias]=CARD[alias];return alias;
+  });
+  try{
+    const choice=await this.pickUI(p,'pickHandCard',[title,safe,this.players[target].name,{
+      presentation:'satori',dragAction:'take',dropLabel:'Your Hand',hiddenIds,hiddenProfiles,
+      instruction:'Four random cards are face up. Other cards remain face down and can still be selected.'}]);
+    return mapping.get(choice)|| (safe.includes(choice)?choice:null);
+  }finally{for(const alias of hiddenIds)delete CARD[alias];}
+};
+/* End reworked rule engine. */
+
+Game.prototype.kanakoMultiplier=function(){
+  return Math.max(1,...this.boardCells(x=>this.abilityId(x.id)==='mtn_kanako'&&!this.isProtected(x.r,x.c)&&!this.isCardAbilityDisabled(x.id)).map(x=>2*(CARD[this.cardAt(x.r,x.c)].abilityMultiplier||1)));
+};
+Game.prototype.sanaeDrawCount=function(){return (this.hasActiveAbility('mtn_kanako')?2:1)*this.kanakoMultiplier();};
 
 /* ===================== UI layer ===================== */
 var game = null;
@@ -5412,11 +5622,11 @@ function onlineSnapshot(seat){
     placementBlockedForTurn:game.placementBlockedForTurn,pendingExtraTurns:game.pendingExtraTurns,
     tradedThisTurn:game.tradedThisTurn,currentPlayerIdx:game.currentPlayerIdx,
     forcedPlay:Object.fromEntries(Object.entries(game.forcedPlay).filter(([idx])=>Number(idx)===seat)),
-    logLines:game.logLines,winner:game.winner?.idx??null,stalemateMessage:game.stalemateMessage||null,
+    logLines:game.logLines.map(x=>x?.kind==='aya-report'?game.newsForSeat(x,seat):x),generatedCopies:copyDefinitions(game),permanentAbilities:game.permanentAbilities,createdActivations:game.createdActivations,winner:game.winner?.idx??null,stalemateMessage:game.stalemateMessage||null,
     remoteWaitingSeat:pendingRemoteTurn && !pendingRemoteTurn.busy ? pendingRemoteTurn.seat : null,turnId:pendingRemoteTurn?.id??null,
     actionAck:online.actionAcks?.[seat]??null,
     sceneCard:lastCrownBackdropId,timeStopped:timeStopDepth>0,
-    tokens:Object.values(CARD).filter(c=>c.token && !['trap_token','__hidden_card'].includes(c.id))};
+    tokens:Object.values(CARD).filter(c=>c.token && !['trap_token','__hidden_card','__draw_one'].includes(c.id) && !c.hiddenChoice)};
 }
 async function publishOnlineNow(){
   if(!online || online.seat!==0 || !game || game.cancelled)return;
@@ -5442,7 +5652,7 @@ function applyOnlineSnapshot(state){
   Object.assign(mirror,{ui,numPlayers:state.players.length,aiDifficulty:state.aiDifficulty,
     players:state.players,board:state.board,wasteland:state.wasteland,
     shopTiles:state.shopTiles,shopCards:state.shopCards,kourindouEnabled:true,
-    drawPile:Array(state.drawCount).fill('__hidden_card'),borrowedAbilities:state.borrowedAbilities||{},
+    drawPile:Array(state.drawCount).fill('__hidden_card'),borrowedAbilities:state.borrowedAbilities||{},permanentAbilities:state.permanentAbilities||{},createdActivations:state.createdActivations||{},paperReports:state.logLines.filter(x=>x?.kind==='aya-report'),nextPaperId:0,reserveAges:state.players.map(()=>({})),ruleContext:null,activeRuleAbility:null,
     placementBlockTurns:state.placementBlockTurns||[],placementBlockedForTurn:state.placementBlockedForTurn||[],
     pendingExtraTurns:state.pendingExtraTurns||{},tradedThisTurn:state.tradedThisTurn||[],
     forcedPlay:state.forcedPlay||{},currentPlayerIdx:state.currentPlayerIdx,logLines:state.logLines,
@@ -5450,6 +5660,7 @@ function applyOnlineSnapshot(state){
     remoteWaitingSeat:state.remoteWaitingSeat,remoteTurnId:state.turnId,stalemateMessage:state.stalemateMessage});
   mirror.winner=state.winner===null?null:mirror.players[state.winner];
   for(const card of state.tokens||[])if(card?.token && card.id)CARD[card.id]=card;
+  for(const card of state.generatedCopies||[])if(card?.createdCopy && /^created_card_\d+$/.test(card.id) && CARD[card.baseId])CARD[card.id]=card;
   game=mirror;
   if(!onlineInputPending || state.actionAck===online.pendingActionId)onlineInputPending=false;
   el('setup').style.display='none';el('game').classList.add('active');
@@ -5597,6 +5808,10 @@ async function handleRemoteAction(seat,action){
     if(online)void sendOnline({kind:'error',matchId:online.matchId,message:'Invalid or stale action.'},seat);return false;
   }
   const player=owner.players[seat],reject=()=>{void sendOnline({kind:'error',matchId:online.matchId,message:'Invalid or stale action.'},seat);return false;};
+  if(action.type==='subscribe'){
+    if(!owner.subscribeNews(seat,action.paperId,action.cardId))return reject();
+    (online.actionAcks ||= {})[seat]=action.actionId;renderAll();publishSnapshot();return true;
+  }
   if(action.type==='trade'){
     if(!owner.canTrade(seat,action.cardId)||!owner.tradeCells().some(c=>c.r===action.target?.r&&c.c===action.target?.c))return reject();
     waiting.busy=true;(online.actionAcks ||= {})[seat]=action.actionId;publishSnapshot();
@@ -5827,7 +6042,7 @@ const DISCARD_LIGHT_EXCEPTIONS = Object.freeze({
 });
 let crownImpactTimer = null;
 
-function crownLightFor(cardId){ return CROWN_LIGHT_PALETTES[cardId] || DEFAULT_CROWN_LIGHT; }
+function crownLightFor(cardId){ return CROWN_LIGHT_PALETTES[cardBaseId(cardId)] || DEFAULT_CROWN_LIGHT; }
 function discardLightFor(cardId){
   if(DISCARD_LIGHT_EXCEPTIONS[cardId]) return DISCARD_LIGHT_EXCEPTIONS[cardId];
   const card = CARD[cardId];
@@ -7039,7 +7254,7 @@ const CARD_ART_CLASS = {
   heaven_tenshi: 'card-art-tenshi',
   heaven_iku: 'card-art-iku',
 }; // per-card portrait art, takes priority over the faction-level background
-function cardBgClass(c, cardId){ return `${CARD_ART_CLASS[cardId] || FACTION_BG_CLASS[c.faction] || ''} card-faction-${c.faction}`.trim(); }
+function cardBgClass(c, cardId){ return `${CARD_ART_CLASS[cardBaseId(cardId)] || FACTION_BG_CLASS[c.faction] || ''} card-faction-${c.faction}`.trim(); }
 
 const CARD_DETAIL_FACTION_ICONS = {
   sdm: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/icons/scarlet_devil_mansion.png",
@@ -7178,7 +7393,7 @@ const CARD_ABILITY_NAMES = {
 /* ---------- Language selection: canonical rules stay language-independent. ---------- */
 let gameLanguage='en';
 try{const saved=window.localStorage?.getItem('boundary-language');if(saved==='zh-CN')gameLanguage=saved;}catch(_error){}
-const ZH_CARDS={"sdm_remilia":["蕾米莉亚·斯卡蕾特","命运操纵","放置：将其他玩家手中的所有红魔馆卡牌加入你的手牌。"],"sdm_flandre":["芙兰朵露·斯卡蕾特","「目」之破坏","放置：选择任意玩家的一张手牌，将其送入该玩家的弃牌堆。"],"sdm_patchouli":["帕秋莉·诺蕾姬","魔法风云","放置：猜测另一名玩家手中的一张卡牌。猜对后，将该卡牌加入你的手牌。"],"sdm_sakuya":["十六夜咲夜","Zawarudo","放置：获得两个额外回合，然后将你的手牌洗入抽牌堆。"],"haku_yuyuko":["西行寺幽幽子","幽冥缠身","[代价 N] 放置：将 N 张随机的正交相邻卡牌送入你的弃牌堆。"],"haku_youmu":["魂魄妖梦","先之先","放置：放置此卡不消耗你的回合。"],"hourai_kaguya":["蓬莱山辉夜","看我操作！","放置：猜测另一名玩家手中的一张永远亭卡牌。每次猜对，你可以将该卡牌放到棋盘上并继续猜测。"],"hourai_eirin":["八意永琳","思兼装置","此卡在棋盘上时，所有领主卡牌的能力均被禁用。"],"hourai_reisen":["铃仙·优昙华院·因幡","狂气之瞳","放置：选择另一名玩家的一张手牌。该玩家必须在下个回合放置这张卡牌。"],"hourai_mokou":["藤原妹红","凤凰复生","放置：你的弃牌堆中每有一张卡牌，就抽一张牌。"],"mtn_kanako":["八坂神奈子","风神之神德","此卡可以放在荒地上。此卡在棋盘上时，其他妖怪之山卡牌的放置能力发动两次。\n放置：将你手中的一张妖怪之山卡牌放到棋盘上。"],"mtn_suwako":["洩矢诹访子","诅咒之地","放置：将三个棋盘格变为荒地。"],"mtn_sanae":["东风谷早苗","八坂之神风","放置：抽一张牌。如果八坂神奈子在棋盘上，再抽一张牌。"],"mtn_aya":["射命丸文","才不是道听途说呢！","放置：其他每名玩家展示四张手牌。"],"palace_satori":["古明地觉","恐怖催眠术","[代价 I] 放置：查看另一名玩家的手牌，并将其中一张加入你的手牌。"],"palace_rin":["火焰猫燐","猫之步伐","放置：将任意弃牌堆中的一张卡牌加入你的手牌。"],"palace_utsuho":["灵乌路空","核裂变","放置：将棋盘上的一个 2×2 区域变为荒地。"],"palace_koishi":["古明地恋","无意识的哲学","棋盘上有三张地灵殿卡牌时，此卡会自动从你的手牌移到棋盘上。"],"sage_yukari":["八云紫","境界操纵","你可以将此卡放在另一张棋盘卡牌上，并将被覆盖的卡牌加入你的手牌。"],"sage_kasen":["茨木华扇","无拘无束","收取阵营卡牌时，此卡可视为任意4卡阵营的卡牌。"],"sage_matara":["摩多罗隐岐奈","/op","放置：选择另一张棋盘卡牌，由此卡使用它的放置能力。"],"sage_ran":["八云蓝","式神召回","放置：抽一张牌。如果八云紫在棋盘上，立即放置抽到的卡牌。"],"reimu":["博丽灵梦","梦想天生","放置：将棋盘上的一张领主卡牌加入你的手牌。"],"marisa":["雾雨魔理沙","极限火花","放置：将棋盘上的一张非领主卡牌送入你的弃牌堆。"],"yuuka":["风见幽香","花之主宰","放置：清除一个 3×3 区域中的荒地，然后将你的手牌洗入抽牌堆并抽四张牌。"],"medicine":["梅蒂欣·梅兰可莉","铃兰中毒","放置：选择一名玩家，将其两张随机手牌放回抽牌堆。"],"hell_hecatia":["赫卡提亚·拉碧斯拉祖利","三位一体狂想曲","此卡计为 3 点弃牌分数。只有弃牌堆已有 3 张及以上地狱卡牌时，此卡才能进入该弃牌堆。"],"hell_clownpiece":["克劳恩皮丝","污秽耐受","此卡可以放在荒地上。\n放置：清除此卡周围的荒地。"],"hell_eiki":["四季映姬","黑白的判决","[代价 I] 放置：将棋盘上数量最多的阵营的所有卡牌放回抽牌堆。"],"hell_komachi":["小野塚小町","距离操控","放置：将此卡与另一张棋盘卡牌交换位置。如果棋盘上有另一张地狱卡牌，此次放置不消耗你的回合。"],"heaven_tenshi":["比那名居天子","全卡牌的绯想天！","[代价 II] 放置：将棋盘上的所有非天界卡牌放回抽牌堆。"],"heaven_iku":["永江衣玖","驾驭雷云","[代价 III] 放置：选择一个 2×2 区域，将其中最多两张随机的非天界卡牌送入你的弃牌堆。"],"temple_byakuren":["圣白莲","魔界幻想","放置：你可以按任意顺序使用每个效果一次。\n[代价 IV] 获得三个额外回合。\n[代价 III] 将另外三张棋盘卡牌放回抽牌堆，并将其所在格变为荒地。\n[代价 II] 查看抽牌堆顶的三张牌，拿取一张，并按任意顺序放回其余卡牌。\n棋盘上每有一张其他命莲寺卡牌，每个效果的代价减少一。"],"temple_shou":["寅丸星","光辉宝藏","[代价 I] 放置：棋盘上每有一块荒地，就抽一张牌，然后清除所有荒地。"],"temple_nue":["封兽鵺","能力奇美拉","放置：从三张随机卡牌中选择一个能力。短暂变为该卡牌的外貌，并使用它的能力。"],"temple_murasa":["村纱水蜜","无底漩涡","放置：选择一名玩家。该玩家在接下来两个回合中不能放置卡牌或交易。"],"temple_ichirin":["云居一轮","再打一轮！","[代价 II] 放置：将每张非命莲寺卡牌向远离此卡的方向推一格。被推出棋盘的卡牌放回抽牌堆。"],"sdm_meiling":["红美铃","内劲","放置：将一张相邻卡牌向远离此卡的方向移动一格。"],"hourai_tewi":["因幡帝","远古骗术","放置：向其他每名玩家的手牌中加入一张陷阱。"],"mtn_nitori":["河城荷取","光学迷彩","以此卡为中心的 3×3 区域中的卡牌不能被选中。"],"palace_yuugi":["星熊勇仪","怪力乱神","[代价 II] 放置：将一张正交相邻的卡牌送入你的弃牌堆。"],"sage_mai_satono":["丁礼田舞与尔子田里乃","驱动活力","放置：在你的下个回合获得一个额外回合。"],"hell_kutaka":["庭渡久侘歌","异界的护卫","此卡可以放在荒地上。\n放置：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。"],"shop_rinnosuke":["森近霖之助","香霖堂","此卡及其周围的卡牌不能被选中、移动或使用能力。\n先选择一张手牌，再点击森近霖之助即可交易。每回合限一次，且不消耗回合。"],"trap_token":["陷阱","嗯……这是陷阱！","此卡在手牌中时，不能交易、弃置或放回抽牌堆。\n放置：将另一张手牌放回抽牌堆。"]};
+const ZH_CARDS={"sdm_remilia": ["蕾米莉亚·斯卡蕾特", "命运操纵", "放置：将其他玩家手中的所有红魔馆卡牌加入你的手牌。"], "sdm_flandre": ["芙兰朵露·斯卡蕾特", "「目」之破坏", "放置：选择任意玩家的一张手牌，将其送入该玩家的弃牌堆。"], "sdm_patchouli": ["帕秋莉·诺蕾姬", "魔法风云", "放置：猜测另一名玩家手中的一张卡牌。猜对后，将该卡牌加入你的手牌。"], "sdm_sakuya": ["十六夜咲夜", "Zawarudo", "放置：获得两个额外回合，然后将你的手牌洗入抽牌堆。"], "haku_yuyuko": ["西行寺幽幽子", "幽冥缠身", "[代价 N] 放置：将 N 张随机的正交相邻卡牌送入你的弃牌堆。"], "haku_youmu": ["魂魄妖梦", "先之先", "放置：放置此卡不消耗你的回合。"], "hourai_kaguya": ["蓬莱山辉夜", "看我操作！", "放置：猜测另一名玩家手中的一张永远亭卡牌。每次猜对，你可以将该卡牌放到棋盘上并继续猜测。"], "hourai_eirin": ["八意永琳", "思兼装置", "放置：创造一张永远亭的卡牌，并将其立刻打出。此卡在棋盘上时，所有贤者卡牌的能力均被禁用。"], "hourai_reisen": ["铃仙·优昙华院·因幡", "狂气之瞳", "放置：选择另一名玩家的一张手牌。该玩家必须在下个回合放置这张卡牌。"], "hourai_mokou": ["藤原妹红", "凤凰复生", "放置：你的弃牌堆中每有一张卡牌，就抽一张牌。"], "mtn_kanako": ["八坂神奈子", "风神之神德", "此卡可以放在荒地上。此卡在棋盘上时，其他妖怪之山卡牌的放置能力发动两次。\n放置：将你手中的一张妖怪之山卡牌放到棋盘上。"], "mtn_suwako": ["洩矢诹访子", "诅咒之地", "放置：将三个棋盘格变为荒地。"], "mtn_sanae": ["东风谷早苗", "八坂之神风", "放置：抽一张牌。如果八坂神奈子在棋盘上，再抽一张牌。"], "mtn_aya": ["射命丸文", "才不是道听途说呢！", "放置：查看其他每名玩家的四张手牌，并记录于报纸中。只有你能阅读。其他玩家须将一张手牌付款给你订阅，才能观看情报。"], "palace_satori": ["古明地觉", "恐怖催眠术", "[代价 I] 放置：随机展示另一名玩家手牌中的四张卡牌，然后从其手牌中选取一张加入你的手牌。未展示的卡牌仍可选取。"], "palace_rin": ["火焰猫燐", "猫之步伐", "放置：将任意弃牌堆中的一张卡牌加入你的手牌，并将其技能改为“放置：抽一张牌”。"], "palace_utsuho": ["灵乌路空", "核裂变", "放置：将棋盘上的一个 2×2 区域变为荒地。"], "palace_koishi": ["古明地恋", "无意识的哲学", "棋盘上有三张地灵殿卡牌时，此卡会自动从你的手牌移到棋盘上。"], "sage_yukari": ["八云紫", "境界操纵", "你可以将此卡放在另一张棋盘卡牌上，并将被覆盖的卡牌加入你的手牌。"], "sage_kasen": ["茨木华扇", "无拘无束", "收取阵营卡牌时，此卡可视为任意4卡阵营的卡牌。"], "sage_matara": ["摩多罗隐岐奈", "/op", "放置：创造一张棋盘上的卡牌，使其获得双倍的能力。"], "sage_ran": ["八云蓝", "式神召回", "放置：抽一张牌。如果八云紫在棋盘上，立即放置抽到的卡牌。"], "reimu": ["博丽灵梦", "梦想天生", "放置：将棋盘上的一张领主卡牌加入你的手牌。"], "marisa": ["雾雨魔理沙", "极限火花", "放置：将棋盘上的一张非领主卡牌送入你的弃牌堆。"], "yuuka": ["风见幽香", "花之主宰", "放置：清除一个 3×3 区域中的荒地，然后将你的手牌洗入抽牌堆并抽四张牌。"], "medicine": ["梅蒂欣·梅兰可莉", "铃兰中毒", "放置：选择一名玩家，将其两张随机手牌放回抽牌堆。"], "hell_hecatia": ["赫卡提亚·拉碧斯拉祖利", "三位一体狂想曲", "此卡计为 3 点弃牌分数。只有弃牌堆已有 3 张及以上地狱卡牌时，此卡才能进入该弃牌堆。"], "hell_clownpiece": ["克劳恩皮丝", "污秽耐受", "此卡可以放在荒地上。\n放置：清除此卡周围的荒地。"], "hell_eiki": ["四季映姬", "黑白的判决", "[代价 I] 放置：将棋盘上数量最多的阵营的所有卡牌放回抽牌堆。"], "hell_komachi": ["小野塚小町", "距离操控", "放置：将此卡与另一张棋盘卡牌交换位置。如果棋盘上有另一张地狱卡牌，此次放置不消耗你的回合。"], "heaven_tenshi": ["比那名居天子", "全卡牌的绯想天！", "[代价 II] 放置：将棋盘上的所有非天界卡牌放回抽牌堆。"], "heaven_iku": ["永江衣玖", "驾驭雷云", "[代价 III] 放置：选择一个 2×2 区域，将其中最多两张随机的非天界卡牌送入你的弃牌堆。"], "temple_byakuren": ["圣白莲", "魔界幻想", "放置：你可以按任意顺序使用每个效果一次。\n[代价 IV] 获得三个额外回合。\n[代价 III] 将另外三张棋盘卡牌放回抽牌堆，并将其所在格变为荒地。\n[代价 II] 查看抽牌堆顶的三张牌，拿取一张，并按任意顺序放回其余卡牌。\n棋盘上每有一张其他命莲寺卡牌，每个效果的代价减少一。"], "temple_shou": ["寅丸星", "光辉宝藏", "[代价 I] 放置：棋盘上每有一块荒地，就抽一张牌，然后清除所有荒地。"], "temple_nue": ["封兽鵺", "能力奇美拉", "放置：从三张随机卡牌中选择一个能力，使用它的能力。"], "temple_murasa": ["村纱水蜜", "无底漩涡", "放置：你在接下来的一个回合中不能放置卡牌或交易。选择一名玩家。该玩家在接下来的两个回合中不能放置卡牌或交易。"], "temple_ichirin": ["云居一轮", "再打一轮！", "[代价 II] 放置：将每张非命莲寺卡牌向远离此卡的方向推一格。被推出棋盘的卡牌放回抽牌堆。"], "sdm_meiling": ["红美铃", "内劲", "放置：将一张相邻卡牌向远离此卡的方向移动一格。"], "hourai_tewi": ["因幡帝", "远古骗术", "放置：向其他每名玩家的手牌中加入一张陷阱。"], "mtn_nitori": ["河城荷取", "光学迷彩", "以此卡为中心的 3×3 区域中的卡牌不能被选中。"], "palace_yuugi": ["星熊勇仪", "怪力乱神", "[代价 II] 放置：将一张正交相邻的卡牌送入你的弃牌堆。"], "sage_mai_satono": ["丁礼田舞与尔子田里乃", "驱动活力", "放置：在你的下个回合获得一个额外回合。"], "hell_kutaka": ["庭渡久侘歌", "异界的护卫", "放置：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。反之，将正交相邻的位置变为荒地。"], "shop_rinnosuke": ["森近霖之助", "香霖堂", "此卡及其周围的卡牌不能被选中、移动或使用能力。\n先选择一张手牌，再点击森近霖之助即可交易。每回合限一次，且不消耗回合。"], "trap_token": ["陷阱", "嗯……这是陷阱！", "此卡在手牌中时，不能交易、弃置或放回抽牌堆。\n放置：将另一张手牌放回抽牌堆。"]};
 const ZH_FACTIONS={"sdm":"红魔馆","hakugyokurou":"白玉楼","hourai":"永远亭","mountain":"妖怪之山","palace":"地灵殿","sage":"贤者","hakurei":"博丽","sunflower":"太阳花田","hell":"地狱","heaven":"天界","temple":"命莲寺","kourindou":"香霖堂","token":"衍生物"};
 const ZH_TEXT={
   "Boundary of Fates": "命运的境界",
@@ -7471,7 +7686,7 @@ const ZH_TEXT={
   "[Cost I] Placed: Draw a card for each wasteland on the board, then clear all wasteland.": "[代价 I] 放置：棋盘上每有一块荒地，就抽一张牌，然后清除所有荒地。",
   "Houjuu Nue": "封兽鵺",
   "Ability Chimera": "能力奇美拉",
-  "Placed: Choose an ability from three random cards. Briefly take its appearance and use its ability.": "放置：从三张随机卡牌中选择一个能力。短暂变为该卡牌的外貌，并使用它的能力。",
+  "Placed: Choose an ability from three random cards. Use its ability.": "放置：从三张随机卡牌中选择一个能力。短暂变为该卡牌的外貌，并使用它的能力。",
   "Murasa Minamitu": "村纱水蜜",
   "Bottomless Vortex": "无底漩涡",
   "Placed: Choose a player. They cannot place cards or trade on their next two turns.": "放置：选择一名玩家。该玩家在接下来两个回合中不能放置卡牌或交易。",
@@ -7562,9 +7777,10 @@ Object.assign(ZH_TEXT,{
 });
 Object.assign(ZH_TEXT,{'Kanako setup trades':'神奈子铺场交易','Pair completion trades':'二卡阵营凑牌交易','Immediate win trades':'即时获胜交易','Hand improvement trades':'一般手牌改善交易','Unclassified trades':'未记录交易分支'});
 Object.assign(ZH_TEXT,{'Buyer games':'买家对局数','Buyer wins':'买家获胜局数','Buyer ties':'买家并列局数','Buyer win rates count each buyer once per category per game, even after repeated trades.':'买家胜率按每种类别每局各计一次，同局多次交易不会重复增加样本数。'});
-// Removed cards and choice panels must be collectible between renders and matches.
 const languageTextSources=new WeakMap(),languageAttributeSources=new WeakMap(),abilityTitleSources=new WeakMap(),ruleTextSources=new WeakMap();
-Object.assign(ZH_TEXT,{'Test data · F8':'测试数据 · F8','F8: open test data and pause':'F8：打开测试数据并暂停','F8 opens test data and pauses the test. Closing this window keeps it paused.':'按 F8 打开测试数据并暂停。关闭窗口后仍会暂停，点击继续测试即可恢复。'});
+function pruneRuleTextSources(){
+  // WeakMap entries are released automatically when their DOM nodes are collected.
+}
 function canonicalCardName(value){
   const text=String(value).trim();
   const entry=CARDS.find(card=>card.name.toLowerCase()===text.toLowerCase() || ZH_CARDS[card.id]?.[0]===text);
@@ -7572,6 +7788,12 @@ function canonicalCardName(value){
 }
 // Patterns cover changing counts, player names and choices; no game data is translated.
 Object.assign(ZH_TEXT,{"AI evaluation lab": "AI 评估实验室", "Current AI": "当前 AI", "Previous AI": "旧版 AI", "Without cost preservation": "关闭代价保牌策略", "Without Kanako reserve": "关闭神奈子收尾策略", "Without Nitori setup": "关闭荷取铺场评分", "Without Hecatia setup": "关闭赫卡提亚铺场评分", "Without Yukari rework": "关闭紫的新评估", "Without Matara rework": "关闭隐岐奈的新评估", "Both policies use the current rules. Each opening tests every mixed seat lineup. Unknown hands are never used as clues.": "新旧策略共用当前规则。每组开局测试所有混合座位组合，未知手牌不作为判断线索。", "Version comparison": "版本对战", "Comparison policy": "对照策略", "Opening groups": "开局组数", "Both sizes": "两种棋盘", "Seed": "随机种子", "Opening set": "开局集合", "Development set": "开发组", "Reserved validation set": "保留验证组", "Three-player tests play six games per opening group. At least 20 complete groups are needed for a conclusion. Keep the validation set unused while tuning.": "三人测试每组开局进行六局，至少完成二十组才给出结论。调参时请保留验证组，最后再用。", "Start comparison": "开始对照", "Position fork": "局面分叉", "The saved position is the start of the latest regular turn, before its action. It does not capture an unfinished extra-turn chain.": "保存的是最近一个普通回合开始、尚未行动的局面，不截取未结束的额外回合连锁。", "Use latest turn-start position": "使用最近回合局面", "Import position": "导入局面", "Save position": "保存局面", "Turn-start position": "回合开始局面", "Action A": "行动 A", "Action B": "行动 B", "Trials per continuation": "每种后续策略的试验次数", "Continuation policy": "后续策略", "Both policies": "两种策略", "A and B share the same sampled hidden cards and rule seed in each trial. Rival private clue memories are omitted. These are estimates under the chosen continuations, not optimal-play proofs.": "每次试验的 A、B 使用相同的抽样手牌与规则随机种子。省略对手的私有线索记忆，结果是所选后续策略下的估计。", "Run position fork": "开始局面分叉", "Stop test": "停止测试", "Ready to evaluate.": "等待开始评估。", "Score rate awards one point to the winner. Stalemates award it to the highest score, shared on ties. Error and turn-limit games exclude their entire opening group. Intervals resample whole opening groups.": "比赛得分率按获胜记一分；僵局由最高分者得分，并列时平分。错误或回合超限会排除整组开局，误差区间以完整开局组为单位重采样。", "Evaluation complete.": "评估完成。", "Position ready.": "局面已准备好。", "Evaluation running in the background.": "评估正在后台运行。", "Reading the turn-start position.": "正在读取回合开始局面。", "Start a game to capture a turn-start position.": "先开始游戏，才能保存回合开始局面。", "Choose two different legal actions.": "请选择两个不同的合法行动。", "Stopped. Only complete opening groups are compared.": "已停止，仅比较完整开局组。", "Position file is too large.": "局面文件过大。", "Evaluation worker failed.": "后台评估运行失败。", "Not enough completed opening groups yet.": "完整试验数量不足，暂不判断。", "The difference is not established.": "暂时无法确认差异。", "Current AI performs better in this test.": "当前 AI 在本批对照中表现更好。", "The comparison policy performs better in this test.": "对照策略在本批测试中表现更好。", "Action A performs better across the tested continuations.": "行动 A 在所测试的后续策略中表现更好。", "Action B performs better across the tested continuations.": "行动 B 在所测试的后续策略中表现更好。", "Interim results only. The planned batch has not finished.": "这只是中途结果，预定批次尚未完成。", "Score-rate difference": "比赛得分率差异", "95% interval": "95% 误差区间", "Independent opening groups": "独立开局组", "Excluded groups": "排除组数", "Aborted games": "中止对局", "Policy": "策略", "Player games": "玩家局数", "Score rate": "比赛得分率", "Current use rate": "当前使用率", "Comparison use rate": "对照使用率", "Current hand turns": "当前持牌回合数", "Comparison hand turns": "对照持牌回合数", "Paired trials": "成对试验数", "Action A score": "行动 A 得分率", "Action B score": "行动 B 得分率", "Difference": "差异", "Excluded paired trials": "排除的成对试验", "Trade": "交易", "Pass turn": "跳过回合", "Runtime errors": "运行错误", "This browser does not support background evaluation.": "此浏览器不支持后台评估。", "Game source is unavailable.": "无法读取游戏程序。", "Evaluation source section missing.": "评估所需的程序片段缺失。", "Import a regular-turn position exported by this game.": "请导入本游戏导出的普通回合开始局面。", "Invalid position dimensions.": "局面尺寸不合法。", "Invalid board.": "棋盘数据不合法。", "Invalid tokens.": "衍生牌数据不合法。", "Unknown or duplicated card in position.": "局面包含未知或重复卡牌。", "Invalid terrain.": "地形数据不合法。", "Choose an unfinished position.": "请选择尚未结束的局面。", "Fork action is not legal in this position.": "分叉行动在此局面中不合法。", "An evaluation is already running.": "已有评估正在运行。", "Evaluation cancelled.": "评估已停止。"});
+Object.assign(ZH_TEXT,{
+  'Test data (D)':'测试数据 (D)','Next game (N)':'下一局 (N)','Continuous test':'连续测试',
+  'Round complete. Press N or choose Next game.':'本局已结束。按 N 或点击下一局。',
+  'Finished games wait for N or Next game. D opens Test data and pauses the test. P pauses or resumes.':'每局结束后，按 N 或点击下一局继续。D 打开测试数据并暂停；P 暂停或继续。',
+  'Every seat is AI. Finished games restart automatically and contribute to the test data.':'所有席位均由电脑控制。每局结束后累计测试数据，按 N 开始下一局，也可开启连续测试。'
+});
 Object.assign(ZH_TEXT,{'Invalid evaluation settings.':'评估设置不合法。','Card inventory does not match the position.':'卡牌清单与局面不一致。'});
 Object.assign(ZH_TEXT,{'First moves can be placements, draws or trades. Ability targets and payments are resolved by the continuation AI.':'首步可比较放置、抽牌或交易；技能目标与代价由所选后续 AI 决定。'});
 const ZH_DYNAMIC=[
@@ -7762,6 +7984,9 @@ const ZH_LOG_ALIASES={Remilia:'蕾米莉亚',Flandre:'芙兰朵露',Patchouli:'�
 const localizedTextCache=new Map();
 const ZH_NAMES=Object.entries(ZH_TEXT).filter(([en])=>CARDS.some(card=>card.name===en) || Object.values(FACTIONS).some(f=>f.name===en))
   .sort((a,b)=>b[0].length-a[0].length).map(([en,zh])=>[new RegExp('(^|[^A-Za-z])'+en.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=$|[^A-Za-z])','g'),zh]);
+Object.assign(ZH_TEXT,{"Create": "创造", "Choose one of three randomly offered cards of the specified type. Add a copy to your hand; the original is unchanged. The copy’s ability costs one additional card. Double abilities resolve twice, with costs paid separately.": "从三张随机提供的同类型卡牌中选择一张，将其复制加入手牌。原卡不移动。复制卡的技能代价增加一张。双倍能力结算两次，各次分别付款。", "Placed: Draw a card.": "放置：抽一张牌。", "Draw a card": "抽一张牌", "Eirin: create an Eientei card": "永琳：创造一张永远亭卡牌", "Eirin: immediately play the created card": "永琳：立刻打出创造的卡牌", "Matara Okina: create a board card with double abilities": "摩多罗：创造一张棋盘卡牌，获得双倍能力", "Create: choose one of three cards": "创造：三选一", "Four random cards are face up. Other cards remain face down and can still be selected.": "随机四张卡牌正面展示。其余卡牌保持背面，仍可盲选。", "Subscribe: pay one card to Aya’s player": "订阅：将一张手牌付款给文的玩家", "Subscribe": "订阅", "Placed: Create an Eientei card and immediately play it. While this card is on the board, all Sage card abilities are disabled.": "放置：创造一张永远亭的卡牌，并将其立刻打出。此卡在棋盘上时，所有贤者卡牌的能力均被禁用。", "Placed: Create a card currently on the board. The created copy gains double abilities.": "放置：创造一张棋盘上的卡牌，使其获得双倍的能力。", "[Cost I] Placed: Randomly reveal four cards in another player’s hand, then take any one card from that hand. Unrevealed cards remain selectable.": "[代价 I] 放置：随机展示另一名玩家手牌中的四张卡牌，然后从其手牌中选取一张加入你的手牌。未展示的卡牌仍可选取。", "Placed: Take a card from any discard pile into your hand. Replace its ability with “Placed: Draw a card” for the rest of this match.": "放置：将任意弃牌堆中的一张卡牌加入你的手牌，并将其技能改为“放置：抽一张牌”。", "Placed: If this card is on wasteland, take a Hell card from the draw pile into your hand. Otherwise turn orthogonally adjacent positions into wasteland.": "放置：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。反之，将正交相邻的位置变为荒地。", "Placed: You cannot place cards or trade on your next turn. Choose a player who cannot place cards or trade on their next two turns.": "放置：你在接下来的一个回合中不能放置卡牌或交易。选择一名玩家。该玩家在接下来的两个回合中不能放置卡牌或交易。", "Placed: Look at four cards from each other player’s hand and record them in a private newspaper. Other players can read it only by paying one hand card to you to subscribe.": "放置：查看其他每名玩家的四张手牌，并记录于报纸中。只有你能阅读。其他玩家须将一张手牌付款给你订阅，才能观看情报。", "Placed: Choose an ability from three random cards. Use its ability.": "放置：从三张随机卡牌中选择一个能力，使用它的能力。"});
+ZH_DYNAMIC.unshift([/^Create copy: ability cost \+(\d+)(.*)$/,(_,n,tail)=>`创造复制：技能代价 +${n}。${tail.includes("Double abilities")?"双倍能力结算两次，每次分别支付代价。":""}`]);
+Object.assign(ZH_TEXT,{"F8 opens test data and pauses the test. Closing this window keeps it paused.": "按 F8 打开测试数据并暂停。关闭窗口后保持暂停。", "D / F8: open test data and pause": "D / F8：打开测试数据并暂停", "Test data (D / F8)": "测试数据（D / F8）"});
 function translateGameText(value){
   const original=String(value);if(gameLanguage!=='zh-CN')return original;
   if(localizedTextCache.has(original))return localizedTextCache.get(original);
@@ -7781,7 +8006,7 @@ function translateGameText(value){
 }
 function setCardAbilityTitle(node,cardId){
   // Pick once for this view; translation and observer updates keep the same title.
-  abilityTitleSources.set(node,{title:CARD_ABILITY_NAMES[cardId] || 'Card Ability',tenshiAlternative:cardId==='heaven_tenshi' && Math.random()<0.2});
+  abilityTitleSources.set(node,{title:(game?.abilityId(cardId)==='__draw_one'?'Draw a card':CARD_ABILITY_NAMES[cardBaseId(cardId)]) || 'Card Ability',tenshiAlternative:cardId==='heaven_tenshi' && Math.random()<0.2});
   renderCardAbilityTitle(node);
 }
 function renderCardAbilityTitle(node){
@@ -7849,7 +8074,9 @@ function initializeGameLanguage(){
       else if(record.type==='attributes')localizeElement(record.target);
       else for(const node of record.addedNodes)roots.add(node);
     }
-    roots.forEach(localizeSubtree);
+    // Removed views must not stay alive through the rule-text registry.
+    if(records.some(record=>record.removedNodes?.length))pruneRuleTextSources();
+    roots.forEach(root=>{if(root.isConnected)localizeSubtree(root);});
   });
   observer.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['title','aria-label','placeholder']});
   setGameLanguage(gameLanguage);
@@ -7869,6 +8096,7 @@ const CARD_REFERENCE_ALIASES={
   Rinnosuke:'shop_rinnosuke',Trap:'trap_token'
 };
 const RULE_TERMS={
+  create:{title:'Create',text:'Choose one of three randomly offered cards of the specified type. Add a copy to your hand; the original is unchanged. The copy’s ability costs one additional card. Double abilities resolve twice, with costs paid separately.'},
   wasteland:{title:'Wasteland',text:'Wasteland is a blocked tile. A card can be placed there only if its ability allows it.'},
   cost:{title:'Cost',text:'Return the shown number of hand cards to the draw pile to use the ability. Cost N lets you choose how many cards to pay. If you do not pay, the ability is skipped.'}
 };
@@ -7879,7 +8107,7 @@ for(const [faction,f] of Object.entries(FACTIONS)) if(f.size>0) RULE_REFERENCES.
 RULE_REFERENCES.set('SDM',{faction:'sdm'});
 if(typeof ZH_CARDS!=='undefined')for(const [cardId,entry] of Object.entries(ZH_CARDS))RULE_REFERENCES.set(entry[0],{cardId});
 if(typeof ZH_FACTIONS!=='undefined')for(const [faction,name] of Object.entries(ZH_FACTIONS))if(FACTIONS[faction].size>0)RULE_REFERENCES.set(name,{faction});
-RULE_REFERENCES.set('荒地',{term:'wasteland'});RULE_REFERENCES.set('代价',{term:'cost'});
+RULE_REFERENCES.set('创造',{term:'create'});RULE_REFERENCES.set('荒地',{term:'wasteland'});RULE_REFERENCES.set('代价',{term:'cost'});
 for(const name of ['Crown','crown','领主'])RULE_REFERENCES.set(name,{crown:true});
 for(const [name,term] of Object.entries(RULE_TERMS)){
   RULE_REFERENCES.set(name,{term:name});RULE_REFERENCES.set(term.title,{term:name});
@@ -7917,7 +8145,10 @@ function ruleTextHtml(value,{cards=true}={}){
   }
   return html+escapeLogHtml(text.slice(end));
 }
-function setRuleText(node,value,options){if(typeof ruleTextSources!=='undefined')ruleTextSources.set(node,{value,options});node.innerHTML=ruleTextHtml(value,options);}
+function setRuleText(node,value,options){
+  if(typeof ruleTextSources!=='undefined')ruleTextSources.set(node,{value,options});
+  const html=ruleTextHtml(value,options);if(node.innerHTML!==html)node.innerHTML=html;
+}
 function ruleTooltip(value){
   return (typeof translateGameText==='function'?translateGameText(value):String(value)).replace(FACTION_REFERENCE_PATTERN,(_match,prefix,name)=>prefix+FACTIONS[RULE_REFERENCES.get(name).faction].icon);
 }
@@ -8032,7 +8263,7 @@ function openCardDetails(cardId,{followReference=false}={}){
     ? `${c.faction} detail-card-${cardId}`
     : `other-faction detail-card-${cardId}`;
   detail.classList.add(`card-faction-${c.faction}`);
-  if(c.crown && game && game.eirinActive()) detail.classList.add('eirin-muted');
+  if(game && game.isCardAbilityDisabled(cardId)) detail.classList.add('eirin-muted');
   const factionIcon = CARD_DETAIL_FACTION_ICONS[c.faction];
   const iconHost = el('card-detail-icon');
   iconHost.replaceChildren();
@@ -8064,14 +8295,14 @@ function openCardDetails(cardId,{followReference=false}={}){
     }
   } else if(cardId==='temple_ichirin'){
     portrait.classList.add('ichirin-stand');
-    for(const [name,url] of [['Unzan',TEMPLE_UNZAN_PORTRAIT],['Ichirin',CARD_DETAIL_PORTRAITS[cardId]]]){
+    for(const [name,url] of [['Unzan',TEMPLE_UNZAN_PORTRAIT],['Ichirin',CARD_DETAIL_PORTRAITS[cardBaseId(cardId)]]]){
       const artwork=document.createElement('img');artwork.src=url;artwork.alt=name;portrait.appendChild(artwork);
     }
-  } else if(CARD_DETAIL_PORTRAITS[cardId]){
+  } else if(CARD_DETAIL_PORTRAITS[cardBaseId(cardId)]){
     const artwork = document.createElement('img');
     artwork.className = `detail-art-${cardId}`;
     artwork.src = cardId==='shop_rinnosuke' && inHand
-      ? KOURINDOU_PORTRAITS.shop_rinnosuke_hand : CARD_DETAIL_PORTRAITS[cardId];
+      ? KOURINDOU_PORTRAITS.shop_rinnosuke_hand : CARD_DETAIL_PORTRAITS[cardBaseId(cardId)];
     artwork.alt = c.name;
     portrait.appendChild(artwork);
   } else {
@@ -8082,7 +8313,7 @@ function openCardDetails(cardId,{followReference=false}={}){
   }
   setCardAbilityTitle(el('card-detail-ability'),c.token ? 'trap_token' : cardId);
   const borrowed=game?.borrowedAbilities?.[cardId];
-  setRuleText(el('card-detail-description'),borrowed && game.isOnBoard(cardId) ? `Using ${CARD[borrowed].name}’s ability.\n${CARD[borrowed].desc}` : inHand && c.handDesc ? c.handDesc : c.desc);
+  setRuleText(el('card-detail-description'),borrowed && game.isOnBoard(cardId) ? `Using ${CARD[borrowed].name}’s ability.\n${CARD[borrowed].desc}` : dynamicCardDescription(cardId,inHand));
   el('card-detail-description').parentElement.scrollTop=0;
   el('card-detail-overlay').classList.add('show');
   requestAnimationFrame(fitCardDetailHeadings);
@@ -8141,10 +8372,10 @@ function cardBoardHtml(cardId){
   const style=[c.crown ? `--crown-light-main:${crownLightFor(cardId).main};--crown-light-rgb:${crownLightFor(cardId).rgb}` : '',illusion].filter(Boolean).join(';');
   const crownStyle=style ? ` style="${escapeLogHtml(style)}"` : '';
   const illusionClass=illusion ? ' card-art-illusion' : '';
-  const muted = c.crown && game && typeof game.isOnBoard==='function' && game.eirinActive() ? ' eirin-muted' : '';
+  const muted = game && typeof game.isOnBoard==='function' && game.isCardAbilityDisabled(cardId) ? ' eirin-muted' : '';
   return `<div class="board-card ${c.crown?'crown':''} ${bgClass}${muted}${illusionClass}"${crownStyle}>
     <div class="icon-row">${cardFactionBadgeHtml(c.faction)}${c.crown?'<span class="crown-mark">👑</span>':''}</div>
-    <div class="cname">${c.name}</div>
+    <div class="cname">${c.name}</div>${instanceBadgeHtml(cardId)}
   </div>`;
 }
 
@@ -8409,7 +8640,7 @@ function renderBoard(){
         const face=cell.querySelector('.board-card');
         syncIllusionFace(face,cardId);
         if(face && CARD[cardId].crown){
-          face.classList.toggle('eirin-muted',game.eirinActive());
+          face.classList.toggle('eirin-muted',game.isCardAbilityDisabled(cardId));
         }
         if(cardId!=='hell_hecatia' && hecatiaCell){
           const dy=hecatiaCell.r-r, dx=hecatiaCell.c-c;
@@ -8498,7 +8729,7 @@ function renderShop(){
     tile.classList.toggle('shopkeeper-tile',id==='shop_rinnosuke');
     const face=tile.querySelector('.board-card');
     syncIllusionFace(face,id);
-    if(face && id && CARD[id].crown) face.classList.toggle('eirin-muted',game.eirinActive());
+    if(face && id && CARD[id]) face.classList.toggle('eirin-muted',game.isCardAbilityDisabled(id));
     tile.title=id ? `${CARD[id].name}${game.isProtected(r,c) ? ' · Protected by Rinnosuke; no faction' : ''}. Double-click or press I for details.` : 'Empty tile';
     tile.setAttribute('aria-label',tile.title+(selectable ? ' Click to choose.' : ''));
   }
@@ -8745,7 +8976,7 @@ function renderHand(){
       + (selectedForChoice ? ' selected':'')
       + (forced===cardId ? ' reisen-bound':'')
       + (mindArrivals.get(cardId)>Date.now() ? ' mind-arriving':'')
-      + (c.crown && game.eirinActive() ? ' eirin-muted' : '')
+      + (game.isCardAbilityDisabled(cardId) ? ' eirin-muted' : '')
       + (sanaeArrivalUntil.get(cardId)>Date.now() ? ' sanae-glow' : '')
       + (mokouArrivalUntil.get(cardId)>Date.now() ? ' mokou-glow' : '')
       + (yukariArrivalUntil.get(cardId)>Date.now() ? ' yukari-arriving' : '')
@@ -8758,7 +8989,7 @@ function renderHand(){
     syncRemiliaArrival(div,cardId);
     if(mindArrivals.get(cardId)>Date.now()) div.style.setProperty('--mind-age',`${-Math.max(0,1000-(mindArrivals.get(cardId)-Date.now()))}ms`);
     div.innerHTML = `<div class="icon-row">${cardFactionBadgeHtml(c.faction)}${c.crown?'<span class="crown-mark">👑</span>':''}</div>
-      <div class="cname">${c.name}</div>`;
+      <div class="cname">${c.name}</div>${instanceBadgeHtml(cardId)}`;
     if(forced===cardId){
       const marker=document.createElement('span');marker.className='reisen-forced-marker';
       marker.setAttribute('aria-hidden','true');marker.innerHTML=mindEyeSvg();
@@ -8903,23 +9134,40 @@ function escapeLogHtml(value){
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
   })[char]);
 }
+function instanceBadgeHtml(id){
+  const card=CARD[id],labels=[];
+  if(card?.createdCopy)labels.push((gameLanguage==='zh-CN'?'复制 · 代价 +':'Copy · Cost +')+card.costBonus+(card.abilityMultiplier===2?' · ×2':''));
+  if(game?.permanentAbilities?.[id]==='__draw_one')labels.push(gameLanguage==='zh-CN'?'技能：抽一张牌':'Ability: Draw a card');
+  return labels.length?`<div class="instance-badge">${labels.join(' · ')}</div>`:'';
+}
+function dynamicCardDescription(id,inHand=false){
+  const card=CARD[id],ability=game?.abilityId(id)||cardBaseId(id);
+  let desc=ability==='__draw_one'?'Placed: Draw a card.':(inHand&&card.handDesc?card.handDesc:CARD[ability]?.desc||card.desc);
+  if(card.createdCopy)desc+='\nCreate copy: ability cost +'+card.costBonus+(card.abilityMultiplier===2?'. Double abilities: resolve twice; pay each resolution separately.':'.');
+  return desc;
+}
+function newspaperHtml(entry){
+  const paper=entry.reportCounts?entry:game.newsForSeat(entry,localSeat());
+  const stories=paper.subscribed?paper.reports.map(x=>`<section class="news-story"><strong>${escapeLogHtml(x.player)}</strong><p>${x.cards.map(escapeLogHtml).join(' · ')||'No cards'}</p></section>`).join(''):
+    `<p>折起的报纸 · Folded newspaper</p><p>支付一张手牌给 ${escapeLogHtml(paper.reporter)} 订阅，才能阅读情报。</p><button type="button" data-subscribe-paper="${paper.paperId}">订阅 / Subscribe</button>`;
+  return `<div class="log-entry aya-newspaper"><div class="news-masthead">BUNBUNMARU NEWS</div><p>${escapeLogHtml(paper.edition)} · ${escapeLogHtml(paper.reporter)}</p>${stories}</div>`;
+}
+document.addEventListener('click',async event=>{
+  const button=event.target.closest?.('[data-subscribe-paper]');if(!button||!game||!localTurnReady()||pendingCellChoice||pendingHandChoice)return;
+  const owner=game,p=localSeat(),paperId=Number(button.dataset.subscribePaper),eligible=owner.newsPayments(p);if(!eligible.length)return;
+  button.disabled=true;
+  const payment=await ui.pickOwnHandCard('Subscribe: pay one card to Aya’s player',eligible,{confirmLabel:'Subscribe'});
+  if(game===owner&&!owner.cancelled&&payment){
+    if(online&&online.seat!==0)sendGuestAction({type:'subscribe',paperId,cardId:payment});
+    else{owner.subscribeNews(p,paperId,payment);renderAll();publishSnapshot();}
+  }
+  if(button.isConnected)button.disabled=false;
+});
+
 function renderLog(){
   if(!game || game.cancelled) return;
   el('log').innerHTML=game.logLines.slice().reverse().map(entry=>{
-    if(entry && typeof entry==='object' && entry.kind==='aya-report'){
-      const stories=entry.reports.map(report=>`<section class="news-story">
-        <div class="news-story-heading"><strong>${escapeLogHtml(report.player)}</strong>
-          <span class="news-story-count">${report.cards.length} revealed</span></div>
-        <p>${report.cards.length ? report.cards.map(card=>ruleTextHtml(card)).join(' · ') : 'No cards in hand.'}</p>
-      </section>`).join('') || '<section class="news-story">No other hands to report.</section>';
-      return `<div class="log-entry aya-newspaper" aria-label="Aya newspaper hand reveal">
-        <div class="news-masthead">BUNBUNMARU NEWS</div>
-        <div class="news-edition"><span>${escapeLogHtml(entry.edition)}</span><span>Hearsay Finder</span></div>
-        <h4 class="news-headline">Hands Revealed Across Gensokyo</h4>
-        <p class="news-byline">Filed by Aya Shameimaru for ${escapeLogHtml(entry.reporter)}</p>
-        ${stories}<div class="news-footer">EXTRA · EYEWITNESS REPORT</div>
-      </div>`;
-    }
+    if(entry?.kind==='aya-report')return newspaperHtml(entry);
     return `<div class="log-entry">${ruleTextHtml(entry)}</div>`;
   }).join('');
   updateDrawPileDisplay();
@@ -8947,7 +9195,7 @@ function renderStatus(){
   el('draw-btn').disabled = !humanReady || !game.canDrawNormally(localSeat()) || !!pendingCellChoice;
 }
 
-let announcedGameResult=null;
+let announcedGameResult=null,fastAITestRenderFrame=null;
 const FAST_AI_TEST_RENDER_INTERVAL=200;
 let fastAITestRenderTimer=null,fastAITestLastRender=0;
 function cancelFastAITestRender(){
@@ -8966,9 +9214,19 @@ function deferFastAITestRender(){
   }
   return true;
 }
-function renderAll(force=false){
+function renderAll(immediate=false){
   if(!game || game.cancelled) return;
-  if(force!==true && deferFastAITestRender())return;
+  if(immediate!==true && deferFastAITestRender())return;
+  // Keep the event loop responsive when several mutations happen in one AI action.
+  if(game.aiTestMode && game.fastAITest && immediate!==true){
+    if(fastAITestRenderFrame===null){
+      const owner=game;
+      fastAITestRenderFrame=requestAnimationFrame(()=>{
+        fastAITestRenderFrame=null;if(game===owner && !owner.cancelled)renderAll(true);
+      });
+    }
+    return;
+  }
   clearTimeout(fastAITestRenderTimer);fastAITestRenderTimer=null;fastAITestLastRender=Date.now();
   publishSnapshot();
   renderBoard();
@@ -8998,7 +9256,7 @@ function renderAll(force=false){
 /* generic UI choosers used by the engine */
 const ui = {
   onPlacementArrival:prepareHandPlacementArrival,
-  onLog(){ if(game?.aiTestMode && game.fastAITest)renderAll();else renderLog(); },
+  onLog(){ if(game?.fastAITest)renderAll();else renderLog(); },
   onAbilityEffect:showMindAbility,
   onDiscard:showDiscardVanish,
   onCostPaid(){playGameCue('cost');},
@@ -9199,10 +9457,11 @@ const ui = {
     });
   },
   pickHandCard(title, cardIds, targetName, opts={}){
+    for(const [id,card] of Object.entries(opts.hiddenProfiles||{}))if(/^satori_hidden_\d+$/.test(id))CARD[id]={id,name:'Unknown card',faction:'token',token:true,hiddenChoice:true,desc:'Face down. You may still select this card.'};
     if(opts.dragAction)return openByakurenPeek(cardIds,{
       choice:true,title:opts.heading || `${possessive(targetName)} hand`,destination:opts.dropLabel || 'Your Hand',
       source:opts.source || `${possessive(targetName)} hand`,sourceLabels:opts.sourceLabels,
-      groups:opts.groups,cardGroups:opts.cardGroups,presentation:opts.presentation
+      groups:opts.groups,cardGroups:opts.cardGroups,presentation:opts.presentation,hiddenIds:opts.hiddenIds,instruction:opts.instruction
     }).then(result=>result?.taken ?? null);
     return new Promise(resolve => {
       const overlay = el('look-into-overlay');
@@ -9247,7 +9506,7 @@ const ui = {
         const card = CARD[cardId];
         const tile = document.createElement('button');
         tile.type = 'button';
-        tile.className = `hand-card look-into-card ${cardBgClass(card,cardId)}${card.crown && game.eirinActive() ? ' eirin-muted' : ''}`;
+        tile.className = `hand-card look-into-card ${cardBgClass(card,cardId)}${game.isCardAbilityDisabled(cardId) ? ' eirin-muted' : ''}`;
         tile.dataset.cardId = cardId;
         tile.style.setProperty('--read-delay',`${tiles.length*65}ms`);
         tile.setAttribute('aria-label', `${card.name}. Select card; double-click to inspect.`);
@@ -9473,7 +9732,7 @@ function endStalemate(){
 /* Cards with no "Placed:" ability at all — placing one purely to use its ability is impossible
    by definition, so the AI should only ever do so when the placement itself banks discard points
    (goal 1/3 below), never as a bare tiebreaker over an equally-scored card that DOES have one. */
-const NO_PLACED_ABILITY = new Set(['sage_kasen', 'hourai_eirin']);
+const NO_PLACED_ABILITY = new Set(['sage_kasen']);
 const DRAW_ABILITY_CARDS = new Set(['hourai_mokou','mtn_sanae','sage_ran','yuuka','hell_kutaka','temple_shou']);
 
 /* Acquisitions are valued in the same material/assembly units as payment losses.
@@ -9639,18 +9898,18 @@ function aiCostCanResolve(playerIdx, cardId, r, c){
   if(cardId==='hell_kutaka') return game.wastelandAt(r,c) && game.drawPile.some(id=>CARD[id].faction==='hell');
   if(cardId==='sdm_meiling') return game.meilingPushes(r,c).length>0;
   // Kaguya herself leaves the hand before her ability checks for targets.
-  if(cardId==='hourai_kaguya') return !game.eirinActive()
+  if(cardId==='hourai_kaguya') return !game.isSageMuted(cardId)
     && game.emptyCells(playerIdx).length>1
     && (game.knownHandCards(playerIdx,'hourai').some(c=>c.id!==cardId)
       || game.players.some(p=>p.idx!==playerIdx && p.hand.length>0));
   if(cardId==='haku_yuyuko') return game.payableCards(playerIdx).filter(id=>id!==cardId).length>0
-    && game.yuyukoTargets(r,c,playerIdx).length>0 && !game.eirinActive();
+    && game.yuyukoTargets(r,c,playerIdx).length>0 && !game.isSageMuted(cardId);
   const cost=game.abilityCost(cardId,{r,c});
   if(cardId==='temple_shou' && !game.templeWasteland(playerIdx).length)return false;
-  if(cardId==='temple_byakuren')return !game.eirinActive() && game.byakurenOptions(playerIdx,r,c).some(option=>!option.disabled);
+  if(cardId==='temple_byakuren')return !game.isSageMuted(cardId) && game.byakurenOptions(playerIdx,r,c).some(option=>!option.disabled);
   if(cardId==='temple_ichirin' && !game.ichirinPushes(r,c,playerIdx).length)return false;
   if(!cost) return true;
-  if(game.payableCards(playerIdx).filter(id=>id!==cardId).length<cost || (card.crown && game.eirinActive())) return false;
+  if(game.payableCards(playerIdx).filter(id=>id!==cardId).length<cost || game.isCardAbilityDisabled(cardId)) return false;
   if(cardId==='palace_satori') return game.players.some(pl=>pl.idx!==playerIdx && pl.hand.length>0);
   if(cardId==='heaven_tenshi') return game.tenshiOccupiedCount({r,c}) >= Math.ceil(SIZE*SIZE/2)
     && game.abilityBoardCells(playerIdx,cell=>game.boardFaction(cell.r,cell.c)!=='heaven' && game.canReturnBoardToDraw(cell.r,cell.c)).length>0;
@@ -9838,7 +10097,7 @@ const AI_ONE_MORE = new Set(['sdm_sakuya','hourai_kaguya','mtn_kanako','hell_kom
 
 /* These previews use public board information and our own hand. They never execute
    effects, reveal hidden cards, consume random numbers or update test statistics. */
-const AI_PASSIVE_ABILITIES=new Set(['sage_yukari','sage_kasen','hourai_eirin','mtn_nitori','hell_hecatia','palace_koishi']);
+const AI_PASSIVE_ABILITIES=new Set(['sage_yukari','sage_kasen','mtn_nitori','hell_hecatia','palace_koishi']);
 const AI_OPTIONAL_COST_ABILITIES=new Set(['hell_eiki','heaven_tenshi','heaven_iku','palace_yuugi','haku_yuyuko','palace_satori','temple_ichirin','temple_shou','temple_byakuren']);
 
 function aiWithRulePreview(callback,playerIdx=game.currentPlayerIdx){
@@ -9934,13 +10193,13 @@ function aiBestEikiFaction(playerIdx,payment=[]){
   return best;
 }
 
-function aiCurrentAbilityPlan(playerIdx,abilityId,r,c){
+function aiLegacyAbilityPlan(playerIdx,abilityId,r,c){
   if(!inBounds(r,c))return {utility:0,direct:0,handGain:0,bonus:0,skip:true,abilityId};
   abilityId=game.abilityId(abilityId);
   const actor=game.cardAt(r,c)||abilityId,hand=game.players[playerIdx].hand.filter(id=>id!==actor);
   const none={utility:0,direct:0,handGain:0,bonus:0,skip:true,abilityId};
   if(AI_PASSIVE_ABILITIES.has(abilityId) || abilityId==='sage_matara' || game.isProtected(r,c)
-    || (CARD[abilityId]?.crown && game.eirinActive()))return none;
+    || game.isCardAbilityDisabled(actor))return none;
   let cost=game.abilityCost(abilityId,{r,c}),direct=0,handGain=0,bonus=0,utility=0,target=null;
   let payable=game.payableCards(playerIdx).filter(id=>id!==actor);
   if(abilityId==='haku_yuyuko')cost=Math.min(game.yuyukoTargets(r,c,playerIdx).length,payable.length);
@@ -10229,7 +10488,7 @@ function aiFactionForecast(playerIdx,cardId,extraBonus=0){
     if(!missing || !members.some(cell=>game.cardAt(cell.r,cell.c)===cardId))continue;
     const held=hand.filter(id=>game.cardMatchesFaction(id,faction));
     let available=held.length,bonus=extraBonus;
-    const active=!game.eirinActive() || !card.crown;
+    const active=!game.isCardAbilityDisabled(cardId);
     if(active && cardId==='temple_byakuren'){
       const cost=game.byakurenCost(),otherPayable=game.payableCards(playerIdx).filter(id=>id!==cardId && CARD[id].faction!==faction).length;
       if(game.payableCards(playerIdx).filter(id=>id!==cardId).length>=cost)bonus=Math.min(3,Math.max(0,held.length-Math.max(0,cost-otherPayable)));
@@ -10610,7 +10869,7 @@ async function aiCurrentDecideAction(playerIdx,allowTrade=true){
 /* Frozen 955c631 decisions, adapted to shared Kasen matching and main-board AI target rules. */
 const AI_PREVIOUS_DIGEST='02b934d669736ada1b6141bf4c4cab746fd5d14e0cf0235cd57eb2204bc1d442';
 const AI_PREVIOUS_POLICY=(()=>{
-const NO_PLACED_ABILITY = new Set(['sage_kasen', 'hourai_eirin']);
+const NO_PLACED_ABILITY = new Set(['sage_kasen']);
 const DRAW_ABILITY_CARDS = new Set(['hourai_mokou','mtn_sanae','sage_ran','yuuka','hell_kutaka','temple_shou']);
 
 function aiPlacementCells(currentGame, cardId, spaces){
@@ -10630,18 +10889,18 @@ function aiCostCanResolve(playerIdx, cardId, r, c){
   if(cardId==='hell_kutaka') return game.wastelandAt(r,c) && game.drawPile.some(id=>CARD[id].faction==='hell');
   if(cardId==='sdm_meiling') return game.meilingPushes(r,c).length>0;
   // Kaguya herself leaves the hand before her ability checks for targets.
-  if(cardId==='hourai_kaguya') return !game.eirinActive()
+  if(cardId==='hourai_kaguya') return !game.isSageMuted(cardId)
     && game.emptyCells(playerIdx).length>1
     && (game.knownHandCards(playerIdx,'hourai').some(c=>c.id!==cardId)
       || game.players.some(p=>p.idx!==playerIdx && p.hand.length>0));
   if(cardId==='haku_yuyuko') return game.payableCards(playerIdx).filter(id=>id!==cardId).length>0
-    && game.yuyukoTargets(r,c,playerIdx).length>0 && !game.eirinActive();
+    && game.yuyukoTargets(r,c,playerIdx).length>0 && !game.isSageMuted(cardId);
   const cost=game.abilityCost(cardId,{r,c});
   if(cardId==='temple_shou' && !game.templeWasteland(playerIdx).length)return false;
-  if(cardId==='temple_byakuren')return !game.eirinActive() && game.byakurenOptions(playerIdx,r,c).some(option=>!option.disabled);
+  if(cardId==='temple_byakuren')return !game.isSageMuted(cardId) && game.byakurenOptions(playerIdx,r,c).some(option=>!option.disabled);
   if(cardId==='temple_ichirin' && !game.ichirinPushes(r,c,playerIdx).length)return false;
   if(!cost) return true;
-  if(game.payableCards(playerIdx).filter(id=>id!==cardId).length<cost || (card.crown && game.eirinActive())) return false;
+  if(game.payableCards(playerIdx).filter(id=>id!==cardId).length<cost || game.isCardAbilityDisabled(cardId)) return false;
   if(cardId==='palace_satori') return game.players.some(pl=>pl.idx!==playerIdx && pl.hand.length>0);
   if(cardId==='heaven_tenshi') return game.tenshiOccupiedCount({r,c}) >= Math.ceil(SIZE*SIZE/2)
     && game.abilityBoardCells(playerIdx,cell=>game.boardFaction(cell.r,cell.c)!=='heaven' && game.canReturnBoardToDraw(cell.r,cell.c)).length>0;
@@ -10739,7 +10998,7 @@ const AI_ONE_MORE = new Set(['sdm_sakuya','hourai_kaguya','mtn_kanako','hell_kom
 
 /* These previews use public board information and our own hand. They never execute
    effects, reveal hidden cards, consume random numbers or update test statistics. */
-const AI_PASSIVE_ABILITIES=new Set(['sage_yukari','sage_kasen','hourai_eirin','mtn_nitori','hell_hecatia','palace_koishi']);
+const AI_PASSIVE_ABILITIES=new Set(['sage_yukari','sage_kasen','mtn_nitori','hell_hecatia','palace_koishi']);
 const AI_OPTIONAL_COST_ABILITIES=new Set(['hell_eiki','heaven_tenshi','heaven_iku','palace_yuugi','haku_yuyuko','palace_satori','temple_ichirin','temple_shou','temple_byakuren']);
 
 function aiWithRulePreview(callback,playerIdx=game.currentPlayerIdx){
@@ -10841,7 +11100,7 @@ function aiAbilityPlan(playerIdx,abilityId,r,c){
   const actor=game.cardAt(r,c)||abilityId,hand=game.players[playerIdx].hand.filter(id=>id!==actor);
   const none={utility:0,direct:0,handGain:0,bonus:0,skip:true,abilityId};
   if(AI_PASSIVE_ABILITIES.has(abilityId) || abilityId==='sage_matara' || game.isProtected(r,c)
-    || (CARD[abilityId]?.crown && game.eirinActive()))return none;
+    || game.isCardAbilityDisabled(actor))return none;
   let cost=game.abilityCost(abilityId,{r,c}),direct=0,handGain=0,bonus=0,utility=0,target=null;
   let payable=game.payableCards(playerIdx).filter(id=>id!==actor);
   if(abilityId==='haku_yuyuko')cost=Math.min(game.yuyukoTargets(r,c,playerIdx).length,payable.length);
@@ -11126,7 +11385,7 @@ function aiFactionForecast(playerIdx,cardId,extraBonus=0){
     if(!missing || !members.some(cell=>game.cardAt(cell.r,cell.c)===cardId))continue;
     const held=hand.filter(id=>game.cardMatchesFaction(id,faction));
     let available=held.length,bonus=extraBonus;
-    const active=!game.eirinActive() || !card.crown;
+    const active=!game.isCardAbilityDisabled(cardId);
     if(active && cardId==='temple_byakuren'){
       const cost=game.byakurenCost(),otherPayable=game.payableCards(playerIdx).filter(id=>id!==cardId && CARD[id].faction!==faction).length;
       if(game.payableCards(playerIdx).filter(id=>id!==cardId).length>=cost)bonus=Math.min(3,Math.max(0,held.length-Math.max(0,cost-otherPayable)));
@@ -11362,7 +11621,7 @@ return {aiEvaluateCard,aiChooseCostCards,aiFactionPlacement,aiKomachiTarget,aiDe
 /* Frozen 2b07010 decisions, Komachi, Kasen and main-board targets adapted to shared current rules. */
 const AI_BASELINE_DIGEST='464bc49d9a63c3d9dec5ed26c37b8669bbcce6dda3cf12bbc63cf5b88d23ceb0';
 const AI_FROZEN_POLICY=(()=>{
-const NO_PLACED_ABILITY = new Set(['sage_yukari', 'sage_kasen', 'hourai_eirin','mtn_nitori','hell_hecatia']);
+const NO_PLACED_ABILITY = new Set(['sage_yukari', 'sage_kasen','mtn_nitori','hell_hecatia']);
 const DRAW_ABILITY_CARDS = new Set(['hourai_mokou','mtn_sanae','sage_ran','yuuka','hell_kutaka','temple_shou']);
 
 function aiPlacementCells(currentGame, cardId, spaces){
@@ -11382,18 +11641,18 @@ function aiCostCanResolve(playerIdx, cardId, r, c){
   if(cardId==='hell_kutaka') return game.wastelandAt(r,c) && game.drawPile.some(id=>CARD[id].faction==='hell');
   if(cardId==='sdm_meiling') return game.meilingPushes(r,c).length>0;
   // Kaguya herself leaves the hand before her ability checks for targets.
-  if(cardId==='hourai_kaguya') return !game.eirinActive()
+  if(cardId==='hourai_kaguya') return !game.isSageMuted(cardId)
     && game.emptyCells(playerIdx).length>1
     && (game.knownHandCards(playerIdx,'hourai').some(c=>c.id!==cardId)
       || game.players.some(p=>p.idx!==playerIdx && p.hand.length>0));
   if(cardId==='haku_yuyuko') return game.payableCards(playerIdx).filter(id=>id!==cardId).length>0
-    && game.yuyukoTargets(r,c,playerIdx).length>0 && !game.eirinActive();
+    && game.yuyukoTargets(r,c,playerIdx).length>0 && !game.isSageMuted(cardId);
   const cost=game.abilityCost(cardId,{r,c});
   if(cardId==='temple_shou' && !game.templeWasteland(playerIdx).length)return false;
-  if(cardId==='temple_byakuren')return !game.eirinActive() && game.byakurenOptions(playerIdx,r,c).some(option=>!option.disabled);
+  if(cardId==='temple_byakuren')return !game.isSageMuted(cardId) && game.byakurenOptions(playerIdx,r,c).some(option=>!option.disabled);
   if(cardId==='temple_ichirin' && !game.ichirinPushes(r,c,playerIdx).length)return false;
   if(!cost) return true;
-  if(game.payableCards(playerIdx).filter(id=>id!==cardId).length<cost || (card.crown && game.eirinActive())) return false;
+  if(game.payableCards(playerIdx).filter(id=>id!==cardId).length<cost || game.isCardAbilityDisabled(cardId)) return false;
   if(cardId==='palace_satori') return game.players.some(pl=>pl.idx!==playerIdx && pl.hand.length>0);
   if(cardId==='heaven_tenshi') return game.tenshiOccupiedCount({r,c}) >= Math.ceil(SIZE*SIZE/2)
     && game.abilityBoardCells(playerIdx,cell=>game.boardFaction(cell.r,cell.c)!=='heaven' && game.canReturnBoardToDraw(cell.r,cell.c)).length>0;
@@ -11560,7 +11819,7 @@ function aiFactionForecast(playerIdx,cardId){
     if(!missing || !members.some(cell=>game.cardAt(cell.r,cell.c)===cardId))continue;
     const held=hand.filter(id=>game.cardMatchesFaction(id,faction));
     let available=held.length,bonus=0;
-    const active=!game.eirinActive() || !card.crown;
+    const active=!game.isCardAbilityDisabled(cardId);
     if(active && cardId==='temple_byakuren'){
       const cost=game.byakurenCost(),otherPayable=game.payableCards(playerIdx).filter(id=>id!==cardId && CARD[id].faction!==faction).length;
       if(game.payableCards(playerIdx).filter(id=>id!==cardId).length>=cost)bonus=Math.min(3,Math.max(0,held.length-Math.max(0,cost-otherPayable)));
@@ -11606,7 +11865,7 @@ function aiEvaluateCard(playerIdx,cardId){
   let best=null;
   for(const cell of cells){
     const works=aiCostCanResolve(playerIdx,cardId,cell.r,cell.c);
-    const muted=!!card.crown && game.eirinActive();
+    const muted=game.isCardAbilityDisabled(cardId);
     let direct=muted ? 0 : game.estimateDirectDiscardPoints(playerIdx,cardId,cell.r,cell.c);
     if((cardId==='haku_yuyuko' || cardId==='heaven_iku') && direct<=1 && game.winCount(game.players[playerIdx])<6)direct=0;
     const evaluated=aiWithPlacement(cardId,cell,()=>{
@@ -11773,6 +12032,226 @@ function aiBestTrade(playerIdx,...args){return game.players[playerIdx]?.aiPolicy
 function aiTwoCardFactionTrade(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiTwoCardFactionTrade(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiTwoCardFactionTrade(playerIdx,...args) : aiCurrentTwoCardFactionTrade(playerIdx,...args);}
 function aiKanakoTrade(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiKanakoTrade(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiKanakoTrade(playerIdx,...args) : aiCurrentKanakoTrade(playerIdx,...args);}
 
+/* Current AI for the new rules. Forecasts use public board, own hand and legal clues. */
+const previousAbilityPlan=aiLegacyAbilityPlan;
+function aiCreatedValue(p,id,{double=false,template=false}={}){
+  const ability=template?cardBaseId(id):game.abilityId(id),card=CARD[id],fac=FACTIONS[card.faction];
+  const progress=game.factionCells(card.faction).length+game.players[p].hand.filter(x=>game.cardMatchesFaction(x,card.faction)).length;
+  const material=.35+Math.min(fac?.size||0,progress)*.22;
+  const immediate={sdm_flandre:1,marisa:1,haku_yuyuko:1.5,heaven_iku:1.6,palace_rin:.85,palace_satori:.75,mtn_sanae:.5,
+    hourai_mokou:.65,temple_murasa:.5,sdm_meiling:.05,sage_mai_satono:.25,hell_kutaka:.1,mtn_aya:.2,sage_matara:.65,hourai_eirin:.8,__draw_one:.5};
+  let abilityValue=immediate[ability]??.35;
+  const base=CARD[ability]||card,fee=(base.cost3?3:base.cost2?2:base.cost1?1:0)+(card.costBonus||0)+1;
+  const repeat=double?2:1;
+  if(game.payableCards(p).length<fee)abilityValue=0;
+  return material+abilityValue*repeat-fee*repeat*.22;
+}
+function aiNewCreationPlan(p,actor,r,c){
+  const ability=game.abilityId(actor),isEirin=ability==='hourai_eirin';
+  const pool=isEirin?CARDS.filter(x=>x.faction==='hourai'&&!x.token).map(x=>x.id)
+    :game.selectableBoardCells(p,x=>inBounds(x.r,x.c)).map(x=>game.cardAt(x.r,x.c)).filter(id=>CARD[id]&&!CARD[id].token&&!CARD[id].shopkeeper);
+  if(!pool.length)return {abilityId:ability,utility:0,direct:0,handGain:0,bonus:0,skip:true};
+  const values=pool.map(id=>aiCreatedValue(p,id,{double:!isEirin,template:isEirin}));
+  const expected=aiExpectedBestAcquisition(values,Math.min(3,values.length),0);
+  const ownSages=game.players[p].hand.filter(id=>CARD[id].faction==='sage').length;
+  const knownSages=game.knownHandCards(p,'sage').filter(x=>x.playerIdx!==p).length;
+  const muteValue=isEirin?(knownSages*.12-ownSages*.15):0;
+  return {abilityId:ability,utility:Math.max(0,expected)+muteValue,direct:0,handGain:1,bonus:isEirin?1:0,skip:false};
+}
+function aiTerrainDelta(p,cells,clear=false){
+  const before=game.emptyCells(p).length,ownPlan=aiBoardPlanValue(p),threat=aiPublicThreatValue(p),old=game.wasteland;
+  game.wasteland=old.map(row=>row.slice());
+  try{
+    for(const cell of cells)if(inBounds(cell.r,cell.c))game.wasteland[cell.r][cell.c]=!clear;
+    const available=game.emptyCells(p).length;
+    return (available-before)*.045+(aiBoardPlanValue(p)-ownPlan)*.35+(threat-aiPublicThreatValue(p))*.25;
+  }finally{game.wasteland=old;}
+}
+function aiKasenSupport(p,r,c){
+  let best=0;
+  for(const [f,fac] of Object.entries(FACTIONS)){
+    if(fac.size!==4)continue;
+    const near=DIRS4.filter(([dr,dc])=>game.boardMatchesFaction(r+dr,c+dc,f)).length;
+    if(!near)continue;
+    const held=game.players[p].hand.filter(id=>CARD[id].faction===f).length;
+    const board=game.factionCells(f).length,knownRival=game.knownHandCards(p,f).some(x=>x.playerIdx!==p);
+    const risk=board>=3?(knownRival?.65:.18):0;
+    best=Math.max(best,Math.min(.95,near*.18+held*.2)-risk);
+  }
+  return best;
+}
+function aiNewsUtility(p,paper){
+  if(paper.ownerIdx===p || paper.subscribers.includes(p))return 0;
+  const clueCount=paper.reports.reduce((sum,r)=>sum+Math.max(0,Math.min(4,game.players[r.targetIdx].hand.length)-game.knownHandCards(p).filter(x=>x.playerIdx===r.targetIdx).length),0);
+  const abilities=game.players[p].hand.map(id=>game.abilityId(id));
+  return clueCount*.04+(abilities.includes('sdm_patchouli')?.45:0)+(abilities.includes('hourai_kaguya')?.65:0);
+}
+function aiSubscribeNewspapers(p){
+  if(!aiKnows(p,'clues') || game.forcedPlay[p])return;
+  for(const paper of game.paperReports){
+    const gain=aiNewsUtility(p,paper);if(gain<=0)continue;
+    let best=null;
+    for(const id of game.newsPayments(p)){
+      const material=aiAcquisitionValue(p,id).value;
+      const assembly=aiPaymentBreaksAssembly(p,[id]);
+      const f=CARD[id].faction,size=FACTIONS[f]?.size||0;
+      const givesFinish=size && game.factionCells(f).length>=size-1;
+      const cost=material+(assembly?4:0)+(givesFinish?2:0)-(game.players[p].hand.length>=NORMAL_HAND_LIMIT && game.drawPile.length?.2:0);
+      if(!best || cost<best.cost)best={id,cost};
+    }
+    if(best && gain>best.cost+.15)game.subscribeNews(p,paper.paperId,best.id);
+  }
+}
+function aiBestRinTarget(p,entries){
+  let best=null;
+  for(const entry of entries){
+    const owner=entry.idx??entry.playerIdx,id=entry.id,old=game.permanentAbilities[id];
+    game.permanentAbilities[id]='__draw_one';
+    let acquired;try{acquired=aiAcquisitionValue(p,id);}finally{if(old===undefined)delete game.permanentAbilities[id];else game.permanentAbilities[id]=old;}
+    const points=game.pointValue(id),denied=owner===p?0:points,ownLoss=owner===p?points:0;
+    const value=acquired.value+denied*(1+Math.max(0,game.winCount(game.players[owner])-4)*.15)-ownLoss;
+    const row={...entry,idx:owner,...acquired,denied,ownLoss,value};
+    if(!best || value>best.value)best=row;
+  }
+  return best;
+}
+function aiSatoriPlan(p,actor,payment=null){
+  const cost=game.abilityCost(actor),paid=payment||aiProposedPayment(p,cost);
+  if(paid.length<cost && !payment)return null;
+  const fee=paid.reduce((sum,id)=>sum+aiAcquisitionValue(p,id).value,0);
+  const pool=game.handGuessOptions(p).candidates,values=pool.map(id=>aiSatoriRevealedValue(p,null,id,paid).value);
+  let best=null;
+  for(const target of game.players){
+    if(target.idx===p || !target.hand.length)continue;
+    const shown=Math.min(4,target.hand.length),expected=aiExpectedBestAcquisition(values,shown,0),information=shown*.06;
+    const row={targetIdx:target.idx,payment:paid,fee,expected,information,utility:expected-fee+information,unknownSlots:shown};
+    if(!best || row.utility>best.utility)best=row;
+  }
+  return best;
+}
+function aiCurrentAbilityPlan(p,id,r,c){
+  const actor=game.cardAt(r,c)||id,ability=game.abilityId(actor),none={abilityId:ability,utility:0,direct:0,handGain:0,bonus:0,skip:true};
+  if(!inBounds(r,c)||game.isProtected(r,c)||game.isSageMuted(actor))return none;
+  const cost=game.abilityCost(actor,{r,c}),payable=game.payableCards(p).filter(x=>x!==actor);
+  if(payable.length<cost)return none;
+  let plan;
+  if(ability==='palace_satori'){
+    const target=aiSatoriPlan(p,actor);plan=target?{...none,utility:target.utility,handGain:1,target:target.targetIdx,payment:target.payment,skip:target.utility<=0||aiPolicyHas(p,'assembly')&&aiPaymentBreaksAssembly(p,target.payment)}:none;
+  }else if(ability==='palace_rin'){
+    const entries=game.players.flatMap(pl=>pl.discard.map(id=>({idx:pl.idx,id}))),best=aiBestRinTarget(p,entries);
+    plan=best?{...none,utility:best.value,direct:0,handGain:1,target:best,skip:best.value<=0}:none;
+  }else if(['hourai_eirin','sage_matara'].includes(ability))plan=aiNewCreationPlan(p,actor,r,c);
+  else if(ability==='__draw_one')plan={...none,utility:game.drawPile.length?.55:0,handGain:game.drawPile.length?1:0,skip:false};
+  else if(ability==='temple_murasa'){
+    const ownActions=game.players[p].hand.filter(x=>!CARD[x].token).length;
+    const rivals=game.players.filter(x=>x.idx!==p),target=rivals.sort((a,b)=>game.winCount(b)-game.winCount(a)||b.hand.length-a.hand.length)[0];
+    const denied=target?(target.hand.length?1.0:.25)+Math.max(0,game.winCount(target)-4)*.15:0;
+    plan={...none,utility:denied-(ownActions?.55:.1),target:target?.idx,skip:false};
+  }else if(ability==='mtn_aya'){
+    const held=game.players[p].hand.map(x=>game.abilityId(x)),synergy=(held.includes('hourai_kaguya')?.5:0)+(held.includes('sdm_patchouli')?.35:0);
+    const unknown=game.players.filter(x=>x.idx!==p).reduce((n,x)=>n+Math.min(4,Math.max(0,x.hand.length-game.knownHandCards(p).filter(k=>k.playerIdx===x.idx).length)),0);
+    plan={...none,utility:unknown*.04+synergy,skip:false};
+  }else if(ability==='hell_kutaka'){
+    const wasteland=game.wastelandAt(r,c),hasTarget=game.drawPile.length>0&&game.handGuessOptions(p).candidates.some(x=>CARD[x].faction==='hell');
+    const cells=DIRS4.map(([dr,dc])=>({r:r+dr,c:c+dc})).filter(x=>inBounds(x.r,x.c));
+    plan={...none,utility:wasteland?(hasTarget?.65:0):aiTerrainDelta(p,cells),handGain:wasteland&&hasTarget?1:0,skip:false};
+  }else if(ability==='sdm_meiling'){
+    const move=aiBestMeilingMove(p,r,c);
+    plan={...none,utility:move?.value||0,skip:false};
+  }else if(['mtn_suwako','palace_utsuho'].includes(ability)){
+    const usable=game.emptyCells(p).length;
+    plan={...none,utility:usable>=6?.08:usable<=2?-.25:0,skip:false};
+  }else if(ability==='sage_kasen')plan={...none,utility:aiKasenSupport(p,r,c),skip:false};
+  else if(['sage_yukari','mtn_nitori','hell_hecatia','palace_koishi'].includes(ability))plan={...none,utility:0,skip:false};
+  else plan=previousAbilityPlan(p,actor,r,c);
+  const multiplier=CARD[actor]?.abilityMultiplier||1;
+  const surcharge=(CARD[actor]?.costBonus||0)*.25*multiplier;
+  const net=plan.utility*multiplier-surcharge;
+  const copyPayment=aiProposedPayment(p,cost);
+  const skip=plan.skip || CARD[actor]?.createdCopy&&COPY_PASSIVES.has(ability)&&game.createdActivations[actor]!==true&&payable.length<cost;
+  return {...plan,skip,abilityId:ability,utility:net,direct:(plan.direct||0)*multiplier,
+    handGain:(plan.handGain||0)*multiplier,bonus:(plan.bonus||0)*multiplier,payment:plan.payment||aiProposedPayment(p,cost)};
+}
+function aiCurrentEvaluateCard(p,id,{worst=false,exclude=null,acceptCandidate=null}={}){
+  if(!aiKnows(p,'forecast'))return aiBasicEvaluateCard(p,id,{exclude,acceptCandidate});
+  const abilityId=game.abilityId(id);
+  if((abilityId==='mtn_kanako'&&!aiPolicyHas(p,'kanako'))||(abilityId==='sage_yukari'&&!aiPolicyHas(p,'yukari'))||(abilityId==='sage_matara'&&!aiPolicyHas(p,'matara')))return AI_FROZEN_POLICY.aiEvaluateCard(p,id);
+  if((abilityId==='palace_rin'&&!aiPolicyHas(p,'rin'))||(abilityId==='palace_satori'&&!aiPolicyHas(p,'satori')))return AI_PREVIOUS_POLICY.aiEvaluateCard(p,id);
+  const card=CARD[id],cells=game.emptyOrWastelandForCard(card,p).filter(x=>inBounds(x.r,x.c)&&(!exclude||exclude.cardId!==id||exclude.r!==x.r||exclude.c!==x.c));
+  const legal=aiPlacementCells(game,id,cells);let best=null;
+  const priorPlan=abilityId==='sage_yukari'?aiBoardPlanValue(p):0,priorThreat=abilityId==='sage_yukari'?aiPublicThreatValue(p):0;
+  for(const cell of legal){
+    const overridden=game.cardAt(cell.r,cell.c);
+    const candidate=aiWithPlacement(id,cell,()=>{
+      const ability=game.abilityId(id),muted=game.isSageMuted(id),claims=aiCurrentClaims(p),points=claims.reduce((n,x)=>n+x.points,0);
+      const plan=aiAbilityPlan(p,id,cell.r,cell.c),direct=muted||plan.skip?0:plan.direct||0;
+      const forecast=aiFactionForecast(p,id,plan.bonus||0),position=DIRS4.reduce((n,[dr,dc])=>n+(game.boardMatchesFaction(cell.r+dr,cell.c+dc,forecast.faction||card.faction)?1:0),0);
+      const total=game.winCount(game.players[p])+points+direct,winsNow=total>=7;
+      const age=game.reserveAges[p]?.[id]||0;
+      const reserved=['sdm_sakuya','hourai_kaguya','mtn_kanako','hell_komachi','temple_byakuren'].includes(ability);
+      let release=false;
+      if(ability==='mtn_kanako')release=game.players[p].hand.some(other=>other!==id&&CARD[other].faction==='mountain'&&game.emptyOrWastelandForCard(CARD[other],p).length);
+      if(ability==='hourai_kaguya')release=game.knownHandCards(p,'hourai').filter(x=>x.playerIdx!==p).length>=2;
+      if(ability==='hell_komachi')release=game.hasOtherHellCard(id)&&game.players[p].hand.length>0;
+      if(ability==='sdm_sakuya')release=game.players[p].hand.filter(x=>game.canHandEnterPile(x)).length<=3 && plan.utility>.25;
+      if(age>=3&&plan.utility>.25)release=true;
+      const reserveCombo=reserved&&!points&&!winsNow&&!release&&forecast.missing>forecast.bonus;
+      let setup=ability==='sage_kasen'&&!muted?aiKasenSupport(p,cell.r,cell.c):ability==='hell_hecatia'?aiSetupValue(p,cardBaseId(id),cell.r,cell.c):0;
+      if(ability==='mtn_nitori'&&aiPolicyHas(p,'nitori'))setup=.12; // Protection is not automatically a strong placement.
+      const overriden=0;
+      const rate=Math.max(0,points+direct+Math.max(0,plan.utility-direct)+setup+overriden,forecast.rate+setup);
+      const works=!muted && !plan.skip && aiCostCanResolve(p,id,cell.r,cell.c);
+      const lowPriority=!points&&!winsNow&&(muted||reserveCombo||(!works&&forecast.rate<=0)||(plan.utility<=0&&forecast.rate<=0));
+      return {cardId:id,cell,rate,handGain:works?(ability==='sage_yukari'&&overridden?1:plan.handGain||0):0,noAbility:NO_PLACED_ABILITY.has(ability),lowPriority,suppressedCrown:muted,
+        winsNow,losesNow:false,claimSize:Math.max(forecast.size||0,...claims.map(x=>x.size),0),claimsNow:points>0,reserveCombo,position,setupValue:setup,
+        spacePlan:aiPlacementSpace(p,id,cell,forecast.faction),skipAbility:plan.skip,
+        retrieval:['palace_rin','palace_satori'].includes(ability)?{utility:plan.utility,payment:plan.payment,target:plan.target,skip:plan.skip}:null};
+    },p);
+    if((!acceptCandidate||acceptCandidate(candidate))&&(!best||(worst?aiBetterCandidate(best,candidate):aiBetterCandidate(candidate,best))))best=candidate;
+  }
+  return best;
+}
+/* End new AI. */
+
+function aiCostCanResolve(p,id,r,c){
+  if(!inBounds(r,c)||game.isSageMuted(id)||game.isProtected(r,c))return false;
+  const ability=game.abilityId(id),count=game.payableCards(p).filter(x=>x!==id).length;
+  if(count<game.abilityCost(id,{r,c}))return false;
+  if(ability==='haku_yuyuko')return count>=(CARD[id]?.costBonus||0)+1&&game.yuyukoTargets(r,c,p).length>0;
+  if(ability==='palace_yuugi')return game.yuugiTargets(r,c,false,p).length>0;
+  if(ability==='palace_satori')return game.players.some(pl=>pl.idx!==p&&pl.hand.length>0);
+  if(ability==='hell_kutaka')return !game.wastelandAt(r,c)||game.drawPile.length>0;
+  if(ability==='sdm_meiling')return game.meilingPushes(r,c).length>0;
+  if(ability==='temple_shou')return game.templeWasteland(p).length>0;
+  if(ability==='temple_ichirin')return game.ichirinPushes(r,c,p).length>0;
+  if(ability==='temple_byakuren')return game.byakurenOptions(p,r,c).some(o=>!o.disabled);
+  if(ability==='heaven_tenshi')return game.tenshiOccupiedCount({r,c})>=Math.ceil(SIZE*SIZE/2)&&game.abilityBoardCells(p,x=>game.boardFaction(x.r,x.c)!=='heaven').length>0;
+  if(ability==='heaven_iku')return game.estimateDirectDiscardPoints(p,ability,r,c)>=(game.winCount(game.players[p])>=6?1:2);
+  if(ability==='hourai_kaguya')return game.emptyCells(p).length>0&&game.players.some(pl=>pl.hand.length>0);
+  return true;
+}
+function aiPlacementCells(match,id,spaces){
+  const ability=match.abilityId(id);
+  spaces=spaces.filter(cell=>inBounds(cell.r,cell.c)&&(!match.cardAt(cell.r,cell.c)||match.canSelectBoardCard(cell.r,cell.c)));
+  if(ability==='haku_yuyuko')return spaces.filter(x=>match.adjacentOccupiedCount(x.r,x.c)>=2);
+  if(ability==='marisa')return spaces.filter(x=>match.safeMarisaPlacement(x.r,x.c));
+  if(ability==='reimu'&&!match.mainBoardCells(x=>CARD[x.id].crown&&match.canMoveBoardCard(x.r,x.c)&&match.canSelectBoardCard(x.r,x.c)).length)return [];
+  return spaces;
+}
+
+function aiBestMeilingMove(p,r,c,moves=game.meilingPushes(r,c)){
+  const before=aiBoardPlanValue(p),threat=aiPublicThreatValue(p);let best=null;
+  for(const move of moves){
+    const value=aiWithRulePreview(()=>{
+      const id=game.cardAt(move.r,move.c);if(!id)return -Infinity;
+      game.setCardAt(move.r,move.c,null);game.setCardAt(move.toR,move.toC,id);
+      return aiBoardPlanValue(p)-before+(threat-aiPublicThreatValue(p))*.6;
+    },p);
+    if(!best||value>best.value)best={move,value};
+  }
+  return best;
+}
+
 async function doPlayerAction(playerIdx){
   const activeGame=game;
   if(!activeGame || activeGame.cancelled) return {};
@@ -11824,6 +12303,7 @@ async function doPlayerAction(playerIdx){
   if(player.isAI){
     await sleep(900);
     if(game!==activeGame || activeGame.cancelled) return {};
+    aiSubscribeNewspapers(playerIdx);
     // Trading is a free action. Re-evaluate the resulting hand before spending this turn.
     let traded=false;
     let action;
@@ -11971,6 +12451,7 @@ function advanceTurn(){
 async function runNextTurn(){
   const activeGame=game;
   if(!activeGame || activeGame.cancelled || game.winner || game.stalemateMessage) return;
+  try{
   if(activeGame.aiTestMode){
     if(!await waitAITestReady(activeGame))return;
     if(activeGame.testMetrics.turns>=600){activeGame.testAbortReason='turn-limit';await finishAITestRound(activeGame);return;}
@@ -11996,12 +12477,12 @@ async function runNextTurn(){
     return;
   }
   stuckStreak = 0;
-  try{
     const flags = await doPlayerAction(p);
     if(game!==activeGame || activeGame.cancelled) return;
     await afterAction(p, flags, scheduledExtra);
     if(activeGame.aiTestMode && (activeGame.winner || activeGame.stalemateMessage))await finishAITestRound(activeGame);
   }catch(error){
+    if(game!==activeGame || activeGame.cancelled)return;
     if(!activeGame.aiTestMode)throw error;
     activeGame.testAbortReason='error';activeGame.testError=String(error?.message || error);await finishAITestRound(activeGame);
   }
@@ -12822,9 +13303,9 @@ function openByakurenPeek(ids,opts={}){
     if(reading)overlay.dataset.reading=reading;else delete overlay.dataset.reading;
     el('byakuren-peek-emblem').hidden=!reading;el('byakuren-peek-emblem').innerHTML=reading ? mindEyeSvg(reading) : '';
     setRuleText(el('byakuren-peek-title'),opts.choice ? opts.title : 'Makai Fantastica — top three cards');
-    setRuleText(el('byakuren-peek-instruction'),opts.choice
+    setRuleText(el('byakuren-peek-instruction'),opts.instruction || (opts.choice
       ? groups.length ? "Each area is one player's discard pile. Move cards freely, then drag one into Your Hand and confirm." : 'Move and stack cards freely. Drag one into the target area, then confirm. Double-tap to inspect.'
-      : 'Drag one card into Your Hand. Arrange the rest left to right, or stack the next card on top. Double-click or double-tap to inspect.');
+      : 'Drag one card into Your Hand. Arrange the rest left to right, or stack the next card on top. Double-click or double-tap to inspect.'));
     const source=el('byakuren-peek-source');source.hidden=groups.length>0;
     setRuleText(source,opts.choice ? opts.source || 'Draw pile' : 'Draw pile · next card on the left');
     setRuleText(el('byakuren-peek-destination'),opts.choice ? destination : 'Your Hand · take one card');
@@ -12910,7 +13391,7 @@ function openByakurenPeek(ids,opts={}){
     ids.forEach((id,index)=>{
       const node=document.createElement('div');node.className='table-scatter-card byakuren-peek-card table-card-moved';node.dataset.cardId=id;node.dataset.peekCard='true';node.dataset.angle=String((index-1)*4);
       node.setAttribute('role','button');node.tabIndex=0;node.setAttribute('aria-label',`${CARD[id].name}. Drag to move; double-click or double-tap to inspect.`);
-      node.style.setProperty('--table-angle',`${(index-1)*4}deg`);node.innerHTML=cardBoardHtml(id)+'<span class="peek-order"></span>';
+      node.style.setProperty('--table-angle',`${(index-1)*4}deg`);node.innerHTML=CARD[id]?.hiddenChoice?'<div class="card-face faction-bg-token"><div class="cname">？</div><div class="cdesc">Face down · 可盲选</div></div>':cardBoardHtml(id)+'<span class="peek-order"></span>';
       node.addEventListener('pointerdown',onTitleCardPointerDown);node.addEventListener('pointermove',onTitleCardPointerMove);node.addEventListener('pointerup',onTitleCardPointerUp);node.addEventListener('pointercancel',onTitleCardPointerCancel);node.addEventListener('lostpointercapture',onTitleCardPointerCancel);
       node.addEventListener('click',event=>{event.stopPropagation();update(node);});node.addEventListener('dblclick',onTitleCardDoubleClick);node.addEventListener('keydown',onTitleCardKeyDown);
       host.appendChild(node);nodes.push(node);
@@ -12929,13 +13410,13 @@ el('debug-close').addEventListener('click',()=>{closeDebugControls();el('debug-m
 el('debug-overlay').addEventListener('click',event=>{if(event.target===el('debug-overlay'))closeDebugControls();});
 document.addEventListener('keydown',event=>{if(event.key==='Escape' && el('debug-overlay').classList.contains('show')){closeDebugControls();el('debug-menu-btn').focus({preventScroll:true});}});
 
-/* AI-only testing keeps completed-game statistics across automatic restarts. */
-let chosenAITestMode=false,chosenFastAITest=true;
-let aiTestStats=createAITestStats(),aiTestPaused=false,aiTestRestartTimer=null,aiTestStatsFrame=null;
+/* Completed-game statistics survive manual and continuous in-place restarts. */
+let chosenAITestMode=false,chosenFastAITest=true,chosenContinuousAITest=false;
+let aiTestStats=createAITestStats(),aiTestPaused=false,aiTestWaitingForNext=false,aiTestRestartTimer=null,aiTestStatsFrame=null;
 const aiTestPauseWaiters=new Set();
 function cancelAITestAutomation(){
-  clearTimeout(aiTestRestartTimer);aiTestRestartTimer=null;
-  cancelFastAITestRender();
+  clearTimeout(aiTestRestartTimer);aiTestRestartTimer=null;aiTestWaitingForNext=false;cancelFastAITestRender();
+  if(fastAITestRenderFrame!==null)cancelAnimationFrame(fastAITestRenderFrame);fastAITestRenderFrame=null;
   if(aiTestStatsFrame!==null)cancelAnimationFrame(aiTestStatsFrame);aiTestStatsFrame=null;
   for(const resolve of [...aiTestPauseWaiters])resolve(false);aiTestPauseWaiters.clear();
 }
@@ -12947,16 +13428,22 @@ async function waitAITestReady(owner){
 }
 function updateAITestControls(){
   const testing=!!game?.aiTestMode;
-  el('ai-test-stats-btn').hidden=!testing;el('ai-test-pause-btn').hidden=!testing;el('ai-test-fast-label').hidden=!testing;
+  for(const id of ['ai-test-stats-btn','ai-test-pause-btn','ai-test-next-btn','ai-test-fast-label','ai-test-continuous-label','ai-test-round-state'])el(id).hidden=!testing;
+  el('ai-test-next-btn').disabled=!aiTestWaitingForNext;
+  el('ai-test-continuous').checked=chosenContinuousAITest;
+  setRuleText(el('ai-test-round-state'),aiTestWaitingForNext ? 'Round complete. Press N or choose Next game.' : aiTestPaused ? 'Paused after the current action.' : 'AI test is running.');
   el('ai-test-fast').checked=testing ? game.fastAITest : chosenFastAITest;
   for(const id of ['ai-test-pause-btn','ai-test-data-pause'])setRuleText(el(id),aiTestPaused ? 'Resume test' : 'Pause test');
+  document.body.classList.toggle('ai-test-mode',testing);
   document.body.classList.toggle('ai-test-fast',testing && game.fastAITest);
 }
 function setAITestPaused(paused){
   if(!game?.aiTestMode)return;
   aiTestPaused=!!paused;
+  if(aiTestPaused){clearTimeout(aiTestRestartTimer);aiTestRestartTimer=null;}
   if(!aiTestPaused){for(const resolve of [...aiTestPauseWaiters])resolve(true);aiTestPauseWaiters.clear();}
   updateAITestControls();renderAll(true);renderAITestStats();
+  if(!aiTestPaused)scheduleNextAITestRound(game);
 }
 function toggleAITestPause(){setAITestPaused(!aiTestPaused);}
 function queueAITestStatsRender(){
@@ -12988,7 +13475,7 @@ function aiTestEndingHtml(entry){
 function renderAITestStats(){
   const overlay=el('ai-test-overlay');if(!overlay.classList.contains('show'))return;
   const s=aiTestStats,current=game?.aiTestMode ? game : null;
-  setRuleText(el('ai-test-data-state'),current ? aiTestPaused ? 'Paused after the current action.' : 'AI test is running.' : 'AI test is stopped.');
+  setRuleText(el('ai-test-data-state'),current ? aiTestWaitingForNext ? 'Round complete. Press N or choose Next game.' : aiTestPaused ? 'Paused after the current action.' : 'AI test is running.' : 'AI test is stopped.');
   const summary=[['Completed games',s.games],['Wins',s.wins],['Stalemates',s.stalemates],['Aborted games',s.aborted],['Runtime errors',s.errors],
     ['Average turns',s.games?(s.turns/s.games).toFixed(1):'—'],['Total placements',s.placements],['Draw actions',s.drawActions],['Trades',s.trades]];
   el('ai-test-summary').innerHTML=summary.map(([label,value])=>`<div><span>${ruleTextHtml(label)}</span><strong>${value}</strong></div>`).join('');
@@ -13041,18 +13528,11 @@ function renderAITestStats(){
     row.players,`${row.board}×${row.board}`,ruleTextHtml(AI_DIFFICULTIES[row.difficulty].name),row.games,(row.turns/row.games).toFixed(1)]));
 }
 function openAITestDashboard(){
-  closeDebugControls();setAITestPaused(true);
-  el('ai-test-overlay').classList.add('show');renderAITestStats();el('ai-test-close').focus({preventScroll:true});
+  if(game?.aiTestMode)setAITestPaused(true);
+  closeDebugControls();el('ai-test-overlay').classList.add('show');renderAITestStats();el('ai-test-close').focus({preventScroll:true});
 }
 function closeAITestDashboard(){el('ai-test-overlay').classList.remove('show');}
-document.addEventListener('keydown',event=>{
-  if(event.repeat || event.isComposing || event.ctrlKey || event.metaKey || event.altKey || !game?.aiTestMode)return;
-  if(event.key==='F8'){
-    event.preventDefault();
-    if(el('ai-test-overlay').classList.contains('show'))closeAITestDashboard();else openAITestDashboard();
-  }else if(event.key==='Escape' && el('ai-test-overlay').classList.contains('show'))closeAITestDashboard();
-});
-function aiTestExportData(){return {version:3,exportedAt:new Date().toISOString(),definitions:{
+function aiTestExportData(){return {version:4,rulesVersion:REWORK_RULES_VERSION,createdCopiesGroupedByBase:true,exportedAt:new Date().toISOString(),definitions:{
   claimRate:'Completed games with at least one claim of this faction / completed games.',
   useRate:'Completed games in which this card was placed / completed games in which it entered any hand.',
   placementShare:'Actual placements of this card / all actual placements, including ability placements.',
@@ -13105,17 +13585,31 @@ function downloadAITestData(format){
   const blob=new Blob([content],{type:format==='csv' ? 'text/csv;charset=utf-8' : 'application/json;charset=utf-8'}),url=URL.createObjectURL(blob);
   const link=document.createElement('a');link.href=url;link.download=`touhou-ai-test-${new Date().toISOString().slice(0,10)}.${format}`;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
+function scheduleNextAITestRound(owner){
+  if(!owner || game!==owner || owner.cancelled || !owner.aiTestMode || !aiTestWaitingForNext
+    || !chosenContinuousAITest || aiTestPaused || el('ai-test-overlay').classList.contains('show') || aiTestRestartTimer!==null)return;
+  aiTestRestartTimer=setTimeout(()=>{
+    aiTestRestartTimer=null;
+    if(game===owner && !owner.cancelled && chosenContinuousAITest && !aiTestPaused
+      && aiTestWaitingForNext && !el('ai-test-overlay').classList.contains('show'))startNewGame({testContinuation:true});
+  },owner.fastAITest ? 250 : 900);
+}
+function nextAITestRound(){
+  if(!game?.aiTestMode || !aiTestWaitingForNext || el('ai-test-overlay').classList.contains('show'))return;
+  aiTestPaused=false;startNewGame({testContinuation:true});
+}
+function setContinuousAITest(enabled){
+  chosenContinuousAITest=!!enabled;el('menu-ai-test-continuous').checked=chosenContinuousAITest;
+  if(!chosenContinuousAITest){clearTimeout(aiTestRestartTimer);aiTestRestartTimer=null;}
+  updateAITestControls();scheduleNextAITestRound(game);
+}
 async function finishAITestRound(owner){
   if(game!==owner || !owner.aiTestMode || !recordCompletedAITest(aiTestStats,owner))return;
   renderAITestStats();
-  if(!await waitAITestReady(owner))return;
   await waitForVisualEffects(owner);
   if(game!==owner || owner.cancelled)return;
-  aiTestRestartTimer=setTimeout(async()=>{
-    aiTestRestartTimer=null;
-    if(!await waitAITestReady(owner))return;
-    startNewGame({testContinuation:true});
-  },owner.fastAITest ? 80 : 900);
+  aiTestWaitingForNext=true;updateAITestControls();renderAll(true);renderAITestStats();
+  scheduleNextAITestRound(owner);
 }
 document.querySelectorAll('#game-mode-opts .pill-btn').forEach(button=>button.addEventListener('click',()=>{
   chosenAITestMode=button.dataset.mode==='ai-test';
@@ -13124,6 +13618,26 @@ document.querySelectorAll('#game-mode-opts .pill-btn').forEach(button=>button.ad
   updateStartButtonState();
 }));
 el('menu-ai-test-fast').addEventListener('change',event=>chosenFastAITest=event.target.checked);
+el('menu-ai-test-continuous').addEventListener('change',event=>setContinuousAITest(event.target.checked));
+el('ai-test-continuous').addEventListener('change',event=>setContinuousAITest(event.target.checked));
+el('ai-test-next-btn').addEventListener('click',nextAITestRound);
+document.addEventListener('keydown',event=>{
+  if(event.repeat || event.isComposing || event.ctrlKey || event.altKey || event.metaKey)return;
+  if(game?.aiTestMode && event.key==='F8'){
+    event.preventDefault();if(el('ai-test-overlay').classList.contains('show'))closeAITestDashboard();else openAITestDashboard();return;
+  }
+  if(event.target?.closest?.('input,textarea,select,[contenteditable="true"]'))return;
+  const key=event.key.toLowerCase();
+  if(game?.aiTestMode && key==='d'){
+    event.preventDefault();if(el('ai-test-overlay').classList.contains('show'))closeAITestDashboard();else openAITestDashboard();return;
+  }
+  if(document.querySelector('#ai-test-overlay.show,#ai-lab-overlay.show,#modal-overlay.show,#card-detail-overlay.show,#debug-overlay.show,#look-into-overlay.show'))return;
+  if(game?.aiTestMode && key==='p'){event.preventDefault();toggleAITestPause();}
+  if(key==='n' && game && !game.cancelled){
+    if(game.aiTestMode && aiTestWaitingForNext){event.preventDefault();nextAITestRound();}
+    else if(!game.aiTestMode && (game.winner || game.stalemateMessage) && (!online || online.seat===0)){event.preventDefault();startNewGame();}
+  }
+});
 el('ai-test-fast').addEventListener('change',event=>{if(game?.aiTestMode){chosenFastAITest=game.fastAITest=event.target.checked;updateAITestControls();}});
 el('ai-test-stats-btn').addEventListener('click',openAITestDashboard);
 el('ai-test-pause-btn').addEventListener('click',toggleAITestPause);
@@ -13134,8 +13648,8 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='9d4e3f656d6ba4bee28ce60aaf9d9437e890e11394d9b637c1d203fd1a5da862';
-const AI_EVALUATION_POLICY_DIGEST='7fc8de65f2ab17eb1f68cefe3ad280c33b43d91210795a118c29498581ebb1cd';
+const AI_EVALUATION_RULES_DIGEST='b4b9b4c49ae2a629ed4d8000ab7a4988932158511ab9a0ded72bbe7df395b84a';
+const AI_EVALUATION_POLICY_DIGEST='fcd27d97501a20da382690c22a4c1fd2dfa788db3ac19743606ec09961da2337';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
   if(!source)throw new Error('Game source is unavailable.');
@@ -13221,13 +13735,15 @@ function evalForkSummary(report){
   return {groups,invalidPairs,conclusion,completedPairs:report.pairs.length};
 }
 function evalValidateSnapshot(snapshot){
-  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==1 || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
+  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || snapshot.rulesVersion!==REWORK_RULES_VERSION || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
   const state=snapshot.state,n=state?.players?.length,size=snapshot.size;
   if(![4,5].includes(size) || ![2,3,4].includes(n) || !Number.isInteger(state.currentPlayerIdx) || state.currentPlayerIdx<0 || state.currentPlayerIdx>=n)throw new Error('Invalid position dimensions.');
   if(state.numPlayers!==n || state.players.some((p,i)=>p.idx!==i || !Array.isArray(p.hand) || !Array.isArray(p.discard)))throw new Error('Invalid position dimensions.');
   if(!Array.isArray(state.board) || state.board.length!==size || state.board.some(row=>!Array.isArray(row)||row.length!==size))throw new Error('Invalid board.');
   const tokens=snapshot.tokens||[];if(tokens.length>1000 || tokens.some(token=>!/^trap_token_\d+$/.test(token.id)))throw new Error('Invalid tokens.');
-  const allowed=new Set([...CARDS.map(c=>c.id),...tokens.map(t=>t.id)]);
+  const copies=snapshot.generatedCards||[];
+  if(copies.length>1000 || copies.some(c=>!/^created_card_\d+$/.test(c.id)||!CARDS.some(base=>base.id===c.baseId)||!Number.isInteger(c.costBonus)||c.costBonus<1||c.costBonus>100||![1,2].includes(c.abilityMultiplier)||!(CARDS.some(base=>base.id===c.copiedAbility)||c.copiedAbility==='__draw_one')))throw new Error('Invalid created cards.');
+  const allowed=new Set([...CARDS.map(c=>c.id),...tokens.map(t=>t.id),...copies.map(c=>c.id)]);
   const ids=[...state.board.flat(),...(state.shopCards||[]),...(state.drawPile||[]),...state.players.flatMap(p=>[...(p.hand||[]),...(p.discard||[])])].filter(Boolean);
   if(ids.some(id=>!allowed.has(id)) || new Set(ids).size!==ids.length || ids.length>1100)throw new Error('Unknown or duplicated card in position.');
   if(!Array.isArray(state.startingCardIds) || state.startingCardIds.length!==ids.length || new Set(state.startingCardIds).size!==ids.length || ids.some(id=>!state.startingCardIds.includes(id)))throw new Error('Card inventory does not match the position.');
@@ -13253,7 +13769,9 @@ function evalForcedCell(p,id,cells){
   return cells[Math.floor(evalDecisionRNG()*cells.length)];
 }
 function evalResetTokens(snapshot){
-  clearGeneratedTrapCards();
+  for(const id of Object.keys(CARD))if(generatedCard(id)||CARD[id].hiddenChoice)delete CARD[id];
+  nextCreatedCard=snapshot?.copyCounter||0;
+  for(const c of snapshot?.generatedCards||[])CARD[c.id]={...CARD[c.baseId],id:c.id,baseId:c.baseId,createdCopy:true,copiedAbility:c.copiedAbility,costBonus:c.costBonus,abilityMultiplier:c.abilityMultiplier,token:false,shopExpansion:false};
   nextTrapToken=snapshot?.tokenCounter||0;
   for(const token of snapshot?.tokens||[])CARD[token.id]={...CARD.trap_token,id:token.id};
 }
@@ -13351,8 +13869,8 @@ function evalNewOpening(seed,n,size,difficulty){
 }
 async function evalCompare(config,send){
   evalValidateConfig(config);
-  const report={format:'tbg-ai-evaluation',version:1,type:'comparison',baselineCommit:'2b07010618c21eee6dfc6ffd4092c8b4bbb42e9b',baselineDigest:AI_BASELINE_DIGEST,previousCommit:'955c63140738e5cc9deae85802cec12f10c5d61a',previousDigest:AI_PREVIOUS_DIGEST,diagnosticsVersion:3,
-    currentPolicy:'skill-tiers-online-2026-10-09',rules:'Shared current Game engine',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,startedAt:new Date().toISOString(),finished:false,blocks:[]};
+  const report={format:'tbg-ai-evaluation',version:1,type:'comparison',baselineCommit:'2b07010618c21eee6dfc6ffd4092c8b4bbb42e9b',baselineDigest:AI_BASELINE_DIGEST,previousCommit:'955c63140738e5cc9deae85802cec12f10c5d61a',previousDigest:AI_PREVIOUS_DIGEST,diagnosticsVersion:4,rulesVersion:REWORK_RULES_VERSION,
+    currentPolicy:'create-news-reserve-2026-10-12',rules:'Shared current Game engine',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,startedAt:new Date().toISOString(),finished:false,blocks:[]};
   const lineups=evalMixedLineups(config.players,config.opponent);
   for(let i=0;i<config.blocks;i++){
     await evalYield();const seed=evalHashSeed(config.seed,config.phase||'development',i),size=config.size==='both'?(i%2?5:4):Number(config.size);
@@ -13367,7 +13885,7 @@ async function evalCompare(config,send){
 async function evalFork(snapshot,config,send){
   evalValidateSnapshot(snapshot);evalValidateConfig(config,'fork');const actor=snapshot.state.currentPlayerIdx;config={...config,actor};
   const continuations=config.continuations||['current','previous'];
-  const report={format:'tbg-ai-evaluation',version:1,diagnosticsVersion:3,currentPolicy:'skill-tiers-online-2026-10-09',previousDigest:AI_PREVIOUS_DIGEST,type:'fork',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,snapshot,startedAt:new Date().toISOString(),finished:false,pairs:[],
+  const report={format:'tbg-ai-evaluation',version:1,diagnosticsVersion:4,rulesVersion:REWORK_RULES_VERSION,currentPolicy:'create-news-reserve-2026-10-12',previousDigest:AI_PREVIOUS_DIGEST,type:'fork',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,snapshot,startedAt:new Date().toISOString(),finished:false,pairs:[],
     assumptions:'Unknown rival cards and deck order are re-sampled from the acting player information. Rival private clue memories are omitted. Continuations are finite AI policies, not optimal play.'};
   for(let i=0;i<config.trials;i++){
     const seed=evalHashSeed(config.seed,'fork',i),sample=evalSampleHidden(snapshot,actor,evalPRNG(seed));
@@ -13606,7 +14124,7 @@ function renderCustomGrid(){
     const atCap = customSelected.size>=6 && !isSelected;
     tile.className = 'custom-card-tile' + (cardBgClass(c, c.id) ? ' '+cardBgClass(c, c.id) : '') + (isSelected ? ' selected' : '') + (atCap ? ' locked' : '');
     tile.innerHTML = `<div class="icon-row">${cardFactionBadgeHtml(c.faction)}${c.crown?'<span class="crown-mark">👑</span>':''}</div>
-      <div class="cname">${c.name}</div>`;
+      <div class="cname">${c.name}</div>${instanceBadgeHtml(c.id)}`;
     tile.title = ruleTooltip(c.desc);
     tile.addEventListener('click', () => {
       if(customSelected.has(c.id)){
@@ -13665,7 +14183,8 @@ function resetGameView(){
   el('modal-box').classList.remove('chimera-mode');
   el('modal-options').classList.remove('chimera-options');
   game=null;
-  clearGeneratedTrapCards();
+  // Trap definitions belong to the retired match; ordinary card rules stay intact.
+  for(const id of Object.keys(CARD))if(generatedCard(id)||CARD[id]?.hiddenChoice)delete CARD[id];
   announcedGameResult=null;
   if(pendingPlayerChoice){document.removeEventListener('keydown',pendingPlayerChoice.onEscape);pendingPlayerChoice=null;}
   if(pendingHandChoice?.onEscape) document.removeEventListener('keydown',pendingHandChoice.onEscape);
@@ -13707,6 +14226,7 @@ function resetGameView(){
   closeCardDetails();
   el('winner-banner').classList.remove('show');
   document.querySelectorAll('.draw-flight-card,.draw-return-ghost,.discard-vanish,.ability-flight,.swap-flight,.gap-rift,.yukari-gap-card,.master-spark,.spark-impact,.sakura-burst,.fission-burst').forEach(node=>node.remove());
+  pruneRuleTextSources();
 }
 
 function returnToMainMenu(){

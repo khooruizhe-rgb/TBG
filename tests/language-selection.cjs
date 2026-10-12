@@ -25,7 +25,7 @@ slice('/* Only trusted rule text becomes references','let detailReturnFocus')+sl
 const A=ctx.api,tests=[],test=(name,fn)=>tests.push([name,fn]);
 test('Both selectors offer English and Chinese, and preference is saved without restarting',()=>{
  for(const id of ['menu-language','game-language'])assert(html.includes(`id="${id}"`));
- const card=text('Marisa Kirisame'),game={cancelled:false,players:[{hand:['marisa']}],currentPlayerIdx:0};A.setGame(game);A.initializeGameLanguage();A.setGameLanguage('zh-CN');assert.equal(A.language(),'zh-CN');assert.equal(root.lang,'zh-CN');assert.equal(storage.get('boundary-language'),'zh-CN');assert.equal(el('menu-language').value,'zh-CN');assert.equal(el('game-language').value,'zh-CN');assert.equal(card.nodeValue,'雾雨魔理沙');assert.deepEqual(game.players[0].hand,['marisa']);
+ const card=text('Marisa Kirisame'),game={cancelled:false,abilityId:id=>id,players:[{hand:['marisa']}],currentPlayerIdx:0};A.setGame(game);A.initializeGameLanguage();A.setGameLanguage('zh-CN');assert.equal(A.language(),'zh-CN');assert.equal(root.lang,'zh-CN');assert.equal(storage.get('boundary-language'),'zh-CN');assert.equal(el('menu-language').value,'zh-CN');assert.equal(el('game-language').value,'zh-CN');assert.equal(card.nodeValue,'雾雨魔理沙');assert.deepEqual(game.players[0].hand,['marisa']);
  A.setGameLanguage('en');assert.equal(card.nodeValue,'Marisa Kirisame');assert.equal(game.currentPlayerIdx,0);
 });
 test('Every real card has a Chinese name, ability title and complete rules without changing engine data',()=>{
@@ -150,7 +150,8 @@ test('Clicked term popups are Chinese immediately and switch languages without l
 });
 test('Crown references become images with a language-aware label and preserve non-Crown wording',()=>{
  A.setGameLanguage('zh-CN');
- for(const id of ['hourai_eirin','reimu','marisa']){const rule=A.ruleTextHtml(A.CARD[id].desc);assert(rule.includes('class="crown-reference"'));assert(rule.includes('aria-label="领主"'));assert(rule.includes('<svg'));assert(!rule.includes('王冠'));}
+ for(const id of ['reimu','marisa']){const rule=A.ruleTextHtml(A.CARD[id].desc);assert(rule.includes('class="crown-reference"'));assert(rule.includes('aria-label="领主"'));assert(rule.includes('<svg'));assert(!rule.includes('王冠'));}
+ assert(A.ruleTextHtml(A.CARD.hourai_eirin.desc).includes('贤者')); 
  assert(A.ruleTextHtml(A.CARD.marisa.desc).includes('非<span class="crown-reference"'));assert.equal(A.translateGameText('Crown card'),'领主卡牌');assert.equal(A.translateGameText('crown'),'领主');
  assert(A.ruleTextHtml('Crown cards',{cards:false}).includes('class="crown-reference"'));
  assert(!A.ruleTextHtml('crowned').includes('crown-reference'));
