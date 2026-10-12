@@ -1,0 +1,76 @@
+{
+  "status": "pass",
+  "checks": [
+    "Yukari cannot deploy without override or points at easy",
+    "Yukari stays held while drawing at easy",
+    "An empty draw pile does not bypass the Yukari guard at easy",
+    "Yukari cannot deploy without override or points at normal",
+    "Yukari stays held while drawing at normal",
+    "An empty draw pile does not bypass the Yukari guard at normal",
+    "Yukari cannot deploy without override or points at hard",
+    "Yukari stays held while drawing at hard",
+    "An empty draw pile does not bypass the Yukari guard at hard",
+    "Yukari retains a legal override and rejects other empty cells",
+    "Ordinary action evaluation selects the override",
+    "Yukari may use an empty cell that immediately scores a faction",
+    "The allowed empty-cell Yukari placement actually scores four points",
+    "Rin-overwritten Yukari follows its draw ability rather than the override restriction",
+    "Created Yukari uses the same no-empty-deployment rule",
+    "Eirin muting does not turn an unavailable override into an empty placement",
+    "Reisen avoids forcing a Mountain card that completes the public set",
+    "Reisen evaluates the target’s best scoring destination",
+    "Preview restores actor, board, hands, private clues and metrics",
+    "The real Reisen chooser uses the board forecast after revealing the hand",
+    "Reisen choices are recorded for later diagnosis",
+    "The same hand produces the opposite command when the board has three Eientei cards",
+    "A commanded AI chooses a scoring landing rather than a random one",
+    "Live and worker forced placement selectors agree",
+    "Explicit evaluation fork actions still override the policy",
+    "The real forced turn resolves the four-point claim and clears the decree",
+    "Reisen’s mandatory placement bypasses Yukari’s voluntary guard",
+    "A no-destination command is distinguished from a legal wasteland card",
+    "No-destination commands consume the turn without an illegal placement",
+    "A Murasa delay is not mistaken for a permanent lack of legal destinations",
+    "Unrevealed third-player card identities and target-private clues do not change the command",
+    "Cancelling during Reisen’s pause retires the old choice",
+    "The historical comparison policy keeps its original Yukari candidates"
+  ],
+  "details": {
+    "mountain": [
+      {
+        "id": "mtn_sanae",
+        "points": 4,
+        "cell": {
+          "r": 1,
+          "c": 1
+        }
+      },
+      {
+        "id": "hourai_mokou",
+        "points": 0,
+        "cell": {
+          "r": 0,
+          "c": 3
+        }
+      }
+    ],
+    "eientei": [
+      {
+        "id": "mtn_sanae",
+        "points": 0,
+        "cell": {
+          "r": 0,
+          "c": 3
+        }
+      },
+      {
+        "id": "hourai_mokou",
+        "points": 4,
+        "cell": {
+          "r": 1,
+          "c": 1
+        }
+      }
+    ]
+  }
+}
