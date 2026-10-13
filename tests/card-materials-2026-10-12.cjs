@@ -152,7 +152,7 @@ async function choiceTest(name,fn){await fn();tests.push(name);console.log('PASS
     const options=el('creation-cards').children;
     assert.equal(options.length,3);
     assert.equal(A.creationSession().phase,'printing');options[0].children[0].events.click[0]();assert.equal(A.creationSession().phase,'printing');
-    advance(1140);assert.equal(A.creationSession().phase,'ready');
+    advance(620);assert.equal(A.creationSession().phase,'ready');
     for(const option of options){
       const face=option.children[0],inspect=option.children[1];
       assert.match(face.innerHTML,/card-copy-low-ink/);assert.equal((face.innerHTML.match(/card-low-ink-lines/g)||[]).length,1);
@@ -165,7 +165,7 @@ async function choiceTest(name,fn){await fn();tests.push(name);console.log('PASS
     options[0].children[0].events.click[0]();assert.equal(A.creationSession().phase,'departing');
     assert(options.every(option=>option.children[0].classList.contains('creation-flying')));
     assert.equal(options[1].children[0].values.get('--creation-flight-angle'),'-55deg');assert.equal(options[2].children[0].values.get('--creation-flight-angle'),'55deg');
-    advance(700);assert.equal(await selected,'hourai_mokou');
+    advance(380);assert.equal(await selected,'hourai_mokou');
     assert(!el('creation-overlay').classList.contains('show'));assert.equal(A.creationSession(),null);assert.equal(timers.size,0);
     assert.equal(JSON.stringify(A.CARD),before);assert.equal(JSON.stringify(match.players[0].hand),handBefore);
     assert(!A.cardBoardHtml('hourai_mokou').includes('card-copy-low-ink'));
@@ -185,19 +185,19 @@ async function choiceTest(name,fn){await fn();tests.push(name);console.log('PASS
     A.setGame(g);const before=Object.keys(A.CARD).length;
     const creation=A.Game.prototype.createCard.call(g,0,['hourai_mokou','mtn_sanae','sage_ran'],{double:true});
     assert.equal(Object.keys(A.CARD).length,before);assert.deepEqual(g.players[0].hand,['hourai_mokou']);
-    advance(1140);const face=A.creationSession().cards.find(card=>card.id==='mtn_sanae').face;
+    advance(620);const face=A.creationSession().cards.find(card=>card.id==='mtn_sanae').face;
     face.events.click[0]();assert.equal(face.style.left,'132px');assert.equal(face.style.top,'673px');
     assert(face.classList.contains('creation-chosen-flight'));assert.equal(face.style.width,'104px');assert.equal(face.style.height,'126px');
     const placeholder=A.creationSession().placeholder;
     assert.match(placeholder.innerHTML,/Sanae Kochiya\?/);assert.match(placeholder.innerHTML,/icon-row/);assert(placeholder.classList.contains('card-copy-low-ink'));
     A.renderHand();assert.equal(el('hand').children.at(-1),placeholder);
     const incoming=html.slice(html.indexOf('.creation-face.creation-flying.creation-chosen-flight{')).split('}')[0];
-    assert.match(incoming,/left \.65s linear,top \.65s linear/);assert.match(incoming,/width \.65s linear,height \.65s linear/);
+    assert.match(incoming,/left \.36s linear,top \.36s linear/);assert.match(incoming,/width \.36s linear,height \.36s linear/);
     assert(!incoming.includes('ease-in'));assert(!incoming.includes('cubic-bezier'));
 
     assert.equal(Object.keys(A.CARD).length,before);assert.equal(g.players[0].hand.length,1);
     const chosen=A.creationSession().chosen;A.creationSession().cards.find(card=>card.id!==chosen).face.events.click[0]();assert.equal(A.creationSession().chosen,chosen);
-    advance(700);const id=await creation;
+    advance(380);const id=await creation;
     assert.equal(Object.keys(A.CARD).length,before+1);assert.deepEqual(g.players[0].hand,['hourai_mokou',id]);
     assert.equal(A.CARD[id].baseId,'mtn_sanae');assert.equal(A.CARD[id].costBonus,1);assert.equal(A.CARD[id].abilityMultiplier,2);
     assert.equal(A.CARD[id].name,A.CARD.mtn_sanae.name+'?');assert.match(el('hand').children.at(-1).innerHTML,/Sanae Kochiya\?/);
@@ -210,7 +210,7 @@ async function choiceTest(name,fn){await fn();tests.push(name);console.log('PASS
     for(const phase of ['printing','ready','departing']){
       for(let repeat=0;repeat<20;repeat++){
         const pending=A.openCreationChoice('Create: choose one of three cards',['hourai_mokou','mtn_sanae','sage_ran']);
-        if(phase!=='printing')advance(1140);
+        if(phase!=='printing')advance(620);
         if(phase==='departing')A.creationSession().cards[0].face.events.click[0]();
         else if(phase==='ready')A.creationSession().cards[0].inspect.events.click[0]();
         const stale=[...timers.values()].map(timer=>timer.fn);A.closeCreationChoice();assert.equal(await pending,null);
@@ -223,13 +223,13 @@ async function choiceTest(name,fn){await fn();tests.push(name);console.log('PASS
     assert.match(html,/if\(typeof closeCreationChoice==='function'\)closeCreationChoice\(\);/);
   });
   await choiceTest('Keyboard focus stays inside the choice, inspection blocks accidental selection, and Enter selects only once',async()=>{
-    const pending=A.openCreationChoice('Create: choose one of three cards',['hourai_mokou','mtn_sanae']);advance(960);
+    const pending=A.openCreationChoice('Create: choose one of three cards',['hourai_mokou','mtn_sanae']);advance(520);
     const cards=A.creationSession().cards,press=extra=>{for(const fn of documentListeners.get('keydown')||[])fn({key:'Tab',preventDefault(){},...extra});};
     documentFixture.activeElement=null;press({shiftKey:true});assert.equal(documentFixture.activeElement,cards[1].inspect);
     press({});assert.equal(documentFixture.activeElement,cards[0].face);
     cards[0].face.events.keydown[0]({key:'i',preventDefault(){}});cards[1].face.events.click[0]();assert.equal(A.creationSession().phase,'ready');
     A.closeCardDetails();cards[1].face.events.keydown[0]({key:'Enter',preventDefault(){}});cards[0].face.events.click[0]();
-    assert.equal(A.creationSession().chosen,'mtn_sanae');advance(700);assert.equal(await pending,'mtn_sanae');
+    assert.equal(A.creationSession().chosen,'mtn_sanae');advance(380);assert.equal(await pending,'mtn_sanae');
   });
   await choiceTest('Reduced motion and a one-card source complete safely without inventing extra choices',async()=>{
     reducedMotion=true;
@@ -240,11 +240,11 @@ async function choiceTest(name,fn){await fn();tests.push(name);console.log('PASS
   });
   await choiceTest('Watched AI prints the same options, keeps its original choice and finishes without user input',async()=>{
     const pending=A.onCreationChoices({playerIdx:1,ids:['hourai_mokou','mtn_sanae','sage_ran'],chosen:'sage_ran',title:'Create: choose one of three cards'});
-    await new Promise(setImmediate);advance(1140);
+    await new Promise(setImmediate);advance(620);
     const cards=A.creationSession().cards;assert(cards.every(card=>card.inspect.disabled));
     cards[0].face.events.click[0]();assert.equal(A.creationSession().phase,'ready');
-    advance(260);assert.equal(A.creationSession().phase,'departing');assert.equal(A.creationSession().chosen,'sage_ran');
-    advance(700);assert.equal(await pending,'sage_ran');assert.equal(timers.size,0);
+    advance(100);assert.equal(A.creationSession().phase,'departing');assert.equal(A.creationSession().chosen,'sage_ran');
+    advance(380);assert.equal(await pending,'sage_ran');assert.equal(timers.size,0);
     match.fastAITest=true;assert.equal(await A.onCreationChoices({playerIdx:1,ids:['hourai_mokou'],chosen:'hourai_mokou'}),undefined);
     assert.equal(A.creationSession(),null);match.fastAITest=false;
   });
@@ -253,16 +253,16 @@ async function choiceTest(name,fn){await fn();tests.push(name);console.log('PASS
     const g={...match,cancelled:false,fastAITest:false,players:[{idx:0,name:'AI',isAI:true,hand:[]}],startingCardIds:new Set(),testMetrics:null,
       ui:{onCreationChoices:details=>{presentations++;return A.onCreationChoices(details);}},addToHand(p,id){this.players[p].hand.push(id);},recordTestDecision(){},log(){},render:()=>A.renderHand()};
     A.setGame(g);const watched=A.Game.prototype.createCard.call(g,0,['hourai_mokou','mtn_sanae','sage_ran']);await new Promise(setImmediate);
-    assert.equal(presentations,1);assert.equal(g.players[0].hand.length,0);advance(1140);advance(260);advance(700);
+    assert.equal(presentations,1);assert.equal(g.players[0].hand.length,0);advance(620);advance(100);advance(380);
     const id=await watched;assert.equal(A.CARD[id].baseId,'mtn_sanae');assert.equal(g.players[0].hand.length,1);
     g.fastAITest=true;const fast=await A.Game.prototype.createCard.call(g,0,['hourai_mokou','mtn_sanae','sage_ran']);
     assert.equal(presentations,1);assert.equal(A.CARD[fast].baseId,'mtn_sanae');assert.equal(A.creationSession(),null);assert.equal(timers.size,0);
     delete ctx.aiCreatedValue;A.setGame(match);A.renderHand();
   });
   await choiceTest('Replacing the match during printing prevents a stale result, and resizing during flight finishes the selected choice',async()=>{
-    const cancelled=A.openCreationChoice('Create: choose one of three cards',['hourai_mokou']);A.setGame({...match});advance(780);
+    const cancelled=A.openCreationChoice('Create: choose one of three cards',['hourai_mokou']);A.setGame({...match});advance(420);
     assert.equal(await cancelled,null);assert.equal(A.creationSession(),null);A.setGame(match);
-    const resized=A.openCreationChoice('Create: choose one of three cards',['hourai_mokou','mtn_sanae']);advance(960);
+    const resized=A.openCreationChoice('Create: choose one of three cards',['hourai_mokou','mtn_sanae']);advance(520);
     A.creationSession().cards[1].face.events.click[0]();for(const fn of [...windowListeners.get('resize')||[]])fn();
     assert.equal(await resized,'mtn_sanae');assert.equal(timers.size,0);assert.equal(A.creationSession(),null);
   });
