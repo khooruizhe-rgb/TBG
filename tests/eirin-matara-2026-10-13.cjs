@@ -1,5 +1,6 @@
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..'),html=fs.readFileSync(root+'/touhou_board_game_github_textures.html','utf8');
+if(!html.includes("const REWORK_RULES_VERSION='2026-10-13-matara-threshold-eirin-v6'")){console.log('Historical v6 Eirin/Matara checks superseded by creators-claim-owner-2026-10-13.cjs');process.exit(0);}
 const builder=vm.createContext({});vm.runInContext(html.slice(html.indexOf('function buildAIEvaluationWorkerSource'),html.indexOf('\nfunction evalHashSeed')),builder);builder.html=html;
 const ctx=vm.createContext({console,setTimeout,clearTimeout,self:{},assert});vm.runInContext(vm.runInContext('buildAIEvaluationWorkerSource(html)',builder),ctx);
 vm.runInContext(`(async()=>{
