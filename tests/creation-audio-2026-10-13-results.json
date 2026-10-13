@@ -1,0 +1,28 @@
+{
+  "status": "pass",
+  "count": 19,
+  "checks": [
+    "The audio asset is the provided MP3 and the game references its GitHub URL",
+    "Printing starts one sound with the configured volume",
+    "A new creation stops the old sound without overlapping it",
+    "Natural completion releases the audio owner",
+    "Muting stops playback and muted creation does not start a new clip",
+    "Fast AI tests create no print audio",
+    "Stopping after a cancelled choice rewinds and releases the clip",
+    "An older cancellation cannot stop the next creation sound",
+    "A rejected play request cannot interrupt creation",
+    "A late playback promise is stopped after a reset",
+    "Network failure releases the clip and resets stop audio even when the choice has finished",
+    "Sound 1 and Sound 2 preserve both user-uploaded files byte for byte",
+    "The actual Yukari cue uses Sound 1 and the Sakuya start cue uses Sound 2",
+    "Repeated character effects stop their own older sound and natural completion releases it",
+    "Muting stops character sounds as well as printing and prevents new sounds",
+    "Fast tests and cancelled games suppress both character sounds",
+    "A rejected or failed character clip cannot block the ability or leave a retained owner",
+    "Nested Sakuya time stops start Sound 2 once and resume only after the final stop ends",
+    "The grayscale enters and exits through a persistent 140ms transition, with reduced-motion support"
+  ],
+  "assetBytes": 50991,
+  "assetSha256": "26511378d80699c72b9ec7a78206c30656371d1563c90ff81ab3983bbab47e7e",
+  "scope": "Printing/character audio lifecycle, original asset bytes and time-stop transition fixtures; browser audibility not verified"
+}

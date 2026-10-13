@@ -1,0 +1,76 @@
+{
+  "status": "pass",
+  "count": 43,
+  "checks": [
+    "Nitori waits without a quick-claim card at easy",
+    "Hecatia waits without a quick-claim card at easy",
+    "Murasa stays held with three usable cards remaining at easy",
+    "Nitori waits without a quick-claim card at normal",
+    "Hecatia waits without a quick-claim card at normal",
+    "Murasa stays held with three usable cards remaining at normal",
+    "Nitori waits without a quick-claim card at hard",
+    "Hecatia waits without a quick-claim card at hard",
+    "Murasa stays held with three usable cards remaining at hard",
+    "Nitori does not expose a three-card set even with Kanako held",
+    "Hecatia does not expose a three-card set even with Komachi held",
+    "Nitori can set up two held Mountain cards including Kanako",
+    "A proved Nitori setup remains an ordinary AI candidate",
+    "The held Kanako receives value for a proved Nitori claim",
+    "The real Kanako placement collects the guarded Nitori set",
+    "A quick card cannot replace a missing held faction member",
+    "Kanako cannot use Kasen as its forced Mountain placement",
+    "Immediate Nitori collection needs no separate quick card",
+    "Immediate Hecatia collection respects Hell discard ordering and six points",
+    "Hecatia accepts a legal Komachi/Eiki finish after Eiki has no payable cost",
+    "The Hell forecast includes the actual Komachi swap and Hecatia capture",
+    "Forecast restores board, hand identities, activations, clues and metrics",
+    "Hidden opponent identities and their private clues do not affect the claim forecast",
+    "The real Komachi follow-up collects Hecatia before another player acts",
+    "Sakuya can supply two continuous placements for the held Mountain finish",
+    "Sakuya sees the concrete Mountain pairing instead of two abstract extra turns",
+    "The real Sakuya follow-ups claim the set and complete hand cleanup",
+    "A full hand and quick card do not bypass illegal wasteland destinations",
+    "Kutaka can use its wasteland permission to find a safe alternative finish",
+    "Terrain forecasts restore every wasteland tile",
+    "The terrain-aware route actually claims Hecatia without placing illegally",
+    "A created Nitori cannot pay its surcharge with a needed assembly member",
+    "A spare card funds the created Nitori surcharge without breaking the claim",
+    "Rin-overwritten Nitori follows its draw ability instead of the setup restriction",
+    "The frozen comparison policy keeps its original passive setup decisions",
+    "A mandatory Reisen placement bypasses the voluntary setup guard",
+    "An unpaired Youmu receives no free-action value and is reserved",
+    "Youmu can be used when the held Yuyuko concretely completes a faction",
+    "Youmu tempo value is grounded in a real scoring follow-up",
+    "Murasa may be deployed with two usable cards remaining",
+    "Murasa prioritizes the five-point opponent over the opponent with more cards",
+    "The real Murasa ability seals the leading opponent for two turns",
+    "A winning Murasa faction claim may bypass the hand-size reservation"
+  ],
+  "details": {
+    "nitori": {
+      "r": 1,
+      "c": 1
+    },
+    "hell": {
+      "faction": "hell",
+      "points": 6,
+      "steps": [
+        {
+          "cardId": "hell_komachi",
+          "cell": {
+            "r": 0,
+            "c": 2
+          }
+        },
+        {
+          "cardId": "hell_eiki",
+          "cell": {
+            "r": 0,
+            "c": 3
+          }
+        }
+      ]
+    }
+  },
+  "scope": "Targeted decision and real ability-resolution fixtures; not a win-rate comparison"
+}

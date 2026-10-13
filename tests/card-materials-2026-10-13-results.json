@@ -1,6 +1,6 @@
 {
   "status": "pass",
-  "count": 19,
+  "count": 21,
   "checks": [
     "Board cards distinguish low-ink copies, worn retrieved cards and ordinary originals",
     "Copying an overwritten card retains its worn appearance, draw effect and surcharge",
@@ -11,6 +11,8 @@
     "Only Sage muting applies Eirin desaturation; unpaid copies and non-Sage crowns retain color",
     "Copy inspection preserves the portrait crop and returns to an unfiltered ordinary card",
     "Creation preview inspection retains printing through reference navigation and clears it afterward",
+    "Copied names translate and copied-card guesses accept Chinese question-mark names",
+    "Nue borrowed-ability details translate in Chinese and preserve the English source when switching back",
     "The real creation chooser prints every candidate and its inspected image without creating extra cards",
     "Nue ability choices keep original art, while existing copies retain their own material",
     "The actual creation engine waits for the flight and then puts exactly one independent copy into the hand",

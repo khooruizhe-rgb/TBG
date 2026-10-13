@@ -1,0 +1,29 @@
+{
+  "status": "pass",
+  "count": 23,
+  "checks": [
+    "A double draw pays the creation surcharge once",
+    "One payment still gives both draws",
+    "Double Cost I pays Cost II once, including the creation surcharge",
+    "The second Satori effect still works after spending the payment cards",
+    "Variable Cost N=2 plus one surcharge is paid once",
+    "Double Yuyuko reuses N=2 with no payment cards left",
+    "Declining the first cost cannot grant a free second effect",
+    "Double passive activation needs only one surcharge card",
+    "Double Yukari can override with a single surcharge available",
+    "The actual override pays once and returns its target to hand",
+    "Double Koishi automatic activation also pays once",
+    "Byakuren charges each chosen option once even after board discounts disappear",
+    "Paid Byakuren turns double while unselected options stay unavailable",
+    "Double Byakuren look pays only its original discounted cost plus surcharge",
+    "Double Nue repeats its chosen borrowed ability and pays its costs once",
+    "AI repeats an already-paid effect without rejecting it for a second payment",
+    "Activation payment state is restored after resolution",
+    "A created card has one question mark",
+    "Copying a copy keeps one question mark and cumulative surcharge",
+    "Restoring a snapshot preserves the copy name and stable identity",
+    "Compatible v4 turn-start snapshots restore safely under the current copy rules",
+    "The visual question mark does not prevent guessing a copy by its original character name",
+    "A copied card can also be guessed with its question-mark name"
+  ]
+}

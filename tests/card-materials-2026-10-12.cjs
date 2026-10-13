@@ -26,6 +26,7 @@ const ctx=vm.createContext({console,el,document:documentFixture,window:{innerWid
   setTimeout:(fn,delay)=>{const id=++nextTimer;timers.set(id,{fn,due:clock+delay});return id;},clearTimeout:id=>timers.delete(id),
   requestAnimationFrame:()=>1,localSeat:()=>0,localTurnReady:()=>true,syncRemiliaArrival(){},updateTutorialProgress(){},queueMobileViewport(){},onHandCardDragEnd(){},
   playGameCue(){},
+  Audio:class{addEventListener(){}play(){return Promise.resolve();}pause(){}},
   waitForVisualEffects:async()=>true,
   illusionCardStyle:()=>'',crownLightFor:()=>({main:'#aaa',rgb:'1,2,3'})});
 const slice=(start,end)=>js.slice(js.indexOf(start),js.indexOf(end,js.indexOf(start)));
@@ -35,14 +36,15 @@ vm.runInContext(slice('const DIRS4 =','/* ===================== UI layer')+'\nle
   slice('/* Only trusted rule text','const yuukaSunflowerUntil=')+
   slice('function escapeLogHtml(','function newspaperHtml(')+
   slice('function serializablePickArgs(','async function humanPick(')+
-  slice('function renderHand()','function cardNameListHtml(')+`
+  slice('function handCardFaceHtml(','function cardNameListHtml(')+`
   var pendingHandChoice=null,selectedHandCard=null,pendingCellChoice=null;
   var mindArrivals=new Map(),sanaeArrivalUntil=new Map(),mokouArrivalUntil=new Map(),yukariArrivalUntil=new Map();
-  this.api={Game,CARD,cardBoardHtml,renderHand,openCardDetails,closeCardDetails,backCardDetails,dynamicCardDescription,cardHasOverwrite,cardBgClass,serializablePickArgs,validOnlineChoice,translateGameText,
+  this.api={Game,CARD,cardBoardHtml,renderHand,openCardDetails,closeCardDetails,backCardDetails,dynamicCardDescription,cardHasOverwrite,cardBgClass,serializablePickArgs,validOnlineChoice,translateGameText,canonicalCardName,
     setGame:g=>game=g,setLanguage:l=>gameLanguage=l};`,ctx);
 vm.runInContext(slice('/* Printed creation choices:','/* generic UI choosers')+
   slice('function layoutFlightMargin(node)',"document.addEventListener('keydown',event=>{")+
   'this.api.openCreationChoice=openCreationChoice;this.api.closeCreationChoice=closeCreationChoice;this.api.creationSession=()=>creationChoiceSession;',ctx);
+vm.runInContext('var sfxEnabled=true;'+slice('const CREATION_PRINT_SOUND=','const DRAW_SOUND_INTERVAL_MS'),ctx);
 ctx.handOrSeatRect=()=>({left:40,top:610,width:300,height:100,right:340,bottom:710});
 vm.runInContext('this.materialChoice={'+slice('  pickAbilityCards(title,ids','  pickFromList(title, options')+'};',ctx);
 ctx.api.pickAbilityCards=ctx.materialChoice.pickAbilityCards;
@@ -66,6 +68,7 @@ test('Copying an overwritten card retains its worn appearance, draw effect and s
   const markup=A.cardBoardHtml(wornCopy);assert.match(markup,/card-copy-low-ink card-rin-worn/);assert.match(markup,/card-wear-overlay/);
   assert(!markup.includes('instance-badge'));assert(!markup.includes('Cost +'));assert(A.dynamicCardDescription(wornCopy).startsWith('Placed: Draw a card.'));
   assert.equal(A.CARD[wornCopy].faction,'hakugyokurou');assert.equal(A.CARD.haku_yuyuko.faction,'hakugyokurou');
+  assert.match(markup,/Yuyuko Saigyouji\?/);assert(!markup.includes('Saigyouji??'));
 });
 test('The real hand renderer applies the same print and wear layers without copy labels',()=>{
   A.setLanguage('zh-CN');A.renderHand();const cards=el('hand').children;
@@ -121,12 +124,25 @@ test('Copy inspection preserves the portrait crop and returns to an unfiltered o
 test('Creation preview inspection retains printing through reference navigation and clears it afterward',()=>{
   const before=JSON.stringify(A.CARD.hourai_mokou);
   A.closeCardDetails();A.openCardDetails('hourai_mokou',{createdPreview:true});
+  assert.match(el('card-detail-name').textContent,/\?$/);
   assert(el('card-detail').classList.contains('card-copy-low-ink'));
   assert(el('card-detail-portrait').children.some(node=>node.className==='detail-art-hourai_mokou'));
   A.openCardDetails('mtn_sanae',{followReference:true});assert(!el('card-detail').classList.contains('card-copy-low-ink'));
   A.backCardDetails();assert(el('card-detail').classList.contains('card-copy-low-ink'));
   A.closeCardDetails();A.openCardDetails('hourai_mokou');assert(!el('card-detail').classList.contains('card-copy-low-ink'));
   assert.equal(JSON.stringify(A.CARD.hourai_mokou),before);
+});
+test('Copied names translate and copied-card guesses accept Chinese question-mark names',()=>{
+  A.setLanguage('zh-CN');assert.equal(A.translateGameText(A.CARD.mtn_sanae.name+'?'),'东风谷早苗?');
+  assert.equal(A.canonicalCardName('东风谷早苗？'),A.CARD.mtn_sanae.name+'?');assert.equal(A.canonicalCardName(A.CARD.mtn_sanae.name+'?'),A.CARD.mtn_sanae.name+'?');
+  A.setLanguage('en');assert.equal(A.translateGameText(A.CARD.mtn_sanae.name+'?'),A.CARD.mtn_sanae.name+'?');
+});
+test('Nue borrowed-ability details translate in Chinese and preserve the English source when switching back',()=>{
+  match.borrowedAbilities={temple_nue:'sdm_sakuya'};match.isOnBoard=id=>id==='temple_nue';
+  A.setLanguage('zh-CN');A.openCardDetails('temple_nue');
+  assert.match(el('card-detail-description').innerHTML,/正在使用/);assert.match(el('card-detail-description').innerHTML,/十六夜咲夜/);assert(!el('card-detail-description').innerHTML.includes('Using'));
+  A.setLanguage('en');A.openCardDetails('temple_nue');assert.match(el('card-detail-description').innerHTML.replace(/<[^>]*>/g,''),/Using Izayoi Sakuya’s ability\./);
+  A.closeCardDetails();match.borrowedAbilities={};match.isOnBoard=()=>false;
 });
 async function choiceTest(name,fn){await fn();tests.push(name);console.log('PASS '+name);}
 (async()=>{
@@ -171,11 +187,20 @@ async function choiceTest(name,fn){await fn();tests.push(name);console.log('PASS
     assert.equal(Object.keys(A.CARD).length,before);assert.deepEqual(g.players[0].hand,['hourai_mokou']);
     advance(1140);const face=A.creationSession().cards.find(card=>card.id==='mtn_sanae').face;
     face.events.click[0]();assert.equal(face.style.left,'132px');assert.equal(face.style.top,'673px');
+    assert(face.classList.contains('creation-chosen-flight'));assert.equal(face.style.width,'104px');assert.equal(face.style.height,'126px');
+    const placeholder=A.creationSession().placeholder;
+    assert.match(placeholder.innerHTML,/Sanae Kochiya\?/);assert.match(placeholder.innerHTML,/icon-row/);assert(placeholder.classList.contains('card-copy-low-ink'));
+    A.renderHand();assert.equal(el('hand').children.at(-1),placeholder);
+    const incoming=html.slice(html.indexOf('.creation-face.creation-flying.creation-chosen-flight{')).split('}')[0];
+    assert.match(incoming,/left \.65s linear,top \.65s linear/);assert.match(incoming,/width \.65s linear,height \.65s linear/);
+    assert(!incoming.includes('ease-in'));assert(!incoming.includes('cubic-bezier'));
+
     assert.equal(Object.keys(A.CARD).length,before);assert.equal(g.players[0].hand.length,1);
     const chosen=A.creationSession().chosen;A.creationSession().cards.find(card=>card.id!==chosen).face.events.click[0]();assert.equal(A.creationSession().chosen,chosen);
     advance(700);const id=await creation;
     assert.equal(Object.keys(A.CARD).length,before+1);assert.deepEqual(g.players[0].hand,['hourai_mokou',id]);
     assert.equal(A.CARD[id].baseId,'mtn_sanae');assert.equal(A.CARD[id].costBonus,1);assert.equal(A.CARD[id].abilityMultiplier,2);
+    assert.equal(A.CARD[id].name,A.CARD.mtn_sanae.name+'?');assert.match(el('hand').children.at(-1).innerHTML,/Sanae Kochiya\?/);
     assert.equal(el('hand').children.at(-1).dataset.cardId,id);assert(el('hand').children.at(-1).classList.contains('card-copy-low-ink'));
     assert(!el('hand').children.some(node=>node.classList.contains('creation-hand-placeholder')));
     A.setGame(match);A.renderHand();
