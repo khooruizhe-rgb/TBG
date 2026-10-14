@@ -4410,6 +4410,7 @@ class Game {
     opts = opts || {};
     let candidates = this.players.map(p=>p.idx);
     if(opts.excludeSelf) candidates = candidates.filter(i=>i!==playerIdx);
+    if(this.players[playerIdx].isAI && Array.isArray(opts.aiCandidates))candidates=candidates.filter(i=>opts.aiCandidates.includes(i));
     if(opts.hasPayableCard) candidates=candidates.filter(i=>this.payableCards(i).some(id=>!opts.forDiscard || this.canEnterDiscard(i,id)));
     const player = this.players[playerIdx];
     if(player.isAI){
@@ -5106,7 +5107,9 @@ class Game {
         break;
       }
       case 'hourai_reisen': {
-        const targetIdx = await self.choosePlayer(playerIdx, 'Reisen: choose a player to look at', {excludeSelf:true, preferOpponent:true});
+        const aiCandidates=self.players[playerIdx].isAI && aiUsesBoardCorrections(self,playerIdx)
+          ? aiReisenPlayerCandidates(self,playerIdx) : null;
+        const targetIdx = await self.choosePlayer(playerIdx, 'Reisen: choose a player to look at', {excludeSelf:true, preferOpponent:true,aiCandidates});
         if(targetIdx!=null && self.players[targetIdx].hand.length){
           self.presentAbility('reisen',{stage:'focus',r,c,playerIdx,targetIdx});
           const cid = await self.chooseHandCard(playerIdx, targetIdx, 'Force this card to be played next turn',{presentation:'reisen'});
@@ -5505,7 +5508,7 @@ class Game {
 }
 
 /* 2026-10-12: creation, private newspapers and instance ability changes. */
-const REWORK_RULES_VERSION='2026-10-14-komachi-opening-observer-v9';
+const REWORK_RULES_VERSION='2026-10-14-repeat-control-targets-v10';
 Game.prototype.canCreateWithMatara=function(){return this.mainBoardCells().length>=4;};
 let nextCreatedCard=0,nextHiddenChoice=0;
 const COPY_PASSIVES=new Set(['sage_yukari','sage_kasen','mtn_nitori','hell_hecatia','palace_koishi']);
@@ -12664,8 +12667,17 @@ function aiMataraCreationPlan(p,actor,at){
     return plans[Math.min(2,plans.length-1)]||null;
   }finally{player.hand=hand;}
 }
+function aiReisenPlayerCandidates(match,p){
+  const opponents=match.players.filter(other=>other.idx!==p && other.hand.length);
+  const fresh=opponents.filter(other=>!match.forcedPlay[other.idx] || !other.hand.includes(match.forcedPlay[other.idx]));
+  // A second command replaces the first; spread repeated effects before retargeting.
+  return (fresh.length?fresh:opponents).map(other=>other.idx);
+}
 function aiMurasaTarget(match,p){
-  return match.players.filter(other=>other.idx!==p).slice().sort((a,b)=>match.winCount(b)-match.winCount(a)
+  const opponents=match.players.filter(other=>other.idx!==p);
+  const fresh=opponents.filter(other=>(match.placementBlockTurns[other.idx]||0)<2);
+  // Seals take the maximum duration, so two turns already pending add no value.
+  return (fresh.length?fresh:opponents).slice().sort((a,b)=>match.winCount(b)-match.winCount(a)
     ||b.hand.length-a.hand.length||a.idx-b.idx)[0]?.idx??null;
 }
 function aiMurasaUtility(match,p){
@@ -14342,7 +14354,7 @@ function evalForkSummary(report){
   return {groups,invalidPairs,conclusion,completedPairs:report.pairs.length};
 }
 function evalValidateSnapshot(snapshot){
-  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
+  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
   const state=snapshot.state,n=state?.players?.length,size=snapshot.size;
   if(![4,5].includes(size) || ![2,3,4].includes(n) || !Number.isInteger(state.currentPlayerIdx) || state.currentPlayerIdx<0 || state.currentPlayerIdx>=n)throw new Error('Invalid position dimensions.');
   if(state.numPlayers!==n || state.players.some((p,i)=>p.idx!==i || !Array.isArray(p.hand) || !Array.isArray(p.discard)))throw new Error('Invalid position dimensions.');
@@ -14477,7 +14489,7 @@ function evalNewOpening(seed,n,size,difficulty){
 async function evalCompare(config,send){
   evalValidateConfig(config);
   const report={format:'tbg-ai-evaluation',version:1,type:'comparison',baselineCommit:'2b07010618c21eee6dfc6ffd4092c8b4bbb42e9b',baselineDigest:AI_BASELINE_DIGEST,previousCommit:'955c63140738e5cc9deae85802cec12f10c5d61a',previousDigest:AI_PREVIOUS_DIGEST,diagnosticsVersion:4,rulesVersion:REWORK_RULES_VERSION,
-    currentPolicy:'restored-2026-10-11+yukari-reisen+secure-claims+meiling-creators-v3+komachi-v4',rules:'Shared current Game engine',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,startedAt:new Date().toISOString(),finished:false,blocks:[]};
+    currentPolicy:'restored-2026-10-11+yukari-reisen+secure-claims+meiling-creators-v3+komachi-v4+repeat-targets-v1',rules:'Shared current Game engine',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,startedAt:new Date().toISOString(),finished:false,blocks:[]};
   const lineups=evalMixedLineups(config.players,config.opponent);
   for(let i=0;i<config.blocks;i++){
     await evalYield();const seed=evalHashSeed(config.seed,config.phase||'development',i),size=config.size==='both'?(i%2?5:4):Number(config.size);
@@ -14492,7 +14504,7 @@ async function evalCompare(config,send){
 async function evalFork(snapshot,config,send){
   evalValidateSnapshot(snapshot);evalValidateConfig(config,'fork');const actor=snapshot.state.currentPlayerIdx;config={...config,actor};
   const continuations=config.continuations||['current','previous'];
-  const report={format:'tbg-ai-evaluation',version:1,diagnosticsVersion:4,rulesVersion:REWORK_RULES_VERSION,currentPolicy:'restored-2026-10-11+yukari-reisen+secure-claims+meiling-creators-v3+komachi-v4',previousDigest:AI_PREVIOUS_DIGEST,type:'fork',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,snapshot,startedAt:new Date().toISOString(),finished:false,pairs:[],
+  const report={format:'tbg-ai-evaluation',version:1,diagnosticsVersion:4,rulesVersion:REWORK_RULES_VERSION,currentPolicy:'restored-2026-10-11+yukari-reisen+secure-claims+meiling-creators-v3+komachi-v4+repeat-targets-v1',previousDigest:AI_PREVIOUS_DIGEST,type:'fork',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,snapshot,startedAt:new Date().toISOString(),finished:false,pairs:[],
     assumptions:'Unknown rival cards and deck order are re-sampled from the acting player information. Rival private clue memories are omitted. Continuations are finite AI policies, not optimal play.'};
   for(let i=0;i<config.trials;i++){
     const seed=evalHashSeed(config.seed,'fork',i),sample=evalSampleHidden(snapshot,actor,evalPRNG(seed));
