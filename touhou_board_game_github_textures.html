@@ -1989,6 +1989,8 @@
   #tutorial-title{margin:7px 0;font-size:1.05rem;}
   #tutorial-copy{margin:0;font-size:.82rem;line-height:1.45;color:#e0d8e9;}
   #tutorial-feedback{margin:8px 0;color:#ead7b1;font-size:.76rem;line-height:1.35;}
+  .tutorial-checklist{display:flex;flex-wrap:wrap;gap:4px 12px;margin-bottom:5px;}
+  .tutorial-goal.done{color:#477647;font-weight:600;}
   .tutorial-navigation{display:flex;gap:7px;justify-content:flex-end;}
   #tutorial-coach .tutorial-navigation button{cursor:pointer;border:1px solid #9c83b2;border-radius:6px;background:#342742;color:#fff;padding:6px 9px;font:inherit;font-size:.76rem;}
   #tutorial-coach button:disabled{opacity:.45;cursor:default;}
@@ -2733,8 +2735,9 @@ body:not(:has(#game.active)):not(.title-memory-active) #app{position:relative;z-
 .creation-inspect{padding:6px 14px;border:1px solid #ae8d64;border-radius:5px;background:#f8ecd2;color:#65472e;font:inherit;font-size:12px;cursor:pointer}
 .creation-inspect:disabled{opacity:.45;cursor:wait}
 #creation-overlay[data-phase="ready"] .creation-face:hover{box-shadow:0 0 0 2px #d2a85a,4px 9px 14px #271d135c}
-.creation-face.creation-flying{position:fixed;margin:0;z-index:3;aspect-ratio:auto;pointer-events:none;transition:left .22s cubic-bezier(.5,0,.8,.25),top .22s cubic-bezier(.5,0,.8,.25),transform .22s ease-in;transform:translate(-50%,-50%) rotate(var(--creation-flight-angle,0deg)) scale(var(--creation-flight-scale,1))}
+.creation-face.creation-flying{position:fixed;margin:0;z-index:3;aspect-ratio:auto;pointer-events:none;transition:left .46s cubic-bezier(.5,0,.8,.25),top .46s cubic-bezier(.5,0,.8,.25),transform .46s ease-in;transform:translate(-50%,-50%) rotate(var(--creation-flight-angle,0deg)) scale(var(--creation-flight-scale,1))}
 .creation-face.creation-flying.creation-chosen-flight{transition:left .22s linear,top .22s linear,width .22s linear,height .22s linear,transform .22s linear}
+.creation-face.creation-departure-flight{z-index:411}
 #creation-overlay[data-phase="departing"]{background:transparent;pointer-events:none}
 #creation-overlay[data-phase="departing"] #creation-panel{background:transparent;border-color:transparent;box-shadow:none}
 #creation-overlay[data-phase="departing"] :is(#creation-title,#creation-status,.creation-printer,.creation-inspect){visibility:hidden}
@@ -4234,6 +4237,8 @@ class Game {
       catch(_error){ /* A cosmetic effect must never stop the game or its win check. */ }
     }
     this.players[p].discard.push(cardId);
+    if(this.tutorialLesson?.humanSeat===p && this.ruleContext?.playerIdx===p && source?.effect && !source.claimFaction && this.pointValue(cardId)>0)
+      this.tutorialLesson.progress.ability=true;
     if(source?.handOwner!=null)this.recordTestTradeExit(cardId,'discardedFromHand',source.handOwner);
     else this.recordTestTradeBoardExit(cardId,p,source?.claimFaction);
     this.recordTestScore(p,cardId,source);
@@ -4379,6 +4384,8 @@ class Game {
     const player = this.players[playerIdx];
     if(player.isAI){
       await sleep(600);
+      if(this.tutorialLesson?.aiSeat===playerIdx && this.ruleContext?.ability==='mtn_suwako')
+        return aiTutorialWastelandCell(this,cells.filter(cell=>!isValid || isValid(cell)));
       return cells[Math.floor(Math.random()*cells.length)];
     }
     while(!this.cancelled){
@@ -4501,6 +4508,7 @@ class Game {
   }
   async selectCostCards(playerIdx, minCount, maxCount, title){
     const player = this.players[playerIdx];
+    if(this.tutorialLesson?.aiSeat===playerIdx && player.isAI)return null;
     const eligible=this.payableCards(playerIdx);
     if(eligible.length<minCount) return null;
     maxCount=Math.min(maxCount,eligible.length);
@@ -4604,6 +4612,8 @@ class Game {
           if(this.testMetrics)this.testCardActions(id).claimMembers++;
         }
         this.log(`${this.players[placerIdx].name} claims the ${fac.name} faction! (${collected} cards)`);
+        if(this.tutorialLesson?.humanSeat===placerIdx && collected===fac.size && [2,4].includes(fac.size))
+          this.tutorialLesson.progress[fac.size===4?'four':'two']=true;
         if(this.ui?.onFactionClaim){try{this.ui.onFactionClaim({faction:fk,count:collected,playerIdx:placerIdx});}catch(_error){}}
         this.checkWin();
       }
@@ -5508,7 +5518,7 @@ class Game {
 }
 
 /* 2026-10-12: creation, private newspapers and instance ability changes. */
-const REWORK_RULES_VERSION='2026-10-14-repeat-control-targets-v10';
+const REWORK_RULES_VERSION='2026-10-14-guided-final-match-v11';
 Game.prototype.canCreateWithMatara=function(){return this.mainBoardCells().length>=4;};
 let nextCreatedCard=0,nextHiddenChoice=0;
 const COPY_PASSIVES=new Set(['sage_yukari','sage_kasen','mtn_nitori','hell_hecatia','palace_koishi']);
@@ -5686,7 +5696,7 @@ Game.prototype.resolveAbilityRules=async function(id,r,c,p,depth=0){
   let flags={};
   for(let repeat=0;repeat<repeats;repeat++){
     if(this.cancelled || this.winner || !this.isOnBoard(actor))break;
-    const ctx={actor,ability,extra,activation,replay:same?parent.replay:repeat>0,credit:same?parent.credit:{remaining:activation.surchargePaid?extra:0}},prior=this.activeRuleAbility;
+    const ctx={actor,ability,playerIdx:p,extra,activation,replay:same?parent.replay:repeat>0,credit:same?parent.credit:{remaining:activation.surchargePaid?extra:0}},prior=this.activeRuleAbility;
     this.ruleContext=ctx;this.activeRuleAbility=ability;
     try{
       const paidPassive=COPY_PASSIVES.has(ability) && this.createdActivations[actor]===true;
@@ -7826,6 +7836,19 @@ const ZH_TEXT={
   "Use the highlighted hand card for this step.": "这一步请使用高亮的手牌。",
   "Try again to complete this step. Retry restores the practice cards.": "请再试一次来完成这一步。点击重试会还原练习卡牌。",
   "Guided practice — the other players wait while you try this step.": "引导练习 — 其他玩家会等待你完成这一步。",
+  "Win your first match": "赢下你的第一局",
+  "Beat one AI in a full match. Claim a four-card faction, claim a two-card faction, and gain a point with an ability in the same match. Try the four-card faction first, then the pair, and finish with a scoring ability.": "与一名电脑完成对局。在同一局中收取一个四卡阵营、一个二卡阵营，并用技能获得分数。可以先收取四卡阵营，再收取二卡阵营，最后用技能得分。",
+  "You completed all three goals and won the match. Learn to Play is complete.": "你已完成三个目标并赢下对局，玩法学习完成。",
+  "Four-card faction": "四卡阵营",
+  "Two-card faction": "二卡阵营",
+  "Ability point": "技能得分",
+  "Victory": "获胜",
+  "The match begins. Reach 7 discard points to win.": "对局开始。获得 7 点弃牌分数即可获胜。",
+  "Complete all three goals and win in the same match. Retry to try again.": "需要在同一局中完成三个目标并获胜。点击重试，再试一次。",
+  "Connect a four-card faction. Watch for cards already on the table.": "连通一个四卡阵营，留意棋盘上已有的卡牌。",
+  "Connect both members of a two-card faction.": "连通一个二卡阵营的两张卡牌。",
+  "Use a scoring ability to send a card to your discard pile.": "使用能得分的技能，将卡牌送入你的弃牌堆。",
+  "Finish the match by reaching 7 discard points.": "继续行动，达到 7 点弃牌分数以赢下对局。",
   "You have no card to place or draw after trading, so your turn ends.": "交易后没有可放置或可抽取的卡牌，你的回合结束。",
   "Remilia Scarlet": "蕾米莉亚·斯卡蕾特",
   "Fate Manipulation": "命运操纵",
@@ -9538,7 +9561,13 @@ function renderAll(immediate=false){
 
 /* Printed creation choices: presentation owns previews, never card definitions. */
 let creationChoiceSession=null;
-function closeCreationChoice(){creationChoiceSession?.finish(null);}
+const creationDepartureFlights=new Set();
+function clearCreationDepartureFlights(owner=null){
+  for(const flight of [...creationDepartureFlights])if(!owner || flight.owner===owner){
+    clearTimeout(flight.timer);flight.node.remove();creationDepartureFlights.delete(flight);
+  }
+}
+function closeCreationChoice(){creationChoiceSession?.finish(null);clearCreationDepartureFlights();}
 function openCreationChoice(title,ids,{playerIdx=localSeat(),chosen=null}={}){
   closeCreationChoice();
   if(!game || game.cancelled || !ids.length)return Promise.resolve(null);
@@ -9552,6 +9581,7 @@ function openCreationChoice(title,ids,{playerIdx=localSeat(),chosen=null}={}){
       if(session.phase==='finished')return;
       session.phase='finished';for(const timer of session.timers)clearTimeout(timer);session.timers.clear();
       if(value==null || game!==owner || owner.cancelled)session.stopSound();
+      if(value==null || game!==owner || owner.cancelled)clearCreationDepartureFlights(owner);
       if(detailCreatedPreview || detailHistory.some(entry=>entry.createdPreview))closeCardDetails();
       session.placeholder?.remove();session.placeholder=null;
       queueMobileViewport();
@@ -9592,6 +9622,12 @@ function openCreationChoice(title,ids,{playerIdx=localSeat(),chosen=null}={}){
         Object.assign(face.style,{left:`${rect.left+rect.width/2}px`,top:`${rect.top+rect.height/2}px`,width:`${rect.width}px`,height:`${rect.height}px`});
         face.classList.add('creation-flying');face.getBoundingClientRect();
         if(entry===card)face.classList.add('creation-chosen-flight');
+        else if(!reduced){
+          // The handoff finishes first; outgoing sheets keep flying independently.
+          document.body.appendChild(face);face.classList.add('creation-departure-flight');face.setAttribute('aria-hidden','true');
+          const flight={owner,node:face,timer:null};creationDepartureFlights.add(flight);
+          flight.timer=setTimeout(()=>{face.remove();creationDepartureFlights.delete(flight);},480);
+        }
       });
       overlay.dataset.phase='departing';overlay.setAttribute('aria-busy','true');
       let unused=0;
@@ -9611,7 +9647,7 @@ function openCreationChoice(title,ids,{playerIdx=localSeat(),chosen=null}={}){
       });
       queue(()=>finish(card.id),reduced?0:240);
     };
-    const onResize=()=>{if(session.phase==='departing')finish(session.chosen);};
+    const onResize=()=>{if(session.phase==='departing'){clearCreationDepartureFlights(owner);finish(session.chosen);}};
     const onKey=event=>{
       if(el('card-detail-overlay').classList.contains('show') || event.key!=='Tab')return;
       const targets=session.phase==='ready' && !automatic?session.cards.flatMap(card=>[card.face,card.inspect]):[el('creation-title')];
@@ -10056,7 +10092,8 @@ function waitForVisualEffects(owner){
           return timing && Number.isFinite(timing.endTime) && timing.endTime>0;
         });
       }catch(_error){ /* Older browsers use the registered effect deadline. */ }
-      if((!running && Date.now()>=mindEffectsUntil) || Date.now()>=deadline){finish(true);return;}
+      const departing=typeof creationDepartureFlights!=='undefined' && creationDepartureFlights.size>0;
+      if((!running && !departing && Date.now()>=mindEffectsUntil) || Date.now()>=deadline){finish(true);return;}
       timer=setTimeout(check,40);
     };
     check();
@@ -12426,14 +12463,66 @@ async function aiDecideAction(playerIdx,allowTrade=true){
 
 return {aiEvaluateCard,aiChooseCostCards,aiFactionPlacement,aiKomachiTarget,aiDecideHardAction,aiDecideAction,aiBestTrade,aiTwoCardFactionTrade,aiKanakoTrade};
 })();
+/* The final lesson has its own opponent. Ordinary policies never read this state. */
+function aiTutorialKnownHand(match){
+  const lesson=match.tutorialLesson;
+  return lesson ? match.knownHandCards(lesson.aiSeat).filter(card=>card.playerIdx===lesson.humanSeat).map(card=>card.id) : [];
+}
+function aiTutorialWastelandCell(match,cells){
+  const members=match.factionCells('mountain');
+  const distance=cell=>members.length?Math.min(...members.map(member=>Math.abs(member.r-cell.r)+Math.abs(member.c-cell.c))):0;
+  return cells.filter(cell=>inBounds(cell.r,cell.c)).slice().sort((a,b)=>distance(b)-distance(a)||b.r-a.r||b.c-a.c)[0]||null;
+}
+function aiTutorialPlacement(p,id,cells){
+  const lesson=game.tutorialLesson;if(!lesson || p!==lesson.aiSeat)return null;
+  const known=aiTutorialKnownHand(game),faction=CARD[id]?.faction,ability=game.abilityId(id);
+  const protectedFactions=new Set([...known,...lesson.openingHand].map(card=>CARD[card]?.faction));
+  const mountainCount=game.factionCells('mountain').length;
+  if(!lesson.progress.four && faction==='mountain' && mountainCount>=3)return null;
+  if(ability==='mtn_kanako' && mountainCount>=2 && game.players[p].hand.some(card=>card!==id&&CARD[card]?.faction==='mountain'))return null;
+  let best=null;
+  for(const cell of cells.filter(at=>inBounds(at.r,at.c)&&!game.cardAt(at.r,at.c)&&!game.isProtected(at.r,at.c))){
+    const pick=aiWithPlacement(id,cell,()=>{
+      const claims=aiCurrentClaims(p),points=claims.reduce((n,claim)=>n+claim.points,0);
+      if(game.winCount(game.players[p])+points>3 || claims.some(claim=>protectedFactions.has(claim.faction)
+        || !lesson.progress.four&&claim.faction==='mountain'))return null;
+      const members=game.factionCells(faction),others=members.filter(at=>at.r!==cell.r || at.c!==cell.c);
+      const neighbors=DIRS4.filter(([dr,dc])=>game.boardMatchesFaction(cell.r+dr,cell.c+dc,faction)).length;
+      const distance=others.length?Math.min(...others.map(at=>Math.abs(at.r-cell.r)+Math.abs(at.c-cell.c))):0;
+      const liberties=DIRS4.filter(([dr,dc])=>inBounds(cell.r+dr,cell.c+dc)&&!game.cardAt(cell.r+dr,cell.c+dc)&&!game.wastelandAt(cell.r+dr,cell.c+dc)).length;
+      const supportsFour=!lesson.progress.four && faction==='mountain' && known.some(card=>CARD[card]?.faction==='mountain');
+      const safeSkillTarget=!lesson.progress.ability && !CARD[id]?.crown && faction!=='mountain';
+      const value=(supportsFour?1000+(ability==='mtn_kanako'?25:0):safeSkillTarget?180:10)
+        +(game.isConnected(members)?40:0)+neighbors*12-distance*5+liberties+points*8;
+      return {cell,value};
+    },p);
+    if(pick && (!best || pick.value>best.value))best=pick;
+  }
+  return best;
+}
+async function aiTutorialMentorAction(p){
+  if(game.isPlacementBlocked(p))return game.canDrawNormally(p)?{type:'draw'}:{type:'pass'};
+  const harmless=new Set(['mtn_suwako','mtn_kanako','mtn_sanae','mtn_aya','hourai_mokou','hell_clownpiece','hell_kutaka','temple_shou','heaven_tenshi','heaven_iku','haku_yuyuko']);
+  let best=null;
+  for(const id of game.players[p].hand){
+    if(!harmless.has(game.abilityId(id)) || CARD[id]?.createdCopy)continue;
+    const pick=aiTutorialPlacement(p,id,game.emptyOrWastelandForCard(CARD[id],p));
+    if(pick && (!best || pick.value>best.value))best={...pick,cardId:id};
+  }
+  return best?{type:'place',cardId:best.cardId,r:best.cell.r,c:best.cell.c}:game.canDrawNormally(p)?{type:'draw'}:{type:'pass'};
+}
 function aiAbilityPlan(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiAbilityPlan(playerIdx,...args):aiCurrentAbilityPlan(playerIdx,...args);}
 function aiBestChannel(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiBestChannel(playerIdx,...args):aiCurrentBestChannel(playerIdx,...args);}
 function aiEvaluateCard(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiEvaluateCard(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiEvaluateCard(playerIdx,...args) : aiCurrentEvaluateCard(playerIdx,...args);}
 function aiChooseCostCards(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiChooseCostCards(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiChooseCostCards(playerIdx,...args) : aiCurrentChooseCostCards(playerIdx,...args);}
-function aiFactionPlacement(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiFactionPlacement(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiFactionPlacement(playerIdx,...args) : aiCurrentFactionPlacement(playerIdx,...args);}
+function aiFactionPlacement(playerIdx,...args){
+  if(game.tutorialLesson?.aiSeat===playerIdx)return aiTutorialPlacement(playerIdx,args[0],args[1])?.cell||null;
+  return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiFactionPlacement(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiFactionPlacement(playerIdx,...args) : aiCurrentFactionPlacement(playerIdx,...args);
+}
 function aiKomachiTarget(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiKomachiTarget(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiKomachiTarget(playerIdx,...args) : aiCurrentKomachiTarget(playerIdx,...args);}
 function aiDecideHardAction(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiDecideHardAction(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiDecideHardAction(playerIdx,...args) : aiCurrentDecideHardAction(playerIdx,...args);}
 async function aiDecideAction(playerIdx,...args){
+  if(game.tutorialLesson?.aiSeat===playerIdx && game.players[playerIdx]?.isAI)return aiTutorialMentorAction(playerIdx);
   const action=await (game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiDecideAction(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline'?AI_FROZEN_POLICY.aiDecideAction(playerIdx,...args):aiCurrentDecideAction(playerIdx,...args));
   return action;
 }
@@ -14267,8 +14356,8 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='0e12755186b1fc6e9b139ec5cbadfb6b3f4576d8d3482c1ba949c95a562e495f';
-const AI_EVALUATION_POLICY_DIGEST='200db61ebb8cee56cbc8662d4c097277bde70f1bf19cc426105753409a6a3e4c';
+const AI_EVALUATION_RULES_DIGEST='c772671e58b6f5e756f3cb66f8ceaf66430eff3f9466e63e91faf7253d45b823';
+const AI_EVALUATION_POLICY_DIGEST='42c4ba1de705d08a4a6ebe4b6161b5a5e5c0710ed673ae18e6fce6c7c0f6e06d';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
   if(!source)throw new Error('Game source is unavailable.');
@@ -14354,7 +14443,7 @@ function evalForkSummary(report){
   return {groups,invalidPairs,conclusion,completedPairs:report.pairs.length};
 }
 function evalValidateSnapshot(snapshot){
-  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
+  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
   const state=snapshot.state,n=state?.players?.length,size=snapshot.size;
   if(![4,5].includes(size) || ![2,3,4].includes(n) || !Number.isInteger(state.currentPlayerIdx) || state.currentPlayerIdx<0 || state.currentPlayerIdx>=n)throw new Error('Invalid position dimensions.');
   if(state.numPlayers!==n || state.players.some((p,i)=>p.idx!==i || !Array.isArray(p.hand) || !Array.isArray(p.discard)))throw new Error('Invalid position dimensions.');
@@ -15024,12 +15113,13 @@ const TUTORIALS=[
   {title:'Draw for everyone',body:'Press Draw for Everyone instead of placing a card. Players with fewer than 7 cards draw one each. A full hand skips the draw; abilities can still give you more cards.',goal:'draw',success:'You and AI 2 drew a card. AI 1 already had 7 cards, so their hand stayed full.'},
   {title:'Pay a cost and choose an area',body:'Place Iku Nagae. Pay Cost III by selecting the three remaining hand cards together and confirming. Then choose a 2×2 area containing both board cards. Double-click any card to inspect it.',goal:'area',success:'Your three cost cards returned to the draw pile, and Iku sent both targets to your discard pile.'},
   {title:'Step inside',body:'Select a card in your hand, then click Morichika Rinnosuke at Kourindou, outside the main board.',goal:'offer'},
-  {title:'Try a trade',body:'Choose one of the three highlighted cards. You can trade once per turn without using your turn. The rest of Kourindou is yours to discover.',goal:'trade',success:'The merchandise is now in your hand. The trade used no turn.'}
+  {title:'Try a trade',body:'Choose one of the three highlighted cards. You can trade once per turn without using your turn. The rest of Kourindou is yours to discover.',goal:'trade',success:'The merchandise is now in your hand. The trade used no turn.'},
+  {title:'Win your first match',body:'Beat one AI in a full match. Claim a four-card faction, claim a two-card faction, and gain a point with an ability in the same match. Try the four-card faction first, then the pair, and finish with a scoring ability.',goal:'match',success:'You completed all three goals and won the match. Learn to Play is complete.'}
 ];
 let tutorialState=null,tutorialReturnFocus=null;
 function isTutorialPractice(){return !!tutorialState && tutorialState.practice===game;}
 function tutorialAllowsTrade(){
-  return !isTutorialPractice() || ['offer','trade'].includes(TUTORIALS[tutorialState.step].goal);
+  return !isTutorialPractice() || ['offer','trade','match'].includes(TUTORIALS[tutorialState.step].goal);
 }
 
 function clearTutorialPractice(){
@@ -15039,6 +15129,7 @@ function clearTutorialPractice(){
   el('tutorial-coach').hidden=true;
   document.body.classList.remove('tutorial-practice');
   document.querySelectorAll('.tutorial-focus').forEach(node=>node.classList.remove('tutorial-focus'));
+  setRuleText(el('restart-btn'),'Play Again');
 }
 function dockTutorialCoach(mobile){
   const coach=el('tutorial-coach');
@@ -15051,6 +15142,7 @@ function dockTutorialCoach(mobile){
 /* Fixtures use unique real cards; no mock cards, scores, or alternative ability rules. */
 function configureTutorialGame(practice,step){
   const goal=TUTORIALS[step].goal;
+  if(goal==='match'){configureTutorialMatch(practice);return;}
   let board=[],hand=['mtn_sanae'],opponents=[[],[]];
   if(goal==='claim') board=[[1,1,'mtn_kanako'],[1,2,'mtn_suwako'],[2,1,'mtn_aya']];
   if(goal==='draw'){
@@ -15075,8 +15167,26 @@ function configureTutorialGame(practice,step){
   practice.currentPlayerIdx=0;practice.winner=null;practice.logLines=[];
   practice.log('Guided practice — the other players wait while you try this step.');
 }
+function configureTutorialMatch(practice){
+  const hands=[['mtn_sanae','mtn_aya','haku_youmu','haku_yuyuko','marisa','hell_clownpiece'],
+    ['mtn_kanako','mtn_suwako','hourai_mokou','temple_shou','heaven_tenshi','heaven_iku']];
+  practice.board=Array.from({length:SIZE},()=>Array(SIZE).fill(null));
+  practice.wasteland=Array.from({length:SIZE},()=>Array(SIZE).fill(false));
+  practice.shopCards=['shop_rinnosuke','sdm_meiling','hourai_tewi','hell_kutaka'];
+  practice.players.forEach((p,i)=>{p.hand=hands[i].slice();p.discard=[];});
+  const used=new Set([...hands.flat(),...practice.shopCards]);
+  practice.drawPile=shuffle(CARDS.filter(card=>!card.token&&!card.shopkeeper&&!card.shopExpansion&&!used.has(card.id)).map(card=>card.id));
+  practice.startingCardIds=new Set([...used,...practice.drawPile]);
+  practice.handKnowledge=practice.players.map(()=>new Map());practice.reserveAges=practice.players.map(()=>({}));
+  practice.tutorialLesson={humanSeat:0,aiSeat:1,openingHand:hands[0].slice(),progress:{four:false,two:false,ability:false}};
+  practice.revealHand(0,hands[0],[1]);
+  practice.winner=null;practice.logLines=[];
+  practice.log('The match begins. Reach 7 discard points to win.');
+}
 function tutorialObjectiveMet(t){
   const g=t.practice,goal=TUTORIALS[t.step].goal;
+  if(goal==='match')return g.winner?.idx===g.tutorialLesson?.humanSeat
+    && Object.values(g.tutorialLesson.progress).every(Boolean);
   if(goal==='place') return g.isActiveOnBoard('mtn_sanae') && g.players[0].hand.length===1;
   if(goal==='claim') return ['mtn_kanako','mtn_suwako','mtn_aya','mtn_sanae'].every(id=>g.players[0].discard.includes(id));
   if(goal==='draw') return g.players.every((p,i)=>p.hand.length===[7,7,4][i]) && g.drawPile.length===t.initialPileSize-2;
@@ -15088,6 +15198,7 @@ function tutorialObjectiveMet(t){
 function tutorialAllowsAction(type,cardId){
   if(!isTutorialPractice()) return true;
   const t=tutorialState,goal=TUTORIALS[t.step].goal;
+  if(goal==='match')return !t.complete && !t.practice.winner && !t.practice.stalemateMessage && ['place','draw'].includes(type);
   if(t.complete || t.finishedAction) return false;
   const allowed=goal==='draw' ? type==='draw'
     : goal==='offer' ? type==='place'
@@ -15110,6 +15221,7 @@ async function finishTutorialAction(t){
   renderTutorial();
 }
 async function runTutorialTurn(t){
+  if(TUTORIALS[t.step].goal==='match'){runNextTurn();return;}
   await Promise.race([doPlayerAction(0),t.cancelled]);
   if(tutorialState===t && game===t.practice && !t.practice.cancelled) await finishTutorialAction(t);
 }
@@ -15130,7 +15242,7 @@ function openTutorial(step=0){
   for(const name of ['pickPlayer','pickFromList','pickOwnHandCard','pickOwnHandCards','pickHandCard','pickCardPool','arrangeDrawPileCards','pickRectByDrag','pickCell','promptText']){
     practiceUI[name]=(...args)=>Promise.race([ui[name](...args),cancelled.then(()=>name==='pickRectByDrag'?[]:null)]);
   }
-  game=t.practice=new Game(3,practiceUI,null,{aiDifficulty:'hard'});
+  game=t.practice=new Game(TUTORIALS[step].goal==='match'?2:3,practiceUI,null,{aiDifficulty:'hard'});
   configureTutorialGame(game,step);
   t.initialPileSize=game.drawPile.length;
   el('setup').style.display='none';el('game').classList.add('active');
@@ -15151,6 +15263,9 @@ function tutorialStep(delta){
 function updateTutorialProgress(){
   if(!isTutorialPractice()) return;
   const t=tutorialState;
+  if(TUTORIALS[t.step].goal==='match'){
+    t.complete=tutorialObjectiveMet(t);renderTutorial();return;
+  }
   // Opening the real merchandise selection moves straight to the second shop page.
   if(TUTORIALS[t.step].goal==='offer' && pendingCellChoice?.shopTrade){
     t.step++;t.feedback='';renderTutorial();
@@ -15165,6 +15280,7 @@ function highlightTutorialTargets(){
   document.querySelectorAll('.tutorial-focus').forEach(node=>node.classList.remove('tutorial-focus'));
   if(!isTutorialPractice() || tutorialState.complete || tutorialState.finishedAction) return;
   const t=tutorialState,goal=TUTORIALS[t.step].goal;
+  if(goal==='match')return;
   const mark=node=>node?.classList.add('tutorial-focus');
   if(goal==='draw'){mark(el('draw-btn'));return;}
   if(goal==='trade'){
@@ -15190,7 +15306,18 @@ function renderTutorial(){
   const steps=TUTORIALS,page=steps[t.step];
   el('tutorial-progress').textContent=`Learn to Play · ${t.step+1} / ${steps.length}`;
   el('tutorial-title').textContent=page.title;setRuleText(el('tutorial-copy'),page.body);
-  el('tutorial-feedback').textContent=t.feedback || 'Try it on the table. Your match settings stay unchanged.';
+  if(page.goal==='match'){
+    const progress=t.practice.tutorialLesson.progress,won=t.practice.winner?.idx===0;
+    const goals=[['Four-card faction',progress.four],['Two-card faction',progress.two],['Ability point',progress.ability],['Victory',won]];
+    const hint=t.complete?page.success:t.practice.winner||t.practice.stalemateMessage
+      ?'Complete all three goals and win in the same match. Retry to try again.'
+      :!progress.four?'Connect a four-card faction. Watch for cards already on the table.'
+      :!progress.two?'Connect both members of a two-card faction.'
+      :!progress.ability?'Use a scoring ability to send a card to your discard pile.'
+      :'Finish the match by reaching 7 discard points.';
+    el('tutorial-feedback').innerHTML=`<span class="tutorial-checklist">${goals.map(([label,done])=>`<span class="tutorial-goal${done?' done':''}">${done?'✓':'○'} ${ruleTextHtml(label)}</span>`).join('')}</span>${ruleTextHtml(hint)}`;
+    setRuleText(el('restart-btn'),t.complete?'Finish':'Retry');
+  }else el('tutorial-feedback').textContent=t.feedback || 'Try it on the table. Your match settings stay unchanged.';
   el('tutorial-back').disabled=t.step===0;
   el('tutorial-next').disabled=!t.complete;
   el('tutorial-next').textContent=t.step===steps.length-1?'Finish':'Next';
@@ -15360,7 +15487,11 @@ el('start-btn').addEventListener('click', () => {
   if(online)return;
   startNewGame();
 });
-el('restart-btn').addEventListener('click', startNewGame);
+el('restart-btn').addEventListener('click',()=>{
+  if(isTutorialPractice() && TUTORIALS[tutorialState.step].goal==='match'){
+    if(tutorialState.complete)tutorialStep(1);else openTutorial(tutorialState.step);
+  }else startNewGame();
+});
 el('main-menu-btn').addEventListener('click',returnToMainMenu);
 el('winner-menu-btn').addEventListener('click',returnToMainMenu);
 renderTitleTableCards();

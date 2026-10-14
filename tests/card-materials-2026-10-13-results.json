@@ -1,6 +1,6 @@
 {
   "status": "pass",
-  "count": 25,
+  "count": 27,
   "checks": [
     "AI test hand follows the acting seat and decree, remains inspectable and cannot be manually played",
     "Hand flight anchors track the visible AI while other players retain their seat anchors",
@@ -20,6 +20,8 @@
     "Nue ability choices keep original art, while existing copies retain their own material",
     "The actual creation engine waits for the flight and then puts exactly one independent copy into the hand",
     "Closing at printing, ready or flying resolves the choice and releases every timer, listener and hand placeholder",
+    "Outgoing sheets keep flying after the faster handoff and clean up independently",
+    "Closing the completed handoff also cancels any leftover departure sheets",
     "Keyboard focus stays inside the choice, inspection blocks accidental selection, and Enter selects only once",
     "Reduced motion and a one-card source complete safely without inventing extra choices",
     "Watched AI prints the same options, keeps its original choice and finishes without user input",

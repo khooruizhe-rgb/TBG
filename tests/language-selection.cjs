@@ -23,6 +23,14 @@ vm.runInContext(slice('const DIRS4','/* ===================== UI layer')+'\nlet 
 slice('/* Only trusted rule text becomes references','let detailReturnFocus')+slice('function escapeLogHtml(','function renderLog(')+
 'this.api={CARD,CARDS,FACTIONS,CARD_ABILITY_NAMES,ZH_CARDS,ZH_TEXT,canonicalCardName,translateGameText,setCardAbilityTitle,setGameLanguage,initializeGameLanguage,localizeTextNode,ruleTextHtml,setRuleText,openRuleTerm,closeRuleTerm,language:()=>gameLanguage,setGame:g=>game=g};',ctx);
 const A=ctx.api,tests=[],test=(name,fn)=>tests.push([name,fn]);
+vm.runInContext(js.slice(js.indexOf('const TUTORIALS='),js.indexOf('let tutorialState=',js.indexOf('const TUTORIALS=')))+'this.api.finalLesson=TUTORIALS[TUTORIALS.length-1];',ctx);
+test('The final match and its goal checklist are bilingual',()=>{
+ A.setGameLanguage('zh-CN');assert.equal(A.translateGameText(A.finalLesson.title),'赢下你的第一局');
+ const body=A.translateGameText(A.finalLesson.body);assert(body.includes('四卡阵营')&&body.includes('二卡阵营')&&body.includes('技能获得分数'));
+ for(const [en,zh]of [['Four-card faction','四卡阵营'],['Two-card faction','二卡阵营'],['Ability point','技能得分'],['Victory','获胜']])assert.equal(A.translateGameText(en),zh);
+ assert(A.translateGameText(A.finalLesson.success).includes('玩法学习完成'));
+ A.setGameLanguage('en');assert.equal(A.translateGameText(A.finalLesson.body),A.finalLesson.body);assert.equal(A.translateGameText(A.finalLesson.title),'Win your first match');
+});
 test('Partial-opening guidance and the active AI hand title are bilingual',()=>{
  const hint='Choose up to 6 cards for your opening hand. Empty slots are filled at random —';
  A.setGameLanguage('zh-CN');assert.equal(A.translateGameText(hint),'最多自选 6 张起始手牌，空位会随机补齐 —');

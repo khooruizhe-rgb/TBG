@@ -70,6 +70,6 @@
   "details": {
     "randomOfferFloor": 0
   },
-  "rulesVersion": "2026-10-14-repeat-control-targets-v10",
+  "rulesVersion": "2026-10-14-guided-final-match-v11",
   "scope": "Actual placements, costs, ownership, deterministic previews and three-card offer bounds"
 }

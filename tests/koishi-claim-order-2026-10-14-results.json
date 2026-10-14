@@ -117,6 +117,6 @@
       ]
     }
   },
-  "rulesVersion": "2026-10-14-repeat-control-targets-v10",
+  "rulesVersion": "2026-10-14-guided-final-match-v11",
   "scope": "Actual actor/entrant placement and claims, shared Kasen, costs, ordering, AI information boundary and v7 restore"
 }
