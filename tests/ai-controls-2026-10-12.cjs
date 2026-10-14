@@ -40,6 +40,7 @@ vm.runInContext(html.slice(html.indexOf('let announcedGameResult='),html.indexOf
 vm.runInContext(html.slice(html.indexOf('/* Completed-game statistics'),html.indexOf('/* AI evaluation engine start */')),context);
 vm.runInContext(html.slice(html.indexOf('function resetGameView()'),html.indexOf('\nfunction startNewGame')),context);
 vm.runInContext(html.slice(html.indexOf('function startNewGame('),html.indexOf('/* Rinnosuke speaks')),context);
+vm.runInContext(html.slice(html.indexOf('function updateStartButtonState('),html.indexOf("el('customize-toggle').addEventListener",html.indexOf('function updateStartButtonState('))),context);
 vm.runInContext(html.slice(html.indexOf("el('start-btn').addEventListener('click'"),html.indexOf('\nrenderTitleTableCards();',html.indexOf("el('start-btn').addEventListener('click'"))),context);
 function flushFrames(){const timer=vm.runInContext('fastAITestRenderTimer',context);if(timers.has(timer)){const job=timers.get(timer);timers.delete(timer);clock=job.due;job.fn();}const jobs=[...frames.values()];frames.clear();for(const fn of jobs)fn();}
 function press(key,options={}){const event={key,repeat:false,isComposing:false,target:{closest(){return options.input?{}:null;}},preventDefault(){this.prevented=true;},...options};for(const fn of documentListeners.get('keydown')||[])fn(event);return event;}
@@ -90,5 +91,10 @@ const check=(label,fn)=>{fn();result.checks.push(label);};
     for(const id of ['ai-lab-overlay','online-overlay','ai-test-overlay'])assert(!element(id).classList.contains('show'));
   }
   result.checks.push('Returning to the menu removes leftover overlays and the start button works across repeated games');
+  vm.runInContext("customizeOn=true;customSelected.clear();customSelected.add('hourai_eirin');customSelected.add('mtn_sanae');customSelected.add('palace_rin');updateStartButtonState();",context);
+  assert(!element('start-btn').disabled);const beforePartial=context.turnStarts;element('start-btn').emit('click',{});flushFrames();
+  assert.equal(context.turnStarts,beforePartial+1);assert(vm.runInContext("game.players.every(p=>p.hand.length===6)&&['hourai_eirin','mtn_sanae','palace_rin'].every(id=>game.players[0].hand.includes(id))",context));
+  result.checks.push('The real start button accepts three selected opening cards and randomly fills the remaining slots');
+  vm.runInContext('customizeOn=false;customSelected.clear();',context);
   fs.writeFileSync(root+'/tests/ai-controls-2026-10-12-results.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));
 })().catch(e=>{console.error(e.stack);process.exitCode=1});

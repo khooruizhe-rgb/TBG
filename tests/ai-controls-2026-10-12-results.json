@@ -14,7 +14,8 @@
     "Fifteen hundred restarts release copied cards and hidden-choice aliases",
     "Cumulative 1500-game totals remain available through JSON and CSV export",
     "Reset resolves a pending human action only after retiring its match",
-    "Returning to the menu removes leftover overlays and the start button works across repeated games"
+    "Returning to the menu removes leftover overlays and the start button works across repeated games",
+    "The real start button accepts three selected opening cards and randomly fills the remaining slots"
   ],
   "tokenDefinitions": 2,
   "snapshotTokens": 2

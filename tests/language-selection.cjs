@@ -23,6 +23,13 @@ vm.runInContext(slice('const DIRS4','/* ===================== UI layer')+'\nlet 
 slice('/* Only trusted rule text becomes references','let detailReturnFocus')+slice('function escapeLogHtml(','function renderLog(')+
 'this.api={CARD,CARDS,FACTIONS,CARD_ABILITY_NAMES,ZH_CARDS,ZH_TEXT,canonicalCardName,translateGameText,setCardAbilityTitle,setGameLanguage,initializeGameLanguage,localizeTextNode,ruleTextHtml,setRuleText,openRuleTerm,closeRuleTerm,language:()=>gameLanguage,setGame:g=>game=g};',ctx);
 const A=ctx.api,tests=[],test=(name,fn)=>tests.push([name,fn]);
+test('Partial-opening guidance and the active AI hand title are bilingual',()=>{
+ const hint='Choose up to 6 cards for your opening hand. Empty slots are filled at random —';
+ A.setGameLanguage('zh-CN');assert.equal(A.translateGameText(hint),'最多自选 6 张起始手牌，空位会随机补齐 —');
+ const title=A.translateGameText("AI 2's hand");assert(title.includes('2')&&title.includes('手牌')&&!title.includes(' hand'));
+ const log=A.translateGameText('AI 1 starts with a custom hand: Marisa Kirisame, Sanae Kochiya.');assert(log.includes('自定义起手牌')&&log.includes('雾雨魔理沙')&&log.includes('东风谷早苗'));
+ A.setGameLanguage('en');assert.equal(A.translateGameText(hint),hint);assert.equal(A.translateGameText("AI 2's hand"),"AI 2's hand");
+});
 test('Both selectors offer English and Chinese, and preference is saved without restarting',()=>{
  for(const id of ['menu-language','game-language'])assert(html.includes(`id="${id}"`));
  const card=text('Marisa Kirisame'),game={cancelled:false,abilityId:id=>id,players:[{hand:['marisa']}],currentPlayerIdx:0};A.setGame(game);A.initializeGameLanguage();A.setGameLanguage('zh-CN');assert.equal(A.language(),'zh-CN');assert.equal(root.lang,'zh-CN');assert.equal(storage.get('boundary-language'),'zh-CN');assert.equal(el('menu-language').value,'zh-CN');assert.equal(el('game-language').value,'zh-CN');assert.equal(card.nodeValue,'雾雨魔理沙');assert.deepEqual(game.players[0].hand,['marisa']);

@@ -1,7 +1,10 @@
 {
   "status": "pass",
-  "count": 21,
+  "count": 25,
   "checks": [
+    "AI test hand follows the acting seat and decree, remains inspectable and cannot be manually played",
+    "Hand flight anchors track the visible AI while other players retain their seat anchors",
+    "Mobile card sizing uses the acting AI hand count rather than the first seat count",
     "Board cards distinguish low-ink copies, worn retrieved cards and ordinary originals",
     "Copying an overwritten card retains its worn appearance, draw effect and surcharge",
     "The real hand renderer applies the same print and wear layers without copy labels",
@@ -21,6 +24,7 @@
     "Reduced motion and a one-card source complete safely without inventing extra choices",
     "Watched AI prints the same options, keeps its original choice and finishes without user input",
     "The AI creation engine awaits the watched animation and fast tests bypass it without changing the chosen card",
+    "A watched non-first AI creation lands in its visible hand slot and leaves the other AI hand intact",
     "Replacing the match during printing prevents a stale result, and resizing during flight finishes the selected choice",
     "Online choices preserve the actor and presentation flags while validating only the offered source IDs"
   ],

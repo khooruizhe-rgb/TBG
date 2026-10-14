@@ -2836,7 +2836,7 @@ body:not(:has(#game.active)):not(.title-memory-active) #app{position:relative;z-
     </details>
     <div id="custom-hand-picker" style="display:none; text-align:left; margin-top:14px;">
       <p style="color:var(--sakura); font-size:0.85rem; text-align:center;">
-        Pick exactly 6 cards for your opening hand — <span id="custom-hand-count">0</span>/6 selected
+        Choose up to 6 cards for your opening hand. Empty slots are filled at random — <span id="custom-hand-count">0</span>/6 selected
       </p>
       <div id="custom-hand-grid" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center; max-height:360px; overflow-y:auto; padding:6px;"></div>
     </div>
@@ -3449,24 +3449,19 @@ class Game {
     this.currentPlayerIdx = Math.floor(Math.random()*numPlayers);
     this.logLines = [];
 
-    if(customHandIds && customHandIds.length===6 && new Set(customHandIds).size===6 && customHandIds.every(id=>this.drawPile.includes(id))){
-      for(const id of customHandIds){
-        const idx = this.drawPile.indexOf(id);
-        if(idx>=0) this.drawPile.splice(idx,1);
-        this.players[0].hand.push(id);
-      }
-      for(let i=0;i<6;i++){
-        for(let p=1;p<this.players.length;p++){
-          if(this.drawPile.length) this.players[p].hand.push(this.drawPile.pop());
-        }
-      }
-      this.logLines.push(`You start with a custom hand: ${customHandIds.map(id=>CARD[id].name).join(', ')}.`);
-    } else {
-      for(let i=0;i<6;i++){
-        for(const p of this.players){
-          if(this.drawPile.length) p.hand.push(this.drawPile.pop());
-        }
-      }
+    const custom=Array.isArray(customHandIds) && customHandIds.length<=6
+      && new Set(customHandIds).size===customHandIds.length
+      && customHandIds.every(id=>this.drawPile.includes(id)) ? customHandIds : [];
+    for(const id of custom){
+      this.drawPile.splice(this.drawPile.indexOf(id),1);
+      this.players[0].hand.push(id);
+    }
+    for(let i=0;i<6;i++)for(const player of this.players){
+      if(player.hand.length<6 && this.drawPile.length)player.hand.push(this.drawPile.pop());
+    }
+    if(custom.length){
+      const owner=this.players[0].name==='You'?'You start':`${this.players[0].name} starts`;
+      this.logLines.push(`${owner} with a custom hand: ${this.players[0].hand.map(id=>CARD[id].name).join(', ')}.`);
     }
     for(const player of this.players)for(const id of player.hand)this.recordTestSeen(id,player.idx);
   }
@@ -5510,7 +5505,7 @@ class Game {
 }
 
 /* 2026-10-12: creation, private newspapers and instance ability changes. */
-const REWORK_RULES_VERSION='2026-10-14-koishi-staged-claims-v8';
+const REWORK_RULES_VERSION='2026-10-14-komachi-opening-observer-v9';
 Game.prototype.canCreateWithMatara=function(){return this.mainBoardCells().length>=4;};
 let nextCreatedCard=0,nextHiddenChoice=0;
 const COPY_PASSIVES=new Set(['sage_yukari','sage_kasen','mtn_nitori','hell_hecatia','palace_koishi']);
@@ -6350,14 +6345,14 @@ function showDrawFlight({playerIdx,effect}){
   updateDrawPileDisplay();
   if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const pile=el('draw-pile'), face=el('draw-pile-face');
-  const target=playerIdx===localSeat() ? el('hand-area') : el('seats').querySelector(`.seat-${playerIdx} .avatar`);
+  const target=playerIdx===displayedHandSeat() ? el('hand-area') : el('seats').querySelector(`.seat-${playerIdx} .avatar`);
   if(!target || !document.body) return;
   const start=face.getBoundingClientRect(), end=target.getBoundingClientRect();
   if(!start.width || !end.width) return;
   const spread=((drawFlightSerial++ % 3)-1)*9;
   const left=start.left+(start.width-52)/2, top=start.top+(start.height-68)/2;
-  const endX=playerIdx===localSeat() ? end.left+Math.min(end.width*.37,160)+spread : end.left+end.width/2+spread;
-  const endY=playerIdx===localSeat() ? end.top+Math.min(end.height*.7,90) : end.top+end.height/2;
+  const endX=playerIdx===displayedHandSeat() ? end.left+Math.min(end.width*.37,160)+spread : end.left+end.width/2+spread;
+  const endY=playerIdx===displayedHandSeat() ? end.top+Math.min(end.height*.7,90) : end.top+end.height/2;
   const dx=endX-left-26, dy=endY-top-34;
   const flight=document.createElement('div');
   flight.className='pile-card-face draw-flight-card'
@@ -6381,7 +6376,7 @@ function showDrawFlight({playerIdx,effect}){
   drawPileLiftTimer=setTimeout(()=>pile.classList.remove('pile-dealing'),380);
 }
 function handleCardDraw(details){
-  if((details.effect==='sanae' || details.effect==='mokou') && details.playerIdx===localSeat()){
+  if((details.effect==='sanae' || details.effect==='mokou') && details.playerIdx===displayedHandSeat()){
     const arrivals=details.effect==='mokou' ? mokouArrivalUntil : sanaeArrivalUntil;
     const glowClass=details.effect==='mokou' ? 'mokou-glow' : 'sanae-glow';
     const until=Date.now()+1500;
@@ -6691,7 +6686,7 @@ function showCardExit({cardId, playerIdx, source}, destination){
       anchor = cell.querySelector('.board-card') || cell;
     }
   }
-  if(!anchor && source && source.handOwner===localSeat()){
+  if(!anchor && source && source.handOwner===displayedHandSeat()){
     anchor = Array.from(el('hand').children).find(node=>node.dataset.cardId===cardId) || null;
   }
   if(!anchor){
@@ -6740,7 +6735,7 @@ function showCardExit({cardId, playerIdx, source}, destination){
     else if(effect==='yuyuko') applyCrownLight(ghost,{main:'#ffb3d4',rgb:'255,179,212'});
     else applyCrownLight(ghost, discardLightFor(cardId));
   }
-  ghost.innerHTML = destination==='draw' && source && source.handOwner!=null && source.handOwner!==localSeat()
+  ghost.innerHTML = destination==='draw' && source && source.handOwner!=null && source.handOwner!==displayedHandSeat()
     ? '<div class="board-card return-card-back" aria-hidden="true">✧</div>'
     : cardBoardHtml(cardId);
   if(effect==='flandre'){
@@ -6777,10 +6772,10 @@ function seatRect(playerIdx){
   return seat && seat.querySelector('.avatar')?.getBoundingClientRect();
 }
 function handOrSeatRect(playerIdx){
-  return playerIdx===localSeat() ? el('hand-area').getBoundingClientRect() : seatRect(playerIdx);
+  return playerIdx===displayedHandSeat() ? el('hand-area').getBoundingClientRect() : seatRect(playerIdx);
 }
 function tradeHandCardRect(playerIdx,cardId){
-  const actual=playerIdx===localSeat() ? Array.from(el('hand').children).find(n=>n.dataset.cardId===cardId) : null;
+  const actual=playerIdx===displayedHandSeat() ? Array.from(el('hand').children).find(n=>n.dataset.cardId===cardId) : null;
   if(actual) return actual.getBoundingClientRect();
   const anchor=handOrSeatRect(playerIdx);
   if(!anchor) return null;
@@ -7020,7 +7015,7 @@ function showYukariGap({cardId,playerIdx,source}){
   };
   const firstGap=makeGap(start);
   makeCard(start,'leaving',sourceWidth,sourceHeight);
-  if(playerIdx===localSeat()){
+  if(playerIdx===displayedHandSeat()){
     const until=Date.now()+640;
     yukariArrivalUntil.set(cardId,until);
     setTimeout(()=>{
@@ -7036,14 +7031,14 @@ function showYukariGap({cardId,playerIdx,source}){
   }
   requestAnimationFrame(()=>{
     if(!firstGap.isConnected) return;
-    const card=playerIdx===localSeat()
+    const card=playerIdx===displayedHandSeat()
       ? Array.from(el('hand').children).find(node=>node.dataset.cardId===cardId)
       : null;
     const end=card ? card.getBoundingClientRect() : handOrSeatRect(playerIdx);
     if(!end || !end.width) return;
     makeGap(end);
-    const width=card ? end.width : playerIdx===localSeat() ? Math.min(100,sourceWidth) : 66;
-    const height=card ? end.height : playerIdx===localSeat() ? Math.min(135,sourceHeight*1.35) : 88;
+    const width=card ? end.width : playerIdx===displayedHandSeat() ? Math.min(100,sourceWidth) : 66;
+    const height=card ? end.height : playerIdx===displayedHandSeat() ? Math.min(135,sourceHeight*1.35) : 88;
     makeCard(end,'arriving',width,height);
   });
 }
@@ -7063,13 +7058,13 @@ function showRemiliaGather({cards,playerIdx}){
   const now=Date.now(),timers=[],ghosts=[],pulses=[];
   // Snapshot the old hand before rendering the cards in their new owner's hand.
   const flights=cards.map(({cardId,fromPlayerIdx},i)=>{
-    const handCard=fromPlayerIdx===localSeat() ? Array.from(el('hand').children).find(node=>node.dataset.cardId===cardId) : null;
+    const handCard=fromPlayerIdx===displayedHandSeat() ? Array.from(el('hand').children).find(node=>node.dataset.cardId===cardId) : null;
     const rect=handCard ? handCard.getBoundingClientRect() : seatRect(fromPlayerIdx);
     const width=handCard && rect ? rect.width : 70,height=handCard && rect ? rect.height : 92;
     const start=rect ? {left:rect.left+(rect.width-width)/2,top:rect.top+(rect.height-height)/2,width,height} : null;
     const delay=i*HAND_EXIT_STAGGER_MS,arrivesAt=now+800+delay;
     const record={arrivesAt,until:arrivesAt+1200};
-    if(playerIdx===localSeat()) remiliaArrivals.set(cardId,record);
+    if(playerIdx===displayedHandSeat()) remiliaArrivals.set(cardId,record);
     return {cardId,start,delay,record};
   });
   renderAll();
@@ -7091,7 +7086,7 @@ function showRemiliaGather({cards,playerIdx}){
   const cancel=()=>cleanup(true);
   cancelRemiliaGather=cancel;
   for(const {cardId,start,delay} of flights){
-    const handCard=playerIdx===localSeat() ? Array.from(el('hand').children).find(node=>node.dataset.cardId===cardId) : null;
+    const handCard=playerIdx===displayedHandSeat() ? Array.from(el('hand').children).find(node=>node.dataset.cardId===cardId) : null;
     const end=handCard ? handCard.getBoundingClientRect() : handOrSeatRect(playerIdx);
     let ghost=null;
     if(start && end && start.width && end.width){
@@ -7112,7 +7107,7 @@ function showRemiliaGather({cards,playerIdx}){
     }
     timers.push(setTimeout(()=>{
       if(ghost) ghost.remove();
-      if(playerIdx===localSeat()){
+      if(playerIdx===displayedHandSeat()){
         const current=Array.from(el('hand').children).find(node=>node.dataset.cardId===cardId);
         if(current) syncRemiliaArrival(current,cardId);
       }else{
@@ -7426,7 +7421,7 @@ function showMindAbility(details){
   if(stage==='take' && cardId){
     const start=tradeHandCardRect(targetIdx,cardId),end=tradeHandCardRect(playerIdx,cardId);
     animateAbilityCard(cardId,start,end,effect);
-    if(playerIdx===localSeat() && start?.width && end?.width){
+    if(playerIdx===displayedHandSeat() && start?.width && end?.width){
       const until=Date.now()+1000;mindArrivals.set(cardId,until);
       finishMindEffect(()=>{
         if(mindArrivals.get(cardId)!==until)return;mindArrivals.delete(cardId);
@@ -8082,7 +8077,7 @@ const ZH_DYNAMIC=[
   [/^(.+)' hand$/,(_,p)=>`${p}的手牌`],
   [/^Pay (\d+) cards?$/,(_,n)=>`支付 ${n} 张牌`],
   [/^Select (\d+) more cards?…$/,(_,n)=>`再选 ${n} 张牌……`],
-  [/^Pick exactly 6 cards for your opening hand —$/,()=>`请选择 6 张起始手牌 —`],
+  [/^Choose up to 6 cards for your opening hand\. Empty slots are filled at random —$/,()=>`最多自选 6 张起始手牌，空位会随机补齐 —`],
   [/^\/6 selected$/,()=>`/6 已选`],
   [/^(\d+) revealed$/,(_,n)=>`展示 ${n} 张牌`],
   [/^Learn to Play · (\d+) \/ (\d+)$/,(_,n,total)=>`学习玩法 · ${n} / ${total}`],
@@ -9221,14 +9216,18 @@ function handCardFaceHtml(cardId,{createdPreview=false}={}){
   return `${cardMaterialLayersHtml(cardId,{createdPreview})}<div class="icon-row">${cardFactionBadgeHtml(c.faction)}${c.crown?'<span class="crown-mark">👑</span>':''}</div>
       <div class="cname">${createdPreview?copyCardName(cardId):c.name}</div>${instanceBadgeHtml(cardId)}`;
 }
+function displayedHandSeat(){
+  return game?.aiTestMode && game.players.every(player=>player.isAI) ? game.currentPlayerIdx : localSeat();
+}
 function renderHand(){
   if(!game || game.cancelled) return;
   const handEl = el('hand');
   handEl.innerHTML = '';
-  const me = game.players[localSeat()];
+  const handSeat=displayedHandSeat(),me=game.players[handSeat];
   el('hand-title').textContent=game.aiTestMode ? `${possessive(me.name)} hand` : 'Your Hand';
-  const isMyTurn = !me.isAI && game.currentPlayerIdx === localSeat() && !game.winner;
-  const forced = game.isPlacementBlocked(localSeat()) ? null : game.forcedPlay[localSeat()];
+  const isMyTurn = !me.isAI && handSeat===localSeat() && game.currentPlayerIdx===handSeat && !game.winner;
+  const observed=game.aiTestMode && me.isAI;
+  const forced = game.isPlacementBlocked(handSeat) ? null : game.forcedPlay[handSeat];
   me.hand.forEach(cardId => {
     const c = CARD[cardId];
     const div = document.createElement('div');
@@ -9249,7 +9248,7 @@ function renderHand(){
       + (sanaeArrivalUntil.get(cardId)>Date.now() ? ' sanae-glow' : '')
       + (mokouArrivalUntil.get(cardId)>Date.now() ? ' mokou-glow' : '')
       + (yukariArrivalUntil.get(cardId)>Date.now() ? ' yukari-arriving' : '')
-      + (handChoice ? (choiceEligible ? ' hand-choice-eligible' : ' hand-choice-ineligible') : ((!isMyTurn || isForcedRestricted) ? ' disabled':''));
+      + (handChoice ? (choiceEligible ? ' hand-choice-eligible' : ' hand-choice-ineligible') : ((!observed && (!isMyTurn || isForcedRestricted)) ? ' disabled':''));
     const drawGlowUntil=Math.max(sanaeArrivalUntil.get(cardId)||0,mokouArrivalUntil.get(cardId)||0);
     if(drawGlowUntil>Date.now()){
       // Hand cards can be rebuilt during other actions; continue the same glow frame.
@@ -9575,7 +9574,7 @@ function openCreationChoice(title,ids,{playerIdx=localSeat(),chosen=null}={}){
       session.phase='departing';session.chosen=card.id;playGameCue('select');
       const rects=session.cards.map(entry=>entry.face.getBoundingClientRect());
       let destination=handOrSeatRect(playerIdx);
-      if(playerIdx===localSeat()){
+      if(playerIdx===displayedHandSeat()){
         const placeholder=document.createElement('div');
         placeholder.className='hand-card creation-hand-placeholder '+cardBgClass(CARD[card.id],card.id,{createdPreview:true});
         placeholder.innerHTML=handCardFaceHtml(card.id,{createdPreview:true});
@@ -11229,23 +11228,16 @@ function aiCurrentFactionPlacement(playerIdx,cardId,cells,faction=CARD[cardId].f
 }
 
 function aiCurrentKomachiTarget(playerIdx,r,c,cells,allowMistake=true){
-  cells=cells.filter(cell=>inBounds(cell.r,cell.c));
-  if(!cells.length)return null;
-  if(!aiKnows(playerIdx,'value'))return cells[0];
+  const plans=aiKomachiSwapPlans(playerIdx,r,c,cells);
+  if(!plans.length)return null;
+  let pool=plans;
+  const wins=pool.filter(plan=>plan.winsNow);if(wins.length)pool=wins;
+  const safe=pool.filter(plan=>plan.safe);if(safe.length)pool=safe;
+  const points=Math.max(...pool.map(plan=>plan.points));pool=pool.filter(plan=>plan.points===points);
+  if(!aiKnows(playerIdx,'value'))return pool[0].cell;
   const mistake=allowMistake && game.aiMakesMistake('target'),poor=mistake && game.aiDifficulty==='easy';
-  if(mistake && !poor)return cells[Math.floor(Math.random()*cells.length)];
-  const caster=game.cardAt(r,c);let best=null,bestValue=poor ? Infinity : -Infinity;
-  for(const cell of cells){
-    const other=game.cardAt(cell.r,cell.c);let value;
-    try{
-      game.setCardAt(r,c,other);game.setCardAt(cell.r,cell.c,caster);
-      const claims=aiCurrentClaims(playerIdx);
-      value=claims.reduce((sum,claim)=>sum+claim.points*100+claim.size*10,0)
-        +(game.hasOtherHellCard(caster)?20:0);
-    }finally{game.setCardAt(r,c,caster);game.setCardAt(cell.r,cell.c,other);}
-    if(poor ? value<bestValue : value>bestValue){best=cell;bestValue=value;}
-  }
-  return best;
+  if(mistake && !poor)return pool[Math.floor(Math.random()*pool.length)].cell;
+  return pool.slice().sort((a,b)=>poor?a.value-b.value:b.value-a.value)[0].cell;
 }
 
 async function aiCurrentDecideHardAction(playerIdx,allowTrade=true){
@@ -12498,6 +12490,9 @@ function aiPlacementCells(match,id,spaces,playerIdx=match.currentPlayerIdx){
     if(ability==='sdm_meiling')
       spaces=spaces.filter(cell=>aiWithPlacement(id,cell,()=>!aiCostCanResolve(playerIdx,id,cell.r,cell.c)
         || aiMeilingEffectPlan(playerIdx,id,cell).safe,playerIdx));
+    if(ability==='hell_komachi')
+      spaces=spaces.filter(cell=>aiWithPlacement(id,cell,()=>!aiCostCanResolve(playerIdx,id,cell.r,cell.c)
+        || aiKomachiEffectPlan(playerIdx,id,cell).safe,playerIdx));
     if(ability==='mtn_nitori' || ability==='hell_hecatia')
       spaces=spaces.filter(cell=>aiGuardedSetup(playerIdx,id,cell));
     if(ability==='temple_murasa' && match.players[playerIdx].hand.filter(card=>card!==id && !CARD[card]?.token).length>2)
@@ -12549,18 +12544,58 @@ function aiMeilingEffectPlan(p,id,cell){
     return {safe,moves};
   }finally{for(const {move,moved,to}of restores.reverse()){game.setCardAt(move.r,move.c,moved);game.setCardAt(move.toR,move.toC,to);}}
 }
+// Keep a finishing claim and its connection route when choosing a mandatory swap.
+function aiKomachiSwapPlans(p,r,c,cells){
+  const actor=game.cardAt(r,c);if(!actor)return [];
+  cells=cells.filter(cell=>inBounds(cell.r,cell.c)&&!(cell.r===r&&cell.c===c)
+    &&game.cardAt(cell.r,cell.c)&&game.canSelectBoardCard(cell.r,cell.c)&&game.canMoveBoardCard(cell.r,cell.c));
+  const faction=CARD[actor].faction,size=FACTIONS[faction]?.size||0,before=aiCurrentClaims(p);
+  const required=before.filter(claim=>claim.members.some(member=>member.id===actor));
+  const missing=Math.max(0,size-game.factionCells(faction).length),possible=!!size&&aiCanConnectFaction(faction,missing);
+  return cells.map(cell=>{
+    const other=game.cardAt(cell.r,cell.c);game.setCardAt(r,c,other);game.setCardAt(cell.r,cell.c,actor);
+    try{
+      const claims=aiCurrentClaims(p),points=claims.reduce((n,claim)=>n+claim.points,0);
+      const preserves=required.every(old=>claims.some(claim=>claim.faction===old.faction&&claim.points>=old.points
+        &&claim.members.some(member=>member.id===actor)));
+      const safe=preserves&&(!possible||aiCanConnectFaction(faction,Math.max(0,size-game.factionCells(faction).length)));
+      return {cell,points,safe,preserves,winsNow:game.winCount(game.players[p])+points>=7,
+        value:claims.reduce((n,claim)=>n+claim.points*100+claim.size*10,0)+(game.hasOtherHellCard(actor)?20:0)
+          -(Math.abs(cell.r-r)+Math.abs(cell.c-c))*.01};
+    }finally{game.setCardAt(r,c,actor);game.setCardAt(cell.r,cell.c,other);}
+  });
+}
+function aiKomachiEffectPlan(p,id,cell){
+  const before=aiCurrentClaims(p).filter(claim=>claim.members.some(member=>member.id===id)),swaps=[];
+  try{
+    for(let i=0;i<(CARD[id]?.abilityMultiplier||1);i++){
+      const cells=game.selectableBoardCells(p,t=>!(t.r===cell.r&&t.c===cell.c));
+      const target=aiKomachiTarget(p,cell.r,cell.c,cells,false);if(!target)break;
+      const actor=game.cardAt(cell.r,cell.c),other=game.cardAt(target.r,target.c);
+      swaps.push({move:{r:cell.r,c:cell.c,toR:target.r,toC:target.c},moved:actor,to:other});
+      game.setCardAt(cell.r,cell.c,other);game.setCardAt(target.r,target.c,actor);
+    }
+    const claims=aiCurrentClaims(p),points=claims.reduce((n,claim)=>n+claim.points,0);
+    const safe=game.winCount(game.players[p])+points>=7 || before.every(old=>claims.some(claim=>claim.faction===old.faction
+      &&claim.points>=old.points&&claim.members.some(member=>member.id===id)));
+    return {safe,swaps};
+  }finally{for(const {move,moved,to}of swaps.slice().reverse()){game.setCardAt(move.r,move.c,moved);game.setCardAt(move.toR,move.toC,to);}}
+}
 function aiWithPlacementEffects(id,cell,callback,p=game.currentPlayerIdx){
   return aiWithPlacement(id,cell,()=>{
     const ability=game.abilityId(id),works=aiCostCanResolve(p,id,cell.r,cell.c);
-    if(!aiUsesBoardCorrections(game,p) || !works || !['sdm_meiling','hourai_eirin'].includes(ability))return callback({});
+    if(!aiUsesBoardCorrections(game,p) || !works || !['sdm_meiling','hell_komachi','hourai_eirin'].includes(ability))return callback({});
     const player=game.players[p],hand=player.hand,activation=game.createdActivations[id],restores=[];
     const payment=aiProposedPayment(p,game.abilityCost(id,cell));
-    if(ability==='sdm_meiling')player.hand=hand.filter(card=>!payment.includes(card));
+    if(ability!=='hourai_eirin')player.hand=hand.filter(card=>!payment.includes(card));
     if(CARD[id]?.createdCopy)game.createdActivations[id]=true;
     try{
       if(ability==='sdm_meiling')for(const move of aiMeilingEffectPlan(p,id,cell).moves){
         const moved=game.cardAt(move.r,move.c),to=game.cardAt(move.toR,move.toC);restores.push({move,moved,to});
         game.setCardAt(move.r,move.c,null);game.setCardAt(move.toR,move.toC,moved);
+      }
+      if(ability==='hell_komachi')for(const entry of aiKomachiEffectPlan(p,id,cell).swaps){
+        restores.push(entry);game.setCardAt(entry.move.r,entry.move.c,entry.to);game.setCardAt(entry.move.toR,entry.move.toC,entry.moved);
       }
       return callback({worked:true});
     }finally{
@@ -14220,8 +14255,8 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='6b35b1e3bc878563a247a8089713efbee0f5f6fa6a0a6998d36e54ab65321c40';
-const AI_EVALUATION_POLICY_DIGEST='c0b15868c8b88734908ffffe5929929ca28bf1799db8158c79b5b770a6d5edfb';
+const AI_EVALUATION_RULES_DIGEST='0e12755186b1fc6e9b139ec5cbadfb6b3f4576d8d3482c1ba949c95a562e495f';
+const AI_EVALUATION_POLICY_DIGEST='200db61ebb8cee56cbc8662d4c097277bde70f1bf19cc426105753409a6a3e4c';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
   if(!source)throw new Error('Game source is unavailable.');
@@ -14307,7 +14342,7 @@ function evalForkSummary(report){
   return {groups,invalidPairs,conclusion,completedPairs:report.pairs.length};
 }
 function evalValidateSnapshot(snapshot){
-  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
+  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
   const state=snapshot.state,n=state?.players?.length,size=snapshot.size;
   if(![4,5].includes(size) || ![2,3,4].includes(n) || !Number.isInteger(state.currentPlayerIdx) || state.currentPlayerIdx<0 || state.currentPlayerIdx>=n)throw new Error('Invalid position dimensions.');
   if(state.numPlayers!==n || state.players.some((p,i)=>p.idx!==i || !Array.isArray(p.hand) || !Array.isArray(p.discard)))throw new Error('Invalid position dimensions.');
@@ -14442,7 +14477,7 @@ function evalNewOpening(seed,n,size,difficulty){
 async function evalCompare(config,send){
   evalValidateConfig(config);
   const report={format:'tbg-ai-evaluation',version:1,type:'comparison',baselineCommit:'2b07010618c21eee6dfc6ffd4092c8b4bbb42e9b',baselineDigest:AI_BASELINE_DIGEST,previousCommit:'955c63140738e5cc9deae85802cec12f10c5d61a',previousDigest:AI_PREVIOUS_DIGEST,diagnosticsVersion:4,rulesVersion:REWORK_RULES_VERSION,
-    currentPolicy:'restored-2026-10-11+yukari-reisen+secure-claims+meiling-creators-v3',rules:'Shared current Game engine',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,startedAt:new Date().toISOString(),finished:false,blocks:[]};
+    currentPolicy:'restored-2026-10-11+yukari-reisen+secure-claims+meiling-creators-v3+komachi-v4',rules:'Shared current Game engine',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,startedAt:new Date().toISOString(),finished:false,blocks:[]};
   const lineups=evalMixedLineups(config.players,config.opponent);
   for(let i=0;i<config.blocks;i++){
     await evalYield();const seed=evalHashSeed(config.seed,config.phase||'development',i),size=config.size==='both'?(i%2?5:4):Number(config.size);
@@ -14457,7 +14492,7 @@ async function evalCompare(config,send){
 async function evalFork(snapshot,config,send){
   evalValidateSnapshot(snapshot);evalValidateConfig(config,'fork');const actor=snapshot.state.currentPlayerIdx;config={...config,actor};
   const continuations=config.continuations||['current','previous'];
-  const report={format:'tbg-ai-evaluation',version:1,diagnosticsVersion:4,rulesVersion:REWORK_RULES_VERSION,currentPolicy:'restored-2026-10-11+yukari-reisen+secure-claims+meiling-creators-v3',previousDigest:AI_PREVIOUS_DIGEST,type:'fork',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,snapshot,startedAt:new Date().toISOString(),finished:false,pairs:[],
+  const report={format:'tbg-ai-evaluation',version:1,diagnosticsVersion:4,rulesVersion:REWORK_RULES_VERSION,currentPolicy:'restored-2026-10-11+yukari-reisen+secure-claims+meiling-creators-v3+komachi-v4',previousDigest:AI_PREVIOUS_DIGEST,type:'fork',rulesDigest:AI_EVALUATION_RULES_DIGEST,policyDigest:AI_EVALUATION_POLICY_DIGEST,config,snapshot,startedAt:new Date().toISOString(),finished:false,pairs:[],
     assumptions:'Unknown rival cards and deck order are re-sampled from the acting player information. Rival private clue memories are omitted. Continuations are finite AI policies, not optimal play.'};
   for(let i=0;i<config.trials;i++){
     const seed=evalHashSeed(config.seed,'fork',i),sample=evalSampleHidden(snapshot,actor,evalPRNG(seed));
@@ -14715,13 +14750,8 @@ function renderCustomGrid(){
 
 function updateStartButtonState(){
   const startBtn = el('start-btn');
-  if(customizeOn && customSelected.size !== 6){
-    startBtn.disabled = true;
-    startBtn.textContent = `Select ${6 - customSelected.size} more card${6 - customSelected.size===1?'':'s'}…`;
-  } else {
-    startBtn.disabled = false;
-    startBtn.textContent = chosenAITestMode ? 'Start AI test' : 'Begin the Game';
-  }
+  startBtn.disabled = false;
+  startBtn.textContent = chosenAITestMode ? 'Start AI test' : 'Begin the Game';
 }
 
 el('customize-toggle').addEventListener('click', () => {
@@ -15193,7 +15223,7 @@ function syncMobileViewport(){
     document.body.style.setProperty('--mobile-board-width',`${boardWidth}px`);
     document.body.style.setProperty('--mobile-board-font',`${Math.max(6,Math.min(10,boardWidth/SIZE*.18))}px`);
     const pendingCard=creationChoiceSession?.owner===game && creationChoiceSession.placeholder?.isConnected ? 1 : 0;
-    const hand=el('hand').getBoundingClientRect(),metrics=mobileHandMetrics(hand.width,hand.height,(game?.players[localSeat()]?.hand.length||0)+pendingCard);
+    const hand=el('hand').getBoundingClientRect(),metrics=mobileHandMetrics(hand.width,hand.height,(game?.players[displayedHandSeat()]?.hand.length||0)+pendingCard);
     document.body.style.setProperty('--mobile-hand-columns',metrics.columns);
     document.body.style.setProperty('--mobile-card-height',`${metrics.cardHeight}px`);
     document.body.style.setProperty('--mobile-card-font',`${metrics.font}px`);
@@ -15316,7 +15346,6 @@ window.visualViewport?.addEventListener('resize',queueMobileViewport);
 
 el('start-btn').addEventListener('click', () => {
   if(online)return;
-  if(customizeOn && customSelected.size !== 6) return;
   startNewGame();
 });
 el('restart-btn').addEventListener('click', startNewGame);

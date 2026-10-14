@@ -49,6 +49,11 @@ ctx.handOrSeatRect=()=>({left:40,top:610,width:300,height:100,right:340,bottom:7
 vm.runInContext('this.materialChoice={'+slice('  pickAbilityCards(title,ids','  pickFromList(title, options')+'};',ctx);
 ctx.api.pickAbilityCards=ctx.materialChoice.pickAbilityCards;
 vm.runInContext('this.api.onCreationChoices=({'+slice('  async onCreationChoices(','  onDrawPileReturn:')+'}).onCreationChoices;',ctx);
+vm.runInContext(js.slice(js.indexOf('function mindEyeSvg('),js.indexOf('\n}',js.indexOf('function mindEyeSvg('))+2),ctx);
+vm.runInContext(slice('function handOrSeatRect(','function showKoishiSelfPlace(')+'this.api.actualHandOrSeatRect=handOrSeatRect;this.api.actualHandCardRect=tradeHandCardRect;',ctx);
+vm.runInContext('let mobileViewportFrame=0;'+slice('function mobileHandMetrics(','function queueMobileViewport(')+'this.api.mobileHandMetrics=mobileHandMetrics;this.api.actualSyncMobileViewport=syncMobileViewport;',ctx);
+ctx.syncMobileViewport=undefined;
+ctx.handOrSeatRect=()=>({left:40,top:610,width:300,height:100,right:340,bottom:710});
 const A=ctx.api,tests=[];
 function test(name,fn){fn();tests.push(name);console.log('PASS '+name);}
 function advance(ms){clock+=ms;for(const [id,timer]of [...timers])if(timer.due<=clock){timers.delete(id);timer.fn();}}
@@ -58,6 +63,44 @@ A.CARD[wornCopy]={...A.CARD.haku_yuyuko,id:wornCopy,baseId:'haku_yuyuko',created
 const match={players:[{idx:0,name:'You',isAI:false,hand:['haku_yuyuko',copy,wornCopy,'mtn_sanae']}],currentPlayerIdx:0,forcedPlay:{},permanentAbilities:{haku_yuyuko:'__draw_one'},
   isPlacementBlocked:()=>false,isCardAbilityDisabled:()=>false,isSageMuted:()=>false,isOnBoard:()=>false,abilityId(id){return this.permanentAbilities[id]||A.CARD[id].copiedAbility||id;}};
 A.setGame(match);
+test('AI test hand follows the acting seat and decree, remains inspectable and cannot be manually played',()=>{
+  const observed={...match,aiTestMode:true,currentPlayerIdx:1,permanentAbilities:{},forcedPlay:{1:'hourai_reisen'},players:[
+    {idx:0,name:'AI 1',isAI:true,hand:['sdm_remilia']},
+    {idx:1,name:'AI 2',isAI:true,hand:['hourai_reisen',copy]},
+    {idx:2,name:'AI 3',isAI:true,hand:['mtn_sanae','hell_komachi',wornCopy]}]};
+  A.setGame(observed);A.renderHand();
+  assert.deepEqual(el('hand').children.map(node=>node.dataset.cardId),['hourai_reisen',copy]);
+  assert.equal(el('hand-title').textContent,"AI 2's hand");assert(el('hand').children[0].classList.contains('reisen-bound'));
+  assert(el('hand').children[1].classList.contains('card-copy-low-ink'));
+  for(const node of el('hand').children){assert(!node.classList.contains('disabled'));assert(!node.classList.contains('touch-drag-ready'));assert(!node.events.click);}
+  el('hand').children[0].events.dblclick[0]({stopPropagation(){}});assert(el('card-detail-overlay').classList.contains('show'));A.closeCardDetails();
+  for(const idx of [2,0,1,1]){observed.currentPlayerIdx=idx;A.renderHand();assert.deepEqual(el('hand').children.map(node=>node.dataset.cardId),observed.players[idx].hand);}
+  observed.aiTestMode=false;observed.currentPlayerIdx=2;A.renderHand();assert.equal(el('hand').children[0].dataset.cardId,'sdm_remilia');
+  assert.equal(el('hand-title').textContent,'Your Hand');
+  observed.aiTestMode=true;observed.players[0].isAI=false;A.renderHand();assert.equal(el('hand').children[0].dataset.cardId,'sdm_remilia');
+  A.setGame(match);A.renderHand();
+});
+test('Hand flight anchors track the visible AI while other players retain their seat anchors',()=>{
+  const observed={...match,aiTestMode:true,currentPlayerIdx:1,players:[{idx:0,name:'AI 1',isAI:true,hand:['sdm_remilia']},{idx:1,name:'AI 2',isAI:true,hand:['mtn_sanae']}]};
+  const saved=ctx.handOrSeatRect;ctx.handOrSeatRect=A.actualHandOrSeatRect;ctx.seatRect=p=>({left:500+p*90,top:20,width:40,height:60});
+  A.setGame(observed);A.renderHand();el('hand-area').rect={left:20,top:500,width:300,height:150};el('hand').children[0].rect={left:40,top:510,width:70,height:100};
+  assert.equal(A.actualHandOrSeatRect(1).left,20);assert.equal(A.actualHandOrSeatRect(0).left,500);
+  assert.equal(A.actualHandCardRect(1,'mtn_sanae').left,40);assert.equal(A.actualHandCardRect(0,'sdm_remilia').left,488);
+  observed.currentPlayerIdx=0;A.renderHand();assert.equal(A.actualHandOrSeatRect(0).left,20);assert.equal(A.actualHandOrSeatRect(1).left,590);
+  ctx.handOrSeatRect=saved;delete ctx.seatRect;delete el('hand-area').rect;A.setGame(match);A.renderHand();
+});
+test('Mobile card sizing uses the acting AI hand count rather than the first seat count',()=>{
+  const observed={...match,aiTestMode:true,currentPlayerIdx:1,players:[{idx:0,name:'AI 1',isAI:true,hand:['sdm_remilia']},{idx:1,name:'AI 2',isAI:true,hand:['mtn_sanae','mtn_aya','hourai_reisen','hell_komachi','hell_kutaka','temple_shou','palace_satori','sage_ran','yuuka']}]};
+  const oldWidth=ctx.window.innerWidth,oldHeight=ctx.window.innerHeight,oldMatch=ctx.window.matchMedia,oldBody=documentFixture.body;
+  documentFixture.body=new Element();ctx.window.innerWidth=900;ctx.window.innerHeight=400;ctx.window.matchMedia=()=>({matches:true});
+  ctx.mobileFullscreenWanted=()=>true;ctx.dockTutorialCoach=()=>{};ctx.closeMobileJournal=()=>{};ctx.getComputedStyle=()=>({paddingLeft:'0',paddingRight:'0'});
+  ctx.positionRinnosukeBubble=()=>{};ctx.repositionYuukaBlooms=()=>{};
+  el('game').classList.add('active');el('hand').rect={left:0,top:0,width:130,height:300};A.setGame(observed);
+  A.actualSyncMobileViewport();assert.equal(documentFixture.body.values.get('--mobile-card-height'),A.mobileHandMetrics(130,300,9).cardHeight+'px');
+  observed.currentPlayerIdx=0;A.actualSyncMobileViewport();assert.equal(documentFixture.body.values.get('--mobile-card-height'),A.mobileHandMetrics(130,300,1).cardHeight+'px');
+  ctx.window.innerWidth=oldWidth;ctx.window.innerHeight=oldHeight;ctx.window.matchMedia=oldMatch;documentFixture.body=oldBody;
+  el('game').classList.remove('active');delete el('hand').rect;A.setGame(match);A.renderHand();
+});
 test('Board cards distinguish low-ink copies, worn retrieved cards and ordinary originals',()=>{
   const printed=A.cardBoardHtml(copy),worn=A.cardBoardHtml('haku_yuyuko'),plain=A.cardBoardHtml('mtn_sanae');
   assert.match(printed,/card-copy-low-ink/);assert.match(printed,/card-low-ink-lines/);assert(!printed.includes('instance-badge'));
@@ -258,6 +301,19 @@ async function choiceTest(name,fn){await fn();tests.push(name);console.log('PASS
     g.fastAITest=true;const fast=await A.Game.prototype.createCard.call(g,0,['hourai_mokou','mtn_sanae','sage_ran']);
     assert.equal(presentations,1);assert.equal(A.CARD[fast].baseId,'mtn_sanae');assert.equal(A.creationSession(),null);assert.equal(timers.size,0);
     delete ctx.aiCreatedValue;A.setGame(match);A.renderHand();
+  });
+  await choiceTest('A watched non-first AI creation lands in its visible hand slot and leaves the other AI hand intact',async()=>{
+    ctx.aiCreatedValue=(_p,id)=>id==='mtn_sanae'?10:0;
+    const g={...match,cancelled:false,aiTestMode:true,fastAITest:false,currentPlayerIdx:1,permanentAbilities:{},players:[
+      {idx:0,name:'AI 1',isAI:true,hand:['sdm_remilia']},{idx:1,name:'AI 2',isAI:true,hand:['hourai_mokou']}],startingCardIds:new Set(),testMetrics:null,
+      ui:{onCreationChoices:details=>A.onCreationChoices(details)},addToHand(p,id){this.players[p].hand.push(id);},recordTestDecision(){},log(){},render:()=>A.renderHand()};
+    A.setGame(g);A.renderHand();const pending=A.Game.prototype.createCard.call(g,1,['hourai_mokou','mtn_sanae','sage_ran']);await new Promise(setImmediate);
+    advance(620);advance(100);const session=A.creationSession(),face=session.cards.find(card=>card.id==='mtn_sanae').face;
+    assert(session.placeholder);assert.equal(face.style.left,'132px');assert.equal(face.style.top,'673px');
+    assert.equal(face.style.width,'104px');assert.equal(face.style.height,'126px');advance(240);const id=await pending;
+    assert.deepEqual(g.players[0].hand,['sdm_remilia']);assert.deepEqual(g.players[1].hand,['hourai_mokou',id]);
+    assert.deepEqual(el('hand').children.map(node=>node.dataset.cardId),g.players[1].hand);assert.equal(el('hand-title').textContent,"AI 2's hand");
+    assert.equal(A.creationSession(),null);assert.equal(timers.size,0);delete ctx.aiCreatedValue;A.setGame(match);A.renderHand();
   });
   await choiceTest('Replacing the match during printing prevents a stale result, and resizing during flight finishes the selected choice',async()=>{
     const cancelled=A.openCreationChoice('Create: choose one of three cards',['hourai_mokou']);A.setGame({...match});advance(420);
