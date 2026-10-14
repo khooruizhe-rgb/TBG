@@ -46,6 +46,6 @@ setup();const trig2=copy('palace_koishi');hand(0,[trig2]);put('palace_satori',0,
 setup();put('hourai_eirin',1,1);put('sage_kasen',1,2);game.setCardAt(1,1,null);ok(!game.isCardAbilityDisabled('sage_kasen'),'Sage ability restores when Eirin leaves');
 
 setup();const trap=game.makeTrap();ok(game.abilityId(trap)==='trap_token','trap ability stats use stable identity');
-setup();const reused=copy('mtn_kanako');game.createdActivations[reused]=true;let earlyAura=false;game.resolveKoishiCascade=async()=>{earlyAura ||= game.hasActiveAbility('mtn_kanako');};await game.internalPlace(reused,1,1,0,0);assert(!earlyAura,'replayed copied aura must be paid again before benefiting other cards');
+setup();const reused=copy('mtn_kanako');game.createdActivations[reused]=true;let earlyAura=false;const auraResolve=game.resolveAbility;game.resolveAbility=async function(...args){earlyAura ||= game.hasActiveAbility('mtn_kanako');return auraResolve.apply(this,args);};await game.internalPlace(reused,1,1,0,0);assert(!earlyAura,'replayed copied aura must be paid again before benefiting other cards');
 return {tests,status:'pass'};
 })()`,ctx).then(r=>{fs.writeFileSync(root+'/tests/card-creation-news-2026-10-12-results.json',JSON.stringify(r,null,2));console.log(r)}).catch(e=>{console.error(e.stack);process.exitCode=1});

@@ -1,0 +1,122 @@
+{
+  "status": "pass",
+  "count": 52,
+  "checks": [
+    "Koishi chooser receives the current legal landing 3,3",
+    "Only the actor scores when her placement claims and Koishi’s landing does not",
+    "The actor’s claim is not reassigned to Koishi’s holder",
+    "The actor’s claim completes before Koishi’s presentation",
+    "Koishi chooser receives the current legal landing 1,1",
+    "Only Koishi’s holder scores when Kasen alone cannot claim",
+    "The new Palace claim belongs to Koishi’s holder",
+    "Claim counters identify the actual scoring player",
+    "Koishi chooser receives the current legal landing 1,1",
+    "Separate actor and Koishi claims each award their own four points",
+    "Both scoring batches settle actor first and Koishi’s holder second",
+    "Claimed cards are separated between the correct discard piles",
+    "Score-source measurements reconcile both batches",
+    "Koishi chooser receives the current legal landing 1,1",
+    "The actor collects shared Kasen before Koishi can use her as a Palace member",
+    "A trigger latched before Kasen’s collection still places Koishi",
+    "Koishi can use the legal cell newly freed by the actor’s claim",
+    "Koishi rechecks the remaining board rather than claiming a stale four-card group",
+    "A shared card is neither claimed twice nor transferred between winners",
+    "An actor who reaches seven in the first batch wins before Koishi’s batch",
+    "A finished game does not consume or animate the pending Koishi",
+    "Koishi chooser receives the current legal landing 1,1",
+    "Koishi’s holder can win in the second batch after the actor scores",
+    "Koishi chooser receives the current legal landing 1,1",
+    "A copied Koishi’s holder pays once and receives the second claim",
+    "The actor’s batch settles before the copied Koishi pays her surcharge",
+    "Koishi’s payment is recorded against her holder and ability",
+    "Koishi chooser receives the current legal landing 1,1",
+    "Unpaid Koishi stays in hand after the actor’s already completed claim",
+    "Koishi chooser receives the current legal landing 0,2",
+    "An actor’s claim opens a previously full board for Koishi’s scoring placement",
+    "Newly freed cells are refreshed rather than using the full-board pre-claim list",
+    "Koishi chooser receives the current legal landing 1,1",
+    "An explicit nested actor and a third-seat Koishi receive separate batches",
+    "Batch order is independent of the global current-turn index",
+    "Mokou with no discard gains no Koishi and creates no phantom claim",
+    "Koishi chooser receives the current legal landing 1,1",
+    "Koishi drawn during the placed ability enters and scores after that ability completes",
+    "Koishi chooser receives the current legal landing 1,1",
+    "A hand-gaining action with no actor claim still awards Koishi’s new claim to her holder",
+    "A blocked holder does not delay the actor’s batch or place Koishi illegally",
+    "Rin-overwritten Koishi no longer auto-enters",
+    "A cancelled landing returns Koishi without undoing or duplicating the actor’s claim",
+    "The real AI Koishi chooses against the post-actor board at easy, shop false",
+    "The real AI Koishi chooses against the post-actor board at normal, shop false",
+    "The real AI Koishi chooses against the post-actor board at hard, shop false",
+    "The real AI Koishi chooses against the post-actor board at easy, shop true",
+    "The real AI Koishi chooses against the post-actor board at normal, shop true",
+    "The real AI Koishi chooses against the post-actor board at hard, shop true",
+    "The actor’s AI neither credits the opponent’s Koishi points nor reads that hidden identity",
+    "The scoring preview restores hands, board, counters and private knowledge",
+    "A regular v7 snapshot restores into the staged owner-claim rules without losing its copy"
+  ],
+  "details": {
+    "actorOnly": {
+      "scores": [
+        4,
+        0
+      ],
+      "trace": [
+        {
+          "kind": "claim",
+          "playerIdx": 0,
+          "faction": "sdm",
+          "count": 4
+        },
+        {
+          "kind": "enter",
+          "playerIdx": 1
+        }
+      ]
+    },
+    "koishiOnly": {
+      "scores": [
+        0,
+        4
+      ],
+      "trace": [
+        {
+          "kind": "enter",
+          "playerIdx": 1
+        },
+        {
+          "kind": "claim",
+          "playerIdx": 1,
+          "faction": "palace",
+          "count": 4
+        }
+      ]
+    },
+    "both": {
+      "scores": [
+        4,
+        4
+      ],
+      "trace": [
+        {
+          "kind": "claim",
+          "playerIdx": 0,
+          "faction": "sdm",
+          "count": 4
+        },
+        {
+          "kind": "enter",
+          "playerIdx": 1
+        },
+        {
+          "kind": "claim",
+          "playerIdx": 1,
+          "faction": "palace",
+          "count": 4
+        }
+      ]
+    }
+  },
+  "rulesVersion": "2026-10-14-koishi-staged-claims-v8",
+  "scope": "Actual actor/entrant placement and claims, shared Kasen, costs, ordering, AI information boundary and v7 restore"
+}

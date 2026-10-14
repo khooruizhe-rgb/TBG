@@ -3197,7 +3197,7 @@ const CARDS = [
   { id:'palace_utsuho', faction:'palace', name:'Utsuho Reiuji',
     desc:"Placed: Turn a 2×2 area of the board into wasteland." },
   { id:'palace_koishi', faction:'palace', name:'Koishi Komeiji', trigger:true,
-    desc:"When three Palace of the Earth Spirits cards are on the board, this card automatically moves from your hand onto the board. Faction claims belong to the acting player." },
+    desc:"When three Palace of the Earth Spirits cards are on the board, this card automatically moves from your hand onto the board. Resolve the acting player's claims first, then this card's claims for its owner." },
 
   { id:'sage_yukari', faction:'sage', name:'Yukari Yakumo', crown:true, override:true,
     desc:"You can place this card on another board card to take that card into your hand." },
@@ -4614,7 +4614,7 @@ class Game {
     }
   }
 
-  checkKoishiTrigger(depth){
+  checkKoishiTrigger(depth,remove=true){
     if(depth>6) return null;
     const palaceCount = this.factionCells('palace').length;
     if(palaceCount!==3) return null;
@@ -4623,25 +4623,33 @@ class Game {
       if(!this.isPlacementBlocked(p.idx) && triggerId){
         const cells = this.emptyCells(p.idx);
         if(!cells.length) return null;
-        this.removeFromHand(p.idx,triggerId);
+        if(remove)this.removeFromHand(p.idx,triggerId);
         return {ownerIdx:p.idx,cardId:triggerId,cellCandidates:cells};
       }
     }
     return null;
   }
 
-  /* Resolves Koishi's board-trigger, including cascades (rare, but a leap could itself complete
-     a claim that leaves exactly 3 palace cards again). Shared by internalPlace() and by any
-     top-level hand-gaining action (like "draw for everyone") that isn't itself a placement. */
-  async resolveKoishiCascade(depth,claimerIdx=this.currentPlayerIdx){
-    if(depth>6) return;
-    let koishi = this.checkKoishiTrigger(depth);
+  /* Settle the acting player's placement/ability claims before an automatic Koishi's claims.
+     Latch the trigger before the first claim batch, but refresh her legal landing cells after
+     it: a shared Kasen can be collected first without cancelling an already triggered leap. */
+  async resolveKoishiCascade(depth,actorIdx=this.currentPlayerIdx){
+    if(depth>6 || this.cancelled || this.winner) return;
+    let koishi = this.checkKoishiTrigger(depth,false);
+    this.checkClaims(actorIdx);
+    if(this.cancelled || this.winner)return;
+    koishi ||= this.checkKoishiTrigger(depth,false);
     let guard = 0;
     while(koishi && guard<4){
       guard++;
+      if(!this.players[koishi.ownerIdx].hand.includes(koishi.cardId) || this.isPlacementBlocked(koishi.ownerIdx))return;
+      koishi.cellCandidates=this.emptyCells(koishi.ownerIdx);
+      if(!koishi.cellCandidates.length)return;
+      this.removeFromHand(koishi.ownerIdx,koishi.cardId);
       const cell = koishi.cellCandidates.length===1 ? koishi.cellCandidates[0]
         : (this.players[koishi.ownerIdx].isAI ? aiFactionPlacement(koishi.ownerIdx,koishi.cardId,koishi.cellCandidates,CARD[koishi.cardId].faction) : await this.chooseCell(koishi.ownerIdx, koishi.cellCandidates, `${CARD[koishi.cardId].name} wanders onto the board — choose where`));
-      if(this.cancelled || !cell)return;
+      if(this.cancelled)return;
+      if(!cell){this.addToHand(koishi.ownerIdx,koishi.cardId,true);return;}
       if(CARD[koishi.cardId]?.createdCopy){
         const frame={caster:koishi.cardId,ability:'palace_koishi',playerIdx:koishi.ownerIdx,paid:[],gained:[],stolen:[],information:false};
         if(this.testMetrics)(this.testAbilityFrames ||= []).push(frame);
@@ -4661,9 +4669,9 @@ class Game {
         try{ if(await this.ui.onKoishiSelfPlace({cardId:koishi.cardId,playerIdx:koishi.ownerIdx,r:cell.r,c:cell.c})===false) return; }catch(_error){}
       }
       triggerPlacementPresentation(koishi.cardId, cell.r, cell.c);
-      this.checkClaims(claimerIdx);
+      this.checkClaims(koishi.ownerIdx);
       if(this.cancelled || this.winner)return;
-      koishi = this.checkKoishiTrigger(depth);
+      koishi = this.checkKoishiTrigger(depth,false);
     }
   }
 
@@ -4699,9 +4707,6 @@ class Game {
     await sleep(crownEffectId || CARD[cardId].crown ? 1000 : 680);
     if(this.cancelled) return {};
 
-    if(depth<6) await this.resolveKoishiCascade(depth,playerIdx);
-    if(this.cancelled) return {};
-
     const eirinActive = this.eirinActive() && cardId !== 'hourai_eirin';
     let flags = {};
     const card = CARD[cardId];
@@ -4711,8 +4716,10 @@ class Game {
       flags = await this.resolveAbility(cardId, r, c, playerIdx, depth) || {};
     }
     if(this.cancelled) return {};
-    if(depth<6) await this.resolveKoishiCascade(depth,playerIdx); // catch Koishi drawn/gained mid-ability (Sanae, Mokou, Ran, Satori, etc.)
-    this.checkClaims(playerIdx);
+    // Finish the placed ability before the actor's claims, then settle automatic entrants.
+    // This also catches Koishi gained during the ability (Sanae, Mokou, Ran, Satori, etc.).
+    if(depth<6) await this.resolveKoishiCascade(depth,playerIdx);
+    else this.checkClaims(playerIdx);
     this.checkWin();
     this.render();
     return flags;
@@ -5503,7 +5510,7 @@ class Game {
 }
 
 /* 2026-10-12: creation, private newspapers and instance ability changes. */
-const REWORK_RULES_VERSION='2026-10-13-swapped-creators-claim-owner-v7';
+const REWORK_RULES_VERSION='2026-10-14-koishi-staged-claims-v8';
 Game.prototype.canCreateWithMatara=function(){return this.mainBoardCells().length>=4;};
 let nextCreatedCard=0,nextHiddenChoice=0;
 const COPY_PASSIVES=new Set(['sage_yukari','sage_kasen','mtn_nitori','hell_hecatia','palace_koishi']);
@@ -7632,7 +7639,7 @@ const CARD_ABILITY_NAMES = {
 /* ---------- Language selection: canonical rules stay language-independent. ---------- */
 let gameLanguage='en';
 try{const saved=window.localStorage?.getItem('boundary-language');if(saved==='zh-CN')gameLanguage=saved;}catch(_error){}
-const ZH_CARDS={"sdm_remilia": ["蕾米莉亚·斯卡蕾特", "命运操纵", "放置：将其他玩家手中的所有红魔馆卡牌加入你的手牌。"], "sdm_flandre": ["芙兰朵露·斯卡蕾特", "「目」之破坏", "放置：选择任意玩家的一张手牌，将其送入该玩家的弃牌堆。"], "sdm_patchouli": ["帕秋莉·诺蕾姬", "魔法风云", "放置：猜测另一名玩家手中的一张卡牌。猜对后，将该卡牌加入你的手牌。"], "sdm_sakuya": ["十六夜咲夜", "Zawarudo", "放置：获得两个额外回合，然后将你的手牌洗入抽牌堆。"], "haku_yuyuko": ["西行寺幽幽子", "幽冥缠身", "[代价 N] 放置：将 N 张随机的正交相邻卡牌送入你的弃牌堆。"], "haku_youmu": ["魂魄妖梦", "先之先", "放置：放置此卡不消耗你的回合。"], "hourai_kaguya": ["蓬莱山辉夜", "看我操作！", "放置：猜测另一名玩家手中的一张永远亭卡牌。每次猜对，你可以将该卡牌放到棋盘上并继续猜测。"], "hourai_eirin": ["八意永琳", "思兼装置", "放置：创造一张永远亭的卡牌（不能为永琳），使其获得双倍能力。此卡在棋盘上时，所有贤者卡牌的能力均被禁用。"], "hourai_reisen": ["铃仙·优昙华院·因幡", "狂气之瞳", "放置：选择另一名玩家的一张手牌。该玩家必须在下个回合放置这张卡牌。"], "hourai_mokou": ["藤原妹红", "凤凰复生", "放置：你的弃牌堆中每有一张卡牌，就抽一张牌。"], "mtn_kanako": ["八坂神奈子", "风神之神德", "此卡可以放在荒地上。此卡在棋盘上时，其他妖怪之山卡牌的放置能力发动两次。\n放置：将你手中的一张妖怪之山卡牌放到棋盘上。"], "mtn_suwako": ["洩矢诹访子", "诅咒之地", "放置：将三个棋盘格变为荒地。"], "mtn_sanae": ["东风谷早苗", "八坂之神风", "放置：抽一张牌。如果八坂神奈子在棋盘上，再抽一张牌。"], "mtn_aya": ["射命丸文", "才不是道听途说呢！", "放置：查看其他每名玩家的四张手牌，并记录于报纸中。只有你能阅读。其他玩家须将一张手牌付款给你订阅，才能观看情报。"], "palace_satori": ["古明地觉", "恐怖催眠术", "[代价 I] 放置：随机展示另一名玩家手牌中的四张卡牌，然后从其手牌中选取一张加入你的手牌。未展示的卡牌仍可选取。"], "palace_rin": ["火焰猫燐", "猫之步伐", "放置：将任意弃牌堆中的一张卡牌加入你的手牌。该卡牌的技能替换为“覆盖：放置时抽一张牌”，持续到本局结束。"], "palace_utsuho": ["灵乌路空", "核裂变", "放置：将棋盘上的一个 2×2 区域变为荒地。"], "palace_koishi": ["古明地恋", "无意识的哲学", "棋盘上恰有三张地灵殿卡牌时，自动从手牌放置；阵营由本次行动的玩家收取。普通放置时没有技能效果。"], "sage_yukari": ["八云紫", "境界操纵", "你可以将此卡放在另一张棋盘卡牌上，并将被覆盖的卡牌加入你的手牌。"], "sage_kasen": ["茨木华扇", "无拘无束", "收取阵营卡牌时，此卡可视为任意4卡阵营的卡牌。"], "sage_matara": ["摩多罗隐岐奈", "/op", "放置：若主棋盘上至少有四张卡牌，创造一张棋盘上的卡牌（不能为摩多罗），并将其立刻打出。"], "sage_ran": ["八云蓝", "式神召回", "放置：抽一张牌。如果八云紫在棋盘上，立即放置抽到的卡牌。"], "reimu": ["博丽灵梦", "梦想天生", "放置：将棋盘上的一张领主卡牌加入你的手牌。"], "marisa": ["雾雨魔理沙", "极限火花", "放置：将棋盘上的一张非领主卡牌送入你的弃牌堆。"], "yuuka": ["风见幽香", "花之主宰", "放置：清除一个 3×3 区域中的荒地，然后将你的手牌洗入抽牌堆并抽四张牌。"], "medicine": ["梅蒂欣·梅兰可莉", "铃兰中毒", "放置：选择一名玩家，将其两张随机手牌放回抽牌堆。"], "hell_hecatia": ["赫卡提亚·拉碧斯拉祖利", "三位一体狂想曲", "此卡计为 3 点弃牌分数。只有弃牌堆已有 3 张及以上地狱卡牌时，此卡才能进入该弃牌堆。"], "hell_clownpiece": ["克劳恩皮丝", "污秽耐受", "此卡可以放在荒地上。\n放置：清除此卡周围的荒地。"], "hell_eiki": ["四季映姬", "黑白的判决", "[代价 I] 放置：将棋盘上数量最多的阵营的所有卡牌放回抽牌堆。"], "hell_komachi": ["小野塚小町", "距离操控", "放置：将此卡与另一张棋盘卡牌交换位置。如果棋盘上有另一张地狱卡牌，此次放置不消耗你的回合。"], "heaven_tenshi": ["比那名居天子", "全卡牌的绯想天！", "[代价 II] 放置：将棋盘上的所有非天界卡牌放回抽牌堆。"], "heaven_iku": ["永江衣玖", "驾驭雷云", "[代价 III] 放置：选择一个 2×2 区域，将其中最多两张随机的非天界卡牌送入你的弃牌堆。"], "temple_byakuren": ["圣白莲", "魔界幻想", "放置：你可以按任意顺序使用每个效果一次。\n[代价 IV] 获得三个额外回合。\n[代价 III] 将另外三张棋盘卡牌放回抽牌堆，并将其所在格变为荒地。\n[代价 II] 查看抽牌堆顶的三张牌，拿取一张，并按任意顺序放回其余卡牌。\n棋盘上每有一张其他命莲寺卡牌，每个效果的代价减少一。"], "temple_shou": ["寅丸星", "光辉宝藏", "[代价 I] 放置：棋盘上每有一块荒地，就抽一张牌，然后清除所有荒地。"], "temple_nue": ["封兽鵺", "能力奇美拉", "放置：从三张随机卡牌中选择一个能力，使用它的能力。"], "temple_murasa": ["村纱水蜜", "无底漩涡", "放置：你在接下来的一个回合中不能放置卡牌或交易。选择一名玩家。该玩家在接下来的两个回合中不能放置卡牌或交易。"], "temple_ichirin": ["云居一轮", "再打一轮！", "[代价 II] 放置：将每张非命莲寺卡牌向远离此卡的方向推一格。被推出棋盘的卡牌放回抽牌堆。"], "sdm_meiling": ["红美铃", "内劲", "放置：将一张相邻卡牌向远离此卡的方向移动一格。"], "hourai_tewi": ["因幡帝", "远古骗术", "放置：向其他每名玩家的手牌中加入一张陷阱。"], "mtn_nitori": ["河城荷取", "光学迷彩", "以此卡为中心的 3×3 区域中的卡牌不能被选中。"], "palace_yuugi": ["星熊勇仪", "怪力乱神", "[代价 II] 放置：将一张正交相邻的卡牌送入你的弃牌堆。"], "sage_mai_satono": ["丁礼田舞与尔子田里乃", "驱动活力", "放置：在你的下个回合获得一个额外回合。"], "hell_kutaka": ["庭渡久侘歌", "异界的护卫", "放置：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。反之，将正交相邻的位置变为荒地。"], "shop_rinnosuke": ["森近霖之助", "香霖堂", "此卡及其周围的卡牌不能被选中、移动或使用能力。\n先选择一张手牌，再点击森近霖之助即可交易。每回合限一次，且不消耗回合。"], "trap_token": ["陷阱", "嗯……这是陷阱！", "此卡在手牌中时，不能交易、弃置或放回抽牌堆。\n放置：将另一张手牌放回抽牌堆。"]};
+const ZH_CARDS={"sdm_remilia": ["蕾米莉亚·斯卡蕾特", "命运操纵", "放置：将其他玩家手中的所有红魔馆卡牌加入你的手牌。"], "sdm_flandre": ["芙兰朵露·斯卡蕾特", "「目」之破坏", "放置：选择任意玩家的一张手牌，将其送入该玩家的弃牌堆。"], "sdm_patchouli": ["帕秋莉·诺蕾姬", "魔法风云", "放置：猜测另一名玩家手中的一张卡牌。猜对后，将该卡牌加入你的手牌。"], "sdm_sakuya": ["十六夜咲夜", "Zawarudo", "放置：获得两个额外回合，然后将你的手牌洗入抽牌堆。"], "haku_yuyuko": ["西行寺幽幽子", "幽冥缠身", "[代价 N] 放置：将 N 张随机的正交相邻卡牌送入你的弃牌堆。"], "haku_youmu": ["魂魄妖梦", "先之先", "放置：放置此卡不消耗你的回合。"], "hourai_kaguya": ["蓬莱山辉夜", "看我操作！", "放置：猜测另一名玩家手中的一张永远亭卡牌。每次猜对，你可以将该卡牌放到棋盘上并继续猜测。"], "hourai_eirin": ["八意永琳", "思兼装置", "放置：创造一张永远亭的卡牌（不能为永琳），使其获得双倍能力。此卡在棋盘上时，所有贤者卡牌的能力均被禁用。"], "hourai_reisen": ["铃仙·优昙华院·因幡", "狂气之瞳", "放置：选择另一名玩家的一张手牌。该玩家必须在下个回合放置这张卡牌。"], "hourai_mokou": ["藤原妹红", "凤凰复生", "放置：你的弃牌堆中每有一张卡牌，就抽一张牌。"], "mtn_kanako": ["八坂神奈子", "风神之神德", "此卡可以放在荒地上。此卡在棋盘上时，其他妖怪之山卡牌的放置能力发动两次。\n放置：将你手中的一张妖怪之山卡牌放到棋盘上。"], "mtn_suwako": ["洩矢诹访子", "诅咒之地", "放置：将三个棋盘格变为荒地。"], "mtn_sanae": ["东风谷早苗", "八坂之神风", "放置：抽一张牌。如果八坂神奈子在棋盘上，再抽一张牌。"], "mtn_aya": ["射命丸文", "才不是道听途说呢！", "放置：查看其他每名玩家的四张手牌，并记录于报纸中。只有你能阅读。其他玩家须将一张手牌付款给你订阅，才能观看情报。"], "palace_satori": ["古明地觉", "恐怖催眠术", "[代价 I] 放置：随机展示另一名玩家手牌中的四张卡牌，然后从其手牌中选取一张加入你的手牌。未展示的卡牌仍可选取。"], "palace_rin": ["火焰猫燐", "猫之步伐", "放置：将任意弃牌堆中的一张卡牌加入你的手牌。该卡牌的技能替换为“覆盖：放置时抽一张牌”，持续到本局结束。"], "palace_utsuho": ["灵乌路空", "核裂变", "放置：将棋盘上的一个 2×2 区域变为荒地。"], "palace_koishi": ["古明地恋", "无意识的哲学", "棋盘上恰有三张地灵殿卡牌时，此卡自动从手牌放置到棋盘。先结算行动玩家的收取，再将此卡出场后形成的阵营归其持牌人。"], "sage_yukari": ["八云紫", "境界操纵", "你可以将此卡放在另一张棋盘卡牌上，并将被覆盖的卡牌加入你的手牌。"], "sage_kasen": ["茨木华扇", "无拘无束", "收取阵营卡牌时，此卡可视为任意4卡阵营的卡牌。"], "sage_matara": ["摩多罗隐岐奈", "/op", "放置：若主棋盘上至少有四张卡牌，创造一张棋盘上的卡牌（不能为摩多罗），并将其立刻打出。"], "sage_ran": ["八云蓝", "式神召回", "放置：抽一张牌。如果八云紫在棋盘上，立即放置抽到的卡牌。"], "reimu": ["博丽灵梦", "梦想天生", "放置：将棋盘上的一张领主卡牌加入你的手牌。"], "marisa": ["雾雨魔理沙", "极限火花", "放置：将棋盘上的一张非领主卡牌送入你的弃牌堆。"], "yuuka": ["风见幽香", "花之主宰", "放置：清除一个 3×3 区域中的荒地，然后将你的手牌洗入抽牌堆并抽四张牌。"], "medicine": ["梅蒂欣·梅兰可莉", "铃兰中毒", "放置：选择一名玩家，将其两张随机手牌放回抽牌堆。"], "hell_hecatia": ["赫卡提亚·拉碧斯拉祖利", "三位一体狂想曲", "此卡计为 3 点弃牌分数。只有弃牌堆已有 3 张及以上地狱卡牌时，此卡才能进入该弃牌堆。"], "hell_clownpiece": ["克劳恩皮丝", "污秽耐受", "此卡可以放在荒地上。\n放置：清除此卡周围的荒地。"], "hell_eiki": ["四季映姬", "黑白的判决", "[代价 I] 放置：将棋盘上数量最多的阵营的所有卡牌放回抽牌堆。"], "hell_komachi": ["小野塚小町", "距离操控", "放置：将此卡与另一张棋盘卡牌交换位置。如果棋盘上有另一张地狱卡牌，此次放置不消耗你的回合。"], "heaven_tenshi": ["比那名居天子", "全卡牌的绯想天！", "[代价 II] 放置：将棋盘上的所有非天界卡牌放回抽牌堆。"], "heaven_iku": ["永江衣玖", "驾驭雷云", "[代价 III] 放置：选择一个 2×2 区域，将其中最多两张随机的非天界卡牌送入你的弃牌堆。"], "temple_byakuren": ["圣白莲", "魔界幻想", "放置：你可以按任意顺序使用每个效果一次。\n[代价 IV] 获得三个额外回合。\n[代价 III] 将另外三张棋盘卡牌放回抽牌堆，并将其所在格变为荒地。\n[代价 II] 查看抽牌堆顶的三张牌，拿取一张，并按任意顺序放回其余卡牌。\n棋盘上每有一张其他命莲寺卡牌，每个效果的代价减少一。"], "temple_shou": ["寅丸星", "光辉宝藏", "[代价 I] 放置：棋盘上每有一块荒地，就抽一张牌，然后清除所有荒地。"], "temple_nue": ["封兽鵺", "能力奇美拉", "放置：从三张随机卡牌中选择一个能力，使用它的能力。"], "temple_murasa": ["村纱水蜜", "无底漩涡", "放置：你在接下来的一个回合中不能放置卡牌或交易。选择一名玩家。该玩家在接下来的两个回合中不能放置卡牌或交易。"], "temple_ichirin": ["云居一轮", "再打一轮！", "[代价 II] 放置：将每张非命莲寺卡牌向远离此卡的方向推一格。被推出棋盘的卡牌放回抽牌堆。"], "sdm_meiling": ["红美铃", "内劲", "放置：将一张相邻卡牌向远离此卡的方向移动一格。"], "hourai_tewi": ["因幡帝", "远古骗术", "放置：向其他每名玩家的手牌中加入一张陷阱。"], "mtn_nitori": ["河城荷取", "光学迷彩", "以此卡为中心的 3×3 区域中的卡牌不能被选中。"], "palace_yuugi": ["星熊勇仪", "怪力乱神", "[代价 II] 放置：将一张正交相邻的卡牌送入你的弃牌堆。"], "sage_mai_satono": ["丁礼田舞与尔子田里乃", "驱动活力", "放置：在你的下个回合获得一个额外回合。"], "hell_kutaka": ["庭渡久侘歌", "异界的护卫", "放置：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。反之，将正交相邻的位置变为荒地。"], "shop_rinnosuke": ["森近霖之助", "香霖堂", "此卡及其周围的卡牌不能被选中、移动或使用能力。\n先选择一张手牌，再点击森近霖之助即可交易。每回合限一次，且不消耗回合。"], "trap_token": ["陷阱", "嗯……这是陷阱！", "此卡在手牌中时，不能交易、弃置或放回抽牌堆。\n放置：将另一张手牌放回抽牌堆。"]};
 const ZH_FACTIONS={"sdm":"红魔馆","hakugyokurou":"白玉楼","hourai":"永远亭","mountain":"妖怪之山","palace":"地灵殿","sage":"贤者","hakurei":"博丽","sunflower":"太阳花田","hell":"地狱","heaven":"天界","temple":"命莲寺","kourindou":"香霖堂","token":"衍生物"};
 const ZH_TEXT={
   "Boundary of Fates": "命运的境界",
@@ -8235,7 +8242,7 @@ const ZH_LOG_ALIASES={Remilia:'蕾米莉亚',Flandre:'芙兰朵露',Patchouli:'�
 const localizedTextCache=new Map();
 const ZH_NAMES=Object.entries(ZH_TEXT).filter(([en])=>CARDS.some(card=>card.name===en) || Object.values(FACTIONS).some(f=>f.name===en))
   .sort((a,b)=>b[0].length-a[0].length).map(([en,zh])=>[new RegExp('(^|[^A-Za-z])'+en.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=$|[^A-Za-z])','g'),zh]);
-Object.assign(ZH_TEXT,{"Create": "创造", "Placed: Draw a card.": "放置：抽一张牌。", "Draw a card": "抽一张牌", "Overwrite": "覆盖", "Bunbunmaru newspaper": "文々。新闻", "Private edition · subscription required": "独家特刊 · 订阅后阅读", "Filed by Aya Shameimaru": "记者：射命丸文", "This newspaper is folded. Pay one hand card to the editor to subscribe and read the reports.": "报纸已折起。将一张手牌付款给编辑订阅，即可展开阅读情报。", "revealed": "已展示", "Face-down card. Select or drag to take it.": "背面牌。可选择或拖动来取走。", "Eirin: create an Eientei card": "永琳：创造一张永远亭卡牌", "Eirin: immediately play the created card": "永琳：立刻打出创造的卡牌", "Matara Okina: create a board card with double abilities": "摩多罗：创造一张棋盘卡牌，获得双倍能力", "Create: choose one of three cards": "创造：三选一", "Four random cards are face up. Other cards remain face down and can still be selected.": "随机四张卡牌正面展示。其余卡牌保持背面，仍可盲选。", "Subscribe: pay one card to Aya’s player": "订阅：将一张手牌付款给文的玩家", "Subscribe": "订阅", "Placed: Create an Eientei card other than Eirin Yagokoro and immediately play it. While this card is on the board, all Sage card abilities are disabled.": "放置：创造一张永远亭的卡牌（永琳除外），并将其立刻打出。此卡在棋盘上时，所有贤者卡牌的能力均被禁用。", "Placed: Create a card currently on the board other than Matara Okina. The created copy gains double abilities.": "放置：创造一张棋盘上的卡牌（摩多罗除外），使其获得双倍的能力。", "[Cost I] Placed: Randomly reveal four cards in another player’s hand, then take any one card from that hand. Unrevealed cards remain selectable.": "[代价 I] 放置：随机展示另一名玩家手牌中的四张卡牌，然后从其手牌中选取一张加入你的手牌。未展示的卡牌仍可选取。", "Placed: Take a card from any discard pile into your hand. Replace its ability with “Overwrite — Placed: Draw a card” for the rest of this match.": "放置：将任意弃牌堆中的一张卡牌加入你的手牌。该卡牌的技能替换为“覆盖：放置时抽一张牌”，持续到本局结束。", "Placed: If this card is on wasteland, take a Hell card from the draw pile into your hand. Otherwise turn orthogonally adjacent positions into wasteland.": "放置：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。反之，将正交相邻的位置变为荒地。", "Placed: You cannot place cards or trade on your next turn. Choose a player who cannot place cards or trade on their next two turns.": "放置：你在接下来的一个回合中不能放置卡牌或交易。选择一名玩家。该玩家在接下来的两个回合中不能放置卡牌或交易。", "Placed: Look at four cards from each other player’s hand and record them in a private newspaper. Other players can read it only by paying one hand card to you to subscribe.": "放置：查看其他每名玩家的四张手牌，并记录于报纸中。只有你能阅读。其他玩家须将一张手牌付款给你订阅，才能观看情报。", "Placed: Choose an ability from three random cards. Use its ability.": "放置：从三张随机卡牌中选择一个能力，使用它的能力。", "Choose one of three random cards of the specified type and add a copy to your hand. Its ability costs one extra card.": "从随机给出的三张指定类型卡牌中，选一张复制到手牌。复制牌的技能代价加 I。", "Placed: If there are at least four cards on the main board, create a board card other than Matara Okina. The copy gains double abilities.": "放置：若主棋盘上至少有四张卡牌，创造一张场上除摩多罗以外的卡牌。创造牌获得双倍能力。", "Eirin: create an Eientei card with double abilities": "永琳 — 创造一张具有双倍能力的永远亭卡牌", "Matara Okina: create and immediately play a board card": "摩多罗 — 创造一张棋盘上的卡牌并立刻打出", "Matara: immediately play the created card": "摩多罗 — 立刻打出创造的卡牌", "Placed: Create an Eientei card other than Eirin Yagokoro; the copy gains double abilities. While this card is on the board, all Sage card abilities are disabled.": "放置：创造一张永远亭的卡牌（不能为永琳），使其获得双倍能力。此卡在棋盘上时，所有贤者卡牌的能力均被禁用。", "Placed: If there are at least four cards on the main board, create a board card other than Matara Okina and immediately play it.": "放置：若主棋盘上至少有四张卡牌，创造一张棋盘上的卡牌（不能为摩多罗），并将其立刻打出。", "When three Palace of the Earth Spirits cards are on the board, this card automatically moves from your hand onto the board. Faction claims belong to the acting player.": "棋盘上恰有三张地灵殿卡牌时，自动从手牌放置；阵营由本次行动的玩家收取。普通放置时没有技能效果。"});
+Object.assign(ZH_TEXT,{"Create": "创造", "Placed: Draw a card.": "放置：抽一张牌。", "Draw a card": "抽一张牌", "Overwrite": "覆盖", "Bunbunmaru newspaper": "文々。新闻", "Private edition · subscription required": "独家特刊 · 订阅后阅读", "Filed by Aya Shameimaru": "记者：射命丸文", "This newspaper is folded. Pay one hand card to the editor to subscribe and read the reports.": "报纸已折起。将一张手牌付款给编辑订阅，即可展开阅读情报。", "revealed": "已展示", "Face-down card. Select or drag to take it.": "背面牌。可选择或拖动来取走。", "Eirin: create an Eientei card": "永琳：创造一张永远亭卡牌", "Eirin: immediately play the created card": "永琳：立刻打出创造的卡牌", "Matara Okina: create a board card with double abilities": "摩多罗：创造一张棋盘卡牌，获得双倍能力", "Create: choose one of three cards": "创造：三选一", "Four random cards are face up. Other cards remain face down and can still be selected.": "随机四张卡牌正面展示。其余卡牌保持背面，仍可盲选。", "Subscribe: pay one card to Aya’s player": "订阅：将一张手牌付款给文的玩家", "Subscribe": "订阅", "Placed: Create an Eientei card other than Eirin Yagokoro and immediately play it. While this card is on the board, all Sage card abilities are disabled.": "放置：创造一张永远亭的卡牌（永琳除外），并将其立刻打出。此卡在棋盘上时，所有贤者卡牌的能力均被禁用。", "Placed: Create a card currently on the board other than Matara Okina. The created copy gains double abilities.": "放置：创造一张棋盘上的卡牌（摩多罗除外），使其获得双倍的能力。", "[Cost I] Placed: Randomly reveal four cards in another player’s hand, then take any one card from that hand. Unrevealed cards remain selectable.": "[代价 I] 放置：随机展示另一名玩家手牌中的四张卡牌，然后从其手牌中选取一张加入你的手牌。未展示的卡牌仍可选取。", "Placed: Take a card from any discard pile into your hand. Replace its ability with “Overwrite — Placed: Draw a card” for the rest of this match.": "放置：将任意弃牌堆中的一张卡牌加入你的手牌。该卡牌的技能替换为“覆盖：放置时抽一张牌”，持续到本局结束。", "Placed: If this card is on wasteland, take a Hell card from the draw pile into your hand. Otherwise turn orthogonally adjacent positions into wasteland.": "放置：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。反之，将正交相邻的位置变为荒地。", "Placed: You cannot place cards or trade on your next turn. Choose a player who cannot place cards or trade on their next two turns.": "放置：你在接下来的一个回合中不能放置卡牌或交易。选择一名玩家。该玩家在接下来的两个回合中不能放置卡牌或交易。", "Placed: Look at four cards from each other player’s hand and record them in a private newspaper. Other players can read it only by paying one hand card to you to subscribe.": "放置：查看其他每名玩家的四张手牌，并记录于报纸中。只有你能阅读。其他玩家须将一张手牌付款给你订阅，才能观看情报。", "Placed: Choose an ability from three random cards. Use its ability.": "放置：从三张随机卡牌中选择一个能力，使用它的能力。", "Choose one of three random cards of the specified type and add a copy to your hand. Its ability costs one extra card.": "从随机给出的三张指定类型卡牌中，选一张复制到手牌。复制牌的技能代价加 I。", "Placed: If there are at least four cards on the main board, create a board card other than Matara Okina. The copy gains double abilities.": "放置：若主棋盘上至少有四张卡牌，创造一张场上除摩多罗以外的卡牌。创造牌获得双倍能力。", "Eirin: create an Eientei card with double abilities": "永琳 — 创造一张具有双倍能力的永远亭卡牌", "Matara Okina: create and immediately play a board card": "摩多罗 — 创造一张棋盘上的卡牌并立刻打出", "Matara: immediately play the created card": "摩多罗 — 立刻打出创造的卡牌", "Placed: Create an Eientei card other than Eirin Yagokoro; the copy gains double abilities. While this card is on the board, all Sage card abilities are disabled.": "放置：创造一张永远亭的卡牌（不能为永琳），使其获得双倍能力。此卡在棋盘上时，所有贤者卡牌的能力均被禁用。", "Placed: If there are at least four cards on the main board, create a board card other than Matara Okina and immediately play it.": "放置：若主棋盘上至少有四张卡牌，创造一张棋盘上的卡牌（不能为摩多罗），并将其立刻打出。", "When three Palace of the Earth Spirits cards are on the board, this card automatically moves from your hand onto the board. Faction claims belong to the acting player.": "棋盘上恰有三张地灵殿卡牌时，自动从手牌放置；阵营由本次行动的玩家收取。普通放置时没有技能效果。", "When three Palace of the Earth Spirits cards are on the board, this card automatically moves from your hand onto the board. Resolve the acting player's claims first, then this card's claims for its owner.": "棋盘上恰有三张地灵殿卡牌时，此卡自动从手牌放置到棋盘。先结算行动玩家的收取，再将此卡出场后形成的阵营归其持牌人。"});
 ZH_DYNAMIC.unshift([/^Using (.+?)[’']s ability\.$/,(_,name)=>`正在使用${name}的技能。`]);
 ZH_DYNAMIC.unshift([/^Create copy: ability cost \+(\d+)(.*)$/,(_,n,tail)=>`创造复制：技能代价 +${n}。${tail.includes("Double abilities")?"双倍能力结算两次，代价只支付一次。":""}`]);
 Object.assign(ZH_TEXT,{"F8 opens test data and pauses the test. Closing this window keeps it paused.": "按 F8 打开测试数据并暂停。关闭窗口后保持暂停。", "D / F8: open test data and pause": "D / F8：打开测试数据并暂停", "Test data (D / F8)": "测试数据（D / F8）"});
@@ -14213,7 +14220,7 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='3af3fc54c0de06fe28006cbd9d2e2da5ef0693a8caa554e8223f2f053707a625';
+const AI_EVALUATION_RULES_DIGEST='6b35b1e3bc878563a247a8089713efbee0f5f6fa6a0a6998d36e54ab65321c40';
 const AI_EVALUATION_POLICY_DIGEST='c0b15868c8b88734908ffffe5929929ca28bf1799db8158c79b5b770a6d5edfb';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
@@ -14300,7 +14307,7 @@ function evalForkSummary(report){
   return {groups,invalidPairs,conclusion,completedPairs:report.pairs.length};
 }
 function evalValidateSnapshot(snapshot){
-  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
+  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
   const state=snapshot.state,n=state?.players?.length,size=snapshot.size;
   if(![4,5].includes(size) || ![2,3,4].includes(n) || !Number.isInteger(state.currentPlayerIdx) || state.currentPlayerIdx<0 || state.currentPlayerIdx>=n)throw new Error('Invalid position dimensions.');
   if(state.numPlayers!==n || state.players.some((p,i)=>p.idx!==i || !Array.isArray(p.hand) || !Array.isArray(p.discard)))throw new Error('Invalid position dimensions.');

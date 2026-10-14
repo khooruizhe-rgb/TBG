@@ -50,24 +50,24 @@ vm.runInContext(`(async()=>{
   for(const owner of [0,1,2]){
     setup();hold(owner,['palace_koishi']);hold(0,[...(game.players[0].hand),'sage_kasen']);put('palace_satori',0,0);put('palace_rin',0,1);
     game.removeFromHand(0,'sage_kasen');await game.internalPlace('sage_kasen',1,0,0,0);
-    ok(game.winCount(game.players[0])===4&&game.players.filter(p=>p.idx!==0).every(p=>game.winCount(p)===0),'Kasen-triggered Koishi claims belong to actor 0 when holder is '+owner);
+    ok(game.winCount(game.players[owner])===4&&game.players.filter(p=>p.idx!==owner).every(p=>game.winCount(p)===0),'Kasen-triggered Koishi claims belong to holder '+owner+' after actor claims settle');
     ok(game.testSeatMetrics(owner).placements.palace_koishi===1&&game.testSeatMetrics(owner).cardActions.palace_koishi?.abilityCalls===1,'Koishi usage and placement remain with holder '+owner);
-    ok(game.testSeatMetrics(0).scoreSources['faction:palace']?.points===4,'Claim measurements remain with the triggering actor, holder '+owner);
+    ok(game.testSeatMetrics(owner).scoreSources['faction:palace']?.points===4,'Koishi claim measurements belong to holder '+owner);
   }
   setup();hold(2,['palace_koishi']);hold(1,['sage_kasen']);put('palace_satori',0,0);put('palace_rin',0,1);
   game.removeFromHand(1,'sage_kasen');await game.internalPlace('sage_kasen',1,0,1,0);
-  ok(game.currentPlayerIdx===0&&game.winCount(game.players[1])===4&&game.winCount(game.players[2])===0,'Nested placement uses its explicit actor even when current turn belongs to another seat');
+  ok(game.currentPlayerIdx===0&&game.winCount(game.players[2])===4&&game.winCount(game.players[1])===0,'Nested Koishi claims belong to the entrant’s holder, independently of the current turn');
   setup();const koishiCopy=copied('palace_koishi');hold(1,[koishiCopy,'mtn_sanae']);put('palace_satori',0,0);put('palace_rin',0,1);put('palace_utsuho',1,0);
   await game.resolveKoishiCascade(0,0);
-  ok(game.winCount(game.players[0])===4&&game.testSeatMetrics(1).diagnostics.costCards===1&&game.testSeatMetrics(0).diagnostics.costCards===0,'A copied Koishi charges the holder but awards the claim to the actor');
+  ok(game.winCount(game.players[1])===4&&game.winCount(game.players[0])===0&&game.testSeatMetrics(1).diagnostics.costCards===1&&game.testSeatMetrics(0).diagnostics.costCards===0,'A copied Koishi charges the holder and awards her new claim to the holder');
   setup();const nestedCopy=copied('palace_koishi');hold(1,[nestedCopy,'mtn_sanae']);put('palace_satori',0,0);put('palace_rin',0,1);put('palace_utsuho',1,0);
   const parent={caster:'sage_matara',ability:'sage_matara',playerIdx:0,paid:[],gained:[],stolen:[],information:false};game.testAbilityFrames=[parent];
   await game.resolveKoishiCascade(0,0);
   ok(game.testSeatMetrics(1).abilityDetails['palace_koishi:palace_koishi'].costPaid===1&&!parent.paid.length&&game.testAbilityFrames[0]===parent,'Nested Koishi costs belong to her holder and do not pollute the parent ability frame');
   setup();const blocked=copied('palace_koishi');hold(1,[blocked]);put('palace_satori',0,0);put('palace_rin',0,1);put('palace_utsuho',1,0);
   await game.resolveKoishiCascade(0,0);ok(game.players[1].hand.includes(blocked)&&!game.isOnBoard(blocked)&&game.winCount(game.players[0])===0,'An unaffordable copied Koishi stays in the holder’s hand without scoring');
-  setup();hold(1,['palace_koishi']);put('palace_satori',0,0);put('palace_rin',0,1);put('palace_utsuho',1,0);game.players[0].discard=['mtn_sanae','hourai_mokou','sdm_patchouli'];
-  await game.resolveKoishiCascade(0,0);ok(game.winner===game.players[0],'A Koishi-triggered winning claim awards the win to the actor');
+  setup();hold(1,['palace_koishi']);put('palace_satori',0,0);put('palace_rin',0,1);put('palace_utsuho',1,0);game.players[1].discard=['mtn_sanae','hourai_mokou','sdm_patchouli'];
+  await game.resolveKoishiCascade(0,0);ok(game.winner===game.players[1],'A Koishi-triggered winning claim awards the win to her holder');
 
   for(const difficulty of ['easy','normal','hard']){
     setup(difficulty);hold(0,['hourai_eirin']);put('hourai_kaguya',0,0);put('hourai_reisen',0,1);
@@ -114,6 +114,6 @@ vm.runInContext(`(async()=>{
   await game.resolveAbility('sage_matara',1,1,0,0);ok(game.players[0].hand.some(id=>CARD[id]?.createdCopy&&!game.isOnBoard(id)),'A created card with no legal destination remains in hand');
   setup();const saved=copied('hourai_reisen',2);hold(0,[saved]);game.startingCardIds=new Set([saved]);
   const snap=captureAIEvaluationSnapshot(game);snap.rulesVersion='2026-10-13-matara-threshold-eirin-v6';
-  evalRestore(snap,['current','current','current']);ok(game.players[0].hand.includes(saved)&&CARD[saved].abilityMultiplier===2&&REWORK_RULES_VERSION.endsWith('v7'),'Regular v6 snapshots restore their existing double cards under the swapped rules');
+  evalRestore(snap,['current','current','current']);ok(game.players[0].hand.includes(saved)&&CARD[saved].abilityMultiplier===2&&REWORK_RULES_VERSION.endsWith('v8'),'Regular v6 snapshots restore their existing double cards under the swapped rules');
   return {status:'pass',count:checks.length,checks,details,rulesVersion:REWORK_RULES_VERSION,scope:'Actual placements, costs, ownership, deterministic previews and three-card offer bounds'};
 })()`,ctx).then(result=>{fs.writeFileSync(__dirname+'/creators-claim-owner-2026-10-13-results.json',JSON.stringify(result,null,2)+'\n');console.log(result.count+' creator/claim-owner checks passed');}).catch(error=>{console.error(error.stack);process.exitCode=1;});
