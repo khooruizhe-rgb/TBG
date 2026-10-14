@@ -107,7 +107,7 @@ test('Board cards distinguish low-ink copies, worn retrieved cards and ordinary 
   assert.match(worn,/card-rin-worn/);assert.match(worn,/card-wear-overlay/);assert.match(worn,/Ability: Overwrite/);
   assert(!plain.includes('card-copy-low-ink'));assert(!plain.includes('card-rin-worn'));assert(!worn.includes('card-copy-low-ink'));
 });
-test('Copying an overwritten card retains its worn appearance, draw effect and surcharge',()=>{
+test('An existing overwritten copy retains its worn appearance, draw effect and surcharge',()=>{
   const markup=A.cardBoardHtml(wornCopy);assert.match(markup,/card-copy-low-ink card-rin-worn/);assert.match(markup,/card-wear-overlay/);
   assert(!markup.includes('instance-badge'));assert(!markup.includes('Cost +'));assert(A.dynamicCardDescription(wornCopy).startsWith('Placed: Draw a card.'));
   assert.equal(A.CARD[wornCopy].faction,'hakugyokurou');assert.equal(A.CARD.haku_yuyuko.faction,'hakugyokurou');
@@ -175,6 +175,25 @@ test('Creation preview inspection retains printing through reference navigation 
   A.closeCardDetails();A.openCardDetails('hourai_mokou');assert(!el('card-detail').classList.contains('card-copy-low-ink'));
   assert.equal(JSON.stringify(A.CARD.hourai_mokou),before);
 });
+test('Original creation previews ignore borrowed skills, live fields, illusions and board muting',()=>{
+  A.setLanguage('en');const original={...A.CARD.temple_nue},priorBorrow=match.borrowedAbilities,priorOnBoard=match.isOnBoard,priorMute=match.isSageMuted,priorIllusion=ctx.illusionCardStyle;
+  match.borrowedAbilities={temple_nue:'sage_ran'};match.isOnBoard=()=>true;match.isSageMuted=()=>true;ctx.illusionCardStyle=()=> 'filter:invert(1)';
+  try{
+    A.openCardDetails('temple_nue');assert.match(el('card-detail-description').innerHTML,/Using/);
+    Object.assign(A.CARD.temple_nue,{name:'Altered source',faction:'sage',desc:'Placed: Draw a card.'});
+    const markup=A.cardBoardHtml('temple_nue',{createdPreview:true});assert(markup.includes(original.name+'?'));assert(!markup.includes('Altered source'));
+    assert(!markup.includes('eirin-muted'));assert(!markup.includes('card-art-illusion'));assert(!markup.includes('filter:invert'));
+    assert.equal(A.dynamicCardDescription('temple_nue',false,{createdPreview:true}),original.desc);
+    A.openCardDetails('temple_nue',{createdPreview:true});assert(!el('card-detail').classList.contains('eirin-muted'));
+    assert(el('card-detail').classList.contains('temple'));assert(!el('card-detail-description').innerHTML.includes('Using'));
+    assert.equal(el('card-detail-name').textContent,original.name+'?');assert(!el('card-detail-description').innerHTML.includes('Placed: Draw a card.'));
+  }finally{Object.assign(A.CARD.temple_nue,original);match.borrowedAbilities=priorBorrow;match.isOnBoard=priorOnBoard;match.isSageMuted=priorMute;ctx.illusionCardStyle=priorIllusion;A.closeCardDetails();A.setLanguage('zh-CN');}
+});
+test('Create has a concise two-sentence original-version explanation in both languages',()=>{
+  const en='Choose one of three random cards of the specified type and add a copy of its original version to your hand. Its ability costs one extra card.';
+  A.setLanguage('zh-CN');const zh=A.translateGameText(en);assert.match(zh,/原版/);assert.match(zh,/代价加 I/);assert.equal((zh.match(/。/g)||[]).length,2);
+  A.setLanguage('en');assert.equal(A.translateGameText(en),en);
+});
 test('Copied names translate and copied-card guesses accept Chinese question-mark names',()=>{
   A.setLanguage('zh-CN');assert.equal(A.translateGameText(A.CARD.mtn_sanae.name+'?'),'东风谷早苗?');
   assert.equal(A.canonicalCardName('东风谷早苗？'),A.CARD.mtn_sanae.name+'?');assert.equal(A.canonicalCardName(A.CARD.mtn_sanae.name+'?'),A.CARD.mtn_sanae.name+'?');
@@ -204,7 +223,9 @@ async function choiceTest(name,fn){await fn();tests.push(name);console.log('PASS
       A.closeCardDetails();inspect.events.click[0]();assert(el('card-detail').classList.contains('card-copy-low-ink'));
       A.closeCardDetails();
     }
-    assert.match(options[2].children[0].innerHTML,/card-rin-worn/);
+    assert(!options[2].children[0].innerHTML.includes('card-rin-worn'));
+    A.openCardDetails(wornCopy,{createdPreview:true});assert(!el('card-detail').classList.contains('card-rin-worn'));
+    assert(!el('card-detail-description').innerHTML.includes('抽一张牌'));assert.notEqual(el('card-detail-ability').textContent,'覆盖');A.closeCardDetails();
     const faces=A.creationSession().cards.map(card=>card.face);
     options[0].children[0].events.click[0]();assert.equal(A.creationSession().phase,'departing');
     assert(faces.every(face=>face.classList.contains('creation-flying')));

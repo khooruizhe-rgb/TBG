@@ -20,7 +20,7 @@
     "AI repeats an already-paid effect without rejecting it for a second payment",
     "Activation payment state is restored after resolution",
     "A created card has one question mark",
-    "Copying a copy keeps one question mark and cumulative surcharge",
+    "Copying a copy keeps one question mark and one new surcharge",
     "Restoring a snapshot preserves the copy name and stable identity",
     "Compatible v4 turn-start snapshots restore safely under the current copy rules",
     "The visual question mark does not prevent guessing a copy by its original character name",

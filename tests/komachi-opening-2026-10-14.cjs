@@ -90,7 +90,8 @@ vm.runInContext(`(async()=>{
   game.removeFromHand(0,doubled);await game.internalPlace(doubled,1,1,0,0);
   ok(game.winCount(game.players[0])===6&&game.testSeatMetrics(0).diagnostics.costCards===1,'Both real swaps preserve the claim and reuse one surcharge payment');
 
-  setup('hard',5);const nueCopy='created_card_'+(++nextCreatedCard);CARD[nueCopy]=blueprintCopy('temple_nue',nueCopy,'hell_komachi');game.startingCardIds.add(nueCopy);
+  setup('hard',5);const nueCopy='created_card_'+(++nextCreatedCard);CARD[nueCopy]=blueprintCopy('temple_nue',nueCopy,null);game.startingCardIds.add(nueCopy);
+  CARD[nueCopy].copiedAbility='hell_komachi'; // A legacy copy already carries this fixed borrowed skill.
   put('temple_shou',0,0);put('temple_ichirin',0,1);put('temple_murasa',1,0);put('hell_hecatia',4,4);put('hell_eiki',1,2);put('hell_kutaka',2,1);put('hell_clownpiece',2,2);
   hold([nueCopy,'hourai_mokou']);game.players[0].discard=['mtn_sanae'];game.aiMakesMistake=()=>false;
   const win=aiEvaluateCard(0,nueCopy,{acceptCandidate:c=>c.cell.r===1&&c.cell.c===1});

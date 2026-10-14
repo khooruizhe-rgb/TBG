@@ -70,6 +70,6 @@
   "details": {
     "randomOfferFloor": 0
   },
-  "rulesVersion": "2026-10-14-guided-final-match-v11",
+  "rulesVersion": "2026-10-14-original-creation-blueprints-v12",
   "scope": "Actual placements, costs, ownership, deterministic previews and three-card offer bounds"
 }

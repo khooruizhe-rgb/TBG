@@ -1,12 +1,12 @@
 {
   "status": "pass",
-  "count": 27,
+  "count": 29,
   "checks": [
     "AI test hand follows the acting seat and decree, remains inspectable and cannot be manually played",
     "Hand flight anchors track the visible AI while other players retain their seat anchors",
     "Mobile card sizing uses the acting AI hand count rather than the first seat count",
     "Board cards distinguish low-ink copies, worn retrieved cards and ordinary originals",
-    "Copying an overwritten card retains its worn appearance, draw effect and surcharge",
+    "An existing overwritten copy retains its worn appearance, draw effect and surcharge",
     "The real hand renderer applies the same print and wear layers without copy labels",
     "The print filter and dropout lines cover the complete card, including detail header and claim squares",
     "Inspection shows 覆盖 / Overwrite with the draw effect and retains both material states",
@@ -14,6 +14,8 @@
     "Only Sage muting applies Eirin desaturation; unpaid copies and non-Sage crowns retain color",
     "Copy inspection preserves the portrait crop and returns to an unfiltered ordinary card",
     "Creation preview inspection retains printing through reference navigation and clears it afterward",
+    "Original creation previews ignore borrowed skills, live fields, illusions and board muting",
+    "Create has a concise two-sentence original-version explanation in both languages",
     "Copied names translate and copied-card guesses accept Chinese question-mark names",
     "Nue borrowed-ability details translate in Chinese and preserve the English source when switching back",
     "The real creation chooser prints every candidate and its inspected image without creating extra cards",

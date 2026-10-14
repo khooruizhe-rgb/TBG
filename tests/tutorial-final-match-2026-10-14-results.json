@@ -684,6 +684,6 @@
       "opponentPoints": 0
     }
   ],
-  "rulesVersion": "2026-10-14-guided-final-match-v11",
+  "rulesVersion": "2026-10-14-original-creation-blueprints-v12",
   "scope": "Real engine and turn-followup walkthroughs plus controlled tutorial DOM lifecycle; browser pixels are not verified."
 }
