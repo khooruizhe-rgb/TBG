@@ -194,6 +194,26 @@ test('Create has a concise two-sentence original-version explanation in both lan
   A.setLanguage('zh-CN');const zh=A.translateGameText(en);assert.match(zh,/原版/);assert.match(zh,/代价加 I/);assert.equal((zh.match(/。/g)||[]).length,2);
   A.setLanguage('en');assert.equal(A.translateGameText(en),en);
 });
+test('Story chapters leave locked card descriptions and skill titles empty without changing printed definitions',()=>{
+  const definition=A.CARD.sdm_remilia.desc;match.cardAbilityEnabled=A.Game.prototype.cardAbilityEnabled;
+  try{
+    match.storyMatch={skillFactions:[]};
+    for(const language of ['en','zh-CN'])for(const id of ['sdm_remilia','sdm_sakuya','hourai_mokou','sage_kasen']){
+      A.setLanguage(language);A.openCardDetails(id);assert.equal(el('card-detail-description').innerHTML,'');assert.equal(el('card-detail-ability').textContent,'');assert(el('card-detail-ability').hidden);
+      assert.equal(A.dynamicCardDescription(id,true),'');
+    }
+    match.storyMatch.skillFactions=['sdm'];A.openCardDetails('sdm_remilia');assert(!el('card-detail-ability').hidden);assert(el('card-detail-description').innerHTML);
+    A.openCardDetails('hourai_mokou');assert.equal(el('card-detail-description').innerHTML,'');assert(el('card-detail-ability').hidden);
+  }finally{delete match.storyMatch;delete match.cardAbilityEnabled;A.closeCardDetails();}
+  assert.equal(A.CARD.sdm_remilia.desc,definition);A.openCardDetails('hourai_mokou');assert(!el('card-detail-ability').hidden);assert(el('card-detail-description').innerHTML);A.closeCardDetails();
+});
+test('Story chapter titles, objectives and result controls translate together',()=>{
+  A.setLanguage('zh-CN');
+  for(const text of ['Story Mode','Chapter 1 · The first table','Chapter 2 · Scarlet Devil Mansion','Start chapter','Chapters','Next chapter','Claim Scarlet Devil Mansion','Remilia: hold three Mansion cards after her ability','Flandre: discard an opponent hand card','All objectives complete. Chapter cleared.']){
+    const translated=A.translateGameText(text);assert.notEqual(translated,text);assert.match(translated,/[\u4e00-\u9fff]/);
+  }
+  A.setLanguage('en');assert.equal(A.translateGameText('Story Mode'),'Story Mode');
+});
 test('Copied names translate and copied-card guesses accept Chinese question-mark names',()=>{
   A.setLanguage('zh-CN');assert.equal(A.translateGameText(A.CARD.mtn_sanae.name+'?'),'东风谷早苗?');
   assert.equal(A.canonicalCardName('东风谷早苗？'),A.CARD.mtn_sanae.name+'?');assert.equal(A.canonicalCardName(A.CARD.mtn_sanae.name+'?'),A.CARD.mtn_sanae.name+'?');

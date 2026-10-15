@@ -9,7 +9,7 @@ class Node{
 }
 const nodes=new Map(),el=id=>{if(!nodes.has(id))nodes.set(id,new Node());return nodes.get(id);};
 const ctx=vm.createContext({console,setTimeout,clearTimeout,self:{},assert,el,
-  document:{activeElement:new Node(),body:new Node(),querySelectorAll:()=>[]},window:{scrollTo(){}},
+  document:{activeElement:new Node(),body:new Node(),querySelectorAll:()=>[],addEventListener(){}},window:{scrollTo(){}},
   setRuleText:(node,text)=>node.textContent=text,ruleTextHtml:text=>text,closeAITestDashboard(){},updateAITestControls(){},queueMobileViewport(){},waitForVisualEffects:async()=>true});
 vm.runInContext(vm.runInContext('buildAIEvaluationWorkerSource(html)',builder),ctx);
 const tutorial=html.slice(html.indexOf('/* Guided practice uses'),html.indexOf('/* CSS lays out the phone table'));

@@ -1,6 +1,6 @@
 {
   "status": "pass",
-  "count": 29,
+  "count": 31,
   "checks": [
     "AI test hand follows the acting seat and decree, remains inspectable and cannot be manually played",
     "Hand flight anchors track the visible AI while other players retain their seat anchors",
@@ -16,6 +16,8 @@
     "Creation preview inspection retains printing through reference navigation and clears it afterward",
     "Original creation previews ignore borrowed skills, live fields, illusions and board muting",
     "Create has a concise two-sentence original-version explanation in both languages",
+    "Story chapters leave locked card descriptions and skill titles empty without changing printed definitions",
+    "Story chapter titles, objectives and result controls translate together",
     "Copied names translate and copied-card guesses accept Chinese question-mark names",
     "Nue borrowed-ability details translate in Chinese and preserve the English source when switching back",
     "The real creation chooser prints every candidate and its inspected image without creating extra cards",

@@ -34,7 +34,8 @@ var presentationWaiters=new Set(),sanaeArrivalUntil=new Map(),mokouArrivalUntil=
 var ruleTextSources=new WeakMap();
 function clearRinnosukeBubble(){clearTimeout(rinnosukeOpeningTimer);rinnosukeOpeningTimer=null;}
 `,context);
-for(const name of ['closeTitleMemoryGame','closeDebugControls','cancelByakurenPeek','finishTitleCardDrag','clearTableCardSlides','clearTutorialPractice','clearHandDragPhysics','clearHandPlacementArrivals','closeMobileJournal','clearCrownBackdrop','clearMindEffects','releaseRectPointer','removeYuukaBloom','clearExpansionEffects','closeCardDetails'])context[name]=()=>{};
+for(const name of ['closeTitleMemoryGame','closeDebugControls','cancelByakurenPeek','finishTitleCardDrag','clearTableCardSlides','clearTutorialPractice','clearStoryMatch','clearHandDragPhysics','clearHandPlacementArrivals','closeMobileJournal','clearCrownBackdrop','clearMindEffects','releaseRectPointer','removeYuukaBloom','clearExpansionEffects','closeCardDetails'])context[name]=()=>{};
+context.isStoryMatch=()=>false;
 vm.runInContext(html.slice(html.indexOf('function pruneRuleTextSources()'),html.indexOf('\nfunction canonicalCardName')),context);
 vm.runInContext(html.slice(html.indexOf('let announcedGameResult='),html.indexOf('/* generic UI choosers')),context);
 vm.runInContext(html.slice(html.indexOf('/* Completed-game statistics'),html.indexOf('/* AI evaluation engine start */')),context);

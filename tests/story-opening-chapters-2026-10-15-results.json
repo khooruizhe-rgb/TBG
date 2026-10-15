@@ -1,0 +1,1072 @@
+{
+  "status": "pass",
+  "count": 230,
+  "checks": [
+    "The prototype contains two chapters and the four core Mansion cards",
+    "The chapter keeps a randomized first actor, two six-card hands and a basic table: 1/0",
+    "A chapter uses unique real cards with conserved inventory: 1/0",
+    "The mentor alone knows the opening player hand: 1/0",
+    "The chapter keeps a randomized first actor, two six-card hands and a basic table: 1/1",
+    "A chapter uses unique real cards with conserved inventory: 1/1",
+    "The mentor alone knows the opening player hand: 1/1",
+    "The chapter keeps a randomized first actor, two six-card hands and a basic table: 2/0",
+    "A chapter uses unique real cards with conserved inventory: 2/0",
+    "The mentor alone knows the opening player hand: 2/0",
+    "The chapter keeps a randomized first actor, two six-card hands and a basic table: 2/1",
+    "A chapter uses unique real cards with conserved inventory: 2/1",
+    "The mentor alone knows the opening player hand: 2/1",
+    "Chapter one suppresses every active and passive ability: sdm_remilia",
+    "Chapter one suppresses every active and passive ability: sdm_flandre",
+    "Chapter one suppresses every active and passive ability: sdm_patchouli",
+    "Chapter one suppresses every active and passive ability: sdm_sakuya",
+    "Chapter one suppresses every active and passive ability: haku_yuyuko",
+    "Chapter one suppresses every active and passive ability: haku_youmu",
+    "Chapter one suppresses every active and passive ability: hourai_kaguya",
+    "Chapter one suppresses every active and passive ability: hourai_eirin",
+    "Chapter one suppresses every active and passive ability: hourai_reisen",
+    "Chapter one suppresses every active and passive ability: hourai_mokou",
+    "Chapter one suppresses every active and passive ability: mtn_kanako",
+    "Chapter one suppresses every active and passive ability: mtn_suwako",
+    "Chapter one suppresses every active and passive ability: mtn_sanae",
+    "Chapter one suppresses every active and passive ability: mtn_aya",
+    "Chapter one suppresses every active and passive ability: palace_satori",
+    "Chapter one suppresses every active and passive ability: palace_rin",
+    "Chapter one suppresses every active and passive ability: palace_utsuho",
+    "Chapter one suppresses every active and passive ability: palace_koishi",
+    "Chapter one suppresses every active and passive ability: sage_yukari",
+    "Chapter one suppresses every active and passive ability: sage_kasen",
+    "Chapter one suppresses every active and passive ability: sage_matara",
+    "Chapter one suppresses every active and passive ability: sage_ran",
+    "Chapter one suppresses every active and passive ability: reimu",
+    "Chapter one suppresses every active and passive ability: marisa",
+    "Chapter one suppresses every active and passive ability: yuuka",
+    "Chapter one suppresses every active and passive ability: medicine",
+    "Chapter one suppresses every active and passive ability: hell_hecatia",
+    "Chapter one suppresses every active and passive ability: hell_clownpiece",
+    "Chapter one suppresses every active and passive ability: hell_eiki",
+    "Chapter one suppresses every active and passive ability: hell_komachi",
+    "Chapter one suppresses every active and passive ability: heaven_tenshi",
+    "Chapter one suppresses every active and passive ability: heaven_iku",
+    "Chapter one suppresses every active and passive ability: temple_byakuren",
+    "Chapter one suppresses every active and passive ability: temple_shou",
+    "Chapter one suppresses every active and passive ability: temple_nue",
+    "Chapter one suppresses every active and passive ability: temple_murasa",
+    "Chapter one suppresses every active and passive ability: temple_ichirin",
+    "Chapter one suppresses every active and passive ability: sdm_meiling",
+    "Chapter one suppresses every active and passive ability: hourai_tewi",
+    "Chapter one suppresses every active and passive ability: mtn_nitori",
+    "Chapter one suppresses every active and passive ability: palace_yuugi",
+    "Chapter one suppresses every active and passive ability: sage_mai_satono",
+    "Chapter one suppresses every active and passive ability: hell_kutaka",
+    "No Kanako, Eirin, Kasen or Hecatia passive survives chapter one",
+    "Override and wasteland permissions are also disabled",
+    "Chapter two unlocks only the Mansion faction",
+    "Actual Remilia resolution gathers the other three Mansion cards and records the goal",
+    "Remilia transfers real cards instead of generating substitutes",
+    "Remilia ending with fewer than three Mansion cards does not satisfy the goal",
+    "Merely holding three or more Mansion cards does not imply using Remilia",
+    "Flandre requires the player to discard an opponent hand card: 0/0",
+    "Flandre requires the player to discard an opponent hand card: 0/1",
+    "Flandre requires the player to discard an opponent hand card: 1/0",
+    "Flandre requires the player to discard an opponent hand card: 1/1",
+    "Cancelling Flandre selection leaves its objective incomplete",
+    "The opponent claiming Mansion does not satisfy the player objective",
+    "The player must really claim the connected four-card Mansion faction",
+    "AI Mansion cards wait three complete own turns, including turn 0",
+    "AI Mansion cards wait three complete own turns, including turn 1",
+    "AI Mansion cards wait three complete own turns, including turn 2",
+    "AI Mansion cards wait three complete own turns, including turn 3",
+    "AI Mansion cards wait three complete own turns, including turn 4",
+    "Reacquiring a Mansion card resets its three-turn holding time",
+    "Before every Mansion card has appeared, AI prefers a legal shared draw over playing mature Mansion cards",
+    "When both hands are full, AI spends a safe non-Mansion card before a Mansion card",
+    "Once all core Mansion cards have appeared, the opponent resumes placing cards",
+    "The delay condition records past placements even after faction collection empties the board",
+    "Story planning does not mutate state, statistics or randomness",
+    "A real full story match clears every objective: 1/0/0",
+    "The walkthrough conserves all original cards: 1/0/0",
+    "A real full story match clears every objective: 1/0/1",
+    "The walkthrough conserves all original cards: 1/0/1",
+    "A real full story match clears every objective: 1/0/2",
+    "The walkthrough conserves all original cards: 1/0/2",
+    "A real full story match clears every objective: 1/0/3",
+    "The walkthrough conserves all original cards: 1/0/3",
+    "A real full story match clears every objective: 1/0/4",
+    "The walkthrough conserves all original cards: 1/0/4",
+    "A real full story match clears every objective: 1/0/5",
+    "The walkthrough conserves all original cards: 1/0/5",
+    "A real full story match clears every objective: 1/0/6",
+    "The walkthrough conserves all original cards: 1/0/6",
+    "A real full story match clears every objective: 1/0/7",
+    "The walkthrough conserves all original cards: 1/0/7",
+    "A real full story match clears every objective: 1/0/8",
+    "The walkthrough conserves all original cards: 1/0/8",
+    "A real full story match clears every objective: 1/0/9",
+    "The walkthrough conserves all original cards: 1/0/9",
+    "A real full story match clears every objective: 1/0/10",
+    "The walkthrough conserves all original cards: 1/0/10",
+    "A real full story match clears every objective: 1/0/11",
+    "The walkthrough conserves all original cards: 1/0/11",
+    "A real full story match clears every objective: 1/0/12",
+    "The walkthrough conserves all original cards: 1/0/12",
+    "A real full story match clears every objective: 1/0/13",
+    "The walkthrough conserves all original cards: 1/0/13",
+    "A real full story match clears every objective: 1/0/14",
+    "The walkthrough conserves all original cards: 1/0/14",
+    "A real full story match clears every objective: 1/0/15",
+    "The walkthrough conserves all original cards: 1/0/15",
+    "A real full story match clears every objective: 1/1/0",
+    "The walkthrough conserves all original cards: 1/1/0",
+    "A real full story match clears every objective: 1/1/1",
+    "The walkthrough conserves all original cards: 1/1/1",
+    "A real full story match clears every objective: 1/1/2",
+    "The walkthrough conserves all original cards: 1/1/2",
+    "A real full story match clears every objective: 1/1/3",
+    "The walkthrough conserves all original cards: 1/1/3",
+    "A real full story match clears every objective: 1/1/4",
+    "The walkthrough conserves all original cards: 1/1/4",
+    "A real full story match clears every objective: 1/1/5",
+    "The walkthrough conserves all original cards: 1/1/5",
+    "A real full story match clears every objective: 1/1/6",
+    "The walkthrough conserves all original cards: 1/1/6",
+    "A real full story match clears every objective: 1/1/7",
+    "The walkthrough conserves all original cards: 1/1/7",
+    "A real full story match clears every objective: 1/1/8",
+    "The walkthrough conserves all original cards: 1/1/8",
+    "A real full story match clears every objective: 1/1/9",
+    "The walkthrough conserves all original cards: 1/1/9",
+    "A real full story match clears every objective: 1/1/10",
+    "The walkthrough conserves all original cards: 1/1/10",
+    "A real full story match clears every objective: 1/1/11",
+    "The walkthrough conserves all original cards: 1/1/11",
+    "A real full story match clears every objective: 1/1/12",
+    "The walkthrough conserves all original cards: 1/1/12",
+    "A real full story match clears every objective: 1/1/13",
+    "The walkthrough conserves all original cards: 1/1/13",
+    "A real full story match clears every objective: 1/1/14",
+    "The walkthrough conserves all original cards: 1/1/14",
+    "A real full story match clears every objective: 1/1/15",
+    "The walkthrough conserves all original cards: 1/1/15",
+    "A real full story match clears every objective: 2/0/0",
+    "The walkthrough conserves all original cards: 2/0/0",
+    "A real full story match clears every objective: 2/0/1",
+    "The walkthrough conserves all original cards: 2/0/1",
+    "A real full story match clears every objective: 2/0/2",
+    "The walkthrough conserves all original cards: 2/0/2",
+    "A real full story match clears every objective: 2/0/3",
+    "The walkthrough conserves all original cards: 2/0/3",
+    "A real full story match clears every objective: 2/0/4",
+    "The walkthrough conserves all original cards: 2/0/4",
+    "A real full story match clears every objective: 2/0/5",
+    "The walkthrough conserves all original cards: 2/0/5",
+    "A real full story match clears every objective: 2/0/6",
+    "The walkthrough conserves all original cards: 2/0/6",
+    "A real full story match clears every objective: 2/0/7",
+    "The walkthrough conserves all original cards: 2/0/7",
+    "A real full story match clears every objective: 2/0/8",
+    "The walkthrough conserves all original cards: 2/0/8",
+    "A real full story match clears every objective: 2/0/9",
+    "The walkthrough conserves all original cards: 2/0/9",
+    "A real full story match clears every objective: 2/0/10",
+    "The walkthrough conserves all original cards: 2/0/10",
+    "A real full story match clears every objective: 2/0/11",
+    "The walkthrough conserves all original cards: 2/0/11",
+    "A real full story match clears every objective: 2/0/12",
+    "The walkthrough conserves all original cards: 2/0/12",
+    "A real full story match clears every objective: 2/0/13",
+    "The walkthrough conserves all original cards: 2/0/13",
+    "A real full story match clears every objective: 2/0/14",
+    "The walkthrough conserves all original cards: 2/0/14",
+    "A real full story match clears every objective: 2/0/15",
+    "The walkthrough conserves all original cards: 2/0/15",
+    "A real full story match clears every objective: 2/1/0",
+    "The walkthrough conserves all original cards: 2/1/0",
+    "A real full story match clears every objective: 2/1/1",
+    "The walkthrough conserves all original cards: 2/1/1",
+    "A real full story match clears every objective: 2/1/2",
+    "The walkthrough conserves all original cards: 2/1/2",
+    "A real full story match clears every objective: 2/1/3",
+    "The walkthrough conserves all original cards: 2/1/3",
+    "A real full story match clears every objective: 2/1/4",
+    "The walkthrough conserves all original cards: 2/1/4",
+    "A real full story match clears every objective: 2/1/5",
+    "The walkthrough conserves all original cards: 2/1/5",
+    "A real full story match clears every objective: 2/1/6",
+    "The walkthrough conserves all original cards: 2/1/6",
+    "A real full story match clears every objective: 2/1/7",
+    "The walkthrough conserves all original cards: 2/1/7",
+    "A real full story match clears every objective: 2/1/8",
+    "The walkthrough conserves all original cards: 2/1/8",
+    "A real full story match clears every objective: 2/1/9",
+    "The walkthrough conserves all original cards: 2/1/9",
+    "A real full story match clears every objective: 2/1/10",
+    "The walkthrough conserves all original cards: 2/1/10",
+    "A real full story match clears every objective: 2/1/11",
+    "The walkthrough conserves all original cards: 2/1/11",
+    "A real full story match clears every objective: 2/1/12",
+    "The walkthrough conserves all original cards: 2/1/12",
+    "A real full story match clears every objective: 2/1/13",
+    "The walkthrough conserves all original cards: 2/1/13",
+    "A real full story match clears every objective: 2/1/14",
+    "The walkthrough conserves all original cards: 2/1/14",
+    "A real full story match clears every objective: 2/1/15",
+    "The walkthrough conserves all original cards: 2/1/15",
+    "A victory without extra goals cannot clear chapter two",
+    "Each extra objective is required: sdm",
+    "Each extra objective is required: remilia",
+    "Each extra objective is required: flandre",
+    "All extra goals without victory are insufficient",
+    "Chapter one requires victory without impossible ability objectives",
+    "Story chapters do not mutate global printed card definitions",
+    "The menu offers both replayable prototype chapters",
+    "Chapter two shows all four active core cards before a match begins",
+    "Start chapter launches one real match after the card introduction",
+    "Story matches retain normal placement and shared drawing with the shop omitted",
+    "Winning with missing goals offers Retry",
+    "A true clear records progress and enables chapter navigation",
+    "Finishing chapter two retires its match and opens chapter selection",
+    "Clearing chapter one leads to the Mansion skill introduction",
+    "Retry resets objectives, holding ages and the entire old match",
+    "Story retry resolves the retired idle human turn and releases its controls",
+    "N retries the current story chapter instead of starting an ordinary match",
+    "N after a true story clear follows chapter navigation",
+    "Returning to ordinary play restores every normal ability",
+    "Ordinary result controls retain their normal behavior"
+  ],
+  "walkthroughs": [
+    {
+      "chapter": 1,
+      "actor": 0,
+      "opening": 0,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 0,
+      "opening": 1,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 0,
+      "opening": 2,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 0,
+      "opening": 3,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 0,
+      "opening": 4,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 0,
+      "opening": 5,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 0,
+      "opening": 6,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 0,
+      "opening": 7,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 0,
+      "opening": 8,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 0,
+      "opening": 9,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 0,
+      "opening": 10,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 0,
+      "opening": 11,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 0,
+      "opening": 12,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 0,
+      "opening": 13,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 0,
+      "opening": 14,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 0,
+      "opening": 15,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 1,
+      "opening": 0,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 1,
+      "opening": 1,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 1,
+      "opening": 2,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 1,
+      "opening": 3,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 1,
+      "opening": 4,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 1,
+      "opening": 5,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 1,
+      "opening": 6,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 1,
+      "opening": 7,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 1,
+      "opening": 8,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 1,
+      "opening": 9,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 1,
+      "opening": 10,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 1,
+      "opening": 11,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 1,
+      "opening": 12,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 1,
+      "opening": 13,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 1,
+      "opening": 14,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 1,
+      "actor": 1,
+      "opening": 15,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 0,
+      "progress": {
+        "sdm": true,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 0,
+      "opening": 0,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 0,
+      "opening": 1,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 0,
+      "opening": 2,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 0,
+      "opening": 3,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 0,
+      "opening": 4,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 0,
+      "opening": 5,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 0,
+      "opening": 6,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 0,
+      "opening": 7,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 0,
+      "opening": 8,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 0,
+      "opening": 9,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 0,
+      "opening": 10,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 0,
+      "opening": 11,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 0,
+      "opening": 12,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 0,
+      "opening": 13,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 0,
+      "opening": 14,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 0,
+      "opening": 15,
+      "turns": 11,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 1,
+      "opening": 0,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 1,
+      "opening": 1,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 1,
+      "opening": 2,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 1,
+      "opening": 3,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 1,
+      "opening": 4,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 1,
+      "opening": 5,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 1,
+      "opening": 6,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 1,
+      "opening": 7,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 1,
+      "opening": 8,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 1,
+      "opening": 9,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 1,
+      "opening": 10,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 1,
+      "opening": 11,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 1,
+      "opening": 12,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 1,
+      "opening": 13,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 1,
+      "opening": 14,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    },
+    {
+      "chapter": 2,
+      "actor": 1,
+      "opening": 15,
+      "turns": 12,
+      "playerPoints": 8,
+      "opponentPoints": 1,
+      "progress": {
+        "sdm": true,
+        "remilia": true,
+        "flandre": true
+      }
+    }
+  ],
+  "rulesVersion": "2026-10-15-story-opening-chapters-v13",
+  "scope": "Shipped story rules and AI, complete real-rule walkthroughs and controlled chapter UI lifecycle; no browser pixel verification"
+}
