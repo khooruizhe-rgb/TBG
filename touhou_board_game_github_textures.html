@@ -2727,12 +2727,12 @@ body:not(:has(#game.active)):not(.title-memory-active) #app{position:relative;z-
 #story-card-grid .story-ability-card .cname{font-size:inherit;}
 .story-ability-card>.story-old-face{z-index:2;animation:storyCardRenew 1350ms ease-in-out var(--story-refresh-delay,0ms) both;}
 .story-ability-card>.story-refresh-scan{position:absolute;left:0;right:0;top:0;height:3px;z-index:4;background:#fff9cb;box-shadow:0 0 12px 5px #ffe6a1,0 0 28px #ffe297;pointer-events:none;animation:storyCardScan 1350ms ease-in-out var(--story-refresh-delay,0ms) both;}
-.story-ability-card>.story-card-glow{position:absolute;inset:-4px;border:2px solid #ffdb8a;border-radius:15px;box-shadow:0 0 16px #f4bc6388,inset 0 0 9px #ffdc8a77;pointer-events:none;animation:storyCardInvite 1800ms ease-in-out infinite;}
+.story-ability-card>.story-card-glow{position:absolute;inset:-5px;z-index:5;border:3px solid #73ecff;border-radius:16px;box-shadow:0 0 0 1px #19749bbf,0 0 18px 6px #18bce4b3,0 0 34px 10px #319be680,inset 0 0 12px #8df3ffb3;pointer-events:none;animation:storyCardInvite 1800ms ease-in-out infinite;}
 .story-card-seen>.story-card-glow{animation:none;opacity:.2;}
 .story-ability-card.table-card-dragging>.story-card-glow{animation-play-state:paused;}
 @keyframes storyCardRenew{from{clip-path:inset(0 0 0 0)}to{clip-path:inset(100% 0 0 0)}}
 @keyframes storyCardScan{0%{top:0;opacity:0}8%{opacity:1}92%{opacity:1}100%{top:100%;opacity:0}}
-@keyframes storyCardInvite{0%,100%{opacity:.35}50%{opacity:1}}
+@keyframes storyCardInvite{0%,100%{opacity:.65}50%{opacity:1}}
 @media(prefers-reduced-motion:reduce){.story-ability-card>.story-old-face,.story-ability-card>.story-refresh-scan{display:none;animation:none}.story-ability-card>.story-card-glow{animation:none;opacity:.6}.story-card-seen>.story-card-glow{opacity:.2}}
 
 #log .news-masthead small{display:block;margin-top:3px;font-size:.58em;letter-spacing:.12em}
@@ -5568,7 +5568,7 @@ class Game {
 }
 
 /* 2026-10-12: creation, private newspapers and instance ability changes. */
-const REWORK_RULES_VERSION='2026-10-15-random-learning-renewal-v14';
+const REWORK_RULES_VERSION='2026-10-15-guided-opening-scarlet-reserve-v15';
 Game.prototype.canCreateWithMatara=function(){return this.mainBoardCells().length>=4;};
 let nextCreatedCard=0,nextHiddenChoice=0;
 const COPY_PASSIVES=new Set(['sage_yukari','sage_kasen','mtn_nitori','hell_hecatia','palace_koishi']);
@@ -5862,6 +5862,12 @@ function dealLearningOpening(match,{scarletOpening=false,shop=false}={}){
     }
   }
   const hands=[shuffle(hand),...match.players.slice(1).map(()=>deck.splice(0,6))];
+  if(scarletOpening){
+    // takeFromDrawPile pops the end: keep every undealt core Mansion card among the next five draws.
+    const core=new Set(storyScarletCards()),reserved=deck.filter(id=>core.has(id)),rest=deck.filter(id=>!core.has(id));
+    const top=rest.splice(Math.max(0,rest.length-(5-reserved.length)));
+    deck.splice(0,deck.length,...rest,...shuffle([...top,...reserved]));
+  }
   match.players.forEach((player,index)=>{player.hand=hands[index];player.discard=[];});
   match.drawPile=deck;
   match.shopCards=shop?['shop_rinnosuke',...shuffle(CARDS.filter(card=>card.shopExpansion).map(card=>card.id)).slice(0,3)]:[];
@@ -7719,7 +7725,7 @@ const CARD_ABILITY_NAMES = {
   sdm_remilia: 'Fate Manipulation',
   sdm_flandre: '“Eye” Destruction',
   sdm_patchouli: 'Magical Gathering',
-  sdm_sakuya: 'Zawarudo',
+  sdm_sakuya: 'Zawarudo!',
   haku_yuyuko: 'Surrounding Death',
   haku_youmu: 'First Before First',
   hourai_mokou: 'Pheonix Resurrection',
@@ -7756,7 +7762,7 @@ const CARD_ABILITY_NAMES = {
 /* ---------- Language selection: canonical rules stay language-independent. ---------- */
 let gameLanguage='en';
 try{const saved=window.localStorage?.getItem('boundary-language');if(saved==='zh-CN')gameLanguage=saved;}catch(_error){}
-const ZH_CARDS={"sdm_remilia": ["蕾米莉亚·斯卡蕾特", "命运操纵", "放置：将其他玩家手中的所有红魔馆卡牌加入你的手牌。"], "sdm_flandre": ["芙兰朵露·斯卡蕾特", "「目」之破坏", "放置：选择任意玩家的一张手牌，将其送入该玩家的弃牌堆。"], "sdm_patchouli": ["帕秋莉·诺蕾姬", "魔法风云", "放置：猜测另一名玩家手中的一张卡牌。猜对后，将该卡牌加入你的手牌。"], "sdm_sakuya": ["十六夜咲夜", "Zawarudo", "放置：获得两个额外回合，然后将你的手牌洗入抽牌堆。"], "haku_yuyuko": ["西行寺幽幽子", "幽冥缠身", "[代价 N] 放置：将 N 张随机的正交相邻卡牌送入你的弃牌堆。"], "haku_youmu": ["魂魄妖梦", "先之先", "放置：放置此卡不消耗你的回合。"], "hourai_kaguya": ["蓬莱山辉夜", "看我操作！", "放置：猜测另一名玩家手中的一张永远亭卡牌。每次猜对，你可以将该卡牌放到棋盘上并继续猜测。"], "hourai_eirin": ["八意永琳", "思兼装置", "放置：创造一张永远亭的卡牌（不能为永琳），使其获得双倍能力。此卡在棋盘上时，所有贤者卡牌的能力均被禁用。"], "hourai_reisen": ["铃仙·优昙华院·因幡", "狂气之瞳", "放置：选择另一名玩家的一张手牌。该玩家必须在下个回合放置这张卡牌。"], "hourai_mokou": ["藤原妹红", "凤凰复生", "放置：你的弃牌堆中每有一张卡牌，就抽一张牌。"], "mtn_kanako": ["八坂神奈子", "风神之神德", "此卡可以放在荒地上。此卡在棋盘上时，其他妖怪之山卡牌的放置能力发动两次。\n放置：将你手中的一张妖怪之山卡牌放到棋盘上。"], "mtn_suwako": ["洩矢诹访子", "诅咒之地", "放置：将三个棋盘格变为荒地。"], "mtn_sanae": ["东风谷早苗", "八坂之神风", "放置：抽一张牌。如果八坂神奈子在棋盘上，再抽一张牌。"], "mtn_aya": ["射命丸文", "才不是道听途说呢！", "放置：查看其他每名玩家的四张手牌，并记录于报纸中。只有你能阅读。其他玩家须将一张手牌付款给你订阅，才能观看情报。"], "palace_satori": ["古明地觉", "恐怖催眠术", "[代价 I] 放置：随机展示另一名玩家手牌中的四张卡牌，然后从其手牌中选取一张加入你的手牌。未展示的卡牌仍可选取。"], "palace_rin": ["火焰猫燐", "猫之步伐", "放置：将任意弃牌堆中的一张卡牌加入你的手牌。该卡牌的技能替换为“覆盖：放置时抽一张牌”，持续到本局结束。"], "palace_utsuho": ["灵乌路空", "核裂变", "放置：将棋盘上的一个 2×2 区域变为荒地。"], "palace_koishi": ["古明地恋", "无意识的哲学", "棋盘上恰有三张地灵殿卡牌时，此卡自动从手牌放置到棋盘。先结算行动玩家的收取，再将此卡出场后形成的阵营归其持牌人。"], "sage_yukari": ["八云紫", "境界操纵", "你可以将此卡放在另一张棋盘卡牌上，并将被覆盖的卡牌加入你的手牌。"], "sage_kasen": ["茨木华扇", "无拘无束", "收取阵营卡牌时，此卡可视为任意4卡阵营的卡牌。"], "sage_matara": ["摩多罗隐岐奈", "/op", "放置：若主棋盘上至少有四张卡牌，创造一张棋盘上的卡牌（不能为摩多罗），并将其立刻打出。"], "sage_ran": ["八云蓝", "式神召回", "放置：抽一张牌。如果八云紫在棋盘上，立即放置抽到的卡牌。"], "reimu": ["博丽灵梦", "梦想天生", "放置：将棋盘上的一张领主卡牌加入你的手牌。"], "marisa": ["雾雨魔理沙", "极限火花", "放置：将棋盘上的一张非领主卡牌送入你的弃牌堆。"], "yuuka": ["风见幽香", "花之主宰", "放置：清除一个 3×3 区域中的荒地，然后将你的手牌洗入抽牌堆并抽四张牌。"], "medicine": ["梅蒂欣·梅兰可莉", "铃兰中毒", "放置：选择一名玩家，将其两张随机手牌放回抽牌堆。"], "hell_hecatia": ["赫卡提亚·拉碧斯拉祖利", "三位一体狂想曲", "此卡计为 3 点弃牌分数。只有弃牌堆已有 3 张及以上地狱卡牌时，此卡才能进入该弃牌堆。"], "hell_clownpiece": ["克劳恩皮丝", "污秽耐受", "此卡可以放在荒地上。\n放置：清除此卡周围的荒地。"], "hell_eiki": ["四季映姬", "黑白的判决", "[代价 I] 放置：将棋盘上数量最多的阵营的所有卡牌放回抽牌堆。"], "hell_komachi": ["小野塚小町", "距离操控", "放置：将此卡与另一张棋盘卡牌交换位置。如果棋盘上有另一张地狱卡牌，此次放置不消耗你的回合。"], "heaven_tenshi": ["比那名居天子", "全卡牌的绯想天！", "[代价 II] 放置：将棋盘上的所有非天界卡牌放回抽牌堆。"], "heaven_iku": ["永江衣玖", "驾驭雷云", "[代价 III] 放置：选择一个 2×2 区域，将其中最多两张随机的非天界卡牌送入你的弃牌堆。"], "temple_byakuren": ["圣白莲", "魔界幻想", "放置：你可以按任意顺序使用每个效果一次。\n[代价 IV] 获得三个额外回合。\n[代价 III] 将另外三张棋盘卡牌放回抽牌堆，并将其所在格变为荒地。\n[代价 II] 查看抽牌堆顶的三张牌，拿取一张，并按任意顺序放回其余卡牌。\n棋盘上每有一张其他命莲寺卡牌，每个效果的代价减少一。"], "temple_shou": ["寅丸星", "光辉宝藏", "[代价 I] 放置：棋盘上每有一块荒地，就抽一张牌，然后清除所有荒地。"], "temple_nue": ["封兽鵺", "能力奇美拉", "放置：从三张随机卡牌中选择一个能力，使用它的能力。"], "temple_murasa": ["村纱水蜜", "无底漩涡", "放置：你在接下来的一个回合中不能放置卡牌或交易。选择一名玩家。该玩家在接下来的两个回合中不能放置卡牌或交易。"], "temple_ichirin": ["云居一轮", "再打一轮！", "[代价 II] 放置：将每张非命莲寺卡牌向远离此卡的方向推一格。被推出棋盘的卡牌放回抽牌堆。"], "sdm_meiling": ["红美铃", "内劲", "放置：将一张相邻卡牌向远离此卡的方向移动一格。"], "hourai_tewi": ["因幡帝", "远古骗术", "放置：向其他每名玩家的手牌中加入一张陷阱。"], "mtn_nitori": ["河城荷取", "光学迷彩", "以此卡为中心的 3×3 区域中的卡牌不能被选中。"], "palace_yuugi": ["星熊勇仪", "怪力乱神", "[代价 II] 放置：将一张正交相邻的卡牌送入你的弃牌堆。"], "sage_mai_satono": ["丁礼田舞与尔子田里乃", "驱动活力", "放置：在你的下个回合获得一个额外回合。"], "hell_kutaka": ["庭渡久侘歌", "异界的护卫", "放置：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。反之，将正交相邻的位置变为荒地。"], "shop_rinnosuke": ["森近霖之助", "香霖堂", "此卡及其周围的卡牌不能被选中、移动或使用能力。\n先选择一张手牌，再点击森近霖之助即可交易。每回合限一次，且不消耗回合。"], "trap_token": ["陷阱", "嗯……这是陷阱！", "此卡在手牌中时，不能交易、弃置或放回抽牌堆。\n放置：将另一张手牌放回抽牌堆。"]};
+const ZH_CARDS={"sdm_remilia": ["蕾米莉亚·斯卡蕾特", "命运操纵", "放置：将其他玩家手中的所有红魔馆卡牌加入你的手牌。"], "sdm_flandre": ["芙兰朵露·斯卡蕾特", "「目」之破坏", "放置：选择任意玩家的一张手牌，将其送入该玩家的弃牌堆。"], "sdm_patchouli": ["帕秋莉·诺蕾姬", "魔法风云", "放置：猜测另一名玩家手中的一张卡牌。猜对后，将该卡牌加入你的手牌。"], "sdm_sakuya": ["十六夜咲夜", "Zawarudo!", "放置：获得两个额外回合，然后将你的手牌洗入抽牌堆。"], "haku_yuyuko": ["西行寺幽幽子", "幽冥缠身", "[代价 N] 放置：将 N 张随机的正交相邻卡牌送入你的弃牌堆。"], "haku_youmu": ["魂魄妖梦", "先之先", "放置：放置此卡不消耗你的回合。"], "hourai_kaguya": ["蓬莱山辉夜", "看我操作！", "放置：猜测另一名玩家手中的一张永远亭卡牌。每次猜对，你可以将该卡牌放到棋盘上并继续猜测。"], "hourai_eirin": ["八意永琳", "思兼装置", "放置：创造一张永远亭的卡牌（不能为永琳），使其获得双倍能力。此卡在棋盘上时，所有贤者卡牌的能力均被禁用。"], "hourai_reisen": ["铃仙·优昙华院·因幡", "狂气之瞳", "放置：选择另一名玩家的一张手牌。该玩家必须在下个回合放置这张卡牌。"], "hourai_mokou": ["藤原妹红", "凤凰复生", "放置：你的弃牌堆中每有一张卡牌，就抽一张牌。"], "mtn_kanako": ["八坂神奈子", "风神之神德", "此卡可以放在荒地上。此卡在棋盘上时，其他妖怪之山卡牌的放置能力发动两次。\n放置：将你手中的一张妖怪之山卡牌放到棋盘上。"], "mtn_suwako": ["洩矢诹访子", "诅咒之地", "放置：将三个棋盘格变为荒地。"], "mtn_sanae": ["东风谷早苗", "八坂之神风", "放置：抽一张牌。如果八坂神奈子在棋盘上，再抽一张牌。"], "mtn_aya": ["射命丸文", "才不是道听途说呢！", "放置：查看其他每名玩家的四张手牌，并记录于报纸中。只有你能阅读。其他玩家须将一张手牌付款给你订阅，才能观看情报。"], "palace_satori": ["古明地觉", "恐怖催眠术", "[代价 I] 放置：随机展示另一名玩家手牌中的四张卡牌，然后从其手牌中选取一张加入你的手牌。未展示的卡牌仍可选取。"], "palace_rin": ["火焰猫燐", "猫之步伐", "放置：将任意弃牌堆中的一张卡牌加入你的手牌。该卡牌的技能替换为“覆盖：放置时抽一张牌”，持续到本局结束。"], "palace_utsuho": ["灵乌路空", "核裂变", "放置：将棋盘上的一个 2×2 区域变为荒地。"], "palace_koishi": ["古明地恋", "无意识的哲学", "棋盘上恰有三张地灵殿卡牌时，此卡自动从手牌放置到棋盘。先结算行动玩家的收取，再将此卡出场后形成的阵营归其持牌人。"], "sage_yukari": ["八云紫", "境界操纵", "你可以将此卡放在另一张棋盘卡牌上，并将被覆盖的卡牌加入你的手牌。"], "sage_kasen": ["茨木华扇", "无拘无束", "收取阵营卡牌时，此卡可视为任意4卡阵营的卡牌。"], "sage_matara": ["摩多罗隐岐奈", "/op", "放置：若主棋盘上至少有四张卡牌，创造一张棋盘上的卡牌（不能为摩多罗），并将其立刻打出。"], "sage_ran": ["八云蓝", "式神召回", "放置：抽一张牌。如果八云紫在棋盘上，立即放置抽到的卡牌。"], "reimu": ["博丽灵梦", "梦想天生", "放置：将棋盘上的一张领主卡牌加入你的手牌。"], "marisa": ["雾雨魔理沙", "极限火花", "放置：将棋盘上的一张非领主卡牌送入你的弃牌堆。"], "yuuka": ["风见幽香", "花之主宰", "放置：清除一个 3×3 区域中的荒地，然后将你的手牌洗入抽牌堆并抽四张牌。"], "medicine": ["梅蒂欣·梅兰可莉", "铃兰中毒", "放置：选择一名玩家，将其两张随机手牌放回抽牌堆。"], "hell_hecatia": ["赫卡提亚·拉碧斯拉祖利", "三位一体狂想曲", "此卡计为 3 点弃牌分数。只有弃牌堆已有 3 张及以上地狱卡牌时，此卡才能进入该弃牌堆。"], "hell_clownpiece": ["克劳恩皮丝", "污秽耐受", "此卡可以放在荒地上。\n放置：清除此卡周围的荒地。"], "hell_eiki": ["四季映姬", "黑白的判决", "[代价 I] 放置：将棋盘上数量最多的阵营的所有卡牌放回抽牌堆。"], "hell_komachi": ["小野塚小町", "距离操控", "放置：将此卡与另一张棋盘卡牌交换位置。如果棋盘上有另一张地狱卡牌，此次放置不消耗你的回合。"], "heaven_tenshi": ["比那名居天子", "全卡牌的绯想天！", "[代价 II] 放置：将棋盘上的所有非天界卡牌放回抽牌堆。"], "heaven_iku": ["永江衣玖", "驾驭雷云", "[代价 III] 放置：选择一个 2×2 区域，将其中最多两张随机的非天界卡牌送入你的弃牌堆。"], "temple_byakuren": ["圣白莲", "魔界幻想", "放置：你可以按任意顺序使用每个效果一次。\n[代价 IV] 获得三个额外回合。\n[代价 III] 将另外三张棋盘卡牌放回抽牌堆，并将其所在格变为荒地。\n[代价 II] 查看抽牌堆顶的三张牌，拿取一张，并按任意顺序放回其余卡牌。\n棋盘上每有一张其他命莲寺卡牌，每个效果的代价减少一。"], "temple_shou": ["寅丸星", "光辉宝藏", "[代价 I] 放置：棋盘上每有一块荒地，就抽一张牌，然后清除所有荒地。"], "temple_nue": ["封兽鵺", "能力奇美拉", "放置：从三张随机卡牌中选择一个能力，使用它的能力。"], "temple_murasa": ["村纱水蜜", "无底漩涡", "放置：你在接下来的一个回合中不能放置卡牌或交易。选择一名玩家。该玩家在接下来的两个回合中不能放置卡牌或交易。"], "temple_ichirin": ["云居一轮", "再打一轮！", "[代价 II] 放置：将每张非命莲寺卡牌向远离此卡的方向推一格。被推出棋盘的卡牌放回抽牌堆。"], "sdm_meiling": ["红美铃", "内劲", "放置：将一张相邻卡牌向远离此卡的方向移动一格。"], "hourai_tewi": ["因幡帝", "远古骗术", "放置：向其他每名玩家的手牌中加入一张陷阱。"], "mtn_nitori": ["河城荷取", "光学迷彩", "以此卡为中心的 3×3 区域中的卡牌不能被选中。"], "palace_yuugi": ["星熊勇仪", "怪力乱神", "[代价 II] 放置：将一张正交相邻的卡牌送入你的弃牌堆。"], "sage_mai_satono": ["丁礼田舞与尔子田里乃", "驱动活力", "放置：在你的下个回合获得一个额外回合。"], "hell_kutaka": ["庭渡久侘歌", "异界的护卫", "放置：如果此卡位于荒地上，将抽牌堆中的一张地狱卡牌加入你的手牌。反之，将正交相邻的位置变为荒地。"], "shop_rinnosuke": ["森近霖之助", "香霖堂", "此卡及其周围的卡牌不能被选中、移动或使用能力。\n先选择一张手牌，再点击森近霖之助即可交易。每回合限一次，且不消耗回合。"], "trap_token": ["陷阱", "嗯……这是陷阱！", "此卡在手牌中时，不能交易、弃置或放回抽牌堆。\n放置：将另一张手牌放回抽牌堆。"]};
 const ZH_FACTIONS={"sdm":"红魔馆","hakugyokurou":"白玉楼","hourai":"永远亭","mountain":"妖怪之山","palace":"地灵殿","sage":"贤者","hakurei":"博丽","sunflower":"太阳花田","hell":"地狱","heaven":"天界","temple":"命莲寺","kourindou":"香霖堂","token":"衍生物"};
 const ZH_TEXT={
   "Boundary of Fates": "命运的境界",
@@ -7969,7 +7975,8 @@ const ZH_TEXT={
   "Magical Gathering": "魔法风云",
   "Placed: Guess a card in another player’s hand. If your guess is correct, take that card into your hand.": "放置：猜测另一名玩家手中的一张卡牌。猜对后，将该卡牌加入你的手牌。",
   "Izayoi Sakuya": "十六夜咲夜",
-  "Zawarudo": "Zawarudo",
+  "Zawarudo": "Zawarudo!",
+  "Zawarudo!": "Zawarudo!",
   "Placed: Take two extra turns, then shuffle your hand into the draw pile.": "放置：获得两个额外回合，然后将你的手牌洗入抽牌堆。",
   "Yuyuko Saigyouji": "西行寺幽幽子",
   "Surrounding Death": "幽冥缠身",
@@ -12596,8 +12603,7 @@ function aiLearningFourFaction(match,lesson){
   }).filter(option=>option.value>=0).sort((a,b)=>b.value-a.value)[0]?.faction||null;
 }
 function aiTutorialWastelandCell(match,cells){
-  const focus=aiLearningFourFaction(match,match.tutorialLesson)||'mountain';
-  const members=match.factionCells(focus);
+  const members=match.factionCells('mountain');
   const distance=cell=>members.length?Math.min(...members.map(member=>Math.abs(member.r-cell.r)+Math.abs(member.c-cell.c))):0;
   return cells.filter(cell=>inBounds(cell.r,cell.c)).slice().sort((a,b)=>distance(b)-distance(a)||b.r-a.r||b.c-a.c)[0]||null;
 }
@@ -12606,21 +12612,20 @@ function aiTutorialPlacement(p,id,cells){
   const known=aiTutorialKnownHand(game),faction=CARD[id]?.faction,ability=game.abilityId(id);
   const protectedFactions=new Set([...known,...lesson.openingHand].map(card=>CARD[card]?.faction));
   const mountainCount=game.factionCells('mountain').length;
-  const focus=aiLearningFourFaction(game,lesson);
-  if(!lesson.progress.four && faction===focus && game.factionCells(focus).length>=3)return null;
+  if(!lesson.progress.four && faction==='mountain' && mountainCount>=3)return null;
   if(ability==='mtn_kanako' && mountainCount>=2 && game.players[p].hand.some(card=>card!==id&&CARD[card]?.faction==='mountain'))return null;
   let best=null;
   for(const cell of cells.filter(at=>inBounds(at.r,at.c)&&!game.cardAt(at.r,at.c)&&!game.isProtected(at.r,at.c))){
     const pick=aiWithPlacement(id,cell,()=>{
       const claims=aiCurrentClaims(p),points=claims.reduce((n,claim)=>n+claim.points,0);
       if(game.winCount(game.players[p])+points>3 || claims.some(claim=>protectedFactions.has(claim.faction)
-        || !lesson.progress.four&&claim.faction===focus))return null;
+        || !lesson.progress.four&&claim.faction==='mountain'))return null;
       const members=game.factionCells(faction),others=members.filter(at=>at.r!==cell.r || at.c!==cell.c);
       const neighbors=DIRS4.filter(([dr,dc])=>game.boardMatchesFaction(cell.r+dr,cell.c+dc,faction)).length;
       const distance=others.length?Math.min(...others.map(at=>Math.abs(at.r-cell.r)+Math.abs(at.c-cell.c))):0;
       const liberties=DIRS4.filter(([dr,dc])=>inBounds(cell.r+dr,cell.c+dc)&&!game.cardAt(cell.r+dr,cell.c+dc)&&!game.wastelandAt(cell.r+dr,cell.c+dc)).length;
-      const supportsFour=!lesson.progress.four && faction===focus && known.some(card=>game.cardMatchesFaction(card,focus));
-      const safeSkillTarget=!lesson.progress.ability && !CARD[id]?.crown && faction!==focus;
+      const supportsFour=!lesson.progress.four && faction==='mountain' && known.some(card=>CARD[card]?.faction==='mountain');
+      const safeSkillTarget=!lesson.progress.ability && !CARD[id]?.crown && faction!=='mountain';
       const value=(supportsFour?1000+(ability==='mtn_kanako'?25:0):safeSkillTarget?180:10)
         +(game.isConnected(members)?40:0)+neighbors*12-distance*5+liberties+points*8;
       return {cell,value};
@@ -12632,8 +12637,7 @@ function aiTutorialPlacement(p,id,cells){
 async function aiTutorialMentorAction(p){
   if(game.storyMatch?.aiSeat===p)return aiStoryMentorAction(p);
   if(game.isPlacementBlocked(p))return game.canDrawNormally(p)?{type:'draw'}:{type:'pass'};
-  const harmless=new Set(['mtn_suwako','mtn_kanako','mtn_sanae','mtn_aya','hourai_mokou','hell_clownpiece','hell_kutaka','temple_shou','heaven_tenshi','heaven_iku','haku_yuyuko',
-    'sage_ran','palace_satori','palace_yuugi','hell_eiki','temple_ichirin']);
+  const harmless=new Set(['mtn_suwako','mtn_kanako','mtn_sanae','mtn_aya','hourai_mokou','hell_clownpiece','hell_kutaka','temple_shou','heaven_tenshi','heaven_iku','haku_yuyuko']);
   let best=null;
   for(const id of game.players[p].hand){
     if(!harmless.has(game.abilityId(id)) || CARD[id]?.createdCopy)continue;
@@ -14553,8 +14557,8 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='2040a3b00280ecb4a0aec52d3cb613a4140937d111d1ac2ce99ca0e908c979da';
-const AI_EVALUATION_POLICY_DIGEST='4763f73e63086bb565bffb81f78f088fe4b54ffe1c40ea35894bf1ec504a36db';
+const AI_EVALUATION_RULES_DIGEST='da7349c10778e1a9ca1298404c4d275c6eec5a7512e5d492988356872695d467';
+const AI_EVALUATION_POLICY_DIGEST='f91b7e7dbc9bfd513b6068fdc9361ae32a49b1426f983a459d4de0dbad594931';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
   if(!source)throw new Error('Game source is unavailable.');
@@ -14640,7 +14644,7 @@ function evalForkSummary(report){
   return {groups,invalidPairs,conclusion,completedPairs:report.pairs.length};
 }
 function evalValidateSnapshot(snapshot){
-  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-15-story-opening-chapters-v13','2026-10-14-original-creation-blueprints-v12','2026-10-14-guided-final-match-v11','2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
+  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-15-random-learning-renewal-v14','2026-10-15-story-opening-chapters-v13','2026-10-14-original-creation-blueprints-v12','2026-10-14-guided-final-match-v11','2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
   const state=snapshot.state,n=state?.players?.length,size=snapshot.size;
   if(![4,5].includes(size) || ![2,3,4].includes(n) || !Number.isInteger(state.currentPlayerIdx) || state.currentPlayerIdx<0 || state.currentPlayerIdx>=n)throw new Error('Invalid position dimensions.');
   if(state.numPlayers!==n || state.players.some((p,i)=>p.idx!==i || !Array.isArray(p.hand) || !Array.isArray(p.discard)))throw new Error('Invalid position dimensions.');
@@ -15342,37 +15346,44 @@ function dockTutorialCoach(mobile){
 function configureTutorialGame(practice,step){
   const goal=TUTORIALS[step].goal;
   if(goal==='match'){configureTutorialMatch(practice);return;}
-  const pool=shuffle(CARDS.filter(card=>!card.token&&!card.shopkeeper&&!card.shopExpansion).map(card=>card.id));
-  const take=id=>{const index=pool.indexOf(id);if(index>=0)return pool.splice(index,1)[0];return null;};
-  const randomHand=(count,trade=false)=>Array.from({length:count},()=>take(pool.find(id=>!trade||!CARD[id].override)));
-  let board=[],required=[];
-  if(goal==='place'||goal==='claim')required=[take('mtn_sanae')];
-  if(goal==='claim')board=[[1,1,take('mtn_kanako')],[1,2,take('mtn_suwako')],[2,1,take('mtn_aya')]];
-  if(goal==='area'){
-    required=[take('heaven_iku')];
-    const targets=pool.filter(id=>!CARD[id].crown&&!CARD[id].wild&&!CARD[id].triple&&CARD[id].faction!=='heaven').slice(0,2);
-    board=targets.map((id,index)=>[0,index,take(id)]);
+  let board=[],hand=['mtn_sanae'],opponents=[[],[]];
+  if(goal==='claim') board=[[1,1,'mtn_kanako'],[1,2,'mtn_suwako'],[2,1,'mtn_aya']];
+  if(goal==='draw'){
+    hand=['hourai_mokou','hell_clownpiece','haku_youmu','sage_ran','mtn_sanae','palace_rin'];
+    opponents=[['sdm_remilia','sdm_flandre','sdm_patchouli','sdm_sakuya','hourai_kaguya','hourai_eirin','hourai_reisen'],['mtn_kanako','mtn_suwako','mtn_aya']];
   }
-  const trade=goal==='offer'||goal==='trade',handSize=trade?2:goal==='area'?4:6;
-  const hand=shuffle([...required,...randomHand(handSize-required.length,trade)]);
-  const opponents=goal==='draw'?[randomHand(7),randomHand(3)]:[randomHand(6),randomHand(6)];
-  practice.shopCards=['shop_rinnosuke',...shuffle(CARDS.filter(card=>card.shopExpansion).map(card=>card.id)).slice(0,3)];
+  if(goal==='area'){
+    hand=['heaven_iku','hourai_mokou','hell_clownpiece','haku_youmu'];
+    board=[[0,0,'mtn_aya'],[0,1,'sage_ran']];
+  }
+  if(goal==='offer' || goal==='trade') hand=['hourai_mokou','haku_youmu'];
+  practice.shopCards=['shop_rinnosuke','sdm_meiling','hourai_tewi','hell_kutaka'];
   practice.board=Array.from({length:SIZE},()=>Array(SIZE).fill(null));
   practice.wasteland=Array.from({length:SIZE},()=>Array(SIZE).fill(false));
-  for(const [r,c,id] of board)practice.setCardAt(r,c,id);
-  practice.players.forEach((player,index)=>{player.hand=(index===0?hand:opponents[index-1]).slice();player.discard=[];});
-  practice.drawPile=pool;
-  practice.startingCardIds=new Set([...board.map(cell=>cell[2]),...practice.players.flatMap(player=>player.hand),...practice.shopCards,...pool]);
+  for(const [r,c,id] of board) practice.setCardAt(r,c,id);
+  practice.players.forEach((p,i)=>{
+    p.hand=(i===0?hand:opponents[i-1]).slice();p.discard=[];
+  });
+  const used=new Set([...board.map(cell=>cell[2]),...practice.players.flatMap(p=>p.hand),...practice.shopCards]);
+  practice.drawPile=CARDS.filter(card=>!card.token && !card.shopkeeper && !card.shopExpansion && !used.has(card.id)).map(card=>card.id);
+  practice.startingCardIds=new Set([...used,...practice.drawPile]);
   practice.handKnowledge=practice.players.map(()=>new Map());practice.reserveAges=practice.players.map(()=>({}));
   practice.players.forEach(player=>practice.revealHand(player.idx,player.hand,[player.idx]));
-  practice.tutorialExercise={initialHandSize:hand.length,areaTargets:board.map(cell=>cell[2]),costCards:goal==='area'?hand.filter(id=>id!=='heaven_iku'):[],tradeCard:trade?hand[0]:null};
+  practice.tutorialExercise={initialHandSize:hand.length,areaTargets:board.map(cell=>cell[2]),costCards:goal==='area'?hand.filter(id=>id!=='heaven_iku'):[],tradeCard:goal==='offer'||goal==='trade'?hand[0]:null};
   practice.currentPlayerIdx=0;practice.winner=null;practice.logLines=[];
   practice.log('Guided practice — the other players wait while you try this step.');
 }
 function configureTutorialMatch(practice){
+  const hands=[['mtn_sanae','mtn_aya','haku_youmu','haku_yuyuko','marisa','hell_clownpiece'],
+    ['mtn_kanako','mtn_suwako','hourai_mokou','temple_shou','heaven_tenshi','heaven_iku']];
   practice.board=Array.from({length:SIZE},()=>Array(SIZE).fill(null));
   practice.wasteland=Array.from({length:SIZE},()=>Array(SIZE).fill(false));
-  const hands=dealLearningOpening(practice,{shop:true});
+  practice.shopCards=['shop_rinnosuke','sdm_meiling','hourai_tewi','hell_kutaka'];
+  practice.players.forEach((p,i)=>{p.hand=hands[i].slice();p.discard=[];});
+  const used=new Set([...hands.flat(),...practice.shopCards]);
+  practice.drawPile=shuffle(CARDS.filter(card=>!card.token&&!card.shopkeeper&&!card.shopExpansion&&!used.has(card.id)).map(card=>card.id));
+  practice.startingCardIds=new Set([...used,...practice.drawPile]);
+  practice.handKnowledge=practice.players.map(()=>new Map());practice.reserveAges=practice.players.map(()=>({}));
   practice.tutorialLesson={humanSeat:0,aiSeat:1,openingHand:hands[0].slice(),progress:{four:false,two:false,ability:false}};
   practice.revealHand(0,hands[0],[1]);
   practice.winner=null;practice.logLines=[];

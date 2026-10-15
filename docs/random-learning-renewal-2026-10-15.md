@@ -1,6 +1,6 @@
 # 随机教学开局、陈旧无技能牌与红魔馆翻新介绍
 
-当前规则版本为 `2026-10-15-random-learning-renewal-v14`。
+本记录对应 `2026-10-15-random-learning-renewal-v14`。教学固定开局的恢复、第二章核心牌预留、蓝青色光晕与技能标点更新见 [v15 修正](guided-opening-scarlet-reserve-2026-10-15.md)；下文保留 v14 的实现与验证记录。
 
 ## 随机发牌
 

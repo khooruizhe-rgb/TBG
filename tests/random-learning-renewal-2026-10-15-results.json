@@ -1,37 +1,38 @@
 {
   "status": "pass",
-  "count": 59,
+  "count": 62,
   "checks": [
-    "Both six-card hands and remaining deck vary across 256 seeded 1 openings",
-    "Only chapter two reserves Remilia and another Mansion card; extra Mansion cards remain possible: 1",
-    "A random opening samples broadly from the ordinary card pool: 1",
+    "Story hands remain random; the final tutorial restores both fixed hands while shuffling its remaining deck: 1",
+    "Only chapter two reserves Remilia and another Mansion card: 1",
+    "Tutorial hands stay fixed while story openings sample broadly: 1",
     "The same seed reproduces hands, deck, shop and first actor: 1",
-    "Both six-card hands and remaining deck vary across 256 seeded 2 openings",
-    "Only chapter two reserves Remilia and another Mansion card; extra Mansion cards remain possible: 2",
-    "A random opening samples broadly from the ordinary card pool: 2",
+    "Story hands remain random; the final tutorial restores both fixed hands while shuffling its remaining deck: 2",
+    "Only chapter two reserves Remilia and another Mansion card: 2",
+    "Tutorial hands stay fixed while story openings sample broadly: 2",
+    "Undealt core Mansion cards are among the actual next five draws at varied positions, including zero and two missing cards",
     "The same seed reproduces hands, deck, shop and first actor: 2",
-    "Both six-card hands and remaining deck vary across 256 seeded tutorial openings",
-    "Only chapter two reserves Remilia and another Mansion card; extra Mansion cards remain possible: tutorial",
-    "A random opening samples broadly from the ordinary card pool: tutorial",
+    "Story hands remain random; the final tutorial restores both fixed hands while shuffling its remaining deck: tutorial",
+    "Only chapter two reserves Remilia and another Mansion card: tutorial",
+    "Tutorial hands stay fixed while story openings sample broadly: tutorial",
     "The same seed reproduces hands, deck, shop and first actor: tutorial",
-    "Guided page 0 randomizes hand identities and merchandise while retaining its necessary lesson cards",
-    "The real rules still complete the randomized single-step exercise 0",
-    "Guided page 1 randomizes hand identities and merchandise while retaining its necessary lesson cards",
-    "The real rules still complete the randomized single-step exercise 1",
-    "Guided page 2 randomizes hand identities and merchandise while retaining its necessary lesson cards",
-    "The real rules still complete the randomized single-step exercise 2",
-    "Guided page 3 randomizes hand identities and merchandise while retaining its necessary lesson cards",
-    "The real rules still complete the randomized single-step exercise 3",
-    "Guided page 4 randomizes hand identities and merchandise while retaining its necessary lesson cards",
-    "The real rules still complete the randomized single-step exercise 4",
-    "Guided page 5 randomizes hand identities and merchandise while retaining its necessary lesson cards",
-    "The real rules still complete the randomized single-step exercise 5",
+    "Guided page 0 restores fixed lesson hands and merchandise",
+    "The real rules complete the restored fixed single-step exercise 0",
+    "Guided page 1 restores fixed lesson hands and merchandise",
+    "The real rules complete the restored fixed single-step exercise 1",
+    "Guided page 2 restores fixed lesson hands and merchandise",
+    "The real rules complete the restored fixed single-step exercise 2",
+    "Guided page 3 restores fixed lesson hands and merchandise",
+    "The real rules complete the restored fixed single-step exercise 3",
+    "Guided page 4 restores fixed lesson hands and merchandise",
+    "The real rules complete the restored fixed single-step exercise 4",
+    "Guided page 5 restores fixed lesson hands and merchandise",
+    "The real rules complete the restored fixed single-step exercise 5",
     "Conditional dealing terminates even under a constant RNG",
-    "The tutorial mentor adapts to the random player faction instead of always supporting Mountain",
-    "Adaptive mentoring restores the board, hands, knowledge and statistics",
-    "A full match from an actual random 1 opening ends without a runtime error or turn-limit abort",
-    "A full match from an actual random 2 opening ends without a runtime error or turn-limit abort",
-    "A full match from an actual random tutorial opening ends without a runtime error or turn-limit abort",
+    "The story mentor retains support for the random player faction",
+    "Story mentor planning preserves the board, hands, knowledge and statistics",
+    "An actual production 1 match ends without a runtime error or turn-limit abort",
+    "An actual production 2 match ends without a runtime error or turn-limit abort",
+    "An actual production tutorial match ends without a runtime error or turn-limit abort",
     "A story card without skills has Rin wear without an Overwrite label: sdm_remilia",
     "Worn story details retain their empty skill text: sdm_remilia",
     "A story card without skills has Rin wear without an Overwrite label: hourai_mokou",
@@ -39,6 +40,8 @@
     "Only still-locked factions remain worn in chapter two",
     "The actual hand renderer uses the same story material state",
     "Leaving the story restores the original card appearance and ability",
+    "Sakuya details preserve the exclamation mark in en",
+    "Sakuya details preserve the exclamation mark in zh-CN",
     "The introduction has four freely movable large cards",
     "Each introduction card has fresh art, a worn layer, a renewal scan and an invitation glow: sdm_remilia",
     "Each introduction card has fresh art, a worn layer, a renewal scan and an invitation glow: sdm_flandre",
@@ -84,57 +87,67 @@
         2,
         3
       ],
-      "withoutRemilia": 0
-    },
-    "tutorial": {
-      "seeds": 256,
-      "uniqueHands": 256,
-      "uniqueOpponentHands": 256,
-      "distinctCards": 36,
-      "redCounts": [
+      "withoutRemilia": 0,
+      "reservePositions": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "reserveCounts": [
         0,
         1,
         2
+      ]
+    },
+    "tutorial": {
+      "seeds": 256,
+      "uniqueHands": 1,
+      "uniqueOpponentHands": 1,
+      "distinctCards": 6,
+      "redCounts": [
+        0
       ],
-      "withoutRemilia": 220
+      "withoutRemilia": 256
     }
   },
   "exerciseSamples": [
     {
       "step": 0,
       "seeds": 64,
-      "uniqueHands": 64,
-      "uniqueShopStocks": 30
+      "uniqueHands": 1,
+      "uniqueShopStocks": 1
     },
     {
       "step": 1,
       "seeds": 64,
-      "uniqueHands": 64,
-      "uniqueShopStocks": 30
+      "uniqueHands": 1,
+      "uniqueShopStocks": 1
     },
     {
       "step": 2,
       "seeds": 64,
-      "uniqueHands": 64,
-      "uniqueShopStocks": 30
+      "uniqueHands": 1,
+      "uniqueShopStocks": 1
     },
     {
       "step": 3,
       "seeds": 64,
-      "uniqueHands": 63,
-      "uniqueShopStocks": 33
+      "uniqueHands": 1,
+      "uniqueShopStocks": 1
     },
     {
       "step": 4,
       "seeds": 64,
-      "uniqueHands": 58,
-      "uniqueShopStocks": 26
+      "uniqueHands": 1,
+      "uniqueShopStocks": 1
     },
     {
       "step": 5,
       "seeds": 64,
-      "uniqueHands": 61,
-      "uniqueShopStocks": 29
+      "uniqueHands": 1,
+      "uniqueShopStocks": 1
     }
   ],
   "randomMatches": [
@@ -155,26 +168,26 @@
     },
     {
       "mode": 2,
-      "turns": 34,
+      "turns": 20,
       "ending": "win",
       "winner": 0,
       "points": [
         9,
-        2
+        0
       ],
       "progress": {
-        "sdm": false,
+        "sdm": true,
         "remilia": false,
         "flandre": false
       }
     },
     {
       "mode": "tutorial",
-      "turns": 16,
+      "turns": 8,
       "ending": "win",
       "winner": 0,
       "points": [
-        8,
+        7,
         0
       ],
       "progress": {
@@ -184,6 +197,6 @@
       }
     }
   ],
-  "rulesVersion": "2026-10-15-random-learning-renewal-v14",
-  "scope": "768 actual seeded full-match openings, 384 guided exercise configurations with actual completions, complete random matches, real renderers and shared pointer physics in a controlled DOM; no browser pixel verification"
+  "rulesVersion": "2026-10-15-guided-opening-scarlet-reserve-v15",
+  "scope": "512 seeded random story openings with chapter-two next-five-draw guarantees, 256 restored fixed-hand tutorial openings, 384 fixed exercise configurations with actual completions, complete production matches, bilingual Sakuya titles, real renderers and shared pointer physics in a controlled DOM; no browser pixel verification"
 }

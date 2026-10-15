@@ -16,7 +16,7 @@ vm.runInContext(html.slice(html.indexOf('const TUTORIALS='),html.indexOf('let tu
     const stock=match=>[...match.players.flatMap(p=>[...p.hand,...p.discard]),...match.drawPile,...match.shopCards.filter(Boolean),...match.mainBoardCells().map(cell=>match.cardAt(cell.r,cell.c))];
     const stamp=match=>JSON.stringify({hands:match.players.map(p=>p.hand),deck:match.drawPile,shop:match.shopCards,actor:match.currentPlayerIdx});
     for(const mode of [1,2,'tutorial']){
-      const layouts=new Set(),humans=new Set(),rivals=new Set(),lords=new Set(),redCounts=new Set();let withoutRemilia=0;
+      const layouts=new Set(),humans=new Set(),rivals=new Set(),lords=new Set(),redCounts=new Set(),reservePositions=new Set(),reserveCounts=new Set();let withoutRemilia=0;
       for(let seed=0;seed<256;seed++){
         const {match,actor}=opening(mode,seed),ids=stock(match),human=match.players[0].hand,rival=match.players[1].hand;
         assert.equal(match.currentPlayerIdx,actor);assert(match.players.every(p=>p.hand.length===6));
@@ -25,17 +25,29 @@ vm.runInContext(html.slice(html.indexOf('const TUTORIALS='),html.indexOf('let tu
         assert(human.every(id=>match.handKnowledge[1].get(id)===0));assert.equal(match.handKnowledge[0].size,0);
         const red=human.filter(id=>CARD[id].faction==='sdm').length;redCounts.add(red);
         if(!human.includes('sdm_remilia'))withoutRemilia++;
-        if(mode===2){assert(human.includes('sdm_remilia'));assert(red>=2);assert.equal(human.filter(id=>id==='sdm_remilia').length,1);}
-        if(mode==='tutorial'){assert.equal(match.shopCards[0],'shop_rinnosuke');assert.equal(match.shopCards.length,4);assert(match.shopCards.slice(1).every(id=>CARD[id].shopExpansion));}
+        if(mode===2){
+          assert(human.includes('sdm_remilia'));assert(red>=2);assert.equal(human.filter(id=>id==='sdm_remilia').length,1);
+          const remaining=storyScarletCards().filter(id=>!match.players.some(player=>player.hand.includes(id))),deck=match.drawPile.slice();
+          const next=Array.from({length:5},()=>match.takeFromDrawPile(0));
+          assert.deepEqual(next,deck.slice(-5).reverse());assert(remaining.every(id=>next.includes(id)));
+          assert(storyScarletCards().every(id=>human.includes(id)||rival.includes(id)||next.includes(id)));
+          remaining.forEach(id=>reservePositions.add(next.indexOf(id)+1));reserveCounts.add(remaining.length);match.drawPile=deck;
+        }
+        if(mode==='tutorial'){
+          assert.deepEqual(human,['mtn_sanae','mtn_aya','haku_youmu','haku_yuyuko','marisa','hell_clownpiece']);
+          assert.deepEqual(rival,['mtn_kanako','mtn_suwako','hourai_mokou','temple_shou','heaven_tenshi','heaven_iku']);
+          assert.deepEqual(match.shopCards,['shop_rinnosuke','sdm_meiling','hourai_tewi','hell_kutaka']);
+        }
         else assert.equal(match.shopCards.length,0);
         layouts.add(stamp(match));humans.add(human.slice().sort().join(','));rivals.add(rival.slice().sort().join(','));human.forEach(id=>lords.add(id));
       }
-      ok(layouts.size===256&&humans.size>240&&rivals.size>240,'Both six-card hands and remaining deck vary across 256 seeded '+mode+' openings');
-      ok(mode===2?withoutRemilia===0&&redCounts.size>=2:withoutRemilia>0&&redCounts.size>=3,'Only chapter two reserves Remilia and another Mansion card; extra Mansion cards remain possible: '+mode);
-      ok(lords.size>=35,'A random opening samples broadly from the ordinary card pool: '+mode);
+      ok(mode==='tutorial'?layouts.size===256&&humans.size===1&&rivals.size===1:layouts.size===256&&humans.size>240&&rivals.size>240,'Story hands remain random; the final tutorial restores both fixed hands while shuffling its remaining deck: '+mode);
+      ok(mode===2?withoutRemilia===0&&redCounts.size>=2:mode==='tutorial'?withoutRemilia===256&&redCounts.size===1:withoutRemilia>0&&redCounts.size>=3,'Only chapter two reserves Remilia and another Mansion card: '+mode);
+      ok(mode==='tutorial'?lords.size===6:lords.size>=35,'Tutorial hands stay fixed while story openings sample broadly: '+mode);
+      if(mode===2)ok(reservePositions.size===5&&reserveCounts.has(0)&&reserveCounts.has(2),'Undealt core Mansion cards are among the actual next five draws at varied positions, including zero and two missing cards');
       const a=opening(mode,'replay-'+mode).match,first=stamp(a),b=opening(mode,'replay-'+mode).match;
       ok(stamp(b)===first,'The same seed reproduces hands, deck, shop and first actor: '+mode);
-      samples[mode]={seeds:256,uniqueHands:humans.size,uniqueOpponentHands:rivals.size,distinctCards:lords.size,redCounts:[...redCounts].sort(),withoutRemilia};
+      samples[mode]={seeds:256,uniqueHands:humans.size,uniqueOpponentHands:rivals.size,distinctCards:lords.size,redCounts:[...redCounts].sort(),withoutRemilia,...(mode===2?{reservePositions:[...reservePositions].sort(),reserveCounts:[...reserveCounts].sort()}: {})};
     }
     const exerciseSamples=[];
     for(let step=0;step<6;step++){
@@ -51,26 +63,26 @@ vm.runInContext(html.slice(html.indexOf('const TUTORIALS='),html.indexOf('let tu
         if(step>=4){assert.equal(hand.length,2);assert(hand.includes(game.tutorialExercise.tradeCard));assert(!CARD[game.tutorialExercise.tradeCard].override);}
         hands.add(hand.slice().sort().join(','));shops.add(game.shopCards.slice(1).sort().join(','));
       }
-      ok(hands.size>48&&shops.size>=5,'Guided page '+step+' randomizes hand identities and merchandise while retaining its necessary lesson cards');
+      ok(hands.size===1&&shops.size===1,'Guided page '+step+' restores fixed lesson hands and merchandise');
       const match=game,initialPileSize=game.drawPile.length;game.players[0].isAI=false;
       game.ui={pickOwnHandCards:async(t,ids,options)=>ids.slice(0,options.maxCount),pickRectByDrag:async()=>game.rectCells({r:0,c:0},2,{r:1,c:1})};game.pickUI=async(p,method,args)=>game.ui[method](...args);
       if(step<2){game.removeFromHand(0,'mtn_sanae');await game.internalPlace('mtn_sanae',2,2,0,0);}
       else if(step===2)game.drawForEveryone(0);
       else if(step===3){game.removeFromHand(0,'heaven_iku');await game.internalPlace('heaven_iku',3,3,0,0);}
       else{const offered=game.tutorialExercise.tradeCard;assert(game.tradeCard(0,offered,game.tradeCells()[0]));}
-      ok(tutorialObjectiveMet({practice:match,step:step===4?5:step,initialPileSize}),'The real rules still complete the randomized single-step exercise '+step);
+      ok(tutorialObjectiveMet({practice:match,step:step===4?5:step,initialPileSize}),'The real rules complete the restored fixed single-step exercise '+step);
       evalConservation(match);exerciseSamples.push({step,seeds:64,uniqueHands:hands.size,uniqueShopStocks:shops.size});
     }
     const rng=Math.random;Math.random=()=>0;
     try{const {match}=opening(2,'constant');ok(match.players[0].hand.includes('sdm_remilia')&&match.players[0].hand.some(id=>id!=='sdm_remilia'&&CARD[id].faction==='sdm'),'Conditional dealing terminates even under a constant RNG');}finally{Math.random=rng;}
-    opening('tutorial','adaptive');
+    opening(1,'adaptive');
     const hands=[['palace_satori','palace_koishi','haku_youmu','haku_yuyuko','marisa','hell_clownpiece'],['palace_rin','palace_utsuho','hourai_mokou','temple_shou','heaven_tenshi','heaven_iku']];
-    game.players.forEach((p,i)=>p.hand=hands[i].slice());game.tutorialLesson.openingHand=hands[0].slice();game.handKnowledge=game.players.map(()=>new Map());game.revealHand(0,hands[0],[1]);
+    game.players.forEach((p,i)=>p.hand=hands[i].slice());game.storyMatch.openingHand=hands[0].slice();game.handKnowledge=game.players.map(()=>new Map());game.revealHand(0,hands[0],[1]);
     const state=JSON.stringify(captureAIEvaluationSnapshot(game)),metrics=JSON.stringify(game.testMetrics);let focus;
     Math.random=()=>{throw Error('Adaptive mentoring must not consume RNG');};
-    try{focus=aiLearningFourFaction(game,game.tutorialLesson);await aiTutorialMentorAction(1);}finally{Math.random=rng;}
-    ok(focus==='palace','The tutorial mentor adapts to the random player faction instead of always supporting Mountain');
-    ok(state===JSON.stringify(captureAIEvaluationSnapshot(game))&&metrics===JSON.stringify(game.testMetrics),'Adaptive mentoring restores the board, hands, knowledge and statistics');
+    try{focus=aiLearningFourFaction(game,game.storyMatch);await aiStoryMentorAction(1);}finally{Math.random=rng;}
+    ok(focus==='palace','The story mentor retains support for the random player faction');
+    ok(state===JSON.stringify(captureAIEvaluationSnapshot(game))&&metrics===JSON.stringify(game.testMetrics),'Story mentor planning preserves the board, hands, knowledge and statistics');
     const randomMatches=[];
     for(const mode of [1,2,'tutorial']){
       const {match}=opening(mode,'random-full-'+mode);let turns=0,idle=0;
@@ -80,7 +92,7 @@ vm.runInContext(html.slice(html.indexOf('const TUTORIALS='),html.indexOf('let tu
         else{idle=0;const flags=await doPlayerAction(p);await afterAction(p,flags,match.takeScheduledExtraTurns(p));}
         evalConservation(match);
       }
-      ok((!!match.winner||!!match.stalemateMessage)&&turns<160,'A full match from an actual random '+mode+' opening ends without a runtime error or turn-limit abort');
+      ok((!!match.winner||!!match.stalemateMessage)&&turns<160,'An actual production '+mode+' match ends without a runtime error or turn-limit abort');
       randomMatches.push({mode,turns,ending:match.winner?'win':'stalemate',winner:match.winner?.idx??null,points:match.players.map(p=>match.winCount(p)),progress:mode==='tutorial'?{...match.tutorialLesson.progress}:{...match.storyMatch.progress}});
     }
     return {checks,samples,exerciseSamples,randomMatches,rulesVersion:REWORK_RULES_VERSION};
@@ -121,6 +133,10 @@ vm.runInContext(html.slice(html.indexOf('const TUTORIALS='),html.indexOf('let tu
   ok(!A.cardBoardHtml('sdm_remilia').includes('card-rin-worn')&&A.cardBoardHtml('hourai_mokou').includes('card-rin-worn'),'Only still-locked factions remain worn in chapter two');
   A.renderHand();ok(!el('hand').children[0].classList.contains('card-rin-worn')&&el('hand').children[1].classList.contains('card-rin-worn'),'The actual hand renderer uses the same story material state');
   A.setGame(null);A.openCardDetails('hourai_mokou');ok(!el('card-detail').classList.contains('card-rin-worn')&&!!el('card-detail-description').innerHTML,'Leaving the story restores the original card appearance and ability');A.closeCardDetails();
+  for(const language of ['en','zh-CN']){
+    A.setLanguage(language);A.openCardDetails('sdm_sakuya');
+    ok(el('card-detail-ability').textContent==='Zawarudo!','Sakuya details preserve the exclamation mark in '+language);A.closeCardDetails();
+  }
   const listenerBase=resizeCount();U.show(2);flush();let cards=U.session().cards;
   ok(cards.length===4&&parseFloat(el('story-card-grid').values.get('--story-card-width'))>=180,'The introduction has four freely movable large cards');
   for(const card of cards){
@@ -152,6 +168,6 @@ vm.runInContext(html.slice(html.indexOf('const TUTORIALS='),html.indexOf('let tu
   U.show(2);flush();el('story-begin').events.click[0]();ok(loopStarts===1&&U.session()===null&&!el('story-overlay').classList.contains('show'),'Starting the chapter disposes of the introduction before launching one game loop');
   ctx.resetGameView();U.show(1);ok(U.session()===null&&el('story-card-grid').hidden,'Chapter one has no skill-renewal cards');U.close();
   A.setLanguage('zh-CN');ok(A.translateGameText('Click a glowing card to read its ability. Drag cards freely to move and stack them.').includes('单击'),'The new introduction instructions are localized');
-  const result={status:'pass',count:checks.length,checks,samples:rules.samples,exerciseSamples:rules.exerciseSamples,randomMatches:rules.randomMatches,rulesVersion:rules.rulesVersion,scope:'768 actual seeded full-match openings, 384 guided exercise configurations with actual completions, complete random matches, real renderers and shared pointer physics in a controlled DOM; no browser pixel verification'};
-  fs.writeFileSync(__dirname+'/random-learning-renewal-2026-10-15-results.json',JSON.stringify(result,null,2)+'\n');console.log(result.count+' random-learning and renewal checks passed across 768 openings');
+  const result={status:'pass',count:checks.length,checks,samples:rules.samples,exerciseSamples:rules.exerciseSamples,randomMatches:rules.randomMatches,rulesVersion:rules.rulesVersion,scope:'512 seeded random story openings with chapter-two next-five-draw guarantees, 256 restored fixed-hand tutorial openings, 384 fixed exercise configurations with actual completions, complete production matches, bilingual Sakuya titles, real renderers and shared pointer physics in a controlled DOM; no browser pixel verification'};
+  fs.writeFileSync(__dirname+'/random-learning-renewal-2026-10-15-results.json',JSON.stringify(result,null,2)+'\n');console.log(result.count+' learning and renewal checks passed across 768 production openings');
 })().catch(error=>{console.error(error.stack);process.exitCode=1;});
