@@ -1,6 +1,6 @@
 {
   "status": "pass",
-  "count": 62,
+  "count": 66,
   "checks": [
     "Story hands remain random; the final tutorial restores both fixed hands while shuffling its remaining deck: 1",
     "Only chapter two reserves Remilia and another Mansion card: 1",
@@ -62,6 +62,10 @@
     "Closing before the first animation frame cannot restore stale cards",
     "Reduced motion keeps cards draggable while skipping renewal motion and throws",
     "Starting the chapter disposes of the introduction before launching one game loop",
+    "Chapter three renews only the two newly unlocked Hakugyokurou cards",
+    "One tap inspects a chapter-three card using the real shared handler",
+    "Dragging a chapter-three card does not open its details",
+    "Closing the two-card introduction clears its gestures and listeners",
     "Chapter one has no skill-renewal cards",
     "The new introduction instructions are localized"
   ],
@@ -197,6 +201,6 @@
       }
     }
   ],
-  "rulesVersion": "2026-10-15-guided-opening-scarlet-reserve-v15",
+  "rulesVersion": "2026-10-16-story-hakugyokurou-active-mentor-v16",
   "scope": "512 seeded random story openings with chapter-two next-five-draw guarantees, 256 restored fixed-hand tutorial openings, 384 fixed exercise configurations with actual completions, complete production matches, bilingual Sakuya titles, real renderers and shared pointer physics in a controlled DOM; no browser pixel verification"
 }

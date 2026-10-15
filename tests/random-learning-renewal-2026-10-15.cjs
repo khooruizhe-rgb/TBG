@@ -73,8 +73,8 @@ vm.runInContext(html.slice(html.indexOf('const TUTORIALS='),html.indexOf('let tu
       ok(tutorialObjectiveMet({practice:match,step:step===4?5:step,initialPileSize}),'The real rules complete the restored fixed single-step exercise '+step);
       evalConservation(match);exerciseSamples.push({step,seeds:64,uniqueHands:hands.size,uniqueShopStocks:shops.size});
     }
-    const rng=Math.random;Math.random=()=>0;
-    try{const {match}=opening(2,'constant');ok(match.players[0].hand.includes('sdm_remilia')&&match.players[0].hand.some(id=>id!=='sdm_remilia'&&CARD[id].faction==='sdm'),'Conditional dealing terminates even under a constant RNG');}finally{Math.random=rng;}
+    const rng=Math.random,constant=opening(2,'constant').match;Math.random=()=>0;
+    try{configureStoryMatch(constant,2);ok(constant.players[0].hand.includes('sdm_remilia')&&constant.players[0].hand.some(id=>id!=='sdm_remilia'&&CARD[id].faction==='sdm'),'Conditional dealing terminates even under a constant RNG');}finally{Math.random=rng;}
     opening(1,'adaptive');
     const hands=[['palace_satori','palace_koishi','haku_youmu','haku_yuyuko','marisa','hell_clownpiece'],['palace_rin','palace_utsuho','hourai_mokou','temple_shou','heaven_tenshi','heaven_iku']];
     game.players.forEach((p,i)=>p.hand=hands[i].slice());game.storyMatch.openingHand=hands[0].slice();game.handKnowledge=game.players.map(()=>new Map());game.revealHand(0,hands[0],[1]);
@@ -166,7 +166,14 @@ vm.runInContext(html.slice(html.indexOf('const TUTORIALS='),html.indexOf('let tu
   U.show(2);flush();cards=U.session().cards;setReduced(true);const reduced=cards[0],rp=reduced.getBoundingClientRect();trigger(reduced,'pointerdown');now+=10;trigger(reduced,'pointermove',{clientX:rp.left+rp.width/2+35});now+=10;trigger(reduced,'pointerup',{clientX:rp.left+rp.width/2+35});
   ok(U.slides()===0&&!el('card-detail-overlay').classList.contains('show')&&html.includes('.story-ability-card>.story-old-face,.story-ability-card>.story-refresh-scan{display:none;animation:none}'),'Reduced motion keeps cards draggable while skipping renewal motion and throws');setReduced(false);U.close();
   U.show(2);flush();el('story-begin').events.click[0]();ok(loopStarts===1&&U.session()===null&&!el('story-overlay').classList.contains('show'),'Starting the chapter disposes of the introduction before launching one game loop');
-  ctx.resetGameView();U.show(1);ok(U.session()===null&&el('story-card-grid').hidden,'Chapter one has no skill-renewal cards');U.close();
+  ctx.resetGameView();U.show(3);flush();cards=U.session().cards;
+  ok(cards.length===2&&cards.every(card=>['haku_yuyuko','haku_youmu'].includes(card.dataset.cardId)),'Chapter three renews only the two newly unlocked Hakugyokurou cards');
+  const third=cards[0],thirdRect=third.getBoundingClientRect();trigger(third,'pointerdown');now+=60;trigger(third,'pointerup');
+  ok(el('card-detail-overlay').classList.contains('show')&&third.classList.contains('story-card-seen'),'One tap inspects a chapter-three card using the real shared handler');A.closeCardDetails();now+=500;
+  const other=cards[1],otherRect=other.getBoundingClientRect();trigger(other,'pointerdown');now+=25;trigger(other,'pointermove',{clientX:otherRect.left+otherRect.width/2+35});now+=25;trigger(other,'pointerup',{clientX:otherRect.left+otherRect.width/2+35});trigger(other,'click');
+  ok(!el('card-detail-overlay').classList.contains('show')&&!other.classList.contains('story-card-seen'),'Dragging a chapter-three card does not open its details');U.close();
+  ok(U.session()===null&&U.slides()===0&&resizeCount()===listenerBase,'Closing the two-card introduction clears its gestures and listeners');
+  U.show(1);ok(U.session()===null&&el('story-card-grid').hidden,'Chapter one has no skill-renewal cards');U.close();
   A.setLanguage('zh-CN');ok(A.translateGameText('Click a glowing card to read its ability. Drag cards freely to move and stack them.').includes('单击'),'The new introduction instructions are localized');
   const result={status:'pass',count:checks.length,checks,samples:rules.samples,exerciseSamples:rules.exerciseSamples,randomMatches:rules.randomMatches,rulesVersion:rules.rulesVersion,scope:'512 seeded random story openings with chapter-two next-five-draw guarantees, 256 restored fixed-hand tutorial openings, 384 fixed exercise configurations with actual completions, complete production matches, bilingual Sakuya titles, real renderers and shared pointer physics in a controlled DOM; no browser pixel verification'};
   fs.writeFileSync(__dirname+'/random-learning-renewal-2026-10-15-results.json',JSON.stringify(result,null,2)+'\n');console.log(result.count+' learning and renewal checks passed across 768 production openings');

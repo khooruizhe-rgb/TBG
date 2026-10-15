@@ -1,6 +1,6 @@
 # 恢复固定教学与第二章牌库保障
 
-当前规则版本为 `2026-10-15-guided-opening-scarlet-reserve-v15`。
+本记录对应 `2026-10-15-guided-opening-scarlet-reserve-v15`。第三关与教学对手必须行动的后续调整见 [v16 修正](story-hakugyokurou-2026-10-16.md)，下文保留 v15 的实现与验证记录。
 
 ## 教学回调
 

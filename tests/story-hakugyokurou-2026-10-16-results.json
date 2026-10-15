@@ -1,0 +1,475 @@
+{
+  "status": "pass",
+  "count": 109,
+  "checks": [
+    "Both chapter-three hands vary across 256 actual randomized openings",
+    "Undealt Youmu is reserved in any of the actual next five draw positions, while already-dealt cards stay in hand",
+    "Chapter three preserves either first actor",
+    "Every seeded opening has Yuyuko, exactly two opponent Mansion cards, unique stock, cumulative skills and correct mentor knowledge",
+    "Constrained dealing terminates with constant randomness 0",
+    "Constrained dealing terminates with constant randomness 0.999999",
+    "Yuyuko actually pays four cards and earns four skill points before any faction claim",
+    "Four actual costs return to the deck and four actual orthogonal targets enter the player discard",
+    "The four-point resolution conserves every real card",
+    "A subsequent actual Yuyuko–Youmu claim records Hakugyokurou separately",
+    "Two skill points added to two old points do not satisfy a four-point Yuyuko use",
+    "Declining the cost does not complete the Yuyuko objective",
+    "Opponent Yuyuko points fail the race and never satisfy the player ability goal",
+    "An opponent Hakugyokurou claim is not a player objective",
+    "Three opponent points leave the race open",
+    "The exact fourth opponent point permanently records a lost race",
+    "Dropping below four later cannot erase the earlier race failure",
+    "All goals clear only when victory precedes the fourth opponent point: 0",
+    "All goals clear only when victory precedes the fourth opponent point: 3",
+    "All goals clear only when victory precedes the fourth opponent point: 4",
+    "Victory still requires the actual haku objective",
+    "Victory still requires the actual yuyuko objective",
+    "Teaching mode tutorial places a legal card even without strategic ability value: reimu",
+    "The mandatory-action fallback preserves rules, metrics and randomness: tutorial/reimu",
+    "The actual turn executes its mandatory legal placement: tutorial/reimu",
+    "Teaching mode tutorial places a legal card even without strategic ability value: haku_yuyuko",
+    "The mandatory-action fallback preserves rules, metrics and randomness: tutorial/haku_yuyuko",
+    "The actual turn executes its mandatory legal placement: tutorial/haku_yuyuko",
+    "Teaching mode 1 places a legal card even without strategic ability value: reimu",
+    "The mandatory-action fallback preserves rules, metrics and randomness: 1/reimu",
+    "The actual turn executes its mandatory legal placement: 1/reimu",
+    "Teaching mode 1 places a legal card even without strategic ability value: haku_yuyuko",
+    "The mandatory-action fallback preserves rules, metrics and randomness: 1/haku_yuyuko",
+    "The actual turn executes its mandatory legal placement: 1/haku_yuyuko",
+    "Teaching mode 2 places a legal card even without strategic ability value: reimu",
+    "The mandatory-action fallback preserves rules, metrics and randomness: 2/reimu",
+    "The actual turn executes its mandatory legal placement: 2/reimu",
+    "Teaching mode 2 places a legal card even without strategic ability value: haku_yuyuko",
+    "The mandatory-action fallback preserves rules, metrics and randomness: 2/haku_yuyuko",
+    "The actual turn executes its mandatory legal placement: 2/haku_yuyuko",
+    "Teaching mode 3 places a legal card even without strategic ability value: reimu",
+    "The mandatory-action fallback preserves rules, metrics and randomness: 3/reimu",
+    "The actual turn executes its mandatory legal placement: 3/reimu",
+    "Teaching mode 3 places a legal card even without strategic ability value: haku_yuyuko",
+    "The mandatory-action fallback preserves rules, metrics and randomness: 3/haku_yuyuko",
+    "The actual turn executes its mandatory legal placement: 3/haku_yuyuko",
+    "The three-turn Mansion holding preference yields when its young card is the only legal move",
+    "A safe alternative preserves the Mansion holding preference",
+    "The actual Youmu extra action also places a strategically unwanted but legal remaining card",
+    "An actual placement block and empty deck allow a pass",
+    "A placement-blocked teacher still draws whenever drawing is legal",
+    "Terrain with no legal landing and no draw is a genuine unavailable turn",
+    "A teaching opponent can trade for a card that permits its otherwise unavailable placement",
+    "The actual teaching turn trades once and completes the legal placement",
+    "Before both Hakugyokurou cards appear, the opponent delays through legal shared draws",
+    "Once both Hakugyokurou cards appeared, the opponent resumes active placement",
+    "An immediate Mansion collection takes priority over chapter-three stalling",
+    "The opponent really collects Mansion and the race fails at its four points",
+    "Mansion pursuit changes no real state, metrics, race history or randomness during planning",
+    "The opponent uses known Remilia opportunities to pursue its Mansion faction during the delay",
+    "Remilia pursuit obtains the actual known player cards",
+    "A real mid-match route completes all chapter-three goals: 0/0",
+    "The chapter-three route conserves every original: 0/0",
+    "A real mid-match route completes all chapter-three goals: 0/1",
+    "The chapter-three route conserves every original: 0/1",
+    "A real mid-match route completes all chapter-three goals: 0/2",
+    "The chapter-three route conserves every original: 0/2",
+    "A real mid-match route completes all chapter-three goals: 0/3",
+    "The chapter-three route conserves every original: 0/3",
+    "A real mid-match route completes all chapter-three goals: 0/4",
+    "The chapter-three route conserves every original: 0/4",
+    "A real mid-match route completes all chapter-three goals: 0/5",
+    "The chapter-three route conserves every original: 0/5",
+    "A real mid-match route completes all chapter-three goals: 0/6",
+    "The chapter-three route conserves every original: 0/6",
+    "A real mid-match route completes all chapter-three goals: 0/7",
+    "The chapter-three route conserves every original: 0/7",
+    "A real mid-match route completes all chapter-three goals: 1/0",
+    "The chapter-three route conserves every original: 1/0",
+    "A real mid-match route completes all chapter-three goals: 1/1",
+    "The chapter-three route conserves every original: 1/1",
+    "A real mid-match route completes all chapter-three goals: 1/2",
+    "The chapter-three route conserves every original: 1/2",
+    "A real mid-match route completes all chapter-three goals: 1/3",
+    "The chapter-three route conserves every original: 1/3",
+    "A real mid-match route completes all chapter-three goals: 1/4",
+    "The chapter-three route conserves every original: 1/4",
+    "A real mid-match route completes all chapter-three goals: 1/5",
+    "The chapter-three route conserves every original: 1/5",
+    "A real mid-match route completes all chapter-three goals: 1/6",
+    "The chapter-three route conserves every original: 1/6",
+    "A real mid-match route completes all chapter-three goals: 1/7",
+    "The chapter-three route conserves every original: 1/7",
+    "Neither the new chapter nor mandatory teaching moves mutate printed card definitions",
+    "An actual random chapter-three match ends without a runtime error, illegal pass or turn-limit abort: 0",
+    "An actual random chapter-three match ends without a runtime error, illegal pass or turn-limit abort: 1",
+    "An actual random chapter-three match ends without a runtime error, illegal pass or turn-limit abort: 2",
+    "An actual random chapter-three match ends without a runtime error, illegal pass or turn-limit abort: 3",
+    "An actual random chapter-three match ends without a runtime error, illegal pass or turn-limit abort: 4",
+    "An actual random chapter-three match ends without a runtime error, illegal pass or turn-limit abort: 5",
+    "An actual random chapter-three match ends without a runtime error, illegal pass or turn-limit abort: 6",
+    "An actual random chapter-three match ends without a runtime error, illegal pass or turn-limit abort: 7",
+    "Chapter three introduces only the two newly unlocked Hakugyokurou cards",
+    "Chapter-three introductions enable the same movable-card interaction",
+    "The introduction starts chapter three and displays its actual objectives",
+    "The fourth opponent point immediately displays a failed race and a retry explanation",
+    "Retry retires chapter three and resets its goals and permanent race history",
+    "A true chapter-three clear saves its own progress",
+    "Finishing the last available chapter returns to the three-chapter selection"
+  ],
+  "walkthroughs": [
+    {
+      "actor": 0,
+      "seed": 0,
+      "turns": 3,
+      "points": [
+        7,
+        0
+      ],
+      "progress": {
+        "haku": true,
+        "yuyuko": true
+      },
+      "raceLost": false
+    },
+    {
+      "actor": 0,
+      "seed": 1,
+      "turns": 5,
+      "points": [
+        8,
+        0
+      ],
+      "progress": {
+        "haku": true,
+        "yuyuko": true
+      },
+      "raceLost": false
+    },
+    {
+      "actor": 0,
+      "seed": 2,
+      "turns": 3,
+      "points": [
+        7,
+        0
+      ],
+      "progress": {
+        "haku": true,
+        "yuyuko": true
+      },
+      "raceLost": false
+    },
+    {
+      "actor": 0,
+      "seed": 3,
+      "turns": 5,
+      "points": [
+        8,
+        0
+      ],
+      "progress": {
+        "haku": true,
+        "yuyuko": true
+      },
+      "raceLost": false
+    },
+    {
+      "actor": 0,
+      "seed": 4,
+      "turns": 5,
+      "points": [
+        8,
+        0
+      ],
+      "progress": {
+        "haku": true,
+        "yuyuko": true
+      },
+      "raceLost": false
+    },
+    {
+      "actor": 0,
+      "seed": 5,
+      "turns": 9,
+      "points": [
+        7,
+        2
+      ],
+      "progress": {
+        "haku": true,
+        "yuyuko": true
+      },
+      "raceLost": false
+    },
+    {
+      "actor": 0,
+      "seed": 6,
+      "turns": 5,
+      "points": [
+        8,
+        0
+      ],
+      "progress": {
+        "haku": true,
+        "yuyuko": true
+      },
+      "raceLost": false
+    },
+    {
+      "actor": 0,
+      "seed": 7,
+      "turns": 5,
+      "points": [
+        8,
+        0
+      ],
+      "progress": {
+        "haku": true,
+        "yuyuko": true
+      },
+      "raceLost": false
+    },
+    {
+      "actor": 1,
+      "seed": 0,
+      "turns": 6,
+      "points": [
+        8,
+        0
+      ],
+      "progress": {
+        "haku": true,
+        "yuyuko": true
+      },
+      "raceLost": false
+    },
+    {
+      "actor": 1,
+      "seed": 1,
+      "turns": 6,
+      "points": [
+        8,
+        0
+      ],
+      "progress": {
+        "haku": true,
+        "yuyuko": true
+      },
+      "raceLost": false
+    },
+    {
+      "actor": 1,
+      "seed": 2,
+      "turns": 6,
+      "points": [
+        8,
+        0
+      ],
+      "progress": {
+        "haku": true,
+        "yuyuko": true
+      },
+      "raceLost": false
+    },
+    {
+      "actor": 1,
+      "seed": 3,
+      "turns": 6,
+      "points": [
+        8,
+        0
+      ],
+      "progress": {
+        "haku": true,
+        "yuyuko": true
+      },
+      "raceLost": false
+    },
+    {
+      "actor": 1,
+      "seed": 4,
+      "turns": 6,
+      "points": [
+        8,
+        0
+      ],
+      "progress": {
+        "haku": true,
+        "yuyuko": true
+      },
+      "raceLost": false
+    },
+    {
+      "actor": 1,
+      "seed": 5,
+      "turns": 6,
+      "points": [
+        8,
+        0
+      ],
+      "progress": {
+        "haku": true,
+        "yuyuko": true
+      },
+      "raceLost": false
+    },
+    {
+      "actor": 1,
+      "seed": 6,
+      "turns": 6,
+      "points": [
+        8,
+        0
+      ],
+      "progress": {
+        "haku": true,
+        "yuyuko": true
+      },
+      "raceLost": false
+    },
+    {
+      "actor": 1,
+      "seed": 7,
+      "turns": 6,
+      "points": [
+        8,
+        0
+      ],
+      "progress": {
+        "haku": true,
+        "yuyuko": true
+      },
+      "raceLost": false
+    }
+  ],
+  "productionMatches": [
+    {
+      "seed": 0,
+      "turns": 27,
+      "winner": 0,
+      "stalemate": false,
+      "points": [
+        8,
+        1
+      ],
+      "progress": {
+        "haku": true,
+        "yuyuko": false
+      },
+      "raceLost": false
+    },
+    {
+      "seed": 1,
+      "turns": 43,
+      "winner": null,
+      "stalemate": true,
+      "points": [
+        3,
+        4
+      ],
+      "progress": {
+        "haku": true,
+        "yuyuko": false
+      },
+      "raceLost": true
+    },
+    {
+      "seed": 2,
+      "turns": 25,
+      "winner": 0,
+      "stalemate": false,
+      "points": [
+        8,
+        5
+      ],
+      "progress": {
+        "haku": true,
+        "yuyuko": false
+      },
+      "raceLost": true
+    },
+    {
+      "seed": 3,
+      "turns": 34,
+      "winner": 0,
+      "stalemate": false,
+      "points": [
+        7,
+        6
+      ],
+      "progress": {
+        "haku": true,
+        "yuyuko": false
+      },
+      "raceLost": true
+    },
+    {
+      "seed": 4,
+      "turns": 25,
+      "winner": 0,
+      "stalemate": false,
+      "points": [
+        7,
+        6
+      ],
+      "progress": {
+        "haku": false,
+        "yuyuko": false
+      },
+      "raceLost": true
+    },
+    {
+      "seed": 5,
+      "turns": 40,
+      "winner": null,
+      "stalemate": true,
+      "points": [
+        2,
+        1
+      ],
+      "progress": {
+        "haku": false,
+        "yuyuko": false
+      },
+      "raceLost": false
+    },
+    {
+      "seed": 6,
+      "turns": 23,
+      "winner": 0,
+      "stalemate": false,
+      "points": [
+        10,
+        5
+      ],
+      "progress": {
+        "haku": true,
+        "yuyuko": false
+      },
+      "raceLost": true
+    },
+    {
+      "seed": 7,
+      "turns": 28,
+      "winner": 0,
+      "stalemate": false,
+      "points": [
+        8,
+        5
+      ],
+      "progress": {
+        "haku": true,
+        "yuyuko": false
+      },
+      "raceLost": true
+    }
+  ],
+  "randomOpenings": 256,
+  "uniqueHumanHands": 256,
+  "uniqueOpponentHands": 255,
+  "reservePositions": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "rulesVersion": "2026-10-16-story-hakugyokurou-active-mentor-v16",
+  "scope": "Actual constrained deals, rule-level action availability and executed teaching turns, real cost/score/claim/race ownership, sixteen arranged legal mid-match clears, eight complete actual random matches without a strategic teaching pass, and chapter lifecycle in a controlled DOM. No random-opening clear guarantee or browser pixel verification."
+}

@@ -113,7 +113,7 @@ vm.runInContext(`(async()=>{
   setup();const restored=copy('hourai_reisen');hold(0,[restored,'hourai_mokou']);prepareOpponents(0);game.beginPlayerTurn(0);
   const snap=captureAIEvaluationSnapshot(game);snap.rulesVersion='2026-10-14-komachi-opening-observer-v9';
   evalRestore(snap,['current','current','current']);
-  ok(game.players[0].hand.includes(restored)&&CARD[restored].abilityMultiplier===2&&REWORK_RULES_VERSION.endsWith('v15'),'A v9 regular-turn save retains its existing double cards under the target correction');
+  ok(game.players[0].hand.includes(restored)&&CARD[restored].abilityMultiplier===2&&REWORK_RULES_VERSION.endsWith('v16'),'A v9 regular-turn save retains its existing double cards under the target correction');
 
   setup();game.shopCards=['shop_rinnosuke',null,null,null];game.startingCardIds.add('shop_rinnosuke');
   hold(0,['mtn_kanako','hourai_kaguya']);put('hourai_mokou',0,0);put('hourai_reisen',0,1);put('hourai_tewi',1,0);

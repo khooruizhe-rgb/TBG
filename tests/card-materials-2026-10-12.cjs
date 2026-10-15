@@ -204,12 +204,17 @@ test('Story chapters leave locked card descriptions and skill titles empty witho
     }
     match.storyMatch.skillFactions=['sdm'];A.openCardDetails('sdm_remilia');assert(!el('card-detail-ability').hidden);assert(el('card-detail-description').innerHTML);
     A.openCardDetails('hourai_mokou');assert.equal(el('card-detail-description').innerHTML,'');assert(el('card-detail-ability').hidden);
+    match.storyMatch.skillFactions=['sdm','hakugyokurou'];
+    for(const language of ['en','zh-CN'])for(const id of ['haku_yuyuko','haku_youmu']){
+      A.setLanguage(language);A.openCardDetails(id);assert(el('card-detail-description').innerHTML);assert(!el('card-detail-ability').hidden);assert(!A.cardBoardHtml(id).includes('card-rin-worn'));
+    }
+    assert(A.cardBoardHtml('hourai_mokou').includes('card-rin-worn'));
   }finally{delete match.storyMatch;delete match.cardAbilityEnabled;A.closeCardDetails();}
   assert.equal(A.CARD.sdm_remilia.desc,definition);A.openCardDetails('hourai_mokou');assert(!el('card-detail-ability').hidden);assert(el('card-detail-description').innerHTML);A.closeCardDetails();
 });
 test('Story chapter titles, objectives and result controls translate together',()=>{
   A.setLanguage('zh-CN');
-  for(const text of ['Story Mode','Chapter 1 · The first table','Chapter 2 · Scarlet Devil Mansion','Start chapter','Chapters','Next chapter','Claim Scarlet Devil Mansion','Remilia: hold three Mansion cards after her ability','Flandre: discard an opponent hand card','All objectives complete. Chapter cleared.']){
+  for(const text of ['Story Mode','Chapter 1 · The first table','Chapter 2 · Scarlet Devil Mansion','Chapter 3 · Hakugyokurou','Start chapter','Chapters','Next chapter','Claim Scarlet Devil Mansion','Remilia: hold three Mansion cards after her ability','Flandre: discard an opponent hand card','Claim Hakugyokurou','Yuyuko: gain four points with one ability','Win before the opponent reaches four points','The opponent reached four points. Retry this chapter to complete the race objective.','Keep four payment cards and surround an empty square on all four sides for Yuyuko.','Connect Yuyuko and Youmu to claim Hakugyokurou.','All objectives complete. Chapter cleared.']){
     const translated=A.translateGameText(text);assert.notEqual(translated,text);assert.match(translated,/[\u4e00-\u9fff]/);
   }
   A.setLanguage('en');assert.equal(A.translateGameText('Story Mode'),'Story Mode');
