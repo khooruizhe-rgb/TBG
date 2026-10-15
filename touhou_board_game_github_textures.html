@@ -1997,20 +1997,19 @@
   #tutorial-coach button:focus-visible{outline:2px solid #e7bd75;outline-offset:2px;}
   #story-overlay{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;padding:18px;background:#160e16c9;backdrop-filter:blur(5px);}
   #story-overlay.show{display:flex;}
-  #story-panel{width:min(860px,100%);max-height:92dvh;overflow:auto;padding:22px;border:1px solid #a57765;border-radius:10px;background:#f5e8cd;color:#493223;box-shadow:0 20px 80px #0007;}
+  #story-panel{width:min(1040px,100%);max-height:92dvh;overflow:auto;padding:22px;border:1px solid #a57765;border-radius:10px;background:#f5e8cd;color:#493223;box-shadow:0 20px 80px #0007;}
   .story-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;}
   #story-title{margin:0;font-size:1.25rem;}#story-intro{line-height:1.55;margin:14px 0;}
   #story-levels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
   #story-panel button{cursor:pointer;border:1px solid #b39162;border-radius:6px;background:#ead5b2;color:#523721;padding:10px 14px;font:inherit;}
   #story-panel button:focus-visible{outline:3px solid #97653f;outline-offset:3px;}
   #story-levels button{text-align:left;display:grid;gap:7px;}#story-levels small{line-height:1.4;font-size:.78rem;}
-  #story-card-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
-  .story-ability-card{display:grid;grid-template-columns:88px minmax(0,1fr);gap:12px;align-items:start;padding:12px;background:#fff9ed;border:1px solid #ceb38b;border-radius:7px;}
-  .story-card-face{position:relative;width:88px;height:110px;cursor:pointer;}.story-card-face .board-card{position:absolute;inset:0;width:100%;height:100%;font-size:10px;}
-  .story-ability-card h3{margin:0 0 6px;font-size:.95rem;}.story-ability-card p{margin:0;font-size:.78rem;line-height:1.5;white-space:pre-line;}
+  #story-card-grid{position:relative;height:clamp(220px,52dvh,430px);margin:10px 0;border:1px dashed #ad8e6b;border-radius:10px;background:radial-gradient(ellipse at center,#fff4d8,#dec9a5);}
+  #story-card-instruction{margin:8px 0;font-size:.85rem;line-height:1.45;color:#79513c;}
   #story-begin{display:block;margin:18px 0 0 auto;background:#8f433c!important;color:#fff5e2!important;}
   #story-panel [hidden]{display:none!important;}
-  @media(max-width:600px){#story-panel{padding:15px;}#story-card-grid,#story-levels{grid-template-columns:1fr;}.story-ability-card{grid-template-columns:74px minmax(0,1fr);}.story-card-face{width:74px;height:96px;}}
+  @media(max-width:600px){#story-panel{padding:15px;}#story-levels{grid-template-columns:1fr;}#story-card-grid{height:50dvh;min-height:240px;}}
+  @media(orientation:landscape) and (max-height:600px){#story-card-grid{height:48dvh;min-height:160px;}}
   .tutorial-focus{outline:2px solid #f7d381 !important;outline-offset:2px;box-shadow:0 0 13px #efc97688 !important;}
   body.tutorial-practice #game.active{display:flex;flex-direction:column;min-height:0;}
   body.tutorial-practice .layout{flex:1;min-height:0;height:auto;}
@@ -2719,6 +2718,23 @@ body:not(:has(#game.active)):not(.title-memory-active) #app{position:relative;z-
 #card-detail.card-rin-worn{border-color:#b8a17c;box-shadow:0 14px 45px #0008,inset 0 0 20px 7px #4027188a}
 #card-detail.card-rin-worn::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(132deg,#ead6b6bb 0 3%,#58342266 3.8%,transparent 5%),linear-gradient(24deg,transparent 40%,#ead7b64d 40.5%,transparent 41.5%),radial-gradient(ellipse at 2% 84%,#432b2177,transparent 24%)}
 
+/* Story skill introductions reuse the freely movable table, with a top-to-bottom renewal. */
+#story-card-grid .story-ability-card{display:block;position:fixed;width:var(--story-card-width,190px);height:auto;aspect-ratio:3/4;padding:0;border:0;border-radius:12px;background:transparent;animation:none;cursor:grab;touch-action:none;user-select:none;box-shadow:0 8px 20px #49322355;}
+#story-card-grid .story-ability-card:focus-visible{outline:3px solid #b75b37;outline-offset:7px;}
+#story-card-grid .story-ability-card.table-card-dragging{cursor:grabbing;}
+.story-ability-card>.story-new-face,.story-ability-card>.story-old-face{position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none;}
+#story-card-grid .story-ability-card .board-card{position:absolute;inset:0;width:100%;height:100%;font-size:clamp(11px,calc(var(--story-card-width)*.076),17px);border-radius:inherit;}
+#story-card-grid .story-ability-card .cname{font-size:inherit;}
+.story-ability-card>.story-old-face{z-index:2;animation:storyCardRenew 1350ms ease-in-out var(--story-refresh-delay,0ms) both;}
+.story-ability-card>.story-refresh-scan{position:absolute;left:0;right:0;top:0;height:3px;z-index:4;background:#fff9cb;box-shadow:0 0 12px 5px #ffe6a1,0 0 28px #ffe297;pointer-events:none;animation:storyCardScan 1350ms ease-in-out var(--story-refresh-delay,0ms) both;}
+.story-ability-card>.story-card-glow{position:absolute;inset:-4px;border:2px solid #ffdb8a;border-radius:15px;box-shadow:0 0 16px #f4bc6388,inset 0 0 9px #ffdc8a77;pointer-events:none;animation:storyCardInvite 1800ms ease-in-out infinite;}
+.story-card-seen>.story-card-glow{animation:none;opacity:.2;}
+.story-ability-card.table-card-dragging>.story-card-glow{animation-play-state:paused;}
+@keyframes storyCardRenew{from{clip-path:inset(0 0 0 0)}to{clip-path:inset(100% 0 0 0)}}
+@keyframes storyCardScan{0%{top:0;opacity:0}8%{opacity:1}92%{opacity:1}100%{top:100%;opacity:0}}
+@keyframes storyCardInvite{0%,100%{opacity:.35}50%{opacity:1}}
+@media(prefers-reduced-motion:reduce){.story-ability-card>.story-old-face,.story-ability-card>.story-refresh-scan{display:none;animation:none}.story-ability-card>.story-card-glow{animation:none;opacity:.6}.story-card-seen>.story-card-glow{opacity:.2}}
+
 #log .news-masthead small{display:block;margin-top:3px;font-size:.58em;letter-spacing:.12em}
 #log .news-columns{columns:2 125px;column-gap:13px;column-rule:1px solid #ad9772}
 #log .news-story{break-inside:avoid}
@@ -3027,7 +3043,7 @@ body:not(:has(#game.active)):not(.title-memory-active) #app{position:relative;z-
 </div>
 <div id="story-overlay" role="dialog" aria-modal="true" aria-labelledby="story-title">
   <section id="story-panel" tabindex="-1"><div class="story-heading"><h2 id="story-title">Story Mode</h2><button id="story-close" type="button">Back</button></div>
-    <p id="story-intro"></p><div id="story-levels"></div><div id="story-card-grid"></div><button id="story-begin" type="button" hidden>Start chapter</button>
+    <p id="story-intro"></p><div id="story-levels"></div><p id="story-card-instruction" hidden></p><div id="story-card-grid"></div><button id="story-begin" type="button" hidden>Start chapter</button>
   </section>
 </div>
 <div id="modal-overlay">
@@ -5552,7 +5568,7 @@ class Game {
 }
 
 /* 2026-10-12: creation, private newspapers and instance ability changes. */
-const REWORK_RULES_VERSION='2026-10-15-story-opening-chapters-v13';
+const REWORK_RULES_VERSION='2026-10-15-random-learning-renewal-v14';
 Game.prototype.canCreateWithMatara=function(){return this.mainBoardCells().length>=4;};
 let nextCreatedCard=0,nextHiddenChoice=0;
 const COPY_PASSIVES=new Set(['sage_yukari','sage_kasen','mtn_nitori','hell_hecatia','palace_koishi']);
@@ -5567,7 +5583,10 @@ function creationBlueprintIds(ids,excludeBaseId=null){
 }
 function copyCardName(id){return `${originalCardBlueprint(id)?.name.replace(/[?？]+$/,'')||CARD[id]?.name.replace(/[?？]+$/,'')||'Card'}?`;}
 function cardHasOverwrite(id){return (game?.permanentAbilities?.[id] || CARD[id]?.copiedAbility)==='__draw_one';}
-function cardMaterialClasses(id,{createdPreview=false}={}){return [CARD[id]?.createdCopy||createdPreview?'card-copy-low-ink':'',!createdPreview&&cardHasOverwrite(id)?'card-rin-worn':''].filter(Boolean).join(' ');}
+function cardLooksWorn(id,{createdPreview=false,wornPreview=false}={}){
+  return !createdPreview && (wornPreview||cardHasOverwrite(id)||!!game?.storyMatch&&game.cardAbilityEnabled(id)===false);
+}
+function cardMaterialClasses(id,options={}){return [CARD[id]?.createdCopy||options.createdPreview?'card-copy-low-ink':'',cardLooksWorn(id,options)?'card-rin-worn':''].filter(Boolean).join(' ');}
 function generatedCard(id){return /^created_card_\d+$/.test(id) || /^trap_token_\d+$/.test(id);}
 function copyDefinitions(match){return [...match.startingCardIds].filter(id=>CARD[id]?.createdCopy).map(id=>({...CARD[id]}));}
 function mergeAbilityFlags(a={},b={}){
@@ -5828,17 +5847,33 @@ const STORY_CHAPTERS=[
   {id:2,title:'Chapter 2 · Scarlet Devil Mansion',body:'Scarlet Devil Mansion abilities are now active. Win, claim that faction, finish Remilia’s ability with three Mansion cards in hand, and use Flandre to send an opponent’s hand card to their discard pile.',skills:['sdm']}
 ];
 function storyScarletCards(){return CARDS.filter(card=>card.faction==='sdm'&&!card.shopExpansion).map(card=>card.id);}
+function dealLearningOpening(match,{scarletOpening=false,shop=false}={}){
+  const deck=shuffle(CARDS.filter(card=>!card.token&&!card.shopkeeper&&!card.shopExpansion).map(card=>card.id));
+  const hand=deck.splice(0,6);
+  const exchange=id=>{
+    const source=deck.indexOf(id);if(source<0)return;
+    const slots=hand.map((card,index)=>card==='sdm_remilia'?-1:index).filter(index=>index>=0);
+    const slot=slots[Math.floor(Math.random()*slots.length)];[hand[slot],deck[source]]=[deck[source],hand[slot]];
+  };
+  if(scarletOpening){
+    if(!hand.includes('sdm_remilia'))exchange('sdm_remilia');
+    if(!hand.some(id=>id!=='sdm_remilia'&&CARD[id].faction==='sdm')){
+      const options=deck.filter(id=>CARD[id].faction==='sdm');exchange(options[Math.floor(Math.random()*options.length)]);
+    }
+  }
+  const hands=[shuffle(hand),...match.players.slice(1).map(()=>deck.splice(0,6))];
+  match.players.forEach((player,index)=>{player.hand=hands[index];player.discard=[];});
+  match.drawPile=deck;
+  match.shopCards=shop?['shop_rinnosuke',...shuffle(CARDS.filter(card=>card.shopExpansion).map(card=>card.id)).slice(0,3)]:[];
+  match.startingCardIds=new Set([...hands.flat(),...deck,...match.shopCards]);
+  match.handKnowledge=match.players.map(()=>new Map());match.reserveAges=match.players.map(()=>({}));
+  return hands;
+}
 function configureStoryMatch(match,chapter){
   const definition=STORY_CHAPTERS.find(level=>level.id===chapter);if(!definition)throw Error('Unknown story chapter.');
-  const hands=[['sdm_remilia','sdm_flandre','haku_youmu','haku_yuyuko','yuuka','medicine'],
-    ['sdm_patchouli','sdm_sakuya','hourai_mokou','temple_shou','mtn_kanako','mtn_suwako']];
   match.kourindouEnabled=false;match.shopCards=[];match.board=Array.from({length:SIZE},()=>Array(SIZE).fill(null));
   match.wasteland=Array.from({length:SIZE},()=>Array(SIZE).fill(false));
-  match.players.forEach((player,i)=>{player.hand=hands[i].slice();player.discard=[];});
-  const used=new Set(hands.flat());
-  match.drawPile=shuffle(CARDS.filter(card=>!card.token&&!card.shopkeeper&&!card.shopExpansion&&!used.has(card.id)).map(card=>card.id));
-  match.startingCardIds=new Set([...used,...match.drawPile]);match.handKnowledge=match.players.map(()=>new Map());
-  match.reserveAges=match.players.map(()=>({}));
+  const hands=dealLearningOpening(match,{scarletOpening:chapter===2});
   match.storyMatch={chapter,humanSeat:0,aiSeat:1,skillFactions:definition.skills.slice(),openingHand:hands[0].slice(),
     sdmCards:storyScarletCards(),sdmPlaced:[],progress:{sdm:false,remilia:false,flandre:false}};
   match.revealHand(0,hands[0],[1]);match.winner=null;match.stalemateMessage='';match.logLines=[];
@@ -7572,13 +7607,17 @@ const CARD_ART_CLASS = {
 }; // per-card portrait art, takes priority over the faction-level background
 function cardArtworkClass(c,cardId){return `${CARD_ART_CLASS[cardBaseId(cardId)] || FACTION_BG_CLASS[c.faction] || ''} card-faction-${c.faction}`.trim();}
 function cardBgClass(c,cardId,options){return `${cardArtworkClass(c,cardId)} ${cardMaterialClasses(cardId,options)}`.trim();}
-function cardMaterialLayersHtml(id,{createdPreview=false}={}){
+function cardMaterialLayersHtml(id,options={}){
+  const {createdPreview=false}=options;
   const card=CARD[id];
   return (card?.createdCopy||createdPreview?'<div class="card-low-ink-lines" aria-hidden="true"></div>':'')
-    +(!createdPreview&&cardHasOverwrite(id)?'<div class="card-wear-overlay" aria-hidden="true"></div>':'');
+    +(cardLooksWorn(id,options)?'<div class="card-wear-overlay" aria-hidden="true"></div>':'');
 }
 function cardBackHtml(){return '<div class="table-card-back" aria-hidden="true"><span>☯</span></div>';}
-function inspectTableCard(node){if(!CARD[node.dataset.cardId]?.hiddenChoice)openCardDetails(node.dataset.cardId);}
+function inspectTableCard(node){
+  if(node.dataset.storyCard==='true'){inspectStoryIntroCard(node);return;}
+  if(!CARD[node.dataset.cardId]?.hiddenChoice)openCardDetails(node.dataset.cardId);
+}
 
 const CARD_DETAIL_FACTION_ICONS = {
   sdm: "https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/icons/scarlet_devil_mansion.png",
@@ -8357,6 +8396,7 @@ function translateGameText(value){
 Object.assign(ZH_TEXT,{"Story Mode": "故事模式", "Chapter 1 · The first table": "第一关 · 初识牌桌", "Chapter 2 · Scarlet Devil Mansion": "第二关 · 红魔馆", "Cards have no abilities in this chapter. Place cards beside their faction, use Draw for Everyone when needed, and win the match. Try the two-card pair before finishing the four-card faction.": "本关所有卡牌都没有技能。放置卡牌、连接同阵营卡牌，必要时为所有人抽牌，赢下这局。可以先收取二卡阵营，再收取四卡阵营。", "Scarlet Devil Mansion abilities are now active. Win, claim that faction, finish Remilia’s ability with three Mansion cards in hand, and use Flandre to send an opponent’s hand card to their discard pile.": "红魔馆阵营的技能已开放。除了获胜，还需收取红魔馆阵营、发动蕾米莉亚后手中有三张红魔馆卡牌，以及用芙兰朵露将对手的一张手牌放入对手弃牌区。", "Learn the table one chapter at a time. Both opening chapters are available to try and replay.": "逐关了解这张牌桌。目前可直接选择、体验或重玩前两关。", "Cleared": "已通关", "Not cleared": "未通关", "Start chapter": "开始本关", "Chapters": "关卡选择", "Next chapter": "下一关", "Claim Scarlet Devil Mansion": "收取红魔馆阵营", "Remilia: hold three Mansion cards after her ability": "蕾米莉亚：技能结算后手持三张红魔馆卡牌", "Flandre: discard an opponent hand card": "芙兰朵露：将对手手牌放入其弃牌区", "All objectives complete. Chapter cleared.": "所有目标已完成，本关通关。", "Win and complete every objective in the same match. Retry to try again.": "需要在同一局中获胜并完成全部目标。点击“重试”重新挑战。", "Start with the two-card pair, then connect four Mansion cards. Abilities and extra-turn effects are inactive.": "可以先连接二卡阵营，再连接四张红魔馆卡牌。本关技能与额外回合效果均不生效。", "Try Remilia while the other Mansion cards are still in hands.": "试试趁其他红魔馆卡牌还在手中时放置蕾米莉亚。", "With Flandre, choose the opponent and send one of their hand cards to their discard pile.": "使用芙兰朵露时选择对手，将其一张手牌放入对手弃牌区。", "Connect four Mansion cards and claim the faction.": "连接四张红魔馆卡牌，收取该阵营。", "Win the match to clear this chapter.": "赢下这局，即可通关。"});
 Object.assign(ZH_TEXT,{'Before finishing Mansion with Sakuya, claim a two-card faction. Unused cards return when time resumes.':'用咲夜收尾红魔馆前，可以先收取一个二卡阵营。时停结束时，没用完的手牌会回到抽牌堆。'});
 Object.assign(ZH_TEXT,{'The opponent waits for the next turn.':'对手暂且等待，结束这一回合。'});
+Object.assign(ZH_TEXT,{'Click a glowing card to read its ability. Drag cards freely to move and stack them.':'单击发光的卡牌查看技能。可以自由拖动、移动或叠放卡牌。'});
 function setCardAbilityTitle(node,cardId,{createdPreview=false}={}){
   const locked=game?.cardAbilityEnabled?.(cardId)===false;node.hidden=locked;
   // Pick once for this view; translation and observer updates keep the same title.
@@ -12544,8 +12584,20 @@ function aiTutorialKnownHand(match){
   const lesson=match.tutorialLesson;
   return lesson ? match.knownHandCards(lesson.aiSeat).filter(card=>card.playerIdx===lesson.humanSeat).map(card=>card.id) : [];
 }
+function aiLearningFourFaction(match,lesson){
+  if(!lesson)return null;
+  const known=match.knownHandCards(lesson.aiSeat).filter(card=>card.playerIdx===lesson.humanSeat).map(card=>card.id);
+  return Object.keys(FACTIONS).filter(faction=>FACTIONS[faction].size===4).map(faction=>{
+    const held=known.filter(id=>match.cardMatchesFaction(id,faction)).length;
+    const own=match.players[lesson.aiSeat].hand.filter(id=>match.cardMatchesFaction(id,faction)).length;
+    const members=match.factionCells(faction),board=members.length;
+    const playerBoard=members.filter(cell=>lesson.openingHand.includes(match.cardAt(cell.r,cell.c))).length;
+    return {faction,value:held+playerBoard?(held+playerBoard)*8+own*3+board*4:-1};
+  }).filter(option=>option.value>=0).sort((a,b)=>b.value-a.value)[0]?.faction||null;
+}
 function aiTutorialWastelandCell(match,cells){
-  const members=match.factionCells('mountain');
+  const focus=aiLearningFourFaction(match,match.tutorialLesson)||'mountain';
+  const members=match.factionCells(focus);
   const distance=cell=>members.length?Math.min(...members.map(member=>Math.abs(member.r-cell.r)+Math.abs(member.c-cell.c))):0;
   return cells.filter(cell=>inBounds(cell.r,cell.c)).slice().sort((a,b)=>distance(b)-distance(a)||b.r-a.r||b.c-a.c)[0]||null;
 }
@@ -12554,20 +12606,21 @@ function aiTutorialPlacement(p,id,cells){
   const known=aiTutorialKnownHand(game),faction=CARD[id]?.faction,ability=game.abilityId(id);
   const protectedFactions=new Set([...known,...lesson.openingHand].map(card=>CARD[card]?.faction));
   const mountainCount=game.factionCells('mountain').length;
-  if(!lesson.progress.four && faction==='mountain' && mountainCount>=3)return null;
+  const focus=aiLearningFourFaction(game,lesson);
+  if(!lesson.progress.four && faction===focus && game.factionCells(focus).length>=3)return null;
   if(ability==='mtn_kanako' && mountainCount>=2 && game.players[p].hand.some(card=>card!==id&&CARD[card]?.faction==='mountain'))return null;
   let best=null;
   for(const cell of cells.filter(at=>inBounds(at.r,at.c)&&!game.cardAt(at.r,at.c)&&!game.isProtected(at.r,at.c))){
     const pick=aiWithPlacement(id,cell,()=>{
       const claims=aiCurrentClaims(p),points=claims.reduce((n,claim)=>n+claim.points,0);
       if(game.winCount(game.players[p])+points>3 || claims.some(claim=>protectedFactions.has(claim.faction)
-        || !lesson.progress.four&&claim.faction==='mountain'))return null;
+        || !lesson.progress.four&&claim.faction===focus))return null;
       const members=game.factionCells(faction),others=members.filter(at=>at.r!==cell.r || at.c!==cell.c);
       const neighbors=DIRS4.filter(([dr,dc])=>game.boardMatchesFaction(cell.r+dr,cell.c+dc,faction)).length;
       const distance=others.length?Math.min(...others.map(at=>Math.abs(at.r-cell.r)+Math.abs(at.c-cell.c))):0;
       const liberties=DIRS4.filter(([dr,dc])=>inBounds(cell.r+dr,cell.c+dc)&&!game.cardAt(cell.r+dr,cell.c+dc)&&!game.wastelandAt(cell.r+dr,cell.c+dc)).length;
-      const supportsFour=!lesson.progress.four && faction==='mountain' && known.some(card=>CARD[card]?.faction==='mountain');
-      const safeSkillTarget=!lesson.progress.ability && !CARD[id]?.crown && faction!=='mountain';
+      const supportsFour=!lesson.progress.four && faction===focus && known.some(card=>game.cardMatchesFaction(card,focus));
+      const safeSkillTarget=!lesson.progress.ability && !CARD[id]?.crown && faction!==focus;
       const value=(supportsFour?1000+(ability==='mtn_kanako'?25:0):safeSkillTarget?180:10)
         +(game.isConnected(members)?40:0)+neighbors*12-distance*5+liberties+points*8;
       return {cell,value};
@@ -12579,7 +12632,8 @@ function aiTutorialPlacement(p,id,cells){
 async function aiTutorialMentorAction(p){
   if(game.storyMatch?.aiSeat===p)return aiStoryMentorAction(p);
   if(game.isPlacementBlocked(p))return game.canDrawNormally(p)?{type:'draw'}:{type:'pass'};
-  const harmless=new Set(['mtn_suwako','mtn_kanako','mtn_sanae','mtn_aya','hourai_mokou','hell_clownpiece','hell_kutaka','temple_shou','heaven_tenshi','heaven_iku','haku_yuyuko']);
+  const harmless=new Set(['mtn_suwako','mtn_kanako','mtn_sanae','mtn_aya','hourai_mokou','hell_clownpiece','hell_kutaka','temple_shou','heaven_tenshi','heaven_iku','haku_yuyuko',
+    'sage_ran','palace_satori','palace_yuugi','hell_eiki','temple_ichirin']);
   let best=null;
   for(const id of game.players[p].hand){
     if(!harmless.has(game.abilityId(id)) || CARD[id]?.createdCopy)continue;
@@ -12609,7 +12663,7 @@ function aiStoryPlacement(p,id,cells){
   const story=game.storyMatch;if(!story)return null;
   const scarlet=CARD[id]?.faction==='sdm',stall=story.chapter===2&&!storyScarletAllPlaced(game);
   if(story.chapter===2&&scarlet&&(game.reserveAges[p][id]||0)<=3)return null;
-  const protect=new Set(story.openingHand.map(card=>CARD[card].faction));let best=null;
+  const protect=new Set(story.openingHand.map(card=>CARD[card].faction)),focus=aiLearningFourFaction(game,story);let best=null;
   for(const cell of cells.filter(at=>inBounds(at.r,at.c)&&!game.cardAt(at.r,at.c))){
     const pick=aiWithPlacement(id,cell,()=>{
       const claims=aiCurrentClaims(p),points=claims.reduce((n,claim)=>n+claim.points,0);
@@ -12619,7 +12673,7 @@ function aiStoryPlacement(p,id,cells){
       const distance=others.length?Math.min(...others.map(at=>Math.abs(at.r-cell.r)+Math.abs(at.c-cell.c))):0;
       const adjacent=DIRS4.filter(([dr,dc])=>game.boardMatchesFaction(cell.r+dr,cell.c+dc,faction)).length;
       const room=DIRS4.filter(([dr,dc])=>inBounds(cell.r+dr,cell.c+dc)&&!game.cardAt(cell.r+dr,cell.c+dc)).length;
-      const support=story.chapter===1&&scarlet?1000:0;
+      const support=story.chapter===1&&faction===focus?1000:0;
       const value=support+points*100+adjacent*12-distance*5+room;
       return {cell,value};
     },p);
@@ -13800,7 +13854,7 @@ function startTableCardSlide(drag,releasedAt){
     const dt=(now-slide.previous)/1000;slide.previous=now;
     // A backgrounded tab must not resume an old throw when it becomes visible again.
     if(dt>.12){stopTableCardSlide(node);return;}
-    stepTableCardSlide(body,dt,{left:24,top:24,right:window.innerWidth-24,bottom:window.innerHeight-24});
+    stepTableCardSlide(body,dt,tableCardBounds(node));
     moveTitleCard(node,body.x,body.y);node.style.setProperty('--table-angle',`${body.angle}deg`);
     node.dataset.ignoreClickUntil=String(Date.now()+100);
     if(Math.hypot(body.vx,body.vy)<8 && Math.abs(body.spin)<1){stopTableCardSlide(node);return;}
@@ -13809,6 +13863,7 @@ function startTableCardSlide(drag,releasedAt){
   slide.frame=requestAnimationFrame(tick);
 }
 function movableTableCardEnabled(node){
+  if(node?.dataset.storyCard==='true')return node.isConnected!==false&&storyMenuChapter===2&&el('story-overlay').classList.contains('show')&&!el('card-detail-overlay').classList.contains('show');
   if(node?.dataset.peekCard==='true')return true;
   if(el('game').classList.contains('active') || node?.classList.contains('title-memory-matched'))return false;
   return !titleMemoryGame || titleMemoryGame.phase==='ready';
@@ -13828,15 +13883,26 @@ function drawTitlePreviewCards(){
   try{window.localStorage?.setItem('boundary-title-preview',JSON.stringify(lastTitleCardIds));}catch(_error){}
   return drawn;
 }
+function tableCardBounds(node){
+  if(node?.dataset.storyCard==='true'){
+    const area=el('story-card-grid').getBoundingClientRect(),card=node.getBoundingClientRect();
+    const halfWidth=Math.min(area.width/2,card.width/2+10),halfHeight=Math.min(area.height/2,card.height/2+10);
+    return {left:area.left+halfWidth,right:area.right-halfWidth,top:area.top+halfHeight,bottom:area.bottom-halfHeight};
+  }
+  return {left:24,top:24,right:window.innerWidth-24,bottom:window.innerHeight-24};
+}
 function moveTitleCard(node,x,y){
-  const cx=Math.max(24,Math.min(window.innerWidth-24,x)),cy=Math.max(24,Math.min(window.innerHeight-24,y));
+  const bounds=tableCardBounds(node),cx=Math.max(bounds.left,Math.min(bounds.right,x)),cy=Math.max(bounds.top,Math.min(bounds.bottom,y));
   node.style.setProperty('--table-x',`${cx}px`);node.style.setProperty('--table-y',`${cy}px`);
+  if(node.dataset.storyCard==='true'){
+    const area=el('story-card-grid').getBoundingClientRect();node.dataset.storyX=String((cx-area.left)/Math.max(1,area.width));node.dataset.storyY=String((cy-area.top)/Math.max(1,area.height));
+  }
   return {x:cx,y:cy};
 }
 function liftTitleCard(node){
   const rect=node.getBoundingClientRect(),center={x:rect.left+rect.width/2,y:rect.top+rect.height/2};
   node.classList.add('table-card-moved');
-  if(node.dataset.peekCard==='true')node.style.zIndex=String(++peekCardLayer);else document.body.appendChild(node);
+  if(node.dataset.peekCard==='true'||node.dataset.storyCard==='true')node.style.zIndex=String(++peekCardLayer);else document.body.appendChild(node);
   return moveTitleCard(node,center.x,center.y);
 }
 function finishTitleCardDrag(cancelled=false,releasedAt=performance.now()){
@@ -13850,6 +13916,9 @@ function finishTitleCardDrag(cancelled=false,releasedAt=performance.now()){
   if(drag.moved && !cancelled)startTableCardSlide(drag,releasedAt);
   if(cancelled || drag.moved){
     lastTitleCardTap=null;drag.node.dataset.ignoreClickUntil=String(Date.now()+400);return;
+  }
+  if(drag.node.dataset.storyCard==='true'){
+    lastTitleCardTap=null;drag.node.dataset.pointerClickUntil=String(Date.now()+450);inspectTableCard(drag.node);return;
   }
   const time=Date.now(),previous=lastTitleCardTap;
   lastTitleCardTap={node:drag.node,time,x:drag.startX,y:drag.startY,pointerType:drag.pointerType};
@@ -13902,6 +13971,10 @@ function onTitleCardPointerCancel(event){
 function onTitleCardClick(event){
   event.stopPropagation();
   const node=event.currentTarget;
+  if(node.dataset.storyCard==='true'){
+    if(Number(node.dataset.ignoreClickUntil||0)>Date.now()||Number(node.dataset.pointerClickUntil||0)>Date.now())return;
+    inspectTableCard(node);return;
+  }
   if(node.dataset.peekCard==='true'){if(event.detail===0)onTitleCardDoubleClick(event);return;}
   if(event.detail>1 || Number(node.dataset.ignoreClickUntil || 0)>Date.now() ||
     Number(node.dataset.pointerClickUntil || 0)>Date.now())return;
@@ -14098,7 +14171,7 @@ window.addEventListener('blur',()=>{finishTitleCardDrag(true);clearTableCardSlid
 window.addEventListener('resize',()=>{
   finishTitleCardDrag(true);clearTableCardSlides();lastTitleCardTap=null;
   document.querySelectorAll('.table-card-moved').forEach(node=>{
-    if(node.classList.contains('title-memory-matched'))return;
+    if(node.dataset.storyCard==='true'||node.classList.contains('title-memory-matched'))return;
     const rect=node.getBoundingClientRect();moveTitleCard(node,rect.left+rect.width/2,rect.top+rect.height/2);
   });
   if(titleMemoryGame){
@@ -14480,8 +14553,8 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='4020e2720c1cb3ce0d3a0c57fd365136d665bba1e97ccfdb2906a566527f3a8a';
-const AI_EVALUATION_POLICY_DIGEST='e82d6deb4f6cbba4aa42c70fbcbaaaef0a9c0a1825459659c7e78e8e91ed72c1';
+const AI_EVALUATION_RULES_DIGEST='2040a3b00280ecb4a0aec52d3cb613a4140937d111d1ac2ce99ca0e908c979da';
+const AI_EVALUATION_POLICY_DIGEST='4763f73e63086bb565bffb81f78f088fe4b54ffe1c40ea35894bf1ec504a36db';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
   if(!source)throw new Error('Game source is unavailable.');
@@ -14567,7 +14640,7 @@ function evalForkSummary(report){
   return {groups,invalidPairs,conclusion,completedPairs:report.pairs.length};
 }
 function evalValidateSnapshot(snapshot){
-  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-14-original-creation-blueprints-v12','2026-10-14-guided-final-match-v11','2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
+  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-15-story-opening-chapters-v13','2026-10-14-original-creation-blueprints-v12','2026-10-14-guided-final-match-v11','2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
   const state=snapshot.state,n=state?.players?.length,size=snapshot.size;
   if(![4,5].includes(size) || ![2,3,4].includes(n) || !Number.isInteger(state.currentPlayerIdx) || state.currentPlayerIdx<0 || state.currentPlayerIdx>=n)throw new Error('Invalid position dimensions.');
   if(state.numPlayers!==n || state.players.some((p,i)=>p.idx!==i || !Array.isArray(p.hand) || !Array.isArray(p.discard)))throw new Error('Invalid position dimensions.');
@@ -15269,41 +15342,37 @@ function dockTutorialCoach(mobile){
 function configureTutorialGame(practice,step){
   const goal=TUTORIALS[step].goal;
   if(goal==='match'){configureTutorialMatch(practice);return;}
-  let board=[],hand=['mtn_sanae'],opponents=[[],[]];
-  if(goal==='claim') board=[[1,1,'mtn_kanako'],[1,2,'mtn_suwako'],[2,1,'mtn_aya']];
-  if(goal==='draw'){
-    hand=['hourai_mokou','hell_clownpiece','haku_youmu','sage_ran','mtn_sanae','palace_rin'];
-    opponents=[['sdm_remilia','sdm_flandre','sdm_patchouli','sdm_sakuya','hourai_kaguya','hourai_eirin','hourai_reisen'],['mtn_kanako','mtn_suwako','mtn_aya']];
-  }
+  const pool=shuffle(CARDS.filter(card=>!card.token&&!card.shopkeeper&&!card.shopExpansion).map(card=>card.id));
+  const take=id=>{const index=pool.indexOf(id);if(index>=0)return pool.splice(index,1)[0];return null;};
+  const randomHand=(count,trade=false)=>Array.from({length:count},()=>take(pool.find(id=>!trade||!CARD[id].override)));
+  let board=[],required=[];
+  if(goal==='place'||goal==='claim')required=[take('mtn_sanae')];
+  if(goal==='claim')board=[[1,1,take('mtn_kanako')],[1,2,take('mtn_suwako')],[2,1,take('mtn_aya')]];
   if(goal==='area'){
-    hand=['heaven_iku','hourai_mokou','hell_clownpiece','haku_youmu'];
-    board=[[0,0,'mtn_aya'],[0,1,'sage_ran']];
+    required=[take('heaven_iku')];
+    const targets=pool.filter(id=>!CARD[id].crown&&!CARD[id].wild&&!CARD[id].triple&&CARD[id].faction!=='heaven').slice(0,2);
+    board=targets.map((id,index)=>[0,index,take(id)]);
   }
-  if(goal==='offer' || goal==='trade') hand=['hourai_mokou','haku_youmu'];
-  practice.shopCards=['shop_rinnosuke','sdm_meiling','hourai_tewi','hell_kutaka'];
+  const trade=goal==='offer'||goal==='trade',handSize=trade?2:goal==='area'?4:6;
+  const hand=shuffle([...required,...randomHand(handSize-required.length,trade)]);
+  const opponents=goal==='draw'?[randomHand(7),randomHand(3)]:[randomHand(6),randomHand(6)];
+  practice.shopCards=['shop_rinnosuke',...shuffle(CARDS.filter(card=>card.shopExpansion).map(card=>card.id)).slice(0,3)];
   practice.board=Array.from({length:SIZE},()=>Array(SIZE).fill(null));
   practice.wasteland=Array.from({length:SIZE},()=>Array(SIZE).fill(false));
-  for(const [r,c,id] of board) practice.setCardAt(r,c,id);
-  practice.players.forEach((p,i)=>{
-    p.hand=(i===0?hand:opponents[i-1]).slice();p.discard=[];
-  });
-  const used=new Set([...board.map(cell=>cell[2]),...practice.players.flatMap(p=>p.hand),...practice.shopCards]);
-  practice.drawPile=CARDS.filter(card=>!card.token && !card.shopkeeper && !card.shopExpansion && !used.has(card.id)).map(card=>card.id);
-  practice.startingCardIds=new Set([...used,...practice.drawPile]);
+  for(const [r,c,id] of board)practice.setCardAt(r,c,id);
+  practice.players.forEach((player,index)=>{player.hand=(index===0?hand:opponents[index-1]).slice();player.discard=[];});
+  practice.drawPile=pool;
+  practice.startingCardIds=new Set([...board.map(cell=>cell[2]),...practice.players.flatMap(player=>player.hand),...practice.shopCards,...pool]);
+  practice.handKnowledge=practice.players.map(()=>new Map());practice.reserveAges=practice.players.map(()=>({}));
+  practice.players.forEach(player=>practice.revealHand(player.idx,player.hand,[player.idx]));
+  practice.tutorialExercise={initialHandSize:hand.length,areaTargets:board.map(cell=>cell[2]),costCards:goal==='area'?hand.filter(id=>id!=='heaven_iku'):[],tradeCard:trade?hand[0]:null};
   practice.currentPlayerIdx=0;practice.winner=null;practice.logLines=[];
   practice.log('Guided practice — the other players wait while you try this step.');
 }
 function configureTutorialMatch(practice){
-  const hands=[['mtn_sanae','mtn_aya','haku_youmu','haku_yuyuko','marisa','hell_clownpiece'],
-    ['mtn_kanako','mtn_suwako','hourai_mokou','temple_shou','heaven_tenshi','heaven_iku']];
   practice.board=Array.from({length:SIZE},()=>Array(SIZE).fill(null));
   practice.wasteland=Array.from({length:SIZE},()=>Array(SIZE).fill(false));
-  practice.shopCards=['shop_rinnosuke','sdm_meiling','hourai_tewi','hell_kutaka'];
-  practice.players.forEach((p,i)=>{p.hand=hands[i].slice();p.discard=[];});
-  const used=new Set([...hands.flat(),...practice.shopCards]);
-  practice.drawPile=shuffle(CARDS.filter(card=>!card.token&&!card.shopkeeper&&!card.shopExpansion&&!used.has(card.id)).map(card=>card.id));
-  practice.startingCardIds=new Set([...used,...practice.drawPile]);
-  practice.handKnowledge=practice.players.map(()=>new Map());practice.reserveAges=practice.players.map(()=>({}));
+  const hands=dealLearningOpening(practice,{shop:true});
   practice.tutorialLesson={humanSeat:0,aiSeat:1,openingHand:hands[0].slice(),progress:{four:false,two:false,ability:false}};
   practice.revealHand(0,hands[0],[1]);
   practice.winner=null;practice.logLines=[];
@@ -15313,11 +15382,11 @@ function tutorialObjectiveMet(t){
   const g=t.practice,goal=TUTORIALS[t.step].goal;
   if(goal==='match')return g.winner?.idx===g.tutorialLesson?.humanSeat
     && Object.values(g.tutorialLesson.progress).every(Boolean);
-  if(goal==='place') return g.isActiveOnBoard('mtn_sanae') && g.players[0].hand.length===1;
+  if(goal==='place') return g.isActiveOnBoard('mtn_sanae') && g.players[0].hand.length===g.tutorialExercise.initialHandSize;
   if(goal==='claim') return ['mtn_kanako','mtn_suwako','mtn_aya','mtn_sanae'].every(id=>g.players[0].discard.includes(id));
   if(goal==='draw') return g.players.every((p,i)=>p.hand.length===[7,7,4][i]) && g.drawPile.length===t.initialPileSize-2;
-  if(goal==='area') return ['mtn_aya','sage_ran'].every(id=>g.players[0].discard.includes(id))
-    && ['hourai_mokou','hell_clownpiece','haku_youmu'].every(id=>g.drawPile.includes(id)) && !g.players[0].hand.length;
+  if(goal==='area') return g.tutorialExercise.areaTargets.every(id=>g.players[0].discard.includes(id))
+    && g.tutorialExercise.costCards.every(id=>g.drawPile.includes(id)) && !g.players[0].hand.length;
   if(goal==='trade') return g.tradedThisTurn[0] && g.players[0].hand.some(id=>CARD[id].shopExpansion);
   return false;
 }
@@ -15377,7 +15446,7 @@ function openTutorial(step=0){
   dockTutorialCoach(document.body.classList.contains('game-mobile'));
   renderTutorial();
   runTutorialTurn(t); // The real human turn installs all normal click and drag controls.
-  if(TUTORIALS[step].goal==='trade') beginShopTrade('hourai_mokou');
+  if(TUTORIALS[step].goal==='trade') beginShopTrade(game.tutorialExercise.tradeCard);
   window.scrollTo(0,0);queueMobileViewport();
 }
 function tutorialStep(delta){
@@ -15421,7 +15490,7 @@ function highlightTutorialTargets(){
     mark(el('hand-choice-confirm'));return;
   }
   if(pendingRectChoice){mark(tileElement(0,0));mark(tileElement(0,1));return;}
-  const id=goal==='area'?'heaven_iku':goal==='offer'?'hourai_mokou':'mtn_sanae';
+  const id=goal==='area'?'heaven_iku':goal==='offer'?game.tutorialExercise.tradeCard:'mtn_sanae';
   mark([...el('hand').children].find(node=>node.dataset.cardId===id));
   if(selectedHandCard && goal==='offer') mark(tileElement(SIZE+2,1));
   if(selectedHandCard && goal==='claim'){
@@ -15458,26 +15527,29 @@ el('tutorial-retry').addEventListener('click',()=>{if(isStoryMatch())openStoryCh
 el('tutorial-next').addEventListener('click',()=>tutorialStep(1));
 
 /* The first two story chapters are individually replayable while this mode is prototyped. */
-let storyState=null,storyMenuChapter=null,storyReturnFocus=null;
+let storyState=null,storyMenuChapter=null,storyReturnFocus=null,storyIntroSession=null;
 const STORY_PROGRESS_KEY='tbg-story-chapters-v1';
 function isStoryMatch(){return !!storyState&&storyState.practice===game;}
 function storyClearedChapters(){
   try{const value=JSON.parse(window.localStorage?.getItem(STORY_PROGRESS_KEY)||'[]');return Array.isArray(value)?value.filter(id=>STORY_CHAPTERS.some(chapter=>chapter.id===id)):[];}catch(_error){return [];}
 }
 function clearStoryMatch(){
+  closeStoryIntroCards();
   const previous=storyState;storyState=null;previous?.cancel();storyMenuChapter=null;
   el('story-overlay').classList.remove('show');document.body.classList.remove('story-practice');
   if(previous){el('tutorial-coach').hidden=true;document.body.classList.remove('tutorial-practice');setRuleText(el('restart-btn'),'Play Again');setRuleText(el('tutorial-back'),'Back');}
 }
 function closeStoryMenu(){
+  closeStoryIntroCards();
   el('story-overlay').classList.remove('show');storyMenuChapter=null;storyReturnFocus?.focus();
 }
 function openStoryMenu(){
   if(online || game&&!game.cancelled&&!isStoryMatch())return;
   storyReturnFocus=document.activeElement;if(isStoryMatch())returnToMainMenu();
+  closeStoryIntroCards();
   storyMenuChapter=null;el('story-title').textContent='Story Mode';
   setRuleText(el('story-intro'),'Learn the table one chapter at a time. Both opening chapters are available to try and replay.');
-  el('story-card-grid').replaceChildren();el('story-begin').hidden=true;el('story-levels').hidden=false;
+  el('story-card-grid').replaceChildren();el('story-card-grid').hidden=true;el('story-card-instruction').hidden=true;el('story-begin').hidden=true;el('story-levels').hidden=false;
   const levels=el('story-levels');levels.replaceChildren();const cleared=storyClearedChapters();
   for(const chapter of STORY_CHAPTERS){
     const button=document.createElement('button');button.type='button';
@@ -15490,18 +15562,46 @@ function openStoryMenu(){
 }
 function showStoryChapterIntro(chapter){
   const definition=STORY_CHAPTERS.find(level=>level.id===chapter);if(!definition||online||game&&!game.cancelled&&!isStoryMatch())return;
-  if(isStoryMatch())returnToMainMenu();storyMenuChapter=chapter;
+  if(isStoryMatch())returnToMainMenu();closeStoryIntroCards();storyMenuChapter=chapter;
   el('story-title').textContent=definition.title;setRuleText(el('story-intro'),definition.body);
   el('story-levels').hidden=true;el('story-begin').hidden=false;
-  const grid=el('story-card-grid');grid.replaceChildren();
-  if(chapter===2)for(const id of storyScarletCards()){
-    const article=document.createElement('article');article.className='story-ability-card';
-    const face=document.createElement('div');face.className='story-card-face';face.innerHTML=cardBoardHtml(id);face.tabIndex=0;face.setAttribute('role','button');face.setAttribute('aria-label',CARD[id].name);
-    face.addEventListener('click',()=>openCardDetails(id));face.addEventListener('keydown',event=>{if(['Enter',' '].includes(event.key)){event.preventDefault();openCardDetails(id);}});
-    const copy=document.createElement('div'),name=document.createElement('h3'),description=document.createElement('p');
-    name.textContent=CARD[id].name;setRuleText(description,ORIGINAL_CARD_BLUEPRINTS[id].desc);copy.append(name,description);article.append(face,copy);grid.appendChild(article);
+  const grid=el('story-card-grid');grid.replaceChildren();grid.hidden=chapter!==2;el('story-card-instruction').hidden=chapter!==2;
+  if(chapter===2){
+    setRuleText(el('story-card-instruction'),'Click a glowing card to read its ability. Drag cards freely to move and stack them.');
+    const session={cards:[],frame:null,layout:()=>layoutStoryIntroCards()};storyIntroSession=session;
+    storyScarletCards().forEach((id,index)=>{
+      const card=document.createElement('div');card.className='table-scatter-card table-card-moved story-ability-card';card.dataset.cardId=id;card.dataset.storyCard='true';card.dataset.angle=String([-5,3,-3,5][index]);
+      card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',CARD[id].name);card.setAttribute('aria-describedby','story-card-instruction');card.setAttribute('aria-keyshortcuts','Enter Space I ArrowLeft ArrowRight ArrowUp ArrowDown');
+      card.style.setProperty('--table-angle',card.dataset.angle+'deg');card.style.setProperty('--story-refresh-delay',index*100+'ms');
+      card.innerHTML=`<div class="story-new-face">${cardBoardHtml(id)}</div><div class="story-old-face" aria-hidden="true">${cardBoardHtml(id,{wornPreview:true})}</div><span class="story-refresh-scan" aria-hidden="true"></span><span class="story-card-glow" aria-hidden="true"></span>`;
+      for(const [event,handler]of [['pointerdown',onTitleCardPointerDown],['pointermove',onTitleCardPointerMove],['pointerup',onTitleCardPointerUp],['pointercancel',onTitleCardPointerCancel],['lostpointercapture',onTitleCardPointerCancel],['click',onTitleCardClick],['keydown',onTitleCardKeyDown]])card.addEventListener(event,handler);
+      grid.appendChild(card);session.cards.push(card);
+    });
+    window.addEventListener('resize',session.layout);el('story-panel').addEventListener('scroll',session.layout);
+    session.frame=requestAnimationFrame(()=>{session.frame=null;if(storyIntroSession===session)session.layout();});
   }
   el('story-overlay').classList.add('show');el('story-panel').focus();
+}
+function layoutStoryIntroCards(){
+  const session=storyIntroSession;if(!session||!el('story-overlay').classList.contains('show'))return;
+  if(titleCardDrag?.node.dataset.storyCard==='true')finishTitleCardDrag(true);
+  session.cards.forEach(node=>stopTableCardSlide(node,false));
+  const grid=el('story-card-grid'),area=grid.getBoundingClientRect(),columns=area.width>=480?4:2,rows=Math.ceil(session.cards.length/columns);
+  const width=Math.max(60,Math.min(220,(area.width-(columns+1)*16)/columns,(area.height-(rows+1)*14)/rows*.75));
+  grid.style.setProperty('--story-card-width',`${width}px`);
+  session.cards.forEach((card,index)=>{
+    const x=Number(card.dataset.storyX??((index%columns+.5)/columns)),y=Number(card.dataset.storyY??((Math.floor(index/columns)+.5)/rows));
+    moveTitleCard(card,area.left+area.width*x,area.top+area.height*y);
+  });
+}
+function inspectStoryIntroCard(node){
+  if(!movableTableCardEnabled(node))return;stopTableCardSlide(node,false);node.classList.add('story-card-seen');node.dataset.ignoreClickUntil=String(Date.now()+400);openCardDetails(node.dataset.cardId);
+}
+function closeStoryIntroCards(){
+  const session=storyIntroSession;if(!session)return;
+  if(titleCardDrag?.node.dataset.storyCard==='true')finishTitleCardDrag(true);
+  storyIntroSession=null;if(session.frame!==null)cancelAnimationFrame(session.frame);
+  session.cards.forEach(node=>stopTableCardSlide(node,false));window.removeEventListener('resize',session.layout);el('story-panel').removeEventListener('scroll',session.layout);el('story-card-grid').replaceChildren();
 }
 function openStoryChapter(chapter){
   if(!STORY_CHAPTERS.some(level=>level.id===chapter)||online||game&&!game.cancelled&&!isStoryMatch())return;

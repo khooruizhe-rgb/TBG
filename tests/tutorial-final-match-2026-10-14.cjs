@@ -3,15 +3,16 @@ const root=path.resolve(__dirname,'..'),html=fs.readFileSync(root+'/touhou_board
 for(const [,code]of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(code);
 const builder=vm.createContext({});vm.runInContext(html.slice(html.indexOf('function buildAIEvaluationWorkerSource'),html.indexOf('\nfunction evalHashSeed')),builder);builder.html=html;
 class Node{
-  constructor(){this.children=[];this.parentElement=null;this.events={};this.style={};this.names=new Set();this.classList={add:n=>this.names.add(n),remove:n=>this.names.delete(n),contains:n=>this.names.has(n)};this.isConnected=true;}
+  constructor(){this.children=[];this.parentElement=null;this.events={};this.dataset={};this.style={setProperty(){}};this.names=new Set();this.classList={add:n=>this.names.add(n),remove:n=>this.names.delete(n),contains:n=>this.names.has(n)};this.isConnected=true;}
   appendChild(child){child.parentElement=this;this.children.push(child);return child;}insertBefore(child){return this.appendChild(child);}prepend(child){child.parentElement=this;this.children.unshift(child);}
-  querySelector(){return new Node();}addEventListener(name,fn){this.events[name]=fn;}focus(){this.focused=true;}
+  querySelector(){return new Node();}addEventListener(name,fn){this.events[name]=fn;}removeEventListener(name){delete this.events[name];}focus(){this.focused=true;}
 }
 const nodes=new Map(),el=id=>{if(!nodes.has(id))nodes.set(id,new Node());return nodes.get(id);};
-const ctx=vm.createContext({console,setTimeout,clearTimeout,self:{},assert,el,
-  document:{activeElement:new Node(),body:new Node(),querySelectorAll:()=>[],addEventListener(){}},window:{scrollTo(){}},
+const ctx=vm.createContext({console,setTimeout,clearTimeout,self:{},assert,el,performance:{now:()=>0},requestAnimationFrame:()=>1,cancelAnimationFrame(){},
+  document:{activeElement:new Node(),body:new Node(),querySelectorAll:()=>[],addEventListener(){}},window:{scrollTo(){},addEventListener(){},removeEventListener(){}},
   setRuleText:(node,text)=>node.textContent=text,ruleTextHtml:text=>text,closeAITestDashboard(){},updateAITestControls(){},queueMobileViewport(){},waitForVisualEffects:async()=>true});
 vm.runInContext(vm.runInContext('buildAIEvaluationWorkerSource(html)',builder),ctx);
+vm.runInContext(html.slice(html.indexOf('let titleCardDrag='),html.indexOf('function drawTitlePreviewCards('))+html.slice(html.indexOf('function tableCardBounds('),html.indexOf('function setTitleCardFace(')),ctx);
 const tutorial=html.slice(html.indexOf('/* Guided practice uses'),html.indexOf('/* CSS lays out the phone table'));
 vm.runInContext(tutorial+`
   let tutorialLoopStarts=0,menuReturns=0,normalRestarts=0,online=null;
@@ -25,9 +26,16 @@ vm.runInContext(html.slice(restartStart,html.indexOf('\n});',restartStart)+4),ct
 vm.runInContext(`(async()=>{
   const checks=[],walkthroughs=[];function ok(value,name){assert(value,name);checks.push(name);}
   const originalAction=doPlayerAction;
-  function setup(actor=0,seed=0){
+  function setup(actor=0,seed=0,fixed=true){
     evalResetTokens();evalSetSeed(seed);SIZE=4;game=new Game(2,{},null,{aiDifficulty:'hard',aiOnly:true,fastTest:true});game.currentPlayerIdx=actor;game.players[0].isAI=false;
     configureTutorialMatch(game);game.aiMakesMistake=()=>false;game.render=()=>{};
+    // These route fixtures isolate original teaching interactions after the real random deal.
+    if(fixed){
+      const hands=[['mtn_sanae','mtn_aya','haku_youmu','haku_yuyuko','marisa','hell_clownpiece'],['mtn_kanako','mtn_suwako','hourai_mokou','temple_shou','heaven_tenshi','heaven_iku']];
+      game.players.forEach((player,i)=>player.hand=hands[i].slice());game.shopCards=['shop_rinnosuke','sdm_meiling','hourai_tewi','hell_kutaka'];
+      const used=new Set([...hands.flat(),...game.shopCards]);game.drawPile=shuffle(CARDS.filter(card=>!card.token&&!card.shopkeeper&&!card.shopExpansion&&!used.has(card.id)).map(card=>card.id));
+      game.startingCardIds=new Set([...used,...game.drawPile]);game.tutorialLesson.openingHand=hands[0].slice();game.handKnowledge=game.players.map(()=>new Map());game.revealHand(0,hands[0],[1]);
+    }
     game.ui.pickOwnHandCards=async()=>null;
     game.ui.pickCell=async(_title,cells)=>cells[0];
     game.ui.pickFromList=async(_title,options)=>options[0]?.value;

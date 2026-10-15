@@ -1,0 +1,189 @@
+{
+  "status": "pass",
+  "count": 59,
+  "checks": [
+    "Both six-card hands and remaining deck vary across 256 seeded 1 openings",
+    "Only chapter two reserves Remilia and another Mansion card; extra Mansion cards remain possible: 1",
+    "A random opening samples broadly from the ordinary card pool: 1",
+    "The same seed reproduces hands, deck, shop and first actor: 1",
+    "Both six-card hands and remaining deck vary across 256 seeded 2 openings",
+    "Only chapter two reserves Remilia and another Mansion card; extra Mansion cards remain possible: 2",
+    "A random opening samples broadly from the ordinary card pool: 2",
+    "The same seed reproduces hands, deck, shop and first actor: 2",
+    "Both six-card hands and remaining deck vary across 256 seeded tutorial openings",
+    "Only chapter two reserves Remilia and another Mansion card; extra Mansion cards remain possible: tutorial",
+    "A random opening samples broadly from the ordinary card pool: tutorial",
+    "The same seed reproduces hands, deck, shop and first actor: tutorial",
+    "Guided page 0 randomizes hand identities and merchandise while retaining its necessary lesson cards",
+    "The real rules still complete the randomized single-step exercise 0",
+    "Guided page 1 randomizes hand identities and merchandise while retaining its necessary lesson cards",
+    "The real rules still complete the randomized single-step exercise 1",
+    "Guided page 2 randomizes hand identities and merchandise while retaining its necessary lesson cards",
+    "The real rules still complete the randomized single-step exercise 2",
+    "Guided page 3 randomizes hand identities and merchandise while retaining its necessary lesson cards",
+    "The real rules still complete the randomized single-step exercise 3",
+    "Guided page 4 randomizes hand identities and merchandise while retaining its necessary lesson cards",
+    "The real rules still complete the randomized single-step exercise 4",
+    "Guided page 5 randomizes hand identities and merchandise while retaining its necessary lesson cards",
+    "The real rules still complete the randomized single-step exercise 5",
+    "Conditional dealing terminates even under a constant RNG",
+    "The tutorial mentor adapts to the random player faction instead of always supporting Mountain",
+    "Adaptive mentoring restores the board, hands, knowledge and statistics",
+    "A full match from an actual random 1 opening ends without a runtime error or turn-limit abort",
+    "A full match from an actual random 2 opening ends without a runtime error or turn-limit abort",
+    "A full match from an actual random tutorial opening ends without a runtime error or turn-limit abort",
+    "A story card without skills has Rin wear without an Overwrite label: sdm_remilia",
+    "Worn story details retain their empty skill text: sdm_remilia",
+    "A story card without skills has Rin wear without an Overwrite label: hourai_mokou",
+    "Worn story details retain their empty skill text: hourai_mokou",
+    "Only still-locked factions remain worn in chapter two",
+    "The actual hand renderer uses the same story material state",
+    "Leaving the story restores the original card appearance and ability",
+    "The introduction has four freely movable large cards",
+    "Each introduction card has fresh art, a worn layer, a renewal scan and an invitation glow: sdm_remilia",
+    "Each introduction card has fresh art, a worn layer, a renewal scan and an invitation glow: sdm_flandre",
+    "Each introduction card has fresh art, a worn layer, a renewal scan and an invitation glow: sdm_patchouli",
+    "Each introduction card has fresh art, a worn layer, a renewal scan and an invitation glow: sdm_sakuya",
+    "The renewal removes the old layer from top to bottom",
+    "One pointer tap opens the actual card details and acknowledges its glow",
+    "One touch tap opens the card even when compatibility clicks are suppressed",
+    "A touch drag and its synthetic click do not inspect the card",
+    "Dragging and its compatibility click move the card without opening details",
+    "A dragged card stays in the story overlay and releases pointer capture",
+    "Released story cards use the shared table sliding physics",
+    "A keyboard or screen-reader click can also inspect a card",
+    "Arrow keys move cards without inspecting them",
+    "Enter inspects the focused introduction card",
+    "Resizing keeps moved cards reachable within the smaller table",
+    "Closing during a gesture clears cards, capture, slides, layout callbacks and listeners",
+    "Closing before the first animation frame cannot restore stale cards",
+    "Reduced motion keeps cards draggable while skipping renewal motion and throws",
+    "Starting the chapter disposes of the introduction before launching one game loop",
+    "Chapter one has no skill-renewal cards",
+    "The new introduction instructions are localized"
+  ],
+  "samples": {
+    "1": {
+      "seeds": 256,
+      "uniqueHands": 256,
+      "uniqueOpponentHands": 256,
+      "distinctCards": 36,
+      "redCounts": [
+        0,
+        1,
+        2
+      ],
+      "withoutRemilia": 220
+    },
+    "2": {
+      "seeds": 256,
+      "uniqueHands": 256,
+      "uniqueOpponentHands": 256,
+      "distinctCards": 36,
+      "redCounts": [
+        2,
+        3
+      ],
+      "withoutRemilia": 0
+    },
+    "tutorial": {
+      "seeds": 256,
+      "uniqueHands": 256,
+      "uniqueOpponentHands": 256,
+      "distinctCards": 36,
+      "redCounts": [
+        0,
+        1,
+        2
+      ],
+      "withoutRemilia": 220
+    }
+  },
+  "exerciseSamples": [
+    {
+      "step": 0,
+      "seeds": 64,
+      "uniqueHands": 64,
+      "uniqueShopStocks": 30
+    },
+    {
+      "step": 1,
+      "seeds": 64,
+      "uniqueHands": 64,
+      "uniqueShopStocks": 30
+    },
+    {
+      "step": 2,
+      "seeds": 64,
+      "uniqueHands": 64,
+      "uniqueShopStocks": 30
+    },
+    {
+      "step": 3,
+      "seeds": 64,
+      "uniqueHands": 63,
+      "uniqueShopStocks": 33
+    },
+    {
+      "step": 4,
+      "seeds": 64,
+      "uniqueHands": 58,
+      "uniqueShopStocks": 26
+    },
+    {
+      "step": 5,
+      "seeds": 64,
+      "uniqueHands": 61,
+      "uniqueShopStocks": 29
+    }
+  ],
+  "randomMatches": [
+    {
+      "mode": 1,
+      "turns": 39,
+      "ending": "stalemate",
+      "winner": null,
+      "points": [
+        2,
+        0
+      ],
+      "progress": {
+        "sdm": false,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "mode": 2,
+      "turns": 34,
+      "ending": "win",
+      "winner": 0,
+      "points": [
+        9,
+        2
+      ],
+      "progress": {
+        "sdm": false,
+        "remilia": false,
+        "flandre": false
+      }
+    },
+    {
+      "mode": "tutorial",
+      "turns": 16,
+      "ending": "win",
+      "winner": 0,
+      "points": [
+        8,
+        0
+      ],
+      "progress": {
+        "four": true,
+        "two": true,
+        "ability": true
+      }
+    }
+  ],
+  "rulesVersion": "2026-10-15-random-learning-renewal-v14",
+  "scope": "768 actual seeded full-match openings, 384 guided exercise configurations with actual completions, complete random matches, real renderers and shared pointer physics in a controlled DOM; no browser pixel verification"
+}

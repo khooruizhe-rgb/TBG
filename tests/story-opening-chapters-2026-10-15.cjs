@@ -3,22 +3,23 @@ const root=path.resolve(__dirname,'..'),html=fs.readFileSync(root+'/touhou_board
 for(const [,script]of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(script);
 const builder=vm.createContext({});vm.runInContext(html.slice(html.indexOf('function buildAIEvaluationWorkerSource'),html.indexOf('\nfunction evalHashSeed')),builder);builder.html=html;
 class Node{
-  constructor(){this.children=[];this.parentElement=null;this.style={};this.events={};this.attributes={};this.names=new Set();this.isConnected=true;this.hidden=false;
+  constructor(){this.children=[];this.parentElement=null;this.style={setProperty(){}};this.dataset={};this.events={};this.attributes={};this.names=new Set();this.isConnected=true;this.hidden=false;
     this.classList={add:(...names)=>names.forEach(name=>this.names.add(name)),remove:(...names)=>names.forEach(name=>this.names.delete(name)),contains:name=>this.names.has(name)};}
   appendChild(node){this.children.push(node);node.parentElement=this;return node;}append(...nodes){nodes.forEach(node=>this.appendChild(node));}
   replaceChildren(){this.children=[];}insertBefore(node){return this.appendChild(node);}prepend(node){node.parentElement=this;this.children.unshift(node);}
-  addEventListener(name,fn){this.events[name]=fn;}setAttribute(key,value){this.attributes[key]=value;}querySelector(){return new Node();}
+  addEventListener(name,fn){this.events[name]=fn;}removeEventListener(name){delete this.events[name];}setAttribute(key,value){this.attributes[key]=value;}querySelector(){return new Node();}
   querySelectorAll(){return [];}getClientRects(){return this.hidden?[]:[{}];}focus(){documentFixture.activeElement=this;}
 }
 const nodes=new Map(),el=id=>{if(!nodes.has(id))nodes.set(id,new Node());return nodes.get(id);},storage=new Map(),listeners={};
 const documentFixture={activeElement:new Node(),body:new Node(),createElement:()=>new Node(),querySelectorAll:()=>[],
   querySelector:selectors=>selectors.split(',').map(selector=>selector.match(/^#([\w-]+)\.show$/)?.[1]).map(id=>nodes.get(id)).find(node=>node?.classList.contains('show'))||null,
   addEventListener:(name,fn)=>{(listeners[name]||=[]).push(fn);}};
-const ctx=vm.createContext({console,setTimeout,clearTimeout,self:{},assert,el,document:documentFixture,
-  window:{scrollTo(){},localStorage:{getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)}},
+const ctx=vm.createContext({console,setTimeout,clearTimeout,self:{},assert,el,document:documentFixture,performance:{now:()=>0},requestAnimationFrame:()=>1,cancelAnimationFrame(){},
+  window:{scrollTo(){},addEventListener(){},removeEventListener(){},localStorage:{getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)}},
   setRuleText:(node,text)=>node.textContent=text,ruleTextHtml:text=>text,cardBoardHtml:id=>'<div>'+id+'</div>',openCardDetails(){},
   closeAITestDashboard(){},updateAITestControls(){},queueMobileViewport(){},waitForVisualEffects:async()=>true});
 vm.runInContext(vm.runInContext('buildAIEvaluationWorkerSource(html)',builder),ctx);
+vm.runInContext(html.slice(html.indexOf('let titleCardDrag='),html.indexOf('function drawTitlePreviewCards('))+html.slice(html.indexOf('function tableCardBounds('),html.indexOf('function setTitleCardFace(')),ctx);
 vm.runInContext(html.slice(html.indexOf('/* Guided practice uses'),html.indexOf('/* CSS lays out the phone table'))+`
   let online=null,storyLoopStarts=0,ordinaryRestarts=0;
   runNextTurn=async()=>{storyLoopStarts++;};
@@ -32,9 +33,16 @@ ctx.pressStoryKey=key=>{let stopped=false;const event={key,target:{closest:()=>n
 vm.runInContext(`(async()=>{
   const checks=[],walkthroughs=[],ok=(value,name)=>{assert(value,name);checks.push(name);};
   const originalAction=doPlayerAction,definitions=JSON.stringify(CARDS);
-  function setup(chapter=2,actor=0,seed=1){
+  function setup(chapter=2,actor=0,seed=1,fixed=true){
     evalResetTokens();evalSetSeed(seed);SIZE=4;game=new Game(2,{},null,{aiOnly:true,fastTest:true,aiDifficulty:'hard',kourindouEnabled:false});
     game.currentPlayerIdx=actor;game.players[0].isAI=false;configureStoryMatch(game,chapter);game.render=()=>{};
+    // Arrange real cards for skill and route regressions; production random deals are tested separately.
+    if(fixed){
+      const hands=[['sdm_remilia','sdm_flandre','haku_youmu','haku_yuyuko','yuuka','medicine'],['sdm_patchouli','sdm_sakuya','hourai_mokou','temple_shou','mtn_kanako','mtn_suwako']];
+      game.players.forEach((player,i)=>player.hand=hands[i].slice());const used=new Set(hands.flat());
+      game.drawPile=shuffle(CARDS.filter(card=>!card.token&&!card.shopkeeper&&!card.shopExpansion&&!used.has(card.id)).map(card=>card.id));
+      game.startingCardIds=new Set([...used,...game.drawPile]);game.storyMatch.openingHand=hands[0].slice();game.handKnowledge=game.players.map(()=>new Map());game.revealHand(0,hands[0],[1]);
+    }
     game.ui.pickOwnHandCards=async()=>null;game.ui.pickCell=async(t,cells)=>cells[0];game.ui.promptText=async()=>null;
     game.pickUI=async(p,method,args)=>game.ui[method](...args);game.choosePlayer=async()=>1;
     game.chooseHandCard=async(p,target)=>game.players[target].hand.find(id=>game.canHandEnterPile(id));return game;
