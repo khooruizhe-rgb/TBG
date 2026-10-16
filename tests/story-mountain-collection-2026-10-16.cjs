@@ -22,7 +22,7 @@ vm.runInContext(`(async()=>{
     assert(!storyChapterPerfect(chapter));assert(!el('tutorial-feedback').classList.contains('story-perfect'));
     ok(storyProgressDetails()[chapter].goals.length===3,'Chapter '+chapter+' unions distinct objectives over three victories without double-counting repeats or granting a single-run color');
     returnToMainMenu();openStoryMenu();const rating=el('story-levels').children[chapter-1].children[2].children[1];assert(!rating.className.includes('story-stars-perfect'));
-    win(chapter,keys);assert(storyChapterPerfect(chapter));assert(el('tutorial-feedback').classList.contains('story-perfect'));assert.equal(storyStarColor(chapter),FACTIONS[STORY_CHAPTERS[chapter-1].introduced].color);
+    win(chapter,keys);assert(storyChapterPerfect(chapter));assert(!el('tutorial-feedback').classList.contains('story-perfect'));assert(!/[★☆]/.test(el('tutorial-feedback').innerHTML));assert.equal(storyStarColor(chapter),FACTIONS[STORY_CHAPTERS[chapter-1].introduced].color);
     win(chapter,[keys[0]]);assert(storyChapterPerfect(chapter));returnToMainMenu();openStoryMenu();
     ok(el('story-levels').children[chapter-1].children[2].children[1].className.includes('story-stars-perfect'),'Chapter '+chapter+' records a real three-objective victory and preserves its faction-colored stars on later replays');
   }
@@ -38,7 +38,7 @@ vm.runInContext(`(async()=>{
   testStorage.clear();openStoryChapter(5);game.storyMatch.progress={mountain:true,stalemate:true,newsGuess:true};game.winner=game.players[1];updateStoryProgress();
   ok(storyBestStars(5)===null&&!storyState.complete,'The victory requirement still controls banking objectives and clearing the chapter');
   const setter=window.localStorage.setItem;window.localStorage.setItem=()=>{throw Error('Quota');};game.winner=game.players[0];updateStoryProgress();
-  ok(storyState.complete&&el('tutorial-feedback').classList.contains('story-perfect'),'A real single-run completion still colors the current result when storage is unavailable');window.localStorage.setItem=setter;returnToMainMenu();testStorage.clear();
+  ok(storyState.complete&&!el('tutorial-feedback').classList.contains('story-perfect')&&el('tutorial-feedback').innerHTML.includes('✓')&&!/[★☆]/.test(el('tutorial-feedback').innerHTML),'A real single-run completion keeps its current-match checklist usable when storage is unavailable');window.localStorage.setItem=setter;returnToMainMenu();testStorage.clear();
 
   make(null);arrange({hands:[['mtn_kanako','mtn_suwako'],[]]});game.setWastelandAt(0,0,true);
   assert(!game.canPlaceOnWasteland(CARD.mtn_kanako)&&!game.canPlaceOnWasteland(CARD.mtn_suwako));await game.internalPlace('mtn_kanako',0,0,0,0);
@@ -120,7 +120,7 @@ vm.runInContext(`(async()=>{
   let turns=0;while(!game.winner&&!game.stalemateMessage&&turns++<16)await actualMountainTurn();
   ok(game.winner?.idx===0&&game.storyMatch.progress.stalemate&&game.stalemateMessage&&storyMatchStars(game)===3,'The actual turn loop exhausts shared draws, detects both players have no legal action, and awards a three-star 4–3 story victory by stalemate');evalConservation(game);
   storyState={chapter:5,practice:game,complete:false,savedStars:null,cancel(){}};updateStoryProgress();
-  ok(storyBestStars(5)===3&&storyChapterPerfect(5)&&el('tutorial-feedback').classList.contains('story-perfect'),'The same real route saves every objective and its Mountain-colored perfect result');returnToMainMenu();
+  ok(storyBestStars(5)===3&&storyChapterPerfect(5)&&!el('tutorial-feedback').classList.contains('story-perfect'),'The same real route saves every objective and its perfect menu rating without coloring the in-match checklist');returnToMainMenu();
   for(const aiLead of [false,true]){make();arrange({hands:[['reimu'],['marisa']],discards:[[],aiLead?['temple_shou']:[]],emptyPile:true});game.wasteland=game.wasteland.map(row=>row.map(()=>true));endStalemate();ok(game.storyMatch.progress.stalemate&&(aiLead?game.winner?.idx===1:game.winner===null)&&!storyMatchComplete(game),'Actual tied or opponent-led stalemates record the goal but do not invent a player victory: '+aiLead+' '+JSON.stringify({actions:game.players.map(p=>canAct(p.idx)),progress:game.storyMatch.progress,winner:game.winner?.idx,score:game.players.map(p=>game.winCount(p)),spaces:game.players.map(p=>p.hand.map(id=>[id,game.emptyOrWastelandForCard(CARD[id],p.idx)])),draw:game.players.map(p=>game.canDrawNormally(p.idx))}));}
   make();arrange({hands:[['reimu'],['marisa']]});endStalemate();ok(!game.storyMatch.progress.stalemate,'An incorrect early end-stalemate call cannot award the no-legal-action objective');
   for(let seed=0;seed<4;seed++){

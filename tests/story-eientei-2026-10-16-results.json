@@ -237,22 +237,7 @@
   "productionMatches": [
     {
       "seed": 0,
-      "turns": 21,
-      "winner": 0,
-      "stalemate": false,
-      "points": [
-        9,
-        2
-      ],
-      "progress": {
-        "hourai": false,
-        "kaguya": false,
-        "handTen": false
-      }
-    },
-    {
-      "seed": 1,
-      "turns": 16,
+      "turns": 23,
       "winner": 0,
       "stalemate": false,
       "points": [
@@ -266,28 +251,43 @@
       }
     },
     {
-      "seed": 2,
-      "turns": 21,
-      "winner": 0,
+      "seed": 1,
+      "turns": 27,
+      "winner": 1,
       "stalemate": false,
       "points": [
-        8,
-        2
+        6,
+        7
       ],
       "progress": {
         "hourai": true,
-        "kaguya": true,
+        "kaguya": false,
+        "handTen": false
+      }
+    },
+    {
+      "seed": 2,
+      "turns": 36,
+      "winner": 1,
+      "stalemate": true,
+      "points": [
+        0,
+        3
+      ],
+      "progress": {
+        "hourai": false,
+        "kaguya": false,
         "handTen": false
       }
     },
     {
       "seed": 3,
-      "turns": 11,
+      "turns": 41,
       "winner": 1,
-      "stalemate": false,
+      "stalemate": true,
       "points": [
-        0,
-        8
+        1,
+        6
       ],
       "progress": {
         "hourai": false,
@@ -297,31 +297,31 @@
     },
     {
       "seed": 4,
-      "turns": 12,
-      "winner": 1,
+      "turns": 29,
+      "winner": 0,
       "stalemate": false,
       "points": [
-        1,
-        7
+        7,
+        2
       ],
       "progress": {
-        "hourai": false,
-        "kaguya": false,
+        "hourai": true,
+        "kaguya": true,
         "handTen": false
       }
     },
     {
       "seed": 5,
-      "turns": 33,
+      "turns": 15,
       "winner": 1,
       "stalemate": false,
       "points": [
-        4,
+        0,
         7
       ],
       "progress": {
-        "hourai": true,
-        "kaguya": true,
+        "hourai": false,
+        "kaguya": false,
         "handTen": false
       }
     }

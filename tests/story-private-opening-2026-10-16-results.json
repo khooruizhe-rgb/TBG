@@ -44,7 +44,7 @@
     "Policy 3 makes the same decision and Remilia estimate when two unrevealed Mansion cards are exchanged with hidden deck cards",
     "Policy 4 makes the same decision and Remilia estimate when two unrevealed Mansion cards are exchanged with hidden deck cards",
     "Policy 5 makes the same decision and Remilia estimate when two unrevealed Mansion cards are exchanged with hidden deck cards",
-    "A legitimately revealed hand makes Remilia’s gain exact and enables the chapter-three gathering opportunity",
+    "Easy story AI does not enable hard clue planning; ordinary hard AI still values a legitimately revealed hand exactly",
     "Shared drawing reveals no opponent starting cards or the opponent’s new draw",
     "The real Aya skill still records exactly four revealed opponent cards and creates a newspaper",
     "The real Satori chooser reveals only four cards while keeping the other two unknown",

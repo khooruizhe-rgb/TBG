@@ -57,7 +57,9 @@ vm.runInContext(`(async()=>{
   }
   fresh(3);arrange([variants[0],['sdm_remilia','hourai_mokou']]);
   const blind=await aiDecideAction(1);assert.equal(blind.type,'draw');game.revealHand(0,game.players[0].hand,[1]);
-  ok(game.estimateHandGain(1,'sdm_remilia')===2&&(await aiDecideAction(1)).cardId==='sdm_remilia','A legitimately revealed hand makes Remilia’s gain exact and enables the chapter-three gathering opportunity');
+  const easyClues=game.aiDifficulty==='easy'&&game.handKnowledge[1].size===6&&game.knownHandCards(1).every(card=>card.playerIdx===1)&&game.estimateHandGain(1,'sdm_remilia')<1&&(await aiDecideAction(1)).type==='draw';
+  fresh();arrange([variants[0],['sdm_remilia','hourai_mokou']]);game.revealHand(0,game.players[0].hand,[1]);
+  ok(easyClues&&game.estimateHandGain(1,'sdm_remilia')===2&&game.knownHandCards(1).filter(card=>card.playerIdx===0).length===6,'Easy story AI does not enable hard clue planning; ordinary hard AI still values a legitimately revealed hand exactly');
   fresh(4);const human=game.players[0].hand.slice();game.drawForEveryone(1);
   ok(game.players[0].hand.length===7&&game.knownHandCards(1).every(card=>card.playerIdx===1)&&human.every(id=>!game.handKnowledge[1].has(id)),'Shared drawing reveals no opponent starting cards or the opponent’s new draw');
 

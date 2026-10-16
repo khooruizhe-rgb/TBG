@@ -2006,7 +2006,7 @@
   #story-panel button:focus-visible{outline:3px solid #97653f;outline-offset:3px;}
   #story-levels button{text-align:left;display:grid;gap:7px;}#story-levels small{line-height:1.4;font-size:.78rem;}
   .story-stars-perfect{color:var(--story-star-color);text-shadow:0 0 8px color-mix(in srgb,var(--story-star-color) 40%,transparent);}
-  #tutorial-feedback.story-perfect .tutorial-goal.done{color:var(--story-star-color);}
+  .story-practice #tutorial-copy{display:none;}
   #story-debug-reset{margin-top:14px;font-size:.72rem!important;opacity:.8;}
   #story-card-grid{position:relative;height:clamp(220px,52dvh,430px);margin:10px 0;border:1px dashed #ad8e6b;border-radius:10px;background:radial-gradient(ellipse at center,#fff4d8,#dec9a5);}
   #story-card-instruction{margin:8px 0;font-size:.85rem;line-height:1.45;color:#79513c;}
@@ -5990,6 +5990,7 @@ function dealLearningOpening(match,{scarletOpening=false,hakugyokurouOpening=fal
 }
 function configureStoryMatch(match,chapter){
   const definition=STORY_CHAPTERS.find(level=>level.id===chapter);if(!definition)throw Error('Unknown story chapter.');
+  match.aiDifficulty=chapter===1?'hard':'easy';
   match.kourindouEnabled=false;match.shopCards=[];match.shopTiles=[];match.board=Array.from({length:SIZE},()=>Array(SIZE).fill(null));
   match.wasteland=Array.from({length:SIZE},()=>Array(SIZE).fill(false));
   dealLearningOpening(match,{scarletOpening:chapter===2,hakugyokurouOpening:chapter===3,eienteiOpening:chapter===4,mountainOpening:chapter===5});
@@ -8599,6 +8600,9 @@ Object.assign(ZH_TEXT,{
   'Read a newspaper, then make a correct guess':'阅读报纸后正确猜中一次卡牌',
   'Read reports':'阅读报纸情报',
   'Stars collected':'已收集星星',
+  'Match objectives':'本局目标',
+  'The opponent reached four points. This objective is unavailable this match; you can still win and clear the chapter.':'电脑已经达到四分，本局无法完成此目标，仍可获胜通关。',
+  'Chapter cleared.':'本关通关。',
   'Collected in an earlier victory':'已在此前获胜的对局中收集',
   'Chapter cleared. Replay to collect the remaining stars.':'本关通关。可以重玩以收集剩下的星星。',
   'All three objectives completed in one match. Faction-colored stars unlocked.':'已在一局中完成全部目标，星星获得本关阵营颜色。',
@@ -14888,7 +14892,7 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='1f6e59ebd4e0793a4f9f0aef399178f5bc607552ab3acd020154f666ab1d1c9a';
+const AI_EVALUATION_RULES_DIGEST='c892d176ac40e19014e18fe00efbda048bf28a8abc6951cb67d548a970caea44';
 const AI_EVALUATION_POLICY_DIGEST='0b0090567305b2f1d89f1209d2bc112885f8d64488e601aa784c5d001d38c065';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
@@ -15999,7 +16003,7 @@ function openStoryChapter(chapter){
   const practiceUI={...ui};
   for(const name of ['pickPlayer','pickFromList','pickOwnHandCard','pickOwnHandCards','pickHandCard','pickCardPool','arrangeDrawPileCards','pickRectByDrag','pickCell','promptText'])
     practiceUI[name]=(...args)=>Promise.race([ui[name](...args),cancelled.then(()=>name==='pickRectByDrag'?[]:null)]);
-  game=state.practice=new Game(2,practiceUI,null,{aiDifficulty:'hard',kourindouEnabled:false});configureStoryMatch(game,chapter);
+  game=state.practice=new Game(2,practiceUI,null,{aiDifficulty:chapter===1?'hard':'easy',kourindouEnabled:false});configureStoryMatch(game,chapter);
   el('setup').style.display='none';el('game').classList.add('active');document.body.classList.add('tutorial-practice','story-practice');
   el('tutorial-coach').hidden=false;dockTutorialCoach(document.body.classList.contains('game-mobile'));renderStoryCoach();
   // Paint the six-card deal before an AI first turn can draw for everyone.
@@ -16016,17 +16020,15 @@ function updateStoryProgress(){
 function renderStoryCoach(){
   if(!isStoryMatch())return;const state=storyState,definition=STORY_CHAPTERS[state.chapter-1],progress=game.storyMatch.progress;
   el('tutorial-progress').innerHTML=ruleTextHtml('Story Mode')+' · '+state.chapter+' / '+STORY_CHAPTERS.length;
-  el('tutorial-title').textContent=definition.title;setRuleText(el('tutorial-copy'),definition.body);
+  el('tutorial-title').textContent=definition.title;setRuleText(el('tutorial-copy'),'');
   const goals=storyStarGoals(game),raceLost=state.chapter===3&&storyRaceLost(game);
-  const stars=Math.max(storyBestStars(state.chapter)??0,state.complete?storyMatchStars(game):0),collected=new Set(storyProgressDetails()[state.chapter]?.goals||[]);
-  const perfect=storyChapterPerfect(state.chapter)||state.complete&&goals.length===3&&goals.every(goal=>goal.done);
-  const heading=goals.length||state.complete?ruleTextHtml(state.complete?'Stars collected':'Star objectives')+': '+'★'.repeat(stars)+'☆'.repeat(3-stars):'';
-  el('tutorial-feedback').style.setProperty('--story-star-color',storyStarColor(state.chapter));
-  if(perfect)el('tutorial-feedback').classList.add('story-perfect');else el('tutorial-feedback').classList.remove('story-perfect');
-  const hint=state.complete?perfect?'All three objectives completed in one match. Faction-colored stars unlocked.':stars===3?'Three stars collected. Complete all objectives in one match to color them.':'Chapter cleared. Replay to collect the remaining stars.':game.winner||game.stalemateMessage?'Win to clear this chapter. Extra objectives award stars.':raceLost?'The opponent reached four points. This star is unavailable this match; you can still win and clear the chapter.':state.chapter===5?!progress.newsGuess?'Open a newspaper’s reports, then make a correct card guess.':!progress.mountain?'Connect four Youkai Mountain cards and claim the faction.':!progress.stalemate?'Leave every player without a legal action to reach stalemate. The unique highest score wins.':'Win the match to clear this chapter.':state.chapter===4?!progress.kaguya?'Gain four points from Kaguya’s placement, including its resulting faction claims.':!progress.hourai?'Connect four Eientei cards and claim the faction.':!progress.handTen?'Use card-gaining abilities to hold at least ten cards at once.':'Win the match to clear this chapter.':state.chapter===3?!progress.yuyuko?'Gain four points from Yuyuko’s placement, including her ability and faction claims.':!progress.haku?'Connect Yuyuko and Youmu to claim Hakugyokurou.':'Win before the opponent reaches four points.':state.chapter===1?'Win to finish this introductory chapter.':!progress.remilia?'Try Remilia while the other Mansion cards are still in hands.':!progress.flandre?'With Flandre, choose the opponent and send one of their hand cards to their discard pile.':!progress.sdm?'Connect four Mansion cards and claim the faction.':'Win the match to clear this chapter.';
-  el('tutorial-feedback').innerHTML='<span class="story-stars'+(perfect?' story-stars-perfect':'')+'">'+heading+'</span><span class="tutorial-checklist">'+goals.map(goal=>{
-    const done=goal.done||collected.has(goal.key),failed=goal.failed&&!done;
-    return '<span class="tutorial-goal'+(done?' done':'')+(failed?' failed':'')+'"'+(!goal.done&&collected.has(goal.key)?' title="Collected in an earlier victory"':'')+'>'+(failed?'✗':done?'★':'☆')+' '+ruleTextHtml(goal.label)+'</span>';
+  const heading=goals.length?ruleTextHtml('Match objectives'):'';
+  el('tutorial-feedback').classList.remove('story-perfect');
+  el('tutorial-feedback').style.removeProperty?.('--story-star-color');
+  const hint=state.complete?'Chapter cleared.':game.winner||game.stalemateMessage?'Win the match to clear this chapter.':raceLost?'The opponent reached four points. This objective is unavailable this match; you can still win and clear the chapter.':state.chapter===5?!progress.newsGuess?'Open a newspaper’s reports, then make a correct card guess.':!progress.mountain?'Connect four Youkai Mountain cards and claim the faction.':!progress.stalemate?'Leave every player without a legal action to reach stalemate. The unique highest score wins.':'Win the match to clear this chapter.':state.chapter===4?!progress.kaguya?'Gain four points from Kaguya’s placement, including its resulting faction claims.':!progress.hourai?'Connect four Eientei cards and claim the faction.':!progress.handTen?'Use card-gaining abilities to hold at least ten cards at once.':'Win the match to clear this chapter.':state.chapter===3?!progress.yuyuko?'Gain four points from Yuyuko’s placement, including her ability and faction claims.':!progress.haku?'Connect Yuyuko and Youmu to claim Hakugyokurou.':'Win before the opponent reaches four points.':state.chapter===1?'Win to finish this introductory chapter.':!progress.remilia?'Try Remilia while the other Mansion cards are still in hands.':!progress.flandre?'With Flandre, choose the opponent and send one of their hand cards to their discard pile.':!progress.sdm?'Connect four Mansion cards and claim the faction.':'Win the match to clear this chapter.';
+  el('tutorial-feedback').innerHTML='<span class="story-match-objectives">'+heading+'</span><span class="tutorial-checklist">'+goals.map(goal=>{
+    const done=goal.done,failed=goal.failed&&!done;
+    return '<span class="tutorial-goal'+(done?' done':'')+(failed?' failed':'')+'">'+(failed?'✗':done?'✓':'○')+' '+ruleTextHtml(goal.label)+'</span>';
   }).join('')+'</span>'+ruleTextHtml(hint);
   el('tutorial-back').disabled=false;setRuleText(el('tutorial-back'),'Chapters');el('tutorial-next').disabled=!state.complete;
   const next=STORY_CHAPTERS.some(chapter=>chapter.id===state.chapter+1);

@@ -74,7 +74,7 @@ vm.runInContext(`(async()=>{
   for(let stars=0;stars<=3;stars++){
     openStoryChapter(2);const keys=['sdm','remilia','flandre'];keys.forEach((key,index)=>game.storyMatch.progress[key]=index<stars);game.winner=game.players[0];updateStoryProgress();
     const feedback=el('tutorial-feedback').innerHTML,rows=feedback.match(/class="tutorial-goal(?: [^"]*)?"/g)||[];
-    ok(storyState.complete&&!el('tutorial-next').disabled&&storyBestStars(2)===stars&&rows.length===3&&!feedback.includes('Victory')&&feedback.includes('★'.repeat(stars)+'☆'.repeat(3-stars)),'A '+stars+'-star victory saves, displays three extra goals and enables progression');
+    ok(storyState.complete&&!el('tutorial-next').disabled&&storyBestStars(2)===stars&&rows.length===3&&!feedback.includes('Victory')&&!/[★☆]/.test(feedback)&&(feedback.match(/class="tutorial-goal done"/g)||[]).length===stars,'A '+stars+'-star victory saves, displays only this match’s completed goals and enables progression');
     returnToMainMenu();
   }
   openStoryChapter(2);game.winner=game.players[0];updateStoryProgress();returnToMainMenu();
