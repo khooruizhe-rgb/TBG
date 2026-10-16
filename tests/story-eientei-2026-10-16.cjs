@@ -33,7 +33,7 @@ vm.runInContext(`(async()=>{
     assert(g.players.every(p=>p.hand.length===6));assert(human.includes('hourai_kaguya'));assert(human.filter(id=>CARD[id].faction==='hourai').length>=2);
     assert(rival.includes('haku_yuyuko'));assert.equal(rival.filter(id=>CARD[id].faction==='sdm').length,1);assert.equal(rival.filter(id=>CARD[id].faction==='hourai').length,1);
     const ids=inventory();assert.equal(ids.length,36);assert.equal(new Set(ids).size,36);assert(ids.every(id=>g.startingCardIds.has(id)));
-    assert(CARDS.every(card=>g.cardAbilityEnabled(card.id)===['sdm','hakugyokurou','hourai'].includes(card.faction)));
+    assert(CARDS.every(card=>g.cardAbilityEnabled(card.id)===(['sdm','hakugyokurou','hourai'].includes(card.faction)&&!card.shopExpansion)));
     assert(g.handKnowledge.every(memory=>memory.size===0));assert(!('openingHand' in g.storyMatch));
     const absent=storyFactionCards('hourai').filter(id=>!human.includes(id)&&!rival.includes(id)),draws=Array.from({length:5},()=>g.takeFromDrawPile(0));
     assert(absent.every(id=>draws.includes(id)));absent.forEach(id=>positions.add(draws.indexOf(id)+1));
@@ -154,7 +154,7 @@ vm.runInContext(`(async()=>{
   ok(JSON.stringify(captureAIEvaluationSnapshot(game))===afterRestart,'Restart during a pending action also prevents the old follow-up loop from advancing the new match');
 
   returnToMainMenu();testStorage.clear();saveStoryStars(2,3);saveStoryStars(3,2);saveStoryStars(4,1);testStorage.set('unrelated-setting','keep');openStoryMenu();
-  assert.equal(el('story-levels').children.length,5);assert(!el('story-debug-reset').hidden);el('story-debug-reset').events.click();
+  assert.equal(el('story-levels').children.length,6);assert(!el('story-debug-reset').hidden);el('story-debug-reset').events.click();
   ok([2,3,4].every(chapter=>storyBestStars(chapter)===0)&&storyBestStars(1)===null&&storyClearedChapters().length===3&&testStorage.get('unrelated-setting')==='keep','The DEBUG button resets only earned star ratings, preserves clears and unrelated settings, and does not invent a chapter-one clear');
   saveStoryStars(4,3);ok(storyBestStars(4)===3,'Stars can be acquired again after a DEBUG reset');
   showStoryChapterIntro(4);ok(el('story-card-grid').children.length===4&&el('story-debug-reset').hidden,'Chapter four introduces four Eientei cards and hides the DEBUG control during its introduction');

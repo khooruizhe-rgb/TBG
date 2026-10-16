@@ -35,7 +35,7 @@ vm.runInContext(`(async()=>{
     assert(g.players.every(p=>p.hand.length===6));assert.equal(g.currentPlayerIdx,seed%2);assert(!g.kourindouEnabled&&g.shopCards.length===0);
     assert.equal(ids.length,36);assert.equal(new Set(ids).size,36);assert(ids.every(id=>g.startingCardIds.has(id)));
     assert(g.handKnowledge.every(memory=>memory.size===0));assert(!('openingHand' in g.storyMatch));
-    assert(CARDS.every(card=>g.cardAbilityEnabled(card.id)===['sdm','hakugyokurou'].includes(card.faction)));
+    assert(CARDS.every(card=>g.cardAbilityEnabled(card.id)===(['sdm','hakugyokurou'].includes(card.faction)&&!card.shopExpansion)));
     const absent=storyFactionCards('hakugyokurou').filter(id=>!human.includes(id)&&!rival.includes(id)),deck=g.drawPile.slice();
     const next=Array.from({length:5},()=>g.takeFromDrawPile(0));assert(absent.every(id=>next.includes(id)));
     absent.forEach(id=>positions.add(next.indexOf(id)+1));missingCounts.add(absent.length);g.drawPile=deck;

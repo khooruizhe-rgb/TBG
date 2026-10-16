@@ -1,0 +1,53 @@
+{
+  "status": "pass",
+  "count": 26,
+  "checks": [
+    "A central grip translates and throws a card without inventing angular torque",
+    "An off-centre grip rotates beyond the old seven-degree wobble and release does not snap back",
+    "An off-centre release keeps angular momentum after the finger leaves",
+    "The eventual resting rotation is stored and matches the displayed face",
+    "Picking up a resting rotated card preserves its orientation",
+    "The grabbed point remains under the finger while the card rotates, including the original rotated local grip",
+    "Two fingers turn a card through more than one complete revolution without an angle-wrap jump or centre drift",
+    "The turning gesture does not scale card dimensions",
+    "Lifting the first finger transfers the grip to the remaining finger without ending the gesture",
+    "Compatibility clicks between finger releases cannot flip a card or open details during the remaining drag",
+    "The last finger releases normally, leaves no pointer capture and does not open card details",
+    "Lifting the second finger also continues a valid primary drag",
+    "Cancelling either finger restores the original pose and releases both captures without launching a throw",
+    "A spinning card can continue turning even when its linear release speed is zero",
+    "Holding the grip still before release suppresses an accidental old throw",
+    "Reduced motion disables automatic torque and release travel",
+    "Reduced motion still allows an intentional two-finger rotation",
+    "Q and E rotate by fifteen degrees, Shift uses forty-five, without triggering inspection",
+    "Rotated card corners stay fully inside the 1200×800 table, including portrait and landscape sizes",
+    "Rotated card corners stay fully inside the 844×390 table, including portrait and landscape sizes",
+    "Rotated card corners stay fully inside the 390×844 table, including portrait and landscape sizes",
+    "Rotated card corners stay fully inside the 320×480 table, including portrait and landscape sizes",
+    "An edge impact rebounds with lower linear and angular energy",
+    "Edge rebounds settle rather than tunnelling through the table or maintaining endless motion",
+    "The same off-centre motion at thirty, sixty and one hundred twenty samples per second produces nearly identical rotation and position",
+    "A stale animation frame after a background pause cancels momentum instead of resuming an old throw"
+  ],
+  "motionResults": [
+    {
+      "hz": 30,
+      "angle": -59.27750634880888,
+      "x": 761.3156702520605,
+      "y": 422.01037990847425
+    },
+    {
+      "hz": 60,
+      "angle": -59.263061703197444,
+      "x": 761.3214673168796,
+      "y": 422.0006280633408
+    },
+    {
+      "hz": 120,
+      "angle": -59.2450070588768,
+      "x": 761.3287166379038,
+      "y": 421.9884410973863
+    }
+  ],
+  "scope": "Actual shared title/story/ability table handlers and deterministic animation frames, torque, exact grip contact, two-finger angle unwrapping, pointer transfer and cancellation, manual keyboard rotation, reduced motion, spin-only throws, full rotated bounds, lossy collisions, sample-rate consistency and stale-frame cleanup in a controlled DOM. Browser pixels are not verified."
+}

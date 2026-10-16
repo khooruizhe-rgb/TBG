@@ -4,7 +4,7 @@ for(const [,script]of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g))new 
 const builder=vm.createContext({});vm.runInContext(html.slice(html.indexOf('function buildAIEvaluationWorkerSource'),html.indexOf('\nfunction evalHashSeed')),builder);builder.html=html;
 class Node{
   constructor(){this.children=[];this.parentElement=null;this.style={setProperty(){}};this.dataset={};this.events={};this.attributes={};this.names=new Set();this.isConnected=true;this.hidden=false;
-    this.classList={add:(...names)=>names.forEach(name=>this.names.add(name)),remove:(...names)=>names.forEach(name=>this.names.delete(name)),contains:name=>this.names.has(name)};}
+    this.classList={add:(...names)=>names.forEach(name=>this.names.add(name)),remove:(...names)=>names.forEach(name=>this.names.delete(name)),contains:name=>this.names.has(name),toggle:(name,on)=>{if(on===undefined)on=!this.names.has(name);on?this.names.add(name):this.names.delete(name);return on;}};}
   appendChild(node){this.children.push(node);node.parentElement=this;return node;}append(...nodes){nodes.forEach(node=>this.appendChild(node));}
   replaceChildren(){this.children=[];}insertBefore(node){return this.appendChild(node);}prepend(node){node.parentElement=this;this.children.unshift(node);}
   addEventListener(name,fn){this.events[name]=fn;}removeEventListener(name){delete this.events[name];}setAttribute(key,value){this.attributes[key]=value;}querySelector(){return new Node();}
@@ -49,7 +49,7 @@ vm.runInContext(`(async()=>{
   }
   function inventory(match){return [...match.drawPile,...match.shopCards.filter(Boolean),...match.mainBoardCells().map(cell=>match.cardAt(cell.r,cell.c)),...match.players.flatMap(player=>[...player.hand,...player.discard])];}
   async function place(id,p=0,r=1,c=1){game.removeFromHand(p,id);return game.internalPlace(id,r,c,p,0);}
-  ok(STORY_CHAPTERS.length===5&&storyScarletCards().length===4,'The prototype contains five chapters and the four core Mansion cards');
+  ok(STORY_CHAPTERS.length===6&&storyScarletCards().length===4,'The prototype contains six chapters and the four core Mansion cards');
   for(const chapter of [1,2])for(const actor of [0,1]){
     setup(chapter,actor);const ids=inventory(game);
     ok(game.numPlayers===2&&game.currentPlayerIdx===actor&&!game.kourindouEnabled&&game.players.every(p=>p.hand.length===6),'The chapter keeps a randomized first actor, two six-card hands and a basic table: '+chapter+'/'+actor);
@@ -64,7 +64,7 @@ vm.runInContext(`(async()=>{
   ok(!game.hasActiveAbility('mtn_kanako')&&game.kanakoMultiplier()===1&&!game.eirinActive()&&!game.isWildActive('sage_kasen')&&game.pointValue('hell_hecatia')===1,'No Kanako, Eirin, Kasen or Hecatia passive survives chapter one');
   ok(!game.canOverrideTarget('sage_yukari','mtn_sanae')&&!game.canPlaceOnWasteland(CARD.mtn_kanako),'Override and wasteland permissions are also disabled');
   setup(2);
-  ok(CARDS.every(card=>game.cardAbilityEnabled(card.id)===(card.faction==='sdm')),'Chapter two unlocks only the Mansion faction');
+  ok(CARDS.every(card=>game.cardAbilityEnabled(card.id)===(card.faction==='sdm'&&!card.shopExpansion)),'Chapter two unlocks only the Mansion faction');
   await place('sdm_remilia');
   ok(game.storyMatch.progress.remilia&&game.players[0].hand.filter(id=>CARD[id].faction==='sdm').length===3,'Actual Remilia resolution gathers the other three Mansion cards and records the goal');
   ok(game.players[1].hand.every(id=>CARD[id].faction!=='sdm'),'Remilia transfers real cards instead of generating substitutes');
@@ -127,7 +127,7 @@ vm.runInContext(`(async()=>{
   setup(1);game.winner=game.players[0];ok(storyMatchComplete(game),'Chapter one requires victory without impossible ability objectives');
   ok(JSON.stringify(CARDS)===definitions,'Story chapters do not mutate global printed card definitions');
 
-  returnToMainMenu();openStoryMenu();ok(el('story-overlay').classList.contains('show')&&el('story-levels').children.length===5,'The menu offers five replayable prototype chapters');
+  returnToMainMenu();openStoryMenu();ok(el('story-overlay').classList.contains('show')&&el('story-levels').children.length===6,'The menu offers six replayable prototype chapters');
   showStoryChapterIntro(2);ok(el('story-card-grid').children.length===4&&!el('story-begin').hidden&&game===null,'Chapter two shows all four active core cards before a match begins');
   const starts=storyLoopStarts;el('story-begin').events.click();const old=game;
   ok(isStoryMatch()&&game.storyMatch.chapter===2&&storyLoopStarts===starts+1&&!el('story-overlay').classList.contains('show'),'Start chapter launches one real match after the card introduction');

@@ -1450,7 +1450,6 @@
   /* log */
   #log{ max-height:420px; overflow-y:auto; font-size:0.78rem; color:var(--muted); display:flex; flex-direction:column-reverse; gap:4px; }
   #log > .log-entry{ border-bottom:1px dashed var(--line); padding-bottom:4px; }
-  .news-reader>summary{cursor:pointer;font-weight:700;padding:6px 0;}
   #log .aya-newspaper{
     flex:none; padding:10px 9px 9px; margin:3px 0 7px;
     color:#35281b; background:linear-gradient(135deg,#fff6dc,#e8d5a8 87%);
@@ -2005,7 +2004,7 @@
   #story-panel button{cursor:pointer;border:1px solid #b39162;border-radius:6px;background:#ead5b2;color:#523721;padding:10px 14px;font:inherit;}
   #story-panel button:focus-visible{outline:3px solid #97653f;outline-offset:3px;}
   #story-levels button{text-align:left;display:grid;gap:7px;}#story-levels small{line-height:1.4;font-size:.78rem;}
-  .story-stars-perfect{color:var(--story-star-color);text-shadow:0 0 8px color-mix(in srgb,var(--story-star-color) 40%,transparent);}
+  .story-perfect .story-star-rating,.story-stars-perfect{color:var(--story-star-color);text-shadow:0 0 8px color-mix(in srgb,var(--story-star-color) 40%,transparent);}
   .story-practice #tutorial-copy{display:none;}
   #story-debug-reset{margin-top:14px;font-size:.72rem!important;opacity:.8;}
   #story-card-grid{position:relative;height:clamp(220px,52dvh,430px);margin:10px 0;border:1px dashed #ad8e6b;border-radius:10px;background:radial-gradient(ellipse at center,#fff4d8,#dec9a5);}
@@ -3627,6 +3626,7 @@ class Game {
   isPlacementBlocked(p=this.currentPlayerIdx){return !!this.placementBlockedForTurn[p] || (p!==this.currentPlayerIdx && this.placementBlockTurns[p]>0);}
   beginPlayerTurn(p){
     this.triggerDeclines={};
+    if(this.storyMatch?.chapter===6){this.storyMatch.turnSeat=p;this.storyMatch.turnStartScore=this.winCount(this.players[p]);}
     const ages=this.reserveAges[p];for(const id of Object.keys(ages))if(!this.players[p].hand.includes(id))delete ages[id];
     for(const id of this.players[p].hand)ages[id]=(ages[id]||0)+1;
     if(this.testMetrics){this.testMetrics.turns++;const seat=this.testSeatMetrics(p);for(const id of this.players[p].hand){const key=testCardId(id);seat.handTurns[key]=(seat.handTurns[key]||0)+1;}}
@@ -4296,6 +4296,9 @@ class Game {
       catch(_error){ /* A cosmetic effect must never stop the game or its win check. */ }
     }
     this.players[p].discard.push(cardId);
+    const story=this.storyMatch;
+    if(story?.chapter===6 && p===story.humanSeat && p===this.currentPlayerIdx && story.turnSeat===p
+      && this.winCount(this.players[p])-story.turnStartScore>=7)story.progress.surprise=true;
     if(this.storyMatch?.chapter===2 && this.ruleContext?.playerIdx===this.storyMatch.humanSeat
       && this.ruleContext?.ability==='sdm_flandre' && source?.effect==='flandre'
       && source.handOwner===p && p!==this.storyMatch.humanSeat)this.storyMatch.progress.flandre=true;
@@ -4681,6 +4684,11 @@ class Game {
           if(this.storyMatch.chapter===3 && fk==='hakugyokurou')this.storyMatch.progress.haku=true;
           if(this.storyMatch.chapter===4 && fk==='hourai')this.storyMatch.progress.hourai=true;
           if(this.storyMatch.chapter===5 && fk==='mountain')this.storyMatch.progress.mountain=true;
+          if(this.storyMatch.chapter===6){
+            const story=this.storyMatch;if(!story.claimedFactions.includes(fk))story.claimedFactions.push(fk);
+            story.progress.twoFactions=story.claimedFactions.length>=2;
+            if(!story.skillFactions.includes(fk))story.progress.lockedFaction=true;
+          }
         }
         if(this.ui?.onFactionClaim){try{this.ui.onFactionClaim({faction:fk,count:collected,playerIdx:placerIdx});}catch(_error){}}
         this.checkWin();
@@ -5603,7 +5611,7 @@ class Game {
 }
 
 /* 2026-10-12: creation, private newspapers and instance ability changes. */
-const REWORK_RULES_VERSION='2026-10-16-story-mountain-collection-v20';
+const REWORK_RULES_VERSION='2026-10-16-story-kourindou-physics-v21';
 Game.prototype.canCreateWithMatara=function(){return this.mainBoardCells().length>=4;};
 let nextCreatedCard=0,nextHiddenChoice=0;
 const COPY_PASSIVES=new Set(['sage_yukari','sage_kasen','mtn_nitori','hell_hecatia','palace_koishi']);
@@ -5693,7 +5701,12 @@ Game.prototype.withClaimMute=function(callback){
 };
 const originalCheckClaimBatch=Game.prototype.checkClaims;
 Game.prototype.checkClaims=function(p){return this.withClaimMute(()=>originalCheckClaimBatch.call(this,p));};
-Game.prototype.cardAbilityEnabled=function(id){return !this.storyMatch || this.storyMatch.skillFactions.includes(CARD[id]?.faction);};
+Game.prototype.cardAbilityEnabled=function(id){
+  const story=this.storyMatch;if(!story)return true;
+  const card=originalCardBlueprint(id)||CARD[id];
+  if(card?.token)return story.chapter>=6;
+  return card?.shopkeeper||card?.shopExpansion ? story.chapter>=6 : story.skillFactions.includes(card?.faction);
+};
 Game.prototype.abilityId=function(id){return !this.cardAbilityEnabled(id)?'__story_no_ability':this.permanentAbilities?.[id] || this.borrowedAbilities?.[id] || CARD[id]?.copiedAbility || (CARD[id]?.token&&/^trap_token/.test(id)?'trap_token':cardBaseId(id));};
 const originalPointValue=Game.prototype.pointValue;
 Game.prototype.pointValue=function(id){if(CARD[id]?.createdCopy&&CARD[this.abilityId(id)]?.triple&&this.createdActivations[id]!==true)return 1;const n=originalPointValue.call(this,id);return n===3 && CARD[id]?.abilityMultiplier===2 ? 6:n;};
@@ -5833,6 +5846,7 @@ Game.prototype.subscribeNews=function(p,paperId,payment){
   if(this.cancelled || p!==this.currentPlayerIdx || !paper || paper.ownerIdx===p || paper.subscribers.includes(p) || !this.newsPayments(p).includes(payment))return false;
   this.recordTestTradeExit(payment,'takenByOther',p);this.removeFromHand(p,payment);this.addToHand(paper.ownerIdx,payment,true);
   paper.subscribers.push(p);
+  this.recordStoryNewspaperSubscription(p,paperId);
   for(const report of paper.reports)this.revealHand(report.targetIdx,report.cardIds.filter(id=>this.players[report.targetIdx].hand.includes(id)),[p]);
   if(this.testMetrics){const d=this.testSeatMetrics(p).diagnostics;d.newsSubscriptions=(d.newsSubscriptions||0)+1;}
   this.recordTestDecision(p,'subscribe',{paperId,payment:testCardId(payment),editorSeat:paper.ownerIdx+1});
@@ -5877,27 +5891,29 @@ Game.prototype.kanakoMultiplier=function(){
 Game.prototype.sanaeDrawCount=function(){return (this.hasActiveAbility('mtn_kanako')?2:1)*this.kanakoMultiplier();};
 
 /* Story matches share the normal rules; chapter state only unlocks printed abilities. */
-Game.prototype.recordStoryNewspaperRead=function(p,paperId){
+Game.prototype.recordStoryNewspaperSubscription=function(p,paperId){
   const story=this.storyMatch,paper=this.paperReports.find(item=>item.paperId===paperId);
-  if(this.cancelled || story?.chapter!==5 || p!==story.humanSeat || !paper || paper.ownerIdx!==p&&!paper.subscribers.includes(p))return false;
-  if(!story.readPapers.includes(paperId))story.readPapers.push(paperId);
+  if(this.cancelled || story?.chapter!==5 || p!==story.humanSeat || !paper || paper.ownerIdx===p || !paper.subscribers.includes(p))return false;
+  const subscribed=story.subscribedPapers ||= this.paperReports.filter(item=>item.ownerIdx!==p&&item.subscribers.includes(p)).map(item=>item.paperId);
+  if(!subscribed.includes(paperId))subscribed.push(paperId);
   return true;
 };
 Game.prototype.recordStoryCorrectGuess=function(p,target,id){
   const story=this.storyMatch;
-  if(!this.cancelled && story?.chapter===5 && p===story.humanSeat && story.readPapers.length && this.players[target]?.hand.includes(id))story.progress.newsGuess=true;
+  if(!this.cancelled && story?.chapter===5 && p===story.humanSeat && (story.subscribedPapers?.length || this.paperReports.some(paper=>paper.ownerIdx!==p&&paper.subscribers.includes(p))) && this.players[target]?.hand.includes(id))story.progress.newsGuess=true;
 };
 const STORY_CHAPTERS=[
   {id:1,title:'Chapter 1 · The first table',body:'Cards have no abilities in this chapter. Place cards beside their faction, use Draw for Everyone when needed, and win the match. Try the two-card pair before finishing the four-card faction.',skills:[]},
   {id:2,title:'Chapter 2 · Scarlet Devil Mansion',body:'Win to clear this chapter. Three stars: claim Scarlet Devil Mansion, finish Remilia’s ability with three Mansion cards in hand, and use Flandre to discard an opponent’s hand card.',skills:['sdm'],introduced:'sdm'},
   {id:3,title:'Chapter 3 · Hakugyokurou',body:'Hakugyokurou abilities join Scarlet Devil Mansion. Win to clear this chapter. Three stars: claim Hakugyokurou, gain four points from one Yuyuko placement, and win before the opponent reaches four points.',skills:['sdm','hakugyokurou'],introduced:'hakugyokurou'},
   {id:4,title:'Chapter 4 · Eientei',body:'Eientei abilities join Scarlet Devil Mansion and Hakugyokurou. Win to clear this chapter. Three stars: claim Eientei, gain four points from one Kaguya placement, and hold at least ten cards at once.',skills:['sdm','hakugyokurou','hourai'],introduced:'hourai'},
-  {id:5,title:'Chapter 5 · Youkai Mountain',body:'Youkai Mountain abilities are now active too. Win to clear this chapter. Three stars: claim Youkai Mountain, end the game in stalemate, and read a newspaper before making a correct guess.',skills:['sdm','hakugyokurou','hourai','mountain'],introduced:'mountain'}
+  {id:5,title:'Chapter 5 · Youkai Mountain',body:'Youkai Mountain abilities are now active too. Win to clear this chapter. Three stars: claim Youkai Mountain, end the game in stalemate, and subscribe to a newspaper before making a correct guess.',skills:['sdm','hakugyokurou','hourai','mountain'],introduced:'mountain'},
+  {id:6,title:'Chapter 6 · Kourindou',body:'Kourindou opens for trading, and the fifth cards now have abilities. The opponent uses Medium AI. Win to clear this chapter. Three stars: claim two factions, claim a faction whose abilities are still locked, and do something that surprises me!',skills:['sdm','hakugyokurou','hourai','mountain'],introduced:'kourindou'}
 ];
-const STORY_GOAL_KEYS={1:[],2:['sdm','remilia','flandre'],3:['haku','yuyuko','race'],4:['hourai','kaguya','handTen'],5:['mountain','stalemate','newsGuess']};
+const STORY_GOAL_KEYS={1:[],2:['sdm','remilia','flandre'],3:['haku','yuyuko','race'],4:['hourai','kaguya','handTen'],5:['mountain','stalemate','newsGuess'],6:['twoFactions','lockedFaction','surprise']};
 function storyFactionCards(faction){return CARDS.filter(card=>card.faction===faction&&!card.shopExpansion).map(card=>card.id);}
 function storyScarletCards(){return storyFactionCards('sdm');}
-function storyChapterCards(chapter){const faction=STORY_CHAPTERS.find(level=>level.id===chapter)?.introduced;return faction?storyFactionCards(faction):[];}
+function storyChapterCards(chapter){if(chapter===6)return CARDS.filter(card=>card.shopExpansion).map(card=>card.id);const faction=STORY_CHAPTERS.find(level=>level.id===chapter)?.introduced;return faction?storyFactionCards(faction):[];}
 function dealLearningOpening(match,{scarletOpening=false,hakugyokurouOpening=false,eienteiOpening=false,mountainOpening=false,shop=false}={}){
   const deck=shuffle(CARDS.filter(card=>!card.token&&!card.shopkeeper&&!card.shopExpansion).map(card=>card.id));
   const hand=deck.splice(0,6),protectedId=scarletOpening?'sdm_remilia':hakugyokurouOpening?'haku_yuyuko':eienteiOpening?'hourai_kaguya':mountainOpening?'mtn_kanako':null;
@@ -5990,14 +6006,15 @@ function dealLearningOpening(match,{scarletOpening=false,hakugyokurouOpening=fal
 }
 function configureStoryMatch(match,chapter){
   const definition=STORY_CHAPTERS.find(level=>level.id===chapter);if(!definition)throw Error('Unknown story chapter.');
-  match.aiDifficulty=chapter===1?'hard':'easy';
-  match.kourindouEnabled=false;match.shopCards=[];match.shopTiles=[];match.board=Array.from({length:SIZE},()=>Array(SIZE).fill(null));
+  match.aiDifficulty=chapter===1?'hard':chapter>=6?'normal':'easy';
+  match.kourindouEnabled=chapter>=6;match.shopCards=[];
+  match.shopTiles=match.kourindouEnabled?[[0,1],[1,0],[1,1],[1,2]].map(([r,c],slot)=>({r:SIZE+2+r,c,slot,wasteland:false})):[];match.board=Array.from({length:SIZE},()=>Array(SIZE).fill(null));
   match.wasteland=Array.from({length:SIZE},()=>Array(SIZE).fill(false));
-  dealLearningOpening(match,{scarletOpening:chapter===2,hakugyokurouOpening:chapter===3,eienteiOpening:chapter===4,mountainOpening:chapter===5});
+  dealLearningOpening(match,{scarletOpening:chapter===2,hakugyokurouOpening:chapter===3,eienteiOpening:chapter===4,mountainOpening:chapter===5,shop:match.kourindouEnabled});
   match.storyMatch={chapter,humanSeat:0,aiSeat:1,skillFactions:definition.skills.slice(),
     sdmCards:storyScarletCards(),sdmPlaced:[],hakuCards:storyFactionCards('hakugyokurou'),hakuPlaced:[],houraiCards:storyFactionCards('hourai'),houraiPlaced:[],opponentReachedFour:false,
-    mountainCards:storyFactionCards('mountain'),mountainPlaced:[],readPapers:[],
-    progress:chapter===5?{mountain:false,stalemate:false,newsGuess:false}:chapter===4?{hourai:false,kaguya:false,handTen:false}:chapter===3?{haku:false,yuyuko:false}:{sdm:false,remilia:false,flandre:false}};
+    mountainCards:storyFactionCards('mountain'),mountainPlaced:[],subscribedPapers:[],claimedFactions:[],turnSeat:match.currentPlayerIdx,turnStartScore:0,
+    progress:chapter===6?{twoFactions:false,lockedFaction:false,surprise:false}:chapter===5?{mountain:false,stalemate:false,newsGuess:false}:chapter===4?{hourai:false,kaguya:false,handTen:false}:chapter===3?{haku:false,yuyuko:false}:{sdm:false,remilia:false,flandre:false}};
   if(chapter===1)match.revealHand(match.storyMatch.humanSeat,match.players[match.storyMatch.humanSeat].hand,[match.storyMatch.aiSeat]);
   match.winner=null;match.stalemateMessage='';match.logLines=[];
   match.log('The match begins. Reach 7 discard points to win.');
@@ -6025,7 +6042,12 @@ function storyStarGoals(match){
   if(story.chapter===5)return [
     {key:'mountain',label:'Claim Youkai Mountain',done:progress.mountain},
     {key:'stalemate',label:'End the game in stalemate',done:progress.stalemate},
-    {key:'newsGuess',label:'Read a newspaper, then make a correct guess',done:progress.newsGuess}
+    {key:'newsGuess',label:'Subscribe to a newspaper, then make a correct guess',done:progress.newsGuess}
+  ];
+  if(story.chapter===6)return [
+    {key:'twoFactions',label:'Claim two factions',done:progress.twoFactions},
+    {key:'lockedFaction',label:'Claim a faction whose abilities are still locked',done:progress.lockedFaction},
+    {key:'surprise',label:'Do something that surprises me!',done:progress.surprise}
   ];
   return [];
 }
@@ -8563,7 +8585,7 @@ Object.assign(ZH_TEXT,{
   'Keep four payment cards and surround an empty square on all four sides for Yuyuko.':'保留四张可付款的手牌，并在一个空格的四个正交相邻位置放好卡牌，再放置幽幽子。',
   'Connect Yuyuko and Youmu to claim Hakugyokurou.':'连接幽幽子与妖梦，收取白玉楼阵营。'
 });
-Object.assign(ZH_TEXT,{'Click a glowing card to read its ability. Drag cards freely to move and stack them.':'单击发光的卡牌查看技能。可以自由拖动、移动或叠放卡牌。'});
+Object.assign(ZH_TEXT,{'Click a glowing card to read its ability. Drag to move, use two fingers to turn, or press Q / E to rotate.':'单击发光的卡牌查看技能。拖动可以移动卡牌，双指或 Q / E 可以旋转。'});
 Object.assign(ZH_TEXT,{
   'Win to clear this chapter. Three stars: claim Scarlet Devil Mansion, finish Remilia’s ability with three Mansion cards in hand, and use Flandre to discard an opponent’s hand card.':'获胜即可通关。三星目标：收取红魔馆，发动蕾米莉亚后手持三张红魔馆卡牌，以及用芙兰朵露将对手手牌放入其弃牌区。',
   'Hakugyokurou abilities join Scarlet Devil Mansion. Win to clear this chapter. Three stars: claim Hakugyokurou, gain four points from one Yuyuko placement, and win before the opponent reaches four points.':'白玉楼与红魔馆技能均已开放，获胜即可通关。三星目标：收取白玉楼、一次放置幽幽子获得四分，以及在电脑达到四分前获胜。',
@@ -8593,12 +8615,18 @@ Object.assign(ZH_TEXT,{
   [CARD.mtn_kanako.desc]:ZH_CARDS.mtn_kanako[2],
   [CARD.mtn_suwako.desc]:ZH_CARDS.mtn_suwako[2],
   'Chapter 5 · Youkai Mountain':'第五关 · 妖怪之山',
+  'Chapter 6 · Kourindou':'第六关 · 香霖堂',
+  'Kourindou opens for trading, and the fifth cards now have abilities. The opponent uses Medium AI. Win to clear this chapter. Three stars: claim two factions, claim a faction whose abilities are still locked, and do something that surprises me!':'香霖堂开放交易，各阵营第五张卡的技能已解锁。对手使用中等 AI，获胜即可通关。三星目标：收取两个阵营、收取一个尚未解锁技能的阵营、做点让我惊讶的东西吧！',
+  'Claim two factions':'收取两个阵营',
+  'Claim a faction whose abilities are still locked':'收取一个尚未解锁技能的阵营',
+  'Do something that surprises me!':'做点让我惊讶的东西吧！',
+  'Use trades and card abilities to claim two different factions.':'利用交易与卡牌技能，收取两个不同阵营。',
+  'Claim a faction whose core cards still have no abilities.':'收取一个基础卡牌仍未解锁技能的阵营。',
   'Stars carry across victories. Complete all objectives in one match for faction-colored stars.':'星星可以跨获胜对局累计。在一局中完成全部目标，星星即可获得本关阵营颜色。',
-  'Youkai Mountain abilities are now active too. Win to clear this chapter. Three stars: claim Youkai Mountain, end the game in stalemate, and read a newspaper before making a correct guess.':'妖怪之山的技能也已开放，获胜即可通关。三星目标：收取妖怪之山、使游戏陷入僵局，以及阅读报纸后正确猜中一次卡牌。',
+  'Youkai Mountain abilities are now active too. Win to clear this chapter. Three stars: claim Youkai Mountain, end the game in stalemate, and subscribe to a newspaper before making a correct guess.':'妖怪之山的技能也已开放，获胜即可通关。三星目标：收取妖怪之山、使游戏陷入僵局，以及订阅报纸后正确猜中一次卡牌。',
   'Claim Youkai Mountain':'收取妖怪之山阵营',
   'End the game in stalemate':'使游戏陷入僵局',
-  'Read a newspaper, then make a correct guess':'阅读报纸后正确猜中一次卡牌',
-  'Read reports':'阅读报纸情报',
+  'Subscribe to a newspaper, then make a correct guess':'订阅报纸后正确猜中一次卡牌',
   'Stars collected':'已收集星星',
   'Match objectives':'本局目标',
   'The opponent reached four points. This objective is unavailable this match; you can still win and clear the chapter.':'电脑已经达到四分，本局无法完成此目标，仍可获胜通关。',
@@ -8607,7 +8635,7 @@ Object.assign(ZH_TEXT,{
   'Chapter cleared. Replay to collect the remaining stars.':'本关通关。可以重玩以收集剩下的星星。',
   'All three objectives completed in one match. Faction-colored stars unlocked.':'已在一局中完成全部目标，星星获得本关阵营颜色。',
   'Three stars collected. Complete all objectives in one match to color them.':'已累计收集三星。在一局中完成全部目标，可让星星获得阵营颜色。',
-  'Open a newspaper’s reports, then make a correct card guess.':'展开报纸情报后，使用猜牌技能正确猜中一次卡牌。',
+  'Subscribe to a newspaper, then make a correct card guess.':'订阅报纸后，使用猜牌技能正确猜中一次卡牌。',
   'Connect four Youkai Mountain cards and claim the faction.':'连接四张妖怪之山卡牌，收取该阵营。',
   'Leave every player without a legal action to reach stalemate. The unique highest score wins.':'让所有玩家都没有合法行动，形成僵局；分数独占最高者获胜。'
 });
@@ -9781,14 +9809,12 @@ function newspaperHtml(entry){
     `<div class="news-folded-cover" aria-hidden="true"><div class="news-ink-lines">${'<i></i>'.repeat(9)}</div><span class="news-fold-spine"></span></div>
     <p class="news-subscription-note">${copy('This newspaper is folded. Pay one hand card to the editor to subscribe and read the reports.')}</p>
     <button class="news-subscribe" type="button" data-subscribe-paper="${paper.paperId}">${copy('Subscribe')} · ${escapeLogHtml(paper.reporter)}</button>`;
-  const lessonReader=readable&&game.storyMatch?.chapter===5&&localSeat()===game.storyMatch.humanSeat;
-  const columns=lessonReader?`<details class="news-reader" data-story-read-paper="${paper.paperId}"${game.storyMatch.readPapers.includes(paper.paperId)?' open':''}><summary>${copy('Read reports')}</summary>${stories}</details>`:stories;
   return `<article class="log-entry aya-newspaper${readable?'':' news-folded'}" aria-label="${copy('Bunbunmaru newspaper')}">
     <div class="news-masthead"><span lang="ja">文々。新聞</span><small>BUNBUNMARU NEWS</small></div>
     <div class="news-edition"><span>${escapeLogHtml(paper.edition)}</span><span>${copy('Hearsay Finder')}</span></div>
     <h4 class="news-headline">${copy(readable?'Hands Revealed Across Gensokyo':'Private edition · subscription required')}</h4>
     <p class="news-byline">${copy('Filed by Aya Shameimaru')} · ${escapeLogHtml(paper.reporter)}</p>
-    <div class="news-columns">${columns}</div><div class="news-footer">${copy('EXTRA · EYEWITNESS REPORT')}</div></article>`;
+    <div class="news-columns">${stories}</div><div class="news-footer">${copy('EXTRA · EYEWITNESS REPORT')}</div></article>`;
 }
 document.addEventListener('click',async event=>{
   const button=event.target.closest?.('[data-subscribe-paper]');if(!button||!game||!localTurnReady()||pendingCellChoice||pendingHandChoice)return;
@@ -9801,12 +9827,6 @@ document.addEventListener('click',async event=>{
   }
   if(button.isConnected)button.disabled=false;
 });
-
-document.addEventListener('toggle',event=>{
-  const reader=event.target;
-  if(!reader?.matches?.('details[data-story-read-paper]')||!reader.open||!reader.isConnected||!game)return;
-  if(game.recordStoryNewspaperRead(localSeat(),Number(reader.dataset.storyReadPaper)))updateStoryProgress();
-},true);
 
 function renderLog(){
   if(!game || game.cancelled) return;
@@ -12810,7 +12830,7 @@ async function aiDecideAction(playerIdx,allowTrade=true){
 return {aiEvaluateCard,aiChooseCostCards,aiFactionPlacement,aiKomachiTarget,aiDecideHardAction,aiDecideAction,aiBestTrade,aiTwoCardFactionTrade,aiKanakoTrade};
 })();
 /* The final lesson has its own opponent. Ordinary policies never read this state. */
-function aiIsTeachingOpponent(match,p){return !!match.players[p]?.isAI && (match.storyMatch?.aiSeat===p || match.tutorialLesson?.aiSeat===p);}
+function aiIsTeachingOpponent(match,p){return !!match.players[p]?.isAI && (match.storyMatch?.aiSeat===p && match.storyMatch.chapter<6 || match.tutorialLesson?.aiSeat===p);}
 function aiTeachingTradeAction(p){
   for(const offered of game.players[p].hand.filter(id=>game.canTrade(p,id)&&!(id==='sage_yukari'&&aiPolicyHas(p,'yukari-trade',game)))){
     for(const target of game.tradeCells()){
@@ -12911,7 +12931,7 @@ function aiBestChannel(playerIdx,...args){return game.players[playerIdx]?.aiPoli
 function aiEvaluateCard(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiEvaluateCard(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiEvaluateCard(playerIdx,...args) : aiCurrentEvaluateCard(playerIdx,...args);}
 function aiChooseCostCards(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiChooseCostCards(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiChooseCostCards(playerIdx,...args) : aiCurrentChooseCostCards(playerIdx,...args);}
 function aiFactionPlacement(playerIdx,...args){
-  if(game.storyMatch?.aiSeat===playerIdx)return aiStoryPlacement(playerIdx,args[0],args[1])?.cell||null;
+  if(game.storyMatch?.aiSeat===playerIdx && game.storyMatch.chapter<6)return aiStoryPlacement(playerIdx,args[0],args[1])?.cell||null;
   if(game.tutorialLesson?.aiSeat===playerIdx)return aiTutorialPlacement(playerIdx,args[0],args[1])?.cell||null;
   return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiFactionPlacement(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiFactionPlacement(playerIdx,...args) : aiCurrentFactionPlacement(playerIdx,...args);
 }
@@ -14158,17 +14178,45 @@ let peekCardSession=null,cancelByakurenPeek=null;
 let peekCardLayer=1;
 const tableCardSlides=new Map();
 function tableCardEventTime(event){return Number.isFinite(event?.timeStamp) ? event.timeStamp : performance.now();}
+const TABLE_CARD_FRICTION=1800,TABLE_CARD_SPIN_DRAG=5.5;
+function tableCardSize(node){
+  const rect=node.getBoundingClientRect();return {width:node.offsetWidth||rect.width,height:node.offsetHeight||rect.height};
+}
+function tableCardGrip(x,y,angle){
+  const radians=angle*Math.PI/180,cos=Math.cos(radians),sin=Math.sin(radians);
+  return {x:x*cos-y*sin,y:x*sin+y*cos};
+}
 function stepTableCardSlide(body,dt,bounds){
-  const speed=Math.hypot(body.vx,body.vy),friction=2400;
+  dt=Math.max(0,dt);const speed=Math.hypot(body.vx,body.vy);
   if(speed>0){
-    const elapsed=Math.min(Math.max(0,dt),speed/friction),distance=speed*elapsed-friction*elapsed*elapsed/2;
+    const elapsed=Math.min(dt,speed/TABLE_CARD_FRICTION),distance=speed*elapsed-TABLE_CARD_FRICTION*elapsed*elapsed/2;
     body.x+=body.vx/speed*distance;body.y+=body.vy/speed*distance;
-    const remaining=Math.max(0,speed-friction*elapsed)/speed;body.vx*=remaining;body.vy*=remaining;
+    const remaining=Math.max(0,speed-TABLE_CARD_FRICTION*elapsed)/speed;body.vx*=remaining;body.vy*=remaining;
   }
-  const spinDecay=Math.exp(-9*Math.max(0,dt));body.angle+=body.spin*(1-spinDecay)/9;body.spin*=spinDecay;
-  const x=Math.max(bounds.left,Math.min(bounds.right,body.x)),y=Math.max(bounds.top,Math.min(bounds.bottom,body.y));
-  if(x!==body.x)body.vx=0;if(y!==body.y)body.vy=0;body.x=x;body.y=y;
-  return body;
+  const spinDecay=Math.exp(-TABLE_CARD_SPIN_DRAG*dt);
+  body.angle+=body.spin*(1-spinDecay)/TABLE_CARD_SPIN_DRAG;body.spin*=spinDecay;
+  const edge=typeof bounds==='function'?bounds(body.angle):bounds;
+  const x=Math.max(edge.left,Math.min(edge.right,body.x)),y=Math.max(edge.top,Math.min(edge.bottom,body.y));
+  // A soft, lossy table-edge collision preserves a little rebound and spends spin.
+  if(x!==body.x){if(body.vx*(body.x-x)>0)body.vx*=-.28;body.vy*=.85;body.spin*=.65;}
+  if(y!==body.y){if(body.vy*(body.y-y)>0)body.vy*=-.28;body.vx*=.85;body.spin*=.65;}
+  body.x=x;body.y=y;return body;
+}
+function stepTableCardDrag(drag,pointer,dt){
+  const dx=pointer.x-drag.pointer.x,dy=pointer.y-drag.pointer.y;
+  if(dt>0 && !window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches){
+    const elapsed=Math.min(.1,dt),steps=Math.max(1,Math.ceil(elapsed/.008)),h=elapsed/steps;
+    const vx=dx/dt,vy=dy/dt;
+    for(let step=0;step<steps;step++){
+      const arm=tableCardGrip(drag.grip.x,drag.grip.y,drag.rotation);
+      const target=Math.max(-720,Math.min(720,(arm.x*vy-arm.y*vx)/(drag.inertia+arm.x*arm.x+arm.y*arm.y)*180/Math.PI));
+      const decay=Math.exp(-h/.06),before=drag.spin;
+      drag.spin=target+(before-target)*decay;
+      drag.rotation+=target*h+(before-target)*.06*(1-decay);
+    }
+  }
+  const arm=tableCardGrip(drag.grip.x,drag.grip.y,drag.rotation);
+  return moveTitleCard(drag.node,pointer.x-arm.x,pointer.y-arm.y,drag.rotation);
 }
 function stopTableCardSlide(node,notify=true){
   const slide=tableCardSlides.get(node);if(!slide)return;
@@ -14180,11 +14228,11 @@ function clearTableCardSlides(notify=true){for(const node of [...tableCardSlides
 function startTableCardSlide(drag,releasedAt){
   if(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches || drag.node.classList.contains('peek-taken'))return;
   const age=Math.max(0,releasedAt-drag.lastMotionAt),decay=Math.exp(-age/65),speed=Math.hypot(drag.vx,drag.vy)*decay;
-  if(age>100 || speed<45)return;
-  const node=drag.node,rect=node.getBoundingClientRect(),maxTravel=Math.max(32,Math.min(140,rect.width*.9));
-  const limited=Math.min(speed,Math.sqrt(2*2400*maxTravel)),ratio=limited/Math.hypot(drag.vx,drag.vy);
-  const body={x:rect.left+rect.width/2,y:rect.top+rect.height/2,vx:drag.vx*ratio,vy:drag.vy*ratio,
-    angle:drag.rotation,spin:Math.max(-28,Math.min(28,(drag.vx*drag.offsetY-drag.vy*drag.offsetX)*.0007))};
+  const spin=Math.max(-540,Math.min(540,drag.spin*decay));
+  if(age>100 || speed<45&&Math.abs(spin)<12)return;
+  const node=drag.node,rect=node.getBoundingClientRect(),maxTravel=Math.max(64,Math.min(320,tableCardSize(node).width*2.2));
+  const limited=Math.min(speed,Math.sqrt(2*TABLE_CARD_FRICTION*maxTravel)),ratio=speed>0?limited/Math.hypot(drag.vx,drag.vy):0;
+  const body={x:rect.left+rect.width/2,y:rect.top+rect.height/2,vx:drag.vx*ratio,vy:drag.vy*ratio,angle:drag.rotation,spin};
   const slide={body,frame:null,previous:performance.now()};tableCardSlides.set(node,slide);node.classList.add('table-card-sliding');
   node.style.setProperty('--table-angle',`${body.angle}deg`);
   const tick=now=>{
@@ -14193,8 +14241,8 @@ function startTableCardSlide(drag,releasedAt){
     const dt=(now-slide.previous)/1000;slide.previous=now;
     // A backgrounded tab must not resume an old throw when it becomes visible again.
     if(dt>.12){stopTableCardSlide(node);return;}
-    stepTableCardSlide(body,dt,tableCardBounds(node));
-    moveTitleCard(node,body.x,body.y);node.style.setProperty('--table-angle',`${body.angle}deg`);
+    stepTableCardSlide(body,dt,angle=>tableCardBounds(node,angle));
+    moveTitleCard(node,body.x,body.y,body.angle);node.style.setProperty('--table-angle',`${body.angle}deg`);
     node.dataset.ignoreClickUntil=String(Date.now()+100);
     if(Math.hypot(body.vx,body.vy)<8 && Math.abs(body.spin)<1){stopTableCardSlide(node);return;}
     slide.frame=requestAnimationFrame(tick);
@@ -14222,16 +14270,14 @@ function drawTitlePreviewCards(){
   try{window.localStorage?.setItem('boundary-title-preview',JSON.stringify(lastTitleCardIds));}catch(_error){}
   return drawn;
 }
-function tableCardBounds(node){
-  if(node?.dataset.storyCard==='true'){
-    const area=el('story-card-grid').getBoundingClientRect(),card=node.getBoundingClientRect();
-    const halfWidth=Math.min(area.width/2,card.width/2+10),halfHeight=Math.min(area.height/2,card.height/2+10);
-    return {left:area.left+halfWidth,right:area.right-halfWidth,top:area.top+halfHeight,bottom:area.bottom-halfHeight};
-  }
-  return {left:24,top:24,right:window.innerWidth-24,bottom:window.innerHeight-24};
+function tableCardBounds(node,angle=Number(node?.dataset.angle)||0){
+  const size=tableCardSize(node),radians=angle*Math.PI/180,cos=Math.abs(Math.cos(radians)),sin=Math.abs(Math.sin(radians));
+  const area=node?.dataset.storyCard==='true'?el('story-card-grid').getBoundingClientRect():{left:0,top:0,width:window.innerWidth,height:window.innerHeight};
+  const halfWidth=Math.min(area.width/2,(size.width*cos+size.height*sin)/2+10),halfHeight=Math.min(area.height/2,(size.width*sin+size.height*cos)/2+10);
+  return {left:area.left+halfWidth,right:area.left+area.width-halfWidth,top:area.top+halfHeight,bottom:area.top+area.height-halfHeight};
 }
-function moveTitleCard(node,x,y){
-  const bounds=tableCardBounds(node),cx=Math.max(bounds.left,Math.min(bounds.right,x)),cy=Math.max(bounds.top,Math.min(bounds.bottom,y));
+function moveTitleCard(node,x,y,angle){
+  const bounds=tableCardBounds(node,angle),cx=Math.max(bounds.left,Math.min(bounds.right,x)),cy=Math.max(bounds.top,Math.min(bounds.bottom,y));
   node.style.setProperty('--table-x',`${cx}px`);node.style.setProperty('--table-y',`${cy}px`);
   if(node.dataset.storyCard==='true'){
     const area=el('story-card-grid').getBoundingClientRect();node.dataset.storyX=String((cx-area.left)/Math.max(1,area.width));node.dataset.storyY=String((cy-area.top)/Math.max(1,area.height));
@@ -14248,8 +14294,10 @@ function finishTitleCardDrag(cancelled=false,releasedAt=performance.now()){
   const drag=titleCardDrag;if(!drag)return;
   titleCardDrag=null;
   drag.node.classList.remove('table-card-dragging');
-  drag.node.style.setProperty('--table-angle',`${drag.angle}deg`);
-  if(cancelled && drag.moved){moveTitleCard(drag.node,drag.center.x,drag.center.y);drag.node.style.zIndex=drag.layer;}
+  const angle=cancelled?drag.angle:drag.rotation;
+  drag.node.dataset.angle=String(angle);drag.node.style.setProperty('--table-angle',`${angle}deg`);
+  if(cancelled && drag.moved){moveTitleCard(drag.node,drag.center.x,drag.center.y,angle);drag.node.style.zIndex=drag.layer;}
+  if(drag.second){try{drag.node.releasePointerCapture(drag.second.id);}catch(_error){}}
   try{if(drag.node.hasPointerCapture?.(drag.pointerId))drag.node.releasePointerCapture(drag.pointerId);}catch(_error){}
   if(drag.node.dataset.peekCard==='true' && !cancelled)peekCardSession?.update(drag.node,drag.moved);
   if(drag.moved && !cancelled)startTableCardSlide(drag,releasedAt);
@@ -14271,45 +14319,73 @@ function finishTitleCardDrag(cancelled=false,releasedAt=performance.now()){
   }
 }
 function onTitleCardPointerDown(event){
-  if(event.button>0 || event.isPrimary===false || !movableTableCardEnabled(event.currentTarget))return;
-  event.preventDefault();finishTitleCardDrag(true);
-  const node=event.currentTarget;stopTableCardSlide(node);
-  const rect=node.getBoundingClientRect(),center={x:rect.left+rect.width/2,y:rect.top+rect.height/2},time=tableCardEventTime(event);
+  if(event.button>0 || !movableTableCardEnabled(event.currentTarget))return;
+  const node=event.currentTarget;
+  if(titleCardDrag && titleCardDrag.node===node && titleCardDrag.pointerId!==event.pointerId){
+    const drag=titleCardDrag;if(drag.second)return;
+    event.preventDefault();if(!drag.moved){drag.moved=true;liftTitleCard(node);}
+    drag.second={id:event.pointerId,x:event.clientX,y:event.clientY};
+    drag.twistAngle=Math.atan2(event.clientY-drag.pointer.y,event.clientX-drag.pointer.x);
+    const rect=node.getBoundingClientRect();drag.twistOffset={x:rect.left+rect.width/2-(drag.pointer.x+event.clientX)/2,y:rect.top+rect.height/2-(drag.pointer.y+event.clientY)/2};
+    node.classList.add('table-card-dragging');lastTitleCardTap=null;
+    try{node.setPointerCapture(drag.pointerId);node.setPointerCapture(event.pointerId);}catch(_error){}return;
+  }
+  if(event.isPrimary===false)return;
+  event.preventDefault();finishTitleCardDrag(true);stopTableCardSlide(node);
+  const rect=node.getBoundingClientRect(),center={x:rect.left+rect.width/2,y:rect.top+rect.height/2},time=tableCardEventTime(event),angle=Number(node.dataset.angle)||0,size=tableCardSize(node);
   node.focus({preventScroll:true});
-  titleCardDrag={node,center,layer:node.style.zIndex || '',pointerId:event.pointerId,pointerType:event.pointerType || 'mouse',startX:event.clientX,startY:event.clientY,offsetX:event.clientX-center.x,offsetY:event.clientY-center.y,angle:Number(node.dataset.angle)||0,moved:false,
-    sampleTime:time,lastMotionAt:time,samplePoint:center,vx:0,vy:0,rotation:Number(node.dataset.angle)||0};
+  const offsetX=event.clientX-center.x,offsetY=event.clientY-center.y;
+  titleCardDrag={node,center,layer:node.style.zIndex || '',pointerId:event.pointerId,pointerType:event.pointerType || 'mouse',startX:event.clientX,startY:event.clientY,offsetX,offsetY,angle,moved:false,
+    sampleTime:time,lastMotionAt:time,samplePoint:center,pointer:{x:event.clientX,y:event.clientY},grip:tableCardGrip(offsetX,offsetY,-angle),inertia:(size.width*size.width+size.height*size.height)/12,vx:0,vy:0,spin:0,rotation:angle};
   try{node.setPointerCapture(event.pointerId);}catch(_error){}
 }
 function onTitleCardPointerMove(event){
-  const drag=titleCardDrag;if(!drag || drag.pointerId!==event.pointerId)return;
+  const drag=titleCardDrag;if(!drag || drag.pointerId!==event.pointerId&&drag.second?.id!==event.pointerId)return;
   if(!drag.moved && Math.hypot(event.clientX-drag.startX,event.clientY-drag.startY)>5){
     drag.moved=true;liftTitleCard(drag.node);
     try{drag.node.setPointerCapture(drag.pointerId);}catch(_error){}
   }
   if(!drag.moved)return;
   drag.node.classList.add('table-card-dragging');
-  const point=moveTitleCard(drag.node,event.clientX-drag.offsetX,event.clientY-drag.offsetY),time=tableCardEventTime(event),dt=(time-drag.sampleTime)/1000;
+  const time=tableCardEventTime(event),dt=(time-drag.sampleTime)/1000,pointer={x:event.clientX,y:event.clientY},beforeAngle=drag.rotation;
+  let point,motion;
+  if(drag.second){
+    const finger=drag.second.id===event.pointerId?drag.second:drag.pointer;motion=Math.hypot(finger.x-pointer.x,finger.y-pointer.y);finger.x=pointer.x;finger.y=pointer.y;
+    const angle=Math.atan2(drag.second.y-drag.pointer.y,drag.second.x-drag.pointer.x),delta=Math.atan2(Math.sin(angle-drag.twistAngle),Math.cos(angle-drag.twistAngle));
+    drag.rotation+=delta*180/Math.PI;drag.twistOffset=tableCardGrip(drag.twistOffset.x,drag.twistOffset.y,delta*180/Math.PI);drag.twistAngle=angle;
+    point=moveTitleCard(drag.node,(drag.pointer.x+drag.second.x)/2+drag.twistOffset.x,(drag.pointer.y+drag.second.y)/2+drag.twistOffset.y,drag.rotation);
+    if(dt>0){const blend=1-Math.exp(-dt/.035);drag.spin+=(Math.max(-720,Math.min(720,(drag.rotation-beforeAngle)/dt))-drag.spin)*blend;}
+  }else{
+    motion=Math.hypot(pointer.x-drag.pointer.x,pointer.y-drag.pointer.y);point=stepTableCardDrag(drag,pointer,dt);drag.pointer=pointer;
+  }
   if(dt>0){
-    const dx=point.x-drag.samplePoint.x,dy=point.y-drag.samplePoint.y,blend=1-Math.exp(-dt/.035);
-    drag.vx+=(dx/dt-drag.vx)*blend;drag.vy+=(dy/dt-drag.vy)*blend;
-    if(Math.hypot(dx,dy)>.2)drag.lastMotionAt=time;
+    const blend=1-Math.exp(-dt/.035);drag.vx+=((point.x-drag.samplePoint.x)/dt-drag.vx)*blend;drag.vy+=((point.y-drag.samplePoint.y)/dt-drag.vy)*blend;
     drag.samplePoint=point;drag.sampleTime=time;
   }
-  const twist=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ? 0 : Math.max(-7,Math.min(7,(drag.vx*drag.offsetY-drag.vy*drag.offsetX)*.0005));
-  drag.rotation=drag.angle+twist;drag.node.style.setProperty('--table-angle',`${drag.rotation}deg`);
+  if(motion>.2)drag.lastMotionAt=time;
+  drag.node.style.setProperty('--table-angle',`${drag.rotation}deg`);
 }
 function onTitleCardPointerUp(event){
-  if(titleCardDrag?.pointerId!==event.pointerId)return;
-  onTitleCardPointerMove(event);finishTitleCardDrag(false,tableCardEventTime(event));
+  const drag=titleCardDrag;if(!drag || drag.pointerId!==event.pointerId&&drag.second?.id!==event.pointerId)return;
+  onTitleCardPointerMove(event);
+  if(drag.second){
+    const remaining=drag.pointerId===event.pointerId?drag.second:{id:drag.pointerId,...drag.pointer};
+    drag.pointerId=remaining.id;drag.pointer={x:remaining.x,y:remaining.y};drag.second=null;
+    try{drag.node.releasePointerCapture(event.pointerId);}catch(_error){}
+    const rect=drag.node.getBoundingClientRect();drag.grip=tableCardGrip(remaining.x-rect.left-rect.width/2,remaining.y-rect.top-rect.height/2,-drag.rotation);
+    drag.sampleTime=tableCardEventTime(event);return;
+  }
+  finishTitleCardDrag(false,tableCardEventTime(event));
 }
 function onTitleCardPointerCancel(event){
-  if(titleCardDrag?.pointerId!==event.pointerId)return;
+  if(!titleCardDrag || titleCardDrag.pointerId!==event.pointerId&&titleCardDrag.second?.id!==event.pointerId)return;
   if(event.type==='lostpointercapture' && titleCardDrag.node.hasPointerCapture?.(event.pointerId))return;
   finishTitleCardDrag(true);
 }
 function onTitleCardClick(event){
   event.stopPropagation();
   const node=event.currentTarget;
+  if(titleCardDrag?.node===node && titleCardDrag.moved)return;
   if(node.dataset.storyCard==='true'){
     if(Number(node.dataset.ignoreClickUntil||0)>Date.now()||Number(node.dataset.pointerClickUntil||0)>Date.now())return;
     inspectTableCard(node);return;
@@ -14321,6 +14397,7 @@ function onTitleCardClick(event){
 }
 function onTitleCardDoubleClick(event){
   event.preventDefault();event.stopPropagation();const node=event.currentTarget;
+  if(titleCardDrag?.node===node && titleCardDrag.moved)return;
   if(!movableTableCardEnabled(node) || Number(node.dataset.ignoreClickUntil || 0)>Date.now())return;
   stopTableCardSlide(node);
   lastTitleCardTap=null;node.dataset.ignoreClickUntil=String(Date.now()+450);inspectTableCard(node);
@@ -14337,6 +14414,11 @@ function onTitleCardKeyDown(event){
     if(CARD[event.currentTarget.dataset.cardId]?.hiddenChoice){if(event.key.toLowerCase()!=='i')peekCardSession?.update(event.currentTarget);}
     else inspectTableCard(event.currentTarget);
     return;
+  }
+  if(['q','e'].includes(event.key.toLowerCase())){
+    event.preventDefault();const node=event.currentTarget,center=liftTitleCard(node),angle=(Number(node.dataset.angle)||0)+(event.key.toLowerCase()==='q'?-1:1)*(event.shiftKey?45:15);
+    node.dataset.angle=String(angle);node.style.setProperty('--table-angle',`${angle}deg`);moveTitleCard(node,center.x,center.y,angle);
+    if(node.dataset.peekCard==='true')peekCardSession?.update(node,true,true);return;
   }
   const directions={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};
   const delta=directions[event.key];if(!delta)return;
@@ -14491,7 +14573,7 @@ function renderTitleTableCards(){
     const [x,y,baseAngle]=positions[index],angle=baseAngle+Math.random()*12-6;
     const card=document.createElement('div');card.className='table-scatter-card';card.dataset.cardId=preview.id;card.dataset.angle=String(angle);card.dataset.titlePreview='true';
     card.setAttribute('role','button');card.setAttribute('tabindex','0');card.setAttribute('aria-label',`${preview.name}. Click to flip; drag to move; double-click or double-tap to inspect.`);
-    card.setAttribute('aria-keyshortcuts','F Enter Space I ArrowLeft ArrowRight ArrowUp ArrowDown');
+    card.setAttribute('aria-keyshortcuts','F Enter Space I Q E ArrowLeft ArrowRight ArrowUp ArrowDown');
     card.style.setProperty('--table-x',`${x+Math.random()*4-2}%`);card.style.setProperty('--table-y',`${y+Math.random()*6-3}%`);
     card.style.setProperty('--table-angle',`${angle}deg`);card.style.setProperty('--table-delay',`${index*.04}s`);
     const faceDown=index===6 || index===7,turn=document.createElement('div'),front=document.createElement('div'),reverse=document.createElement('div');
@@ -14892,8 +14974,8 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='c892d176ac40e19014e18fe00efbda048bf28a8abc6951cb67d548a970caea44';
-const AI_EVALUATION_POLICY_DIGEST='0b0090567305b2f1d89f1209d2bc112885f8d64488e601aa784c5d001d38c065';
+const AI_EVALUATION_RULES_DIGEST='e68fd25a74d3c4043c3dcab29231714aca41c2aed1036c3fcd871ebc382f70f2';
+const AI_EVALUATION_POLICY_DIGEST='c2a4a2e32ac0aa88ca64af6d7368a6378d3c95f58fdf5deeab9d3d9a34259c8c';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
   if(!source)throw new Error('Game source is unavailable.');
@@ -14979,7 +15061,7 @@ function evalForkSummary(report){
   return {groups,invalidPairs,conclusion,completedPairs:report.pairs.length};
 }
 function evalValidateSnapshot(snapshot){
-  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-16-story-private-opening-v19','2026-10-16-story-eientei-opening-v18','2026-10-16-story-stars-placement-v17','2026-10-16-story-hakugyokurou-active-mentor-v16','2026-10-15-guided-opening-scarlet-reserve-v15','2026-10-15-random-learning-renewal-v14','2026-10-15-story-opening-chapters-v13','2026-10-14-original-creation-blueprints-v12','2026-10-14-guided-final-match-v11','2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
+  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-16-story-mountain-collection-v20','2026-10-16-story-private-opening-v19','2026-10-16-story-eientei-opening-v18','2026-10-16-story-stars-placement-v17','2026-10-16-story-hakugyokurou-active-mentor-v16','2026-10-15-guided-opening-scarlet-reserve-v15','2026-10-15-random-learning-renewal-v14','2026-10-15-story-opening-chapters-v13','2026-10-14-original-creation-blueprints-v12','2026-10-14-guided-final-match-v11','2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
   const state=snapshot.state,n=state?.players?.length,size=snapshot.size;
   if(![4,5].includes(size) || ![2,3,4].includes(n) || !Number.isInteger(state.currentPlayerIdx) || state.currentPlayerIdx<0 || state.currentPlayerIdx>=n)throw new Error('Invalid position dimensions.');
   if(state.numPlayers!==n || state.players.some((p,i)=>p.idx!==i || !Array.isArray(p.hand) || !Array.isArray(p.discard)))throw new Error('Invalid position dimensions.');
@@ -15656,7 +15738,7 @@ const TUTORIALS=[
 let tutorialState=null,tutorialReturnFocus=null;
 function isTutorialPractice(){return !!tutorialState && tutorialState.practice===game;}
 function tutorialAllowsTrade(){
-  if(isStoryMatch())return false;
+  if(isStoryMatch())return game.storyMatch.chapter>=6;
   return !isTutorialPractice() || ['offer','trade','match'].includes(TUTORIALS[tutorialState.step].goal);
 }
 
@@ -15958,11 +16040,11 @@ function showStoryChapterIntro(chapter){
   el('story-levels').hidden=true;el('story-debug-reset').hidden=true;el('story-begin').hidden=false;
   const grid=el('story-card-grid'),introduced=storyChapterCards(chapter);grid.replaceChildren();grid.hidden=!introduced.length;el('story-card-instruction').hidden=!introduced.length;
   if(introduced.length){
-    setRuleText(el('story-card-instruction'),'Click a glowing card to read its ability. Drag cards freely to move and stack them.');
+    setRuleText(el('story-card-instruction'),'Click a glowing card to read its ability. Drag to move, use two fingers to turn, or press Q / E to rotate.');
     const session={cards:[],frame:null,layout:()=>layoutStoryIntroCards()};storyIntroSession=session;
     introduced.forEach((id,index)=>{
-      const card=document.createElement('div');card.className='table-scatter-card table-card-moved story-ability-card';card.dataset.cardId=id;card.dataset.storyCard='true';card.dataset.angle=String([-5,3,-3,5][index]);
-      card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',CARD[id].name);card.setAttribute('aria-describedby','story-card-instruction');card.setAttribute('aria-keyshortcuts','Enter Space I ArrowLeft ArrowRight ArrowUp ArrowDown');
+      const card=document.createElement('div');card.className='table-scatter-card table-card-moved story-ability-card';card.dataset.cardId=id;card.dataset.storyCard='true';card.dataset.angle=String([-5,3,-3,5][index%4]);
+      card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',CARD[id].name);card.setAttribute('aria-describedby','story-card-instruction');card.setAttribute('aria-keyshortcuts','Enter Space I Q E ArrowLeft ArrowRight ArrowUp ArrowDown');
       card.style.setProperty('--table-angle',card.dataset.angle+'deg');card.style.setProperty('--story-refresh-delay',index*100+'ms');
       card.style.setProperty('--story-glow-color',FACTIONS[CARD[id].faction].color);
       card.innerHTML=`<div class="story-new-face">${cardBoardHtml(id)}</div><div class="story-old-face" aria-hidden="true">${cardBoardHtml(id,{wornPreview:true})}</div><span class="story-refresh-scan" aria-hidden="true"></span><span class="story-card-glow" aria-hidden="true"></span>`;
@@ -16003,7 +16085,7 @@ function openStoryChapter(chapter){
   const practiceUI={...ui};
   for(const name of ['pickPlayer','pickFromList','pickOwnHandCard','pickOwnHandCards','pickHandCard','pickCardPool','arrangeDrawPileCards','pickRectByDrag','pickCell','promptText'])
     practiceUI[name]=(...args)=>Promise.race([ui[name](...args),cancelled.then(()=>name==='pickRectByDrag'?[]:null)]);
-  game=state.practice=new Game(2,practiceUI,null,{aiDifficulty:chapter===1?'hard':'easy',kourindouEnabled:false});configureStoryMatch(game,chapter);
+  game=state.practice=new Game(2,practiceUI,null,{aiDifficulty:chapter===1?'hard':chapter>=6?'normal':'easy',kourindouEnabled:chapter>=6});configureStoryMatch(game,chapter);
   el('setup').style.display='none';el('game').classList.add('active');document.body.classList.add('tutorial-practice','story-practice');
   el('tutorial-coach').hidden=false;dockTutorialCoach(document.body.classList.contains('game-mobile'));renderStoryCoach();
   // Paint the six-card deal before an AI first turn can draw for everyone.
@@ -16022,10 +16104,11 @@ function renderStoryCoach(){
   el('tutorial-progress').innerHTML=ruleTextHtml('Story Mode')+' · '+state.chapter+' / '+STORY_CHAPTERS.length;
   el('tutorial-title').textContent=definition.title;setRuleText(el('tutorial-copy'),'');
   const goals=storyStarGoals(game),raceLost=state.chapter===3&&storyRaceLost(game);
-  const heading=goals.length?ruleTextHtml('Match objectives'):'';
-  el('tutorial-feedback').classList.remove('story-perfect');
-  el('tutorial-feedback').style.removeProperty?.('--story-star-color');
-  const hint=state.complete?'Chapter cleared.':game.winner||game.stalemateMessage?'Win the match to clear this chapter.':raceLost?'The opponent reached four points. This objective is unavailable this match; you can still win and clear the chapter.':state.chapter===5?!progress.newsGuess?'Open a newspaper’s reports, then make a correct card guess.':!progress.mountain?'Connect four Youkai Mountain cards and claim the faction.':!progress.stalemate?'Leave every player without a legal action to reach stalemate. The unique highest score wins.':'Win the match to clear this chapter.':state.chapter===4?!progress.kaguya?'Gain four points from Kaguya’s placement, including its resulting faction claims.':!progress.hourai?'Connect four Eientei cards and claim the faction.':!progress.handTen?'Use card-gaining abilities to hold at least ten cards at once.':'Win the match to clear this chapter.':state.chapter===3?!progress.yuyuko?'Gain four points from Yuyuko’s placement, including her ability and faction claims.':!progress.haku?'Connect Yuyuko and Youmu to claim Hakugyokurou.':'Win before the opponent reaches four points.':state.chapter===1?'Win to finish this introductory chapter.':!progress.remilia?'Try Remilia while the other Mansion cards are still in hands.':!progress.flandre?'With Flandre, choose the opponent and send one of their hand cards to their discard pile.':!progress.sdm?'Connect four Mansion cards and claim the faction.':'Win the match to clear this chapter.';
+  const earned=goals.length?goals.filter(goal=>goal.done).length:state.complete?3:0;
+  const heading=(goals.length?ruleTextHtml('Match objectives')+' ':'')+'<span class="story-star-rating" aria-label="'+earned+' / 3">'+'★'.repeat(earned)+'☆'.repeat(3-earned)+'</span>';
+  el('tutorial-feedback').classList.toggle('story-perfect',state.complete&&earned===3);
+  el('tutorial-feedback').style.setProperty('--story-star-color',storyStarColor(state.chapter));
+  const hint=state.complete?'Chapter cleared.':game.winner||game.stalemateMessage?'Win the match to clear this chapter.':raceLost?'The opponent reached four points. This objective is unavailable this match; you can still win and clear the chapter.':state.chapter===6?!progress.twoFactions?'Use trades and card abilities to claim two different factions.':!progress.lockedFaction?'Claim a faction whose core cards still have no abilities.':'Do something that surprises me!':state.chapter===5?!progress.newsGuess?'Subscribe to a newspaper, then make a correct card guess.':!progress.mountain?'Connect four Youkai Mountain cards and claim the faction.':!progress.stalemate?'Leave every player without a legal action to reach stalemate. The unique highest score wins.':'Win the match to clear this chapter.':state.chapter===4?!progress.kaguya?'Gain four points from Kaguya’s placement, including its resulting faction claims.':!progress.hourai?'Connect four Eientei cards and claim the faction.':!progress.handTen?'Use card-gaining abilities to hold at least ten cards at once.':'Win the match to clear this chapter.':state.chapter===3?!progress.yuyuko?'Gain four points from Yuyuko’s placement, including her ability and faction claims.':!progress.haku?'Connect Yuyuko and Youmu to claim Hakugyokurou.':'Win before the opponent reaches four points.':state.chapter===1?'Win to finish this introductory chapter.':!progress.remilia?'Try Remilia while the other Mansion cards are still in hands.':!progress.flandre?'With Flandre, choose the opponent and send one of their hand cards to their discard pile.':!progress.sdm?'Connect four Mansion cards and claim the faction.':'Win the match to clear this chapter.';
   el('tutorial-feedback').innerHTML='<span class="story-match-objectives">'+heading+'</span><span class="tutorial-checklist">'+goals.map(goal=>{
     const done=goal.done,failed=goal.failed&&!done;
     return '<span class="tutorial-goal'+(done?' done':'')+(failed?' failed':'')+'">'+(failed?'✗':done?'✓':'○')+' '+ruleTextHtml(goal.label)+'</span>';

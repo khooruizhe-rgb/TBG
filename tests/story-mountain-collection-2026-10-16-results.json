@@ -1,6 +1,6 @@
 {
   "status": "pass",
-  "count": 73,
+  "count": 72,
   "checks": [
     "Chapter 2 unions distinct objectives over three victories without double-counting repeats or granting a single-run color",
     "Chapter 2 records a real three-objective victory and preserves its faction-colored stars on later replays",
@@ -52,25 +52,24 @@
     "Multiple held Mountain cards still select a legal landing when space is limited",
     "A mandatory Reisen command still resolves before the voluntary Mountain priority",
     "The immediate Mountain rule is confined to chapter five and does not change chapter four",
-    "A correct guess before reading a newspaper does not satisfy the reading goal",
-    "Folded unsubscribed papers and invalid paper IDs cannot count as reading",
-    "Reading alone followed by a wrong guess cannot earn the guess star",
+    "A correct guess before subscription cannot earn the newspaper goal",
+    "Folded unsubscribed papers and invalid paper IDs cannot count as subscription",
+    "Producing one’s own paper and failing payment do not subscribe",
+    "A paid subscription followed by a wrong guess cannot earn the guess star",
     "Aya’s real placement reads hands and collects Mountain, without pretending that producing the newspaper was viewing it",
-    "After reading the actual newspaper, a real correct Patchouli guess records the goal and transfers the card",
+    "After paying for the actual newspaper, a real correct Patchouli guess records the goal and transfers the card",
     "The actual turn loop exhausts shared draws, detects both players have no legal action, and awards a three-star 4–3 story victory by stalemate",
-    "The same real route saves every objective and its perfect menu rating without coloring the in-match checklist",
+    "The same real route saves every objective and its perfect menu rating and colors the three stars earned in this match",
     "Actual tied or opponent-led stalemates record the goal but do not invent a player victory: false {\"actions\":[false,false],\"progress\":{\"mountain\":false,\"stalemate\":true,\"newsGuess\":false},\"score\":[0,0],\"spaces\":[[[\"reimu\",[]]],[[\"marisa\",[]]]],\"draw\":[false,false]}",
     "Actual tied or opponent-led stalemates record the goal but do not invent a player victory: true {\"actions\":[false,false],\"progress\":{\"mountain\":false,\"stalemate\":true,\"newsGuess\":false},\"winner\":1,\"score\":[0,1],\"spaces\":[[[\"reimu\",[]]],[[\"marisa\",[]]]],\"draw\":[false,false]}",
     "An incorrect early end-stalemate call cannot award the no-legal-action objective",
     "Four complete random Mountain matches terminate without errors, strategic passes, conservation failures or turn-limit aborts",
     "The fifth chapter introduces four new core cards",
-    "Clearing the fifth and last chapter returns to five-chapter selection",
-    "A newly produced newspaper retains its masthead and does not count as read merely by rendering its closed report disclosure",
-    "The real capture-phase toggle handler records opening the reports and refreshes chapter goals",
-    "Read reports remain expanded on subsequent real log renders",
+    "Clearing the fifth chapter opens the seven-card Kourindou introduction",
+    "An owner newspaper displays reports directly with its newspaper layout and does not count as a paid subscription",
     "An unsubscribed rival newspaper retains its folded cover and paid subscription control",
-    "A real subscription transfers its payment and makes reports available without pretending that payment itself was reading",
-    "Only opening a connected, readable report disclosure can record the subscribed newspaper",
+    "Real payment immediately records subscription and displays its reports without an extra expansion action",
+    "The redundant newspaper reader and toggle mechanism have been removed",
     "The actual en detail renderer shows Suwako’s shared aura and Kanako’s removed permission",
     "The actual zh-CN detail renderer shows Suwako’s shared aura and Kanako’s removed permission",
     "The actual menu renders three cumulatively collected stars without a single-run color",
@@ -139,6 +138,6 @@
       }
     }
   ],
-  "rulesVersion": "2026-10-16-story-mountain-collection-v20",
-  "scope": "Actual goal unions and legacy migration, single-run colors and reset, Suwako original/copy/muting rules, constrained private fifth-chapter deals, real skill and read chronology, a complete prepared legal endgame route through the real turn loop, four random matches and controlled chapter lifecycle. Actual newspaper toggle/subscription events, bilingual card details and faction-color menu style are also checked with a controlled DOM; browser pixels are not verified."
+  "rulesVersion": "2026-10-16-story-kourindou-physics-v21",
+  "scope": "Actual goal unions and legacy migration, single-run colors and reset, Suwako original/copy/muting rules, constrained private fifth-chapter deals, real skill and subscription chronology, a complete prepared legal endgame route through the real turn loop, four random matches and controlled chapter lifecycle. Actual newspaper subscription and direct-report rendering, bilingual card details and faction-color menu style are also checked with a controlled DOM; browser pixels are not verified."
 }

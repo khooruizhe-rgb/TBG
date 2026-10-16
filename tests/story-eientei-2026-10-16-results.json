@@ -326,6 +326,6 @@
       }
     }
   ],
-  "rulesVersion": "2026-10-16-story-mountain-collection-v20",
+  "rulesVersion": "2026-10-16-story-kourindou-physics-v21",
   "scope": "Real constrained deals, actual skills, nested placement/claim ownership, independent stars, six random full matches, mandatory legal actions, pure planning, real turn cancellation and controlled UI restart/debug lifecycle. No browser pixel verification."
 }

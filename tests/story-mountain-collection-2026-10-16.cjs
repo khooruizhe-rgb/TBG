@@ -22,7 +22,7 @@ vm.runInContext(`(async()=>{
     assert(!storyChapterPerfect(chapter));assert(!el('tutorial-feedback').classList.contains('story-perfect'));
     ok(storyProgressDetails()[chapter].goals.length===3,'Chapter '+chapter+' unions distinct objectives over three victories without double-counting repeats or granting a single-run color');
     returnToMainMenu();openStoryMenu();const rating=el('story-levels').children[chapter-1].children[2].children[1];assert(!rating.className.includes('story-stars-perfect'));
-    win(chapter,keys);assert(storyChapterPerfect(chapter));assert(!el('tutorial-feedback').classList.contains('story-perfect'));assert(!/[★☆]/.test(el('tutorial-feedback').innerHTML));assert.equal(storyStarColor(chapter),FACTIONS[STORY_CHAPTERS[chapter-1].introduced].color);
+    win(chapter,keys);assert(storyChapterPerfect(chapter));assert(el('tutorial-feedback').classList.contains('story-perfect'));assert(el('tutorial-feedback').innerHTML.includes('★★★'));assert.equal(storyStarColor(chapter),FACTIONS[STORY_CHAPTERS[chapter-1].introduced].color);
     win(chapter,[keys[0]]);assert(storyChapterPerfect(chapter));returnToMainMenu();openStoryMenu();
     ok(el('story-levels').children[chapter-1].children[2].children[1].className.includes('story-stars-perfect'),'Chapter '+chapter+' records a real three-objective victory and preserves its faction-colored stars on later replays');
   }
@@ -38,7 +38,7 @@ vm.runInContext(`(async()=>{
   testStorage.clear();openStoryChapter(5);game.storyMatch.progress={mountain:true,stalemate:true,newsGuess:true};game.winner=game.players[1];updateStoryProgress();
   ok(storyBestStars(5)===null&&!storyState.complete,'The victory requirement still controls banking objectives and clearing the chapter');
   const setter=window.localStorage.setItem;window.localStorage.setItem=()=>{throw Error('Quota');};game.winner=game.players[0];updateStoryProgress();
-  ok(storyState.complete&&!el('tutorial-feedback').classList.contains('story-perfect')&&el('tutorial-feedback').innerHTML.includes('✓')&&!/[★☆]/.test(el('tutorial-feedback').innerHTML),'A real single-run completion keeps its current-match checklist usable when storage is unavailable');window.localStorage.setItem=setter;returnToMainMenu();testStorage.clear();
+  ok(storyState.complete&&el('tutorial-feedback').classList.contains('story-perfect')&&el('tutorial-feedback').innerHTML.includes('✓')&&el('tutorial-feedback').innerHTML.includes('★★★'),'A real single-run completion keeps its current-match checklist usable when storage is unavailable');window.localStorage.setItem=setter;returnToMainMenu();testStorage.clear();
 
   make(null);arrange({hands:[['mtn_kanako','mtn_suwako'],[]]});game.setWastelandAt(0,0,true);
   assert(!game.canPlaceOnWasteland(CARD.mtn_kanako)&&!game.canPlaceOnWasteland(CARD.mtn_suwako));await game.internalPlace('mtn_kanako',0,0,0,0);
@@ -67,7 +67,7 @@ vm.runInContext(`(async()=>{
   const hands=new Set(),rivals=new Set(),positions=new Set();
   for(let seed=0;seed<512;seed++){
     const g=make(5,seed,seed%2),a=g.players[0].hand,b=g.players[1].hand;assert(g.players.every(p=>p.hand.length===6));assert(a.includes('mtn_kanako'));assert(a.filter(id=>CARD[id].faction==='mountain').length>=2);assert.equal(b.filter(id=>CARD[id].faction==='mountain').length,1);
-    assert(!('openingHand' in g.storyMatch)&&g.handKnowledge.every(memory=>memory.size===0));assert(CARDS.every(card=>g.cardAbilityEnabled(card.id)===['sdm','hakugyokurou','hourai','mountain'].includes(card.faction)));
+    assert(!('openingHand' in g.storyMatch)&&g.handKnowledge.every(memory=>memory.size===0));assert(CARDS.every(card=>g.cardAbilityEnabled(card.id)===(['sdm','hakugyokurou','hourai','mountain'].includes(card.faction)&&!card.shopExpansion)));
     const stock=[...a,...b,...g.drawPile];assert.equal(stock.length,36);assert.equal(new Set(stock).size,36);const absent=storyFactionCards('mountain').filter(id=>!a.includes(id)&&!b.includes(id)),next=g.drawPile.slice(-5).reverse();assert(absent.every(id=>next.includes(id)));absent.forEach(id=>positions.add(next.indexOf(id)+1));hands.add(a.slice().sort().join(','));rivals.add(b.slice().sort().join(','));
   }
   ok(hands.size>480&&rivals.size>480&&positions.size===5,'512 private six-card Mountain deals preserve stock, all constraints, cumulative unlocks and varied next-five reserve positions');
@@ -103,24 +103,26 @@ vm.runInContext(`(async()=>{
   make(4,1,1);arrange({hands:[[],['mtn_aya','hourai_mokou']],discards:[[],['temple_shou','temple_murasa']]});
   ok((await aiDecideAction(1)).cardId==='hourai_mokou','The immediate Mountain rule is confined to chapter five and does not change chapter four');
 
-  make();arrange({hands:[['sdm_patchouli'],['marisa']]});game.choosePlayer=async()=>1;game.ui.promptText=async()=>CARD.marisa.name;await place('sdm_patchouli');ok(!game.storyMatch.progress.newsGuess,'A correct guess before reading a newspaper does not satisfy the reading goal');
-  make();arrange({hands:[['sdm_patchouli'],['marisa']]});const hiddenPaper=game.addNewspaper(1,[{targetIdx:0,player:'You',cardIds:['sdm_patchouli'],names:{}}],'Test');
-  ok(!game.recordStoryNewspaperRead(0,hiddenPaper.paperId)&&!game.recordStoryNewspaperRead(0,999),'Folded unsubscribed papers and invalid paper IDs cannot count as reading');
-  make();arrange({hands:[['sdm_patchouli'],['marisa']]});const paper=game.addNewspaper(0,[{targetIdx:1,player:'AI 1',cardIds:['marisa'],names:{}}],'Test');assert(game.recordStoryNewspaperRead(0,paper.paperId));game.choosePlayer=async()=>1;game.ui.promptText=async()=> 'wrong';await place('sdm_patchouli');
-  ok(!game.storyMatch.progress.newsGuess,'Reading alone followed by a wrong guess cannot earn the guess star');
+  make();arrange({hands:[['sdm_patchouli'],['marisa']]});game.choosePlayer=async()=>1;game.ui.promptText=async()=>CARD.marisa.name;await place('sdm_patchouli');ok(!game.storyMatch.progress.newsGuess,'A correct guess before subscription cannot earn the newspaper goal');
+  make();arrange({hands:[['sdm_patchouli','reimu'],['marisa']]});const hiddenPaper=game.addNewspaper(1,[{targetIdx:0,player:'You',cardIds:['sdm_patchouli'],names:{}}],'Test');
+  ok(!game.recordStoryNewspaperSubscription(0,hiddenPaper.paperId)&&!game.recordStoryNewspaperSubscription(0,999),'Folded unsubscribed papers and invalid paper IDs cannot count as subscription');
+  const own=game.addNewspaper(0,[{targetIdx:1,player:'AI 1',cardIds:['marisa'],names:{}}],'Test');assert(!game.recordStoryNewspaperSubscription(0,own.paperId));assert(!game.subscribeNews(0,hiddenPaper.paperId,'missing'));
+  ok(game.storyMatch.subscribedPapers.length===0,'Producing one’s own paper and failing payment do not subscribe');
+  assert(game.subscribeNews(0,hiddenPaper.paperId,'reimu'));assert(game.storyMatch.subscribedPapers.includes(hiddenPaper.paperId));game.choosePlayer=async()=>1;game.ui.promptText=async()=> 'wrong';await place('sdm_patchouli');
+  ok(!game.storyMatch.progress.newsGuess,'A paid subscription followed by a wrong guess cannot earn the guess star');
 
   // A prepared legal mid-game route. No objective flags or result scores are forged.
   make();const board=[[0,0,'mtn_kanako'],[0,1,'mtn_suwako'],[1,0,'mtn_sanae'],[3,0,'sdm_remilia'],[3,1,'sdm_flandre'],[3,2,'sdm_sakuya'],[0,2,'hourai_kaguya'],[0,3,'hourai_eirin'],[1,2,'hourai_reisen'],[1,3,'palace_satori'],[2,0,'palace_rin'],[2,1,'palace_utsuho'],[2,2,'hell_eiki'],[2,3,'hell_komachi'],[3,3,'hell_clownpiece']];
   arrange({hands:[['mtn_aya','sdm_patchouli','haku_yuyuko','reimu','yuuka','medicine'],['marisa','haku_youmu','hourai_mokou','hell_hecatia','palace_koishi','sage_yukari']],board,discards:[[],['temple_shou','temple_murasa','temple_nue']]});
   game.storyMatch.mountainPlaced=['mtn_kanako','mtn_suwako','mtn_sanae'];await place('mtn_aya');
   ok(game.storyMatch.progress.mountain&&game.winCount(game.players[0])===4&&game.paperReports.length===1&&!game.storyMatch.progress.newsGuess,'Aya’s real placement reads hands and collects Mountain, without pretending that producing the newspaper was viewing it');
-  assert(game.recordStoryNewspaperRead(0,game.paperReports[0].paperId));game.choosePlayer=async()=>1;game.ui.promptText=async()=>CARD.marisa.name;await place('sdm_patchouli',0,0,0);
-  ok(game.storyMatch.progress.newsGuess&&game.players[0].hand.includes('marisa'),'After reading the actual newspaper, a real correct Patchouli guess records the goal and transfers the card');
+  const rivalPaper=game.addNewspaper(1,[{targetIdx:0,player:'You',cardIds:game.players[0].hand.slice(),names:{}}],'Test');assert(game.subscribeNews(0,rivalPaper.paperId,'medicine'));game.choosePlayer=async()=>1;game.ui.promptText=async()=>CARD.marisa.name;await place('sdm_patchouli',0,0,0);
+  ok(game.storyMatch.progress.newsGuess&&game.players[0].hand.includes('marisa'),'After paying for the actual newspaper, a real correct Patchouli guess records the goal and transfers the card');
   await place('haku_yuyuko',0,0,1);await place('reimu',0,1,0);await place('yuuka',0,1,1);assert.equal(game.boardCells().length,16);assert.equal(game.winCount(game.players[0]),4);game.players[0].isAI=true;stuckStreak=0;
   let turns=0;while(!game.winner&&!game.stalemateMessage&&turns++<16)await actualMountainTurn();
   ok(game.winner?.idx===0&&game.storyMatch.progress.stalemate&&game.stalemateMessage&&storyMatchStars(game)===3,'The actual turn loop exhausts shared draws, detects both players have no legal action, and awards a three-star 4–3 story victory by stalemate');evalConservation(game);
   storyState={chapter:5,practice:game,complete:false,savedStars:null,cancel(){}};updateStoryProgress();
-  ok(storyBestStars(5)===3&&storyChapterPerfect(5)&&!el('tutorial-feedback').classList.contains('story-perfect'),'The same real route saves every objective and its perfect menu rating without coloring the in-match checklist');returnToMainMenu();
+  ok(storyBestStars(5)===3&&storyChapterPerfect(5)&&el('tutorial-feedback').classList.contains('story-perfect'),'The same real route saves every objective and its perfect menu rating and colors the three stars earned in this match');returnToMainMenu();
   for(const aiLead of [false,true]){make();arrange({hands:[['reimu'],['marisa']],discards:[[],aiLead?['temple_shou']:[]],emptyPile:true});game.wasteland=game.wasteland.map(row=>row.map(()=>true));endStalemate();ok(game.storyMatch.progress.stalemate&&(aiLead?game.winner?.idx===1:game.winner===null)&&!storyMatchComplete(game),'Actual tied or opponent-led stalemates record the goal but do not invent a player victory: '+aiLead+' '+JSON.stringify({actions:game.players.map(p=>canAct(p.idx)),progress:game.storyMatch.progress,winner:game.winner?.idx,score:game.players.map(p=>game.winCount(p)),spaces:game.players.map(p=>p.hand.map(id=>[id,game.emptyOrWastelandForCard(CARD[id],p.idx)])),draw:game.players.map(p=>game.canDrawNormally(p.idx))}));}
   make();arrange({hands:[['reimu'],['marisa']]});endStalemate();ok(!game.storyMatch.progress.stalemate,'An incorrect early end-stalemate call cannot award the no-legal-action objective');
   for(let seed=0;seed<4;seed++){
@@ -129,8 +131,8 @@ vm.runInContext(`(async()=>{
     assert((match.winner||match.stalemateMessage)&&turns<180);productionMatches.push({seed,turns,winner:match.winner?.idx??null,stalemate:!!match.stalemateMessage,points:match.players.map(p=>match.winCount(p)),progress:{...match.storyMatch.progress}});
   }
   ok(true,'Four complete random Mountain matches terminate without errors, strategic passes, conservation failures or turn-limit aborts');
-  returnToMainMenu();openStoryMenu();showStoryChapterIntro(5);ok(el('story-card-grid').children.length===4&&el('story-levels').hidden,'The fifth chapter introduces four new core cards');el('story-begin').events.click();game.winner=game.players[0];updateStoryProgress();el('restart-btn').events.click();ok(game===null&&storyMenuChapter===null&&el('story-levels').children.length===5,'Clearing the fifth and last chapter returns to five-chapter selection');
-  return {status:'pass',count:checks.length,checks,randomOpenings:512,productionMatches,rulesVersion:REWORK_RULES_VERSION,scope:'Actual goal unions and legacy migration, single-run colors and reset, Suwako original/copy/muting rules, constrained private fifth-chapter deals, real skill and read chronology, a complete prepared legal endgame route through the real turn loop, four random matches and controlled chapter lifecycle.'};
+  returnToMainMenu();openStoryMenu();showStoryChapterIntro(5);ok(el('story-card-grid').children.length===4&&el('story-levels').hidden,'The fifth chapter introduces four new core cards');el('story-begin').events.click();game.winner=game.players[0];updateStoryProgress();el('restart-btn').events.click();ok(game===null&&storyMenuChapter===6&&el('story-card-grid').children.length===7,'Clearing the fifth chapter opens the seven-card Kourindou introduction');
+  return {status:'pass',count:checks.length,checks,randomOpenings:512,productionMatches,rulesVersion:REWORK_RULES_VERSION,scope:'Actual goal unions and legacy migration, single-run colors and reset, Suwako original/copy/muting rules, constrained private fifth-chapter deals, real skill and subscription chronology, a complete prepared legal endgame route through the real turn loop, four random matches and controlled chapter lifecycle.'};
 })()`,ctx).then(result=>{
   // Actual newspaper, translated card and story-menu renderers in the established DOM fixture.
   // These checks verify events and markup, not browser painting or phone pixels.
@@ -141,22 +143,16 @@ vm.runInContext(`(async()=>{
   const g=new A.Game(2,{},null,{aiOnly:true,fastTest:true});A.setGame(g);g.players[0].isAI=false;g.currentPlayerIdx=0;
   vm.runInContext('configureStoryMatch(game,5);',render);
   const paper=g.addNewspaper(0,[{targetIdx:1,player:'AI 1',cardIds:g.players[1].hand.slice(),names:{}}],'Special Edition');
-  render.paper=paper;let updates=0;render.updateStoryProgress=()=>updates++;
+  render.paper=paper;
   let markup=vm.runInContext('newspaperHtml(paper)',render);
-  ok(markup.includes('news-masthead')&&markup.includes('文々。新聞')&&markup.includes('news-reader')&&!markup.includes(' open>')&&g.storyMatch.readPapers.length===0,'A newly produced newspaper retains its masthead and does not count as read merely by rendering its closed report disclosure');
-  const reader={matches:s=>s==='details[data-story-read-paper]',open:true,isConnected:true,dataset:{storyReadPaper:String(paper.paperId)}};
-  for(const handler of documentListeners.get('toggle'))handler({target:reader});
-  ok(g.storyMatch.readPapers.includes(paper.paperId)&&updates===1,'The real capture-phase toggle handler records opening the reports and refreshes chapter goals');
-  markup=vm.runInContext('newspaperHtml(paper)',render);
-  ok(markup.includes(' open>'),'Read reports remain expanded on subsequent real log renders');
+  ok(markup.includes('news-masthead')&&markup.includes('文々。新聞')&&markup.includes('news-story')&&!markup.includes('<details')&&g.storyMatch.subscribedPapers.length===0,'An owner newspaper displays reports directly with its newspaper layout and does not count as a paid subscription');
   const rival=g.addNewspaper(1,[{targetIdx:0,player:'You',cardIds:g.players[0].hand.slice(),names:{}}],'Special Edition');render.paper=rival;
   markup=vm.runInContext('newspaperHtml(paper)',render);
-  ok(markup.includes('news-folded')&&markup.includes('data-subscribe-paper')&&!markup.includes('news-reader'),'An unsubscribed rival newspaper retains its folded cover and paid subscription control');
-  reader.dataset.storyReadPaper=String(rival.paperId);for(const handler of documentListeners.get('toggle'))handler({target:reader});assert(!g.storyMatch.readPapers.includes(rival.paperId));
+  ok(markup.includes('news-folded')&&markup.includes('data-subscribe-paper')&&!markup.includes('news-story-heading'),'An unsubscribed rival newspaper retains its folded cover and paid subscription control');
   const payment=g.players[0].hand[0];assert(g.subscribeNews(0,rival.paperId,payment));assert(g.players[1].hand.includes(payment));
-  ok(!g.storyMatch.readPapers.includes(rival.paperId)&&vm.runInContext('newspaperHtml(paper)',render).includes('news-reader'),'A real subscription transfers its payment and makes reports available without pretending that payment itself was reading');
-  reader.open=false;for(const handler of documentListeners.get('toggle'))handler({target:reader});reader.open=true;reader.isConnected=false;for(const handler of documentListeners.get('toggle'))handler({target:reader});assert(!g.storyMatch.readPapers.includes(rival.paperId));reader.isConnected=true;for(const handler of documentListeners.get('toggle'))handler({target:reader});
-  ok(g.storyMatch.readPapers.includes(rival.paperId),'Only opening a connected, readable report disclosure can record the subscribed newspaper');
+  markup=vm.runInContext('newspaperHtml(paper)',render);
+  ok(g.storyMatch.subscribedPapers.includes(rival.paperId)&&markup.includes('news-story-heading')&&!markup.includes('<details'),'Real payment immediately records subscription and displays its reports without an extra expansion action');
+  ok(!html.includes('data-story-read-paper')&&!html.includes('news-reader'),'The redundant newspaper reader and toggle mechanism have been removed');
   for(const language of ['en','zh-CN']){
     A.setLanguage(language);A.openCardDetails('mtn_suwako');const suwako=el('card-detail-description').innerHTML.replace(/<[^>]*>/g,'');A.closeCardDetails();
     A.openCardDetails('mtn_kanako');const kanako=el('card-detail-description').innerHTML.replace(/<[^>]*>/g,'');A.closeCardDetails();
@@ -171,6 +167,6 @@ vm.runInContext(`(async()=>{
   ok(rating.textContent.trim()==='★★★'&&!rating.classList.contains('story-stars-perfect'),'The actual menu renders three cumulatively collected stars without a single-run color');
   vm.runInContext('saveStoryStars(5,STORY_GOAL_KEYS[5]);openStoryMenu();',render);rating=el('story-levels').children[4].children[2].children[1];
   ok(rating.classList.contains('story-stars-perfect')&&rating.values.get('--story-star-color')===vm.runInContext('FACTIONS.mountain.color',render),'A single-run perfect record applies the real Mountain color custom property to the menu rating');
-  result.count=result.checks.length;result.scope+=' Actual newspaper toggle/subscription events, bilingual card details and faction-color menu style are also checked with a controlled DOM; browser pixels are not verified.';
+  result.count=result.checks.length;result.scope+=' Actual newspaper subscription and direct-report rendering, bilingual card details and faction-color menu style are also checked with a controlled DOM; browser pixels are not verified.';
   fs.writeFileSync(__dirname+'/story-mountain-collection-2026-10-16-results.json',JSON.stringify(result,null,2)+'\n');console.log(result.count+' Mountain, cumulative-star and real-stalemate checks passed');
 }).catch(error=>{console.error(error.stack);process.exitCode=1;});

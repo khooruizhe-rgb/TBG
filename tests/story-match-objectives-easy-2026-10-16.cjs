@@ -27,29 +27,29 @@ const run=code=>vm.runInContext(code,render),feedback=()=>el('tutorial-feedback'
 for(const chapter of [2,3,4,5]){
   render.returnToMainMenu();run('saveStoryStars('+chapter+',STORY_GOAL_KEYS['+chapter+']);openStoryChapter('+chapter+');');
   ok(run('game.aiDifficulty')==='easy','The actual chapter '+chapter+' opener starts Easy AI');
-  ok(done()===0&&!/[★☆]/.test(feedback())&&!feedback().includes('story-stars')&&!el('tutorial-feedback').classList.contains('story-perfect'),'A previously perfect chapter '+chapter+' starts with three incomplete current-match goals and no star rating');
+  ok(done()===0&&feedback().includes('☆☆☆')&&!el('tutorial-feedback').classList.contains('story-perfect'),'A previously perfect chapter '+chapter+' starts with three incomplete current-match goals and three empty stars');
   ok(el('tutorial-copy').innerHTML===''&&html.includes('.story-practice #tutorial-copy{display:none;}'),'Chapter '+chapter+' removes and hides the duplicate in-match introduction');
   run('game.storyMatch.progress[STORY_GOAL_KEYS['+chapter+'][0]]=true;updateStoryProgress();');
   ok(done()===1&&feedback().includes('✓')&&feedback().includes('○')&&!feedback().includes('Collected in an earlier victory'),'Chapter '+chapter+' marks exactly the one objective performed this match');
   const previous=run('game');el('tutorial-retry').events.click[0]();
   ok(previous.cancelled&&run('game')!==previous&&run('game.aiDifficulty')==='easy'&&done()===0&&run('storyBestStars('+chapter+')')===3,'Retry of chapter '+chapter+' clears current checks while preserving menu stars and Easy difficulty');
   run('game.storyMatch.progress[STORY_GOAL_KEYS['+chapter+'][0]]=true;'+(chapter===3?'game.storyMatch.opponentReachedFour=true;':'')+'game.winner=game.players[0];updateStoryProgress();');
-  ok(done()===1&&!/[★☆]/.test(feedback())&&run('storyState.complete')&&run('storyChapterPerfect('+chapter+')'),'A one-goal replay win in chapter '+chapter+' keeps only that match’s check visible without erasing a saved perfect record');
+  ok(done()===1&&feedback().includes('★☆☆')&&run('storyState.complete')&&run('storyChapterPerfect('+chapter+')'),'A one-goal replay win in chapter '+chapter+' shows exactly one current-match star without erasing a saved perfect record');
   if(chapter===3)ok(feedback().includes('tutorial-goal failed')&&!feedback().includes('Collected in an earlier victory'),'A previously banked race star cannot hide the current match’s failed race');
   render.returnToMainMenu();run('openStoryMenu();');const rating=el('story-levels').children[chapter-1].children[2].children[1];
   ok(rating.textContent.includes('★★★')&&rating.classList.contains('story-stars-perfect'),'Chapter '+chapter+' still displays cumulative stars and faction color in selection');
 }
 render.returnToMainMenu();storage.clear();run('saveStoryStars(2,["sdm"]);saveStoryStars(2,["remilia"]);saveStoryStars(2,["flandre"]);openStoryChapter(2);');
-ok(done()===0&&!/[★☆]/.test(feedback())&&!run('storyChapterPerfect(2)'),'Cumulative three-star progress also cannot pre-complete a fresh match');
+ok(done()===0&&feedback().includes('☆☆☆')&&!run('storyChapterPerfect(2)'),'Cumulative three-star progress also cannot pre-complete a fresh match');
 render.returnToMainMenu();run('openStoryMenu();');const cumulative=el('story-levels').children[1].children[2].children[1];
 ok(cumulative.textContent.includes('★★★')&&!cumulative.classList.contains('story-stars-perfect'),'Cumulative and single-run stars remain distinct in the menu');
 for(const language of ['en','zh-CN']){
   render.returnToMainMenu();A.setLanguage(language);run('openStoryChapter(2);');
-  ok(feedback().includes(language==='en'?'Match objectives':'本局目标')&&!/[★☆]/.test(feedback())&&el('tutorial-copy').innerHTML==='','The actual '+language+' match renderer shows local objectives without stars or duplicate copy');
+  ok(feedback().includes(language==='en'?'Match objectives':'本局目标')&&feedback().includes('☆☆☆')&&el('tutorial-copy').innerHTML==='','The actual '+language+' match renderer shows local objectives with reset stars and no duplicate copy');
   render.returnToMainMenu();run('openStoryChapter(3);game.storyMatch.opponentReachedFour=true;updateStoryProgress();');
   ok(feedback().includes(language==='en'?'This objective is unavailable':'本局无法完成此目标')&&feedback().includes('tutorial-goal failed'),'The '+language+' race-failure hint describes the current objective rather than a stored star');
 }
-render.returnToMainMenu();A.setLanguage('en');run('openStoryChapter(1);');ok(run('game.aiDifficulty')==='hard'&&!/[★☆]/.test(feedback())&&el('tutorial-copy').innerHTML==='','Chapter one retains its mentor base while using the same clean in-match panel');
+render.returnToMainMenu();A.setLanguage('en');run('openStoryChapter(1);');ok(run('game.aiDifficulty')==='hard'&&feedback().includes('☆☆☆')&&el('tutorial-copy').innerHTML==='','Chapter one retains its mentor base while using the same clean in-match panel');
 render.returnToMainMenu();run('openTutorial(0);');
 ok(el('tutorial-copy').innerHTML.includes('Select')&&el('tutorial-copy').innerHTML.includes('Sanae')&&!documentFixture.body.classList.contains('story-practice'),'Leaving story mode restores the original tutorial instructions and removes the story-only hiding class');
 render.returnToMainMenu();run('game=new Game(2,{},null,{aiDifficulty:"hard"});');ok(run('game.aiDifficulty')==='hard'&&!run('game.storyMatch'),'Ordinary Hard matches retain their selected difficulty');

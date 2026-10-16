@@ -357,20 +357,20 @@ test('Sliding friction slows cards to rest and produces the same travel at diffe
  A.stepTableCardSlide(whole,1,bounds);let lastSpeed=Math.hypot(framesBody.vx,framesBody.vy);
  for(let i=0;i<60;i++){A.stepTableCardSlide(framesBody,1/60,bounds);const speed=Math.hypot(framesBody.vx,framesBody.vy);assert(speed<=lastSpeed+.000001);lastSpeed=speed;}
  assert(Math.abs(whole.x-framesBody.x)<.000001);assert(Math.abs(whole.y-framesBody.y)<.000001);assert(Math.abs(whole.angle-framesBody.angle)<.000001);assert.equal(lastSpeed,0);
- assert(Math.abs(Math.hypot(whole.x,whole.y)-(700*700+350*350)/(2*2400))<.000001);
+ assert(Math.abs(Math.hypot(whole.x,whole.y)-(700*700+350*350)/(2*1800))<.000001);
 });
 test('Mouse, touch and pen throws continue after release, stop with friction and keep cards reachable',()=>{
  for(const type of ['mouse','touch','pen']){
   const card=render()[0],release=flick(card,90,20,type);assert.equal(A.slideCount(),1);assert(card.classList.contains('table-card-sliding'));assert(!card.hasPointerCapture(1));
   frame();assert(parseFloat(card.values.get('--table-x'))>release.x);assert(parseFloat(card.values.get('--table-y'))>release.y);
-  for(let i=0;i<60 && A.slideCount();i++)frame();assert.equal(A.slideCount(),0);assert(!card.classList.contains('table-card-sliding'));assert(parseFloat(card.values.get('--table-x'))<=window.innerWidth-24);assert.equal(inspected.length,0);
+  for(let i=0;i<120 && A.slideCount();i++)frame();assert.equal(A.slideCount(),0);assert(!card.classList.contains('table-card-sliding'));assert(parseFloat(card.values.get('--table-x'))<=window.innerWidth-24);assert.equal(inspected.length,0);
   const restingX=card.values.get('--table-x');frame(250);assert.equal(card.values.get('--table-x'),restingX);assert.equal(frames.size,0);
  }
 });
-test('An off-centre grip introduces a small physical rotation and keeps the resting angle when picked up again',()=>{
+test('An off-centre grip transfers torque into visible rotation and keeps the resting angle when picked up again',()=>{
  const card=render()[0],rect=card.getBoundingClientRect(),x=rect.left+rect.width/2,y=rect.top+rect.height/2+30,angle=Number(card.dataset.angle);
  dispatch(card,'pointerdown',{clientX:x,clientY:y,timeStamp:now});now+=16;dispatch(card,'pointermove',{clientX:x+55,clientY:y,timeStamp:now});now+=16;dispatch(card,'pointerup',{clientX:x+100,clientY:y,timeStamp:now});
- assert(A.slideCount());for(let i=0;i<60 && A.slideCount();i++)frame();const resting=Number(card.dataset.angle);assert(resting>angle);assert(resting-angle<12);
+ assert(A.slideCount());for(let i=0;i<120 && A.slideCount();i++)frame();const resting=Number(card.dataset.angle);assert(resting<angle-12,JSON.stringify({resting,angle,x,y}));assert(resting>angle-180);
  const moved=card.getBoundingClientRect();dispatch(card,'pointerdown',{clientX:moved.left+moved.width/2,clientY:moved.top+moved.height/2,timeStamp:now});assert.equal(A.drag().angle,resting);dispatch(card,'pointercancel');
 });
 test('Holding a card still before release or using reduced motion prevents an unwanted throw',()=>{
@@ -384,7 +384,7 @@ test('A sliding card can be picked up at its current position without jumping or
 });
 test('Virtual screen edges stop sliding cards rather than allowing them to disappear offscreen',()=>{
  const bounds={left:24,top:24,right:456,bottom:296},body={x:454,y:80,vx:900,vy:150,angle:2,spin:0};
- A.stepTableCardSlide(body,.04,bounds);assert.equal(body.x,456);assert.equal(body.vx,0);assert(body.y>80);
+ A.stepTableCardSlide(body,.04,bounds);assert.equal(body.x,456);assert(body.vx<0);assert(body.y>80);
  for(let i=0;i<60;i++)A.stepTableCardSlide(body,1/60,bounds);assert(body.x<=456 && body.y<=296);assert.equal(Math.hypot(body.vx,body.vy),0);
 });
 test('Ability choices stop inside the hand target, while incidental sliding across it cannot select a card',async()=>{
@@ -393,7 +393,7 @@ test('Ability choices stop inside the hand target, while incidental sliding acro
  flick(session.cards[0],580-x,565-y);assert(session.cards[0].classList.contains('peek-taken'));assert.equal(A.slideCount(),0);el('byakuren-peek-confirm').onclick();assert.equal((await session.promise).taken,'sdm_flandre');
  session=peek(undefined,{choice:true,title:'Choose card',destination:'Your Hand',source:'Draw pile'});dragTo(session.cards[0],580,420);
  flick(session.cards[0],0,32);assert(!session.cards[0].classList.contains('peek-taken'));assert.equal(A.slideCount(),1);
- for(let i=0;i<60 && A.slideCount();i++)frame();assert(parseFloat(session.cards[0].values.get('--table-y'))>460);assert(!session.cards[0].classList.contains('peek-taken'));assert(el('byakuren-peek-confirm').disabled);A.cancelPeek();assert.equal(await session.promise,null);
+ for(let i=0;i<120 && A.slideCount();i++)frame();assert(parseFloat(session.cards[0].values.get('--table-y'))>460);assert(!session.cards[0].classList.contains('peek-taken'));assert(el('byakuren-peek-confirm').disabled);A.cancelPeek();assert.equal(await session.promise,null);
 });
 test('Confirming Byakuren reads the current physical order and cancels any remaining slides',async()=>{
  const {promise,cards}=peek();dragTo(cards[0],580,565);dragTo(cards[1],450,230);dragTo(cards[2],650,230);
