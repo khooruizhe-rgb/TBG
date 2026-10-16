@@ -53,14 +53,14 @@ vm.runInContext(`(async()=>{
 
   for(const chapter of [2,3]){
     make(chapter);arrange({hands:[[],['sdm_sakuya','hourai_mokou']],emptyPile:true});
-    let action=await aiDecideAction(1);ok(action.type==='place'&&action.cardId==='sdm_sakuya'&&!!aiStoryPlacement(1,'sdm_sakuya',game.emptyCells(1)),'Chapter '+chapter+' can immediately play fresh Sakuya instead of filler');
+    let action=await aiDecideAction(1);ok(action.type==='place'&&action.cardId===(chapter===2?'hourai_mokou':'sdm_sakuya')&&!!aiStoryPlacement(1,'sdm_sakuya',game.emptyCells(1))===(chapter===3),'Chapter '+chapter+' applies its own fresh Mansion holding preference');
     make(chapter);arrange({hands:[[],['sdm_patchouli']],board:[[1,0,'sdm_remilia'],[1,1,'sdm_flandre'],[2,1,'sdm_sakuya']]});
     const before=JSON.stringify(captureAIEvaluationSnapshot(game)),metrics=JSON.stringify(game.testMetrics),random=Math.random;
     Math.random=()=>{throw Error('Planning must not consume RNG');};try{action=await aiDecideAction(1);}finally{Math.random=random;}
-    ok(action.type==='place'&&action.cardId==='sdm_patchouli'&&before===JSON.stringify(captureAIEvaluationSnapshot(game))&&metrics===JSON.stringify(game.testMetrics),'Chapter '+chapter+' pursues an immediate Mansion claim before drawing without mutating the real state');
-    await originalAction(1);ok(game.winCount(game.players[1])===4,'Chapter '+chapter+' executes its own four-point Mansion collection');
+    ok((chapter===2?action.type==='draw':action.type==='place'&&action.cardId==='sdm_patchouli')&&before===JSON.stringify(captureAIEvaluationSnapshot(game))&&metrics===JSON.stringify(game.testMetrics),'Chapter '+chapter+' applies its own claim-versus-delay preference without mutating the real state');
+    await originalAction(1);ok(game.winCount(game.players[1])===(chapter===2?0:4),'Chapter '+chapter+' executes its chosen delay or Mansion collection');
     make(chapter);arrange({hands:[['sdm_flandre','sdm_patchouli'],['sdm_remilia','sdm_sakuya']]});action=await aiDecideAction(1);
-    ok(action.type==='place'&&action.cardId==='sdm_remilia','Chapter '+chapter+' uses a known Remilia gathering opportunity before a delay draw');
+    ok(chapter===2?action.type==='draw':action.type==='place'&&action.cardId==='sdm_remilia','Chapter '+chapter+' applies its own Remilia-versus-delay preference');
     make(chapter);arrange({hands:[[],['sdm_flandre']]});ok((await aiDecideAction(1)).type==='draw','Chapter '+chapter+' still delays through a legal draw when no urgent Mansion opportunity exists');
   }
 

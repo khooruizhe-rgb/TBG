@@ -89,7 +89,7 @@ vm.runInContext(`(async()=>{
   setup(2,1);arrange({hands:[[],['sdm_sakuya']],emptyPile:true});
   ok((await aiDecideAction(1)).type==='place','A newly acquired Mansion card can be played immediately');
   setup(2,1);arrange({hands:[[],['sdm_sakuya','hourai_mokou']],emptyPile:true});
-  ok((await aiDecideAction(1)).cardId==='sdm_sakuya','A filler alternative does not make the AI avoid its Mansion card');
+  ok((await aiDecideAction(1)).cardId==='hourai_mokou','Chapter two holds a fresh Mansion card while a legal filler alternative exists');
   setup(3,1);arrange({hands:[[],['haku_youmu','reimu']],emptyPile:true});
   const followup=await originalAction(1);await afterAction(1,followup);
   ok(game.isOnBoard('haku_youmu')&&game.isOnBoard('reimu')&&!game.players[1].hand.length,'The actual Youmu extra action also places a strategically unwanted but legal remaining card');
@@ -171,6 +171,6 @@ vm.runInContext(`(async()=>{
   ok(el('tutorial-feedback').innerHTML.includes('✗')&&el('tutorial-feedback').innerHTML.includes('opponent reached four points'),'The fourth opponent point immediately displays a failed race and a retry explanation');
   const retired=game;el('tutorial-retry').events.click();ok(retired.cancelled&&game.storyMatch.chapter===3&&!game.storyMatch.opponentReachedFour&&!Object.values(game.storyMatch.progress).some(Boolean),'Retry retires chapter three and resets its goals and permanent race history');
   game.storyMatch.progress={haku:true,yuyuko:true};game.winner=game.players[0];updateTutorialProgress();ok(storyClearedChapters().includes(3),'A true chapter-three clear saves its own progress');
-  el('restart-btn').events.click();ok(game===null&&storyMenuChapter===null&&el('story-levels').children.length===3,'Finishing the last available chapter returns to the three-chapter selection');
+  el('restart-btn').events.click();ok(game===null&&storyMenuChapter===4&&el('story-card-grid').children.length===4,'Finishing chapter three opens the four-card Eientei introduction');
   return {status:'pass',count:checks.length,checks,walkthroughs,productionMatches,randomOpenings:256,uniqueHumanHands:humanHands.size,uniqueOpponentHands:rivalHands.size,reservePositions:[...positions].sort(),rulesVersion:REWORK_RULES_VERSION,scope:'Actual constrained deals, rule-level action availability and executed teaching turns, real cost/score/claim/race ownership, sixteen arranged legal mid-match clears, eight complete actual random matches without a strategic teaching pass, and chapter lifecycle in a controlled DOM. No random-opening clear guarantee or browser pixel verification.'};
 })()`,ctx).then(result=>{fs.writeFileSync(__dirname+'/story-hakugyokurou-2026-10-16-results.json',JSON.stringify(result,null,2)+'\n');console.log(result.count+' Hakugyokurou checks and '+result.walkthroughs.length+' mid-match clear routes passed');}).catch(error=>{console.error(error.stack);process.exitCode=1;});

@@ -1,6 +1,6 @@
 {
   "status": "pass",
-  "count": 68,
+  "count": 72,
   "checks": [
     "Story hands remain random; the final tutorial restores both fixed hands while shuffling its remaining deck: 1",
     "Only chapter two reserves Remilia and another Mansion card: 1",
@@ -68,6 +68,10 @@
     "One tap inspects a chapter-three card using the real shared handler",
     "Dragging a chapter-three card does not open its details",
     "Closing the two-card introduction clears its gestures and listeners",
+    "Chapter four renews the four core Eientei cards",
+    "Eientei introduction glow inherits its blue faction color",
+    "One tap inspects an Eientei card",
+    "Closing the Eientei introduction releases all listeners and gestures",
     "Chapter one has no skill-renewal cards",
     "The introduction instructions and Back-to-exit label are localized"
   ],
@@ -174,11 +178,11 @@
     },
     {
       "mode": 2,
-      "turns": 45,
-      "ending": "stalemate",
-      "winner": null,
+      "turns": 20,
+      "ending": "win",
+      "winner": 0,
       "points": [
-        5,
+        9,
         0
       ],
       "progress": {
@@ -203,6 +207,6 @@
       }
     }
   ],
-  "rulesVersion": "2026-10-16-story-stars-placement-v17",
+  "rulesVersion": "2026-10-16-story-eientei-opening-v18",
   "scope": "512 seeded random story openings with chapter-two next-five-draw guarantees, 256 restored fixed-hand tutorial openings, 384 fixed exercise configurations with actual completions, complete production matches, bilingual Sakuya titles, real renderers and shared pointer physics in a controlled DOM; no browser pixel verification"
 }

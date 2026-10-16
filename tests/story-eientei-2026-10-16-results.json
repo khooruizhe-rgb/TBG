@@ -1,0 +1,331 @@
+{
+  "status": "pass",
+  "count": 36,
+  "checks": [
+    "512 real Eientei deals keep both six-card hands random with all required originals",
+    "Undealt Eientei appears within the next five actual draws and both first actors remain possible",
+    "All 512 deals conserve 36 unique cards, expose the opening only to the mentor and unlock exactly three factions",
+    "Constrained dealing terminates without duplicate or missing cards even with constant randomness",
+    "Only chapter two restores the older Mansion holding strategy",
+    "Chapter two holds Mansion cards through the first three turns and admits them from the fourth",
+    "The holding preference still yields to the mandatory legal-action rule",
+    "Chapter-three Youmu immediately outranks drawing, Remilia and protected Hakugyokurou claims, with pure planning and real execution",
+    "Immediate Youmu still respects actual placement blocks and terrain",
+    "Chapter four uses a normally useful unlocked ability before its delay draw",
+    "Chapter four delays with shared drawing when no useful active skill exists, then resumes placement after all four Eientei originals have appeared",
+    "Chapter four never strategically passes when only a locked but legal card remains",
+    "Kaguya earns both faction and four-point stars through the collection caused by her own placement",
+    "Kaguya includes points from a correctly guessed card’s nested placement and collection",
+    "Two new points added to two old points do not satisfy Kaguya’s four-point placement goal",
+    "A later separate placement can collect Eientei without retroactively completing Kaguya’s earlier goal",
+    "An opponent’s Eientei collection never grants the player either placement star",
+    "The actual Mokou ability can exceed the normal draw limit and latch the ten-card goal",
+    "Spending a card after reaching ten preserves the earned objective",
+    "The ten-card objective tracks the player’s actual hand, never the opponent’s peak",
+    "AI creation previews cannot falsely complete the player’s ten-card objective",
+    "A real created card also counts toward the ten-card hand objective",
+    "Sixteen legal mid-match Mokou–Kaguya routes win with all three independent Eientei stars and conserve every original",
+    "All eight star combinations remain independent of winning, and losing grants no clear or stars",
+    "Six complete random Eientei matches end without runtime errors, strategic passes, duplicate cards or a turn-limit abort",
+    "Story execution preserves original card blueprints",
+    "Thirty-two chapter-three retries immediately paint exactly six cards before starting one turn loop and cancel every retired match",
+    "A genuine AI-first shared draw explains seven cards before the player acts, with no duplicate deal",
+    "A retired asynchronous turn cannot advance, draw into or mutate the replacement match",
+    "Restart during a pending action also prevents the old follow-up loop from advancing the new match",
+    "The DEBUG button resets only earned star ratings, preserves clears and unrelated settings, and does not invent a chapter-one clear",
+    "Stars can be acquired again after a DEBUG reset",
+    "Chapter four introduces four Eientei cards and hides the DEBUG control during its introduction",
+    "The chapter-four introduction launches a real constrained six-card deal",
+    "Finishing the last available chapter returns to four-chapter selection",
+    "Cancelling retired-match animation/turn waits releases their timers immediately without touching the next match"
+  ],
+  "randomOpenings": 512,
+  "walkthroughs": [
+    {
+      "seed": 0,
+      "points": [
+        9,
+        0
+      ],
+      "progress": {
+        "hourai": true,
+        "kaguya": true,
+        "handTen": true
+      }
+    },
+    {
+      "seed": 1,
+      "points": [
+        9,
+        0
+      ],
+      "progress": {
+        "hourai": true,
+        "kaguya": true,
+        "handTen": true
+      }
+    },
+    {
+      "seed": 2,
+      "points": [
+        9,
+        0
+      ],
+      "progress": {
+        "hourai": true,
+        "kaguya": true,
+        "handTen": true
+      }
+    },
+    {
+      "seed": 3,
+      "points": [
+        9,
+        0
+      ],
+      "progress": {
+        "hourai": true,
+        "kaguya": true,
+        "handTen": true
+      }
+    },
+    {
+      "seed": 4,
+      "points": [
+        9,
+        0
+      ],
+      "progress": {
+        "hourai": true,
+        "kaguya": true,
+        "handTen": true
+      }
+    },
+    {
+      "seed": 5,
+      "points": [
+        9,
+        0
+      ],
+      "progress": {
+        "hourai": true,
+        "kaguya": true,
+        "handTen": true
+      }
+    },
+    {
+      "seed": 6,
+      "points": [
+        9,
+        0
+      ],
+      "progress": {
+        "hourai": true,
+        "kaguya": true,
+        "handTen": true
+      }
+    },
+    {
+      "seed": 7,
+      "points": [
+        9,
+        0
+      ],
+      "progress": {
+        "hourai": true,
+        "kaguya": true,
+        "handTen": true
+      }
+    },
+    {
+      "seed": 8,
+      "points": [
+        9,
+        0
+      ],
+      "progress": {
+        "hourai": true,
+        "kaguya": true,
+        "handTen": true
+      }
+    },
+    {
+      "seed": 9,
+      "points": [
+        9,
+        0
+      ],
+      "progress": {
+        "hourai": true,
+        "kaguya": true,
+        "handTen": true
+      }
+    },
+    {
+      "seed": 10,
+      "points": [
+        9,
+        0
+      ],
+      "progress": {
+        "hourai": true,
+        "kaguya": true,
+        "handTen": true
+      }
+    },
+    {
+      "seed": 11,
+      "points": [
+        9,
+        0
+      ],
+      "progress": {
+        "hourai": true,
+        "kaguya": true,
+        "handTen": true
+      }
+    },
+    {
+      "seed": 12,
+      "points": [
+        9,
+        0
+      ],
+      "progress": {
+        "hourai": true,
+        "kaguya": true,
+        "handTen": true
+      }
+    },
+    {
+      "seed": 13,
+      "points": [
+        9,
+        0
+      ],
+      "progress": {
+        "hourai": true,
+        "kaguya": true,
+        "handTen": true
+      }
+    },
+    {
+      "seed": 14,
+      "points": [
+        9,
+        0
+      ],
+      "progress": {
+        "hourai": true,
+        "kaguya": true,
+        "handTen": true
+      }
+    },
+    {
+      "seed": 15,
+      "points": [
+        9,
+        0
+      ],
+      "progress": {
+        "hourai": true,
+        "kaguya": true,
+        "handTen": true
+      }
+    }
+  ],
+  "productionMatches": [
+    {
+      "seed": 0,
+      "turns": 21,
+      "winner": 0,
+      "stalemate": false,
+      "points": [
+        9,
+        2
+      ],
+      "progress": {
+        "hourai": false,
+        "kaguya": false,
+        "handTen": false
+      }
+    },
+    {
+      "seed": 1,
+      "turns": 16,
+      "winner": 0,
+      "stalemate": false,
+      "points": [
+        8,
+        3
+      ],
+      "progress": {
+        "hourai": true,
+        "kaguya": true,
+        "handTen": false
+      }
+    },
+    {
+      "seed": 2,
+      "turns": 25,
+      "winner": 0,
+      "stalemate": false,
+      "points": [
+        8,
+        6
+      ],
+      "progress": {
+        "hourai": false,
+        "kaguya": false,
+        "handTen": false
+      }
+    },
+    {
+      "seed": 3,
+      "turns": 39,
+      "winner": null,
+      "stalemate": true,
+      "points": [
+        4,
+        5
+      ],
+      "progress": {
+        "hourai": true,
+        "kaguya": true,
+        "handTen": false
+      }
+    },
+    {
+      "seed": 4,
+      "turns": 12,
+      "winner": 1,
+      "stalemate": false,
+      "points": [
+        1,
+        7
+      ],
+      "progress": {
+        "hourai": false,
+        "kaguya": false,
+        "handTen": false
+      }
+    },
+    {
+      "seed": 5,
+      "turns": 17,
+      "winner": 1,
+      "stalemate": false,
+      "points": [
+        5,
+        8
+      ],
+      "progress": {
+        "hourai": false,
+        "kaguya": false,
+        "handTen": false
+      }
+    }
+  ],
+  "rulesVersion": "2026-10-16-story-eientei-opening-v18",
+  "scope": "Real constrained deals, actual skills, nested placement/claim ownership, independent stars, six random full matches, mandatory legal actions, pure planning, real turn cancellation and controlled UI restart/debug lifecycle. No browser pixel verification."
+}

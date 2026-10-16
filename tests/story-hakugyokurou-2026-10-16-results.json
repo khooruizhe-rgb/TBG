@@ -49,7 +49,7 @@
     "The mandatory-action fallback preserves rules, metrics and randomness: 3/haku_yuyuko",
     "The actual turn executes its mandatory legal placement: 3/haku_yuyuko",
     "A newly acquired Mansion card can be played immediately",
-    "A filler alternative does not make the AI avoid its Mansion card",
+    "Chapter two holds a fresh Mansion card while a legal filler alternative exists",
     "The actual Youmu extra action also places a strategically unwanted but legal remaining card",
     "An actual placement block and empty deck allow a pass",
     "A placement-blocked teacher still draws whenever drawing is legal",
@@ -110,7 +110,7 @@
     "The fourth opponent point immediately displays a failed race and a retry explanation",
     "Retry retires chapter three and resets its goals and permanent race history",
     "A true chapter-three clear saves its own progress",
-    "Finishing the last available chapter returns to the three-chapter selection"
+    "Finishing chapter three opens the four-card Eientei introduction"
   ],
   "walkthroughs": [
     {
@@ -346,7 +346,7 @@
       "stalemate": false,
       "points": [
         8,
-        1
+        3
       ],
       "progress": {
         "haku": false,
@@ -356,15 +356,15 @@
     },
     {
       "seed": 1,
-      "turns": 32,
+      "turns": 10,
       "winner": 0,
       "stalemate": false,
       "points": [
-        8,
-        1
+        7,
+        0
       ],
       "progress": {
-        "haku": false,
+        "haku": true,
         "yuyuko": false
       },
       "raceLost": false
@@ -401,27 +401,27 @@
     },
     {
       "seed": 4,
-      "turns": 25,
+      "turns": 15,
       "winner": 0,
       "stalemate": false,
       "points": [
-        7,
-        6
+        9,
+        0
       ],
       "progress": {
         "haku": false,
         "yuyuko": false
       },
-      "raceLost": true
+      "raceLost": false
     },
     {
       "seed": 5,
-      "turns": 40,
-      "winner": null,
-      "stalemate": true,
+      "turns": 16,
+      "winner": 0,
+      "stalemate": false,
       "points": [
-        2,
-        1
+        7,
+        2
       ],
       "progress": {
         "haku": false,
@@ -431,12 +431,12 @@
     },
     {
       "seed": 6,
-      "turns": 19,
+      "turns": 17,
       "winner": 0,
       "stalemate": false,
       "points": [
         8,
-        1
+        3
       ],
       "progress": {
         "haku": false,
@@ -470,6 +470,6 @@
     4,
     5
   ],
-  "rulesVersion": "2026-10-16-story-stars-placement-v17",
+  "rulesVersion": "2026-10-16-story-eientei-opening-v18",
   "scope": "Actual constrained deals, rule-level action availability and executed teaching turns, real cost/score/claim/race ownership, sixteen arranged legal mid-match clears, eight complete actual random matches without a strategic teaching pass, and chapter lifecycle in a controlled DOM. No random-opening clear guarantee or browser pixel verification."
 }

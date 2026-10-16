@@ -2,7 +2,7 @@
   "status": "pass",
   "count": 230,
   "checks": [
-    "The prototype contains three chapters and the four core Mansion cards",
+    "The prototype contains four chapters and the four core Mansion cards",
     "The chapter keeps a randomized first actor, two six-card hands and a basic table: 1/0",
     "A chapter uses unique real cards with conserved inventory: 1/0",
     "The mentor alone knows the opening player hand: 1/0",
@@ -77,9 +77,9 @@
     "A legal Mansion placement takes precedence over strategic holding when it is the only available action: 2",
     "A legal Mansion placement takes precedence over strategic holding when it is the only available action: 3",
     "A legal Mansion placement takes precedence over strategic holding when it is the only available action: 4",
-    "Reacquiring a Mansion card does not impose a holding restriction",
+    "Reacquiring a Mansion card resets its three-turn holding preference",
     "Before every Mansion card has appeared, AI prefers a legal shared draw over playing mature Mansion cards",
-    "When hands are full, the AI can develop Mansion without preferring filler cards",
+    "When hands are full, the chapter-two AI prefers filler while Mansion awaits Remilia",
     "Once all core Mansion cards have appeared, the opponent resumes placing cards",
     "The delay condition records past placements even after faction collection empties the board",
     "Story planning does not mutate state, statistics or randomness",
@@ -218,7 +218,7 @@
     "All extra goals without victory are insufficient",
     "Chapter one requires victory without impossible ability objectives",
     "Story chapters do not mutate global printed card definitions",
-    "The menu offers three replayable prototype chapters",
+    "The menu offers four replayable prototype chapters",
     "Chapter two shows all four active core cards before a match begins",
     "Start chapter launches one real match after the card introduction",
     "Story matches retain normal placement and shared drawing with the shop omitted",
@@ -1067,6 +1067,6 @@
       }
     }
   ],
-  "rulesVersion": "2026-10-16-story-stars-placement-v17",
+  "rulesVersion": "2026-10-16-story-eientei-opening-v18",
   "scope": "Shipped story rules and AI, complete real-rule walkthroughs and controlled chapter UI lifecycle; no browser pixel verification"
 }

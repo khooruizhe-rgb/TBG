@@ -118,7 +118,7 @@ vm.runInContext(html.slice(html.indexOf('const TUTORIALS='),html.indexOf('let tu
   Element.prototype.prepend=function(node){this.appendChild(node);this.children.unshift(this.children.pop());};
   vm.runInContext(html.slice(html.indexOf('let titleCardDrag='),html.indexOf('function drawTitlePreviewCards('))+html.slice(html.indexOf('function tableCardBounds('),html.indexOf('function setTitleCardFace(')),ctx);
   vm.runInContext(html.slice(html.indexOf('/* Guided practice uses'),html.indexOf('/* CSS lays out the phone table'))+'this.introAPI={show:showStoryChapterIntro,close:closeStoryMenu,menu:openStoryMenu,layout:layoutStoryIntroCards,session:()=>storyIntroSession,drag:()=>titleCardDrag,slides:()=>tableCardSlides.size,start:openStoryChapter};',ctx);
-  ctx.resetGameView=()=>vm.runInContext('if(game)game.cancelled=true;clearTutorialPractice();clearStoryMatch();game=null;',ctx);ctx.returnToMainMenu=ctx.resetGameView;
+  ctx.resetGameView=()=>vm.runInContext('if(game)game.cancelled=true;clearTutorialPractice();clearStoryMatch();game=null;',ctx);ctx.returnToMainMenu=ctx.resetGameView;ctx.renderAll=()=>{};
   const U=ctx.introAPI,flush=()=>{const batch=[...frames];frames.clear();for(const [,fn]of batch)fn(now);},resizeCount=()=>windowListeners.get('resize')?.length||0;
   const trigger=(node,type,extra={})=>{const rect=node.getBoundingClientRect(),event={currentTarget:node,target:node,type,pointerId:11,pointerType:'mouse',button:0,isPrimary:true,clientX:rect.left+rect.width/2,clientY:rect.top+rect.height/2,timeStamp:now,detail:1,preventDefault(){},stopPropagation(){},...extra};for(const fn of node.events[type]||[])fn(event);};
   el('story-card-grid').rect={left:100,top:170,width:900,height:400,right:1000,bottom:570};
@@ -175,6 +175,12 @@ vm.runInContext(html.slice(html.indexOf('const TUTORIALS='),html.indexOf('let tu
   const other=cards[1],otherRect=other.getBoundingClientRect();trigger(other,'pointerdown');now+=25;trigger(other,'pointermove',{clientX:otherRect.left+otherRect.width/2+35});now+=25;trigger(other,'pointerup',{clientX:otherRect.left+otherRect.width/2+35});trigger(other,'click');
   ok(!el('card-detail-overlay').classList.contains('show')&&!other.classList.contains('story-card-seen'),'Dragging a chapter-three card does not open its details');U.close();
   ok(U.session()===null&&U.slides()===0&&resizeCount()===listenerBase,'Closing the two-card introduction clears its gestures and listeners');
+  U.show(4);flush();cards=U.session().cards;
+  ok(cards.length===4&&cards.every(card=>card.dataset.cardId.startsWith('hourai_')),'Chapter four renews the four core Eientei cards');
+  ok(cards.every(card=>card.values.get('--story-glow-color')===vm.runInContext('FACTIONS.hourai.color',ctx)),'Eientei introduction glow inherits its blue faction color');
+  trigger(cards[0],'pointerdown');now+=60;trigger(cards[0],'pointerup');
+  ok(el('card-detail-overlay').classList.contains('show')&&cards[0].classList.contains('story-card-seen'),'One tap inspects an Eientei card');A.closeCardDetails();U.close();
+  ok(U.session()===null&&U.slides()===0&&resizeCount()===listenerBase,'Closing the Eientei introduction releases all listeners and gestures');
   U.show(1);ok(U.session()===null&&el('story-card-grid').hidden,'Chapter one has no skill-renewal cards');U.close();
   A.setLanguage('zh-CN');ok(A.translateGameText('Click a glowing card to read its ability. Drag cards freely to move and stack them.').includes('单击')&&A.translateGameText('Back')==='退出','The introduction instructions and Back-to-exit label are localized');
   const result={status:'pass',count:checks.length,checks,samples:rules.samples,exerciseSamples:rules.exerciseSamples,randomMatches:rules.randomMatches,rulesVersion:rules.rulesVersion,scope:'512 seeded random story openings with chapter-two next-five-draw guarantees, 256 restored fixed-hand tutorial openings, 384 fixed exercise configurations with actual completions, complete production matches, bilingual Sakuya titles, real renderers and shared pointer physics in a controlled DOM; no browser pixel verification'};

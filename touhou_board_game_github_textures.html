@@ -2004,6 +2004,7 @@
   #story-panel button{cursor:pointer;border:1px solid #b39162;border-radius:6px;background:#ead5b2;color:#523721;padding:10px 14px;font:inherit;}
   #story-panel button:focus-visible{outline:3px solid #97653f;outline-offset:3px;}
   #story-levels button{text-align:left;display:grid;gap:7px;}#story-levels small{line-height:1.4;font-size:.78rem;}
+  #story-debug-reset{margin-top:14px;font-size:.72rem!important;opacity:.8;}
   #story-card-grid{position:relative;height:clamp(220px,52dvh,430px);margin:10px 0;border:1px dashed #ad8e6b;border-radius:10px;background:radial-gradient(ellipse at center,#fff4d8,#dec9a5);}
   #story-card-instruction{margin:8px 0;font-size:.85rem;line-height:1.45;color:#79513c;}
   #story-begin{display:block;margin:18px 0 0 auto;background:#8f433c!important;color:#fff5e2!important;}
@@ -3043,7 +3044,7 @@ body:not(:has(#game.active)):not(.title-memory-active) #app{position:relative;z-
 </div>
 <div id="story-overlay" role="dialog" aria-modal="true" aria-labelledby="story-title">
   <section id="story-panel" tabindex="-1"><div class="story-heading"><h2 id="story-title">Story Mode</h2><button id="story-close" type="button">Back</button></div>
-    <p id="story-intro"></p><div id="story-levels"></div><p id="story-card-instruction" hidden></p><div id="story-card-grid"></div><button id="story-begin" type="button" hidden>Start chapter</button>
+    <p id="story-intro"></p><div id="story-levels"></div><button id="story-debug-reset" type="button">DEBUG · Reset stars</button><p id="story-card-instruction" hidden></p><div id="story-card-grid"></div><button id="story-begin" type="button" hidden>Start chapter</button>
   </section>
 </div>
 <div id="modal-overlay">
@@ -3337,9 +3338,18 @@ function computeRectCells(anchor, dim, hover, contains=inBounds){
   }
   return cells;
 }
+const matchSleepWaiters=new WeakMap();
+function cancelMatchSleeps(match){
+  for(const finish of [...(matchSleepWaiters.get(match)||[])])finish();
+}
 function sleep(ms){
-  const fast=typeof game!=='undefined' && game?.aiTestMode && game.fastAITest;
-  return new Promise(res=>setTimeout(res,fast ? 0 : ms));
+  const owner=typeof game!=='undefined'?game:null,fast=owner?.aiTestMode&&owner.fastAITest;
+  if(owner?.cancelled)return Promise.resolve();
+  return new Promise(resolve=>{
+    let timer;const finish=()=>{clearTimeout(timer);if(owner)matchSleepWaiters.get(owner)?.delete(finish);resolve();};
+    if(owner){if(!matchSleepWaiters.has(owner))matchSleepWaiters.set(owner,new Set());matchSleepWaiters.get(owner).add(finish);}
+    timer=setTimeout(finish,fast?0:ms);
+  });
 }
 function romanNumeral(n){
   if(n===0)return '0';
@@ -4233,6 +4243,7 @@ class Game {
     this.recordTestSeen(cardId,p);
     const frame=this.activeTestAbility();if(frame && p===frame.playerIdx)frame.gained.push(cardId);
     this.players[p].hand.push(cardId);
+    if(this.storyMatch?.chapter===4 && p===this.storyMatch.humanSeat && this.players[p].hand.length>=10)this.storyMatch.progress.handTen=true;
     this.revealHand(p,[cardId],isPublic ? null : [p]);
   }
   takeFromDrawPile(playerIdx, effect){
@@ -4663,6 +4674,7 @@ class Game {
         if(this.storyMatch?.humanSeat===placerIdx && collected===fac.size){
           if(this.storyMatch.chapter===2 && fk==='sdm')this.storyMatch.progress.sdm=true;
           if(this.storyMatch.chapter===3 && fk==='hakugyokurou')this.storyMatch.progress.haku=true;
+          if(this.storyMatch.chapter===4 && fk==='hourai')this.storyMatch.progress.hourai=true;
         }
         if(this.ui?.onFactionClaim){try{this.ui.onFactionClaim({faction:fk,count:collected,playerIdx:placerIdx});}catch(_error){}}
         this.checkWin();
@@ -4742,15 +4754,19 @@ class Game {
       if(!this.canOverrideTarget(cardId,occupied) || !this.moveBoardToHand(r,c,playerIdx,'yukari')) return {};
       this.recordTestAbility(cardId,'sage_yukari',true);
     } else if(!occupied && this.wastelandAt(r,c) && !this.canPlaceOnWasteland(CARD[cardId])) return {};
-    const storyScoreBefore=this.storyMatch?.chapter===3 && playerIdx===this.storyMatch.humanSeat && cardBaseId(cardId)==='haku_yuyuko'
-      ?this.winCount(this.players[playerIdx]):null;
+    const storyScoreGoal=playerIdx===this.storyMatch?.humanSeat
+      ?this.storyMatch.chapter===3&&cardBaseId(cardId)==='haku_yuyuko'?'yuyuko'
+        :this.storyMatch.chapter===4&&cardBaseId(cardId)==='hourai_kaguya'?'kaguya':null:null;
+    const storyScoreBefore=storyScoreGoal?this.winCount(this.players[playerIdx]):null;
     delete this.borrowedAbilities[cardId];
     this.setCardAt(r,c,cardId);
     this.recordTestPlacement(cardId,playerIdx);
     if(this.storyMatch && CARD[cardId]?.faction==='sdm' && !this.storyMatch.sdmPlaced.includes(cardBaseId(cardId)))
       this.storyMatch.sdmPlaced.push(cardBaseId(cardId));
-    if(this.storyMatch?.chapter===3 && CARD[cardId]?.faction==='hakugyokurou' && !this.storyMatch.hakuPlaced.includes(cardBaseId(cardId)))
+    if([3,4].includes(this.storyMatch?.chapter) && CARD[cardId]?.faction==='hakugyokurou' && !this.storyMatch.hakuPlaced.includes(cardBaseId(cardId)))
       this.storyMatch.hakuPlaced.push(cardBaseId(cardId));
+    if(this.storyMatch?.chapter===4 && CARD[cardId]?.faction==='hourai' && !this.storyMatch.houraiPlaced.includes(cardBaseId(cardId)))
+      this.storyMatch.houraiPlaced.push(cardBaseId(cardId));
     this.log(`${this.players[playerIdx].name} places ${CARD[cardId].name}.`);
     const handArrival=this.ui?.onPlacementArrival?.({cardId,r,c,playerIdx,crownEffectId});
     lastPlacedCell = {r, c, crownEffectId, handArrival:!!handArrival};
@@ -4782,7 +4798,7 @@ class Game {
     // This also catches Koishi gained during the ability (Sanae, Mokou, Ran, Satori, etc.).
     if(depth<6) await this.resolveKoishiCascade(depth,playerIdx);
     else this.checkClaims(playerIdx);
-    if(storyScoreBefore!==null && this.winCount(this.players[playerIdx])-storyScoreBefore>=4)this.storyMatch.progress.yuyuko=true;
+    if(storyScoreGoal && this.winCount(this.players[playerIdx])-storyScoreBefore>=4)this.storyMatch.progress[storyScoreGoal]=true;
     this.checkWin();
     this.render();
     return flags;
@@ -5577,7 +5593,7 @@ class Game {
 }
 
 /* 2026-10-12: creation, private newspapers and instance ability changes. */
-const REWORK_RULES_VERSION='2026-10-16-story-stars-placement-v17';
+const REWORK_RULES_VERSION='2026-10-16-story-eientei-opening-v18';
 Game.prototype.canCreateWithMatara=function(){return this.mainBoardCells().length>=4;};
 let nextCreatedCard=0,nextHiddenChoice=0;
 const COPY_PASSIVES=new Set(['sage_yukari','sage_kasen','mtn_nitori','hell_hecatia','palace_koishi']);
@@ -5854,14 +5870,15 @@ Game.prototype.sanaeDrawCount=function(){return (this.hasActiveAbility('mtn_kana
 const STORY_CHAPTERS=[
   {id:1,title:'Chapter 1 · The first table',body:'Cards have no abilities in this chapter. Place cards beside their faction, use Draw for Everyone when needed, and win the match. Try the two-card pair before finishing the four-card faction.',skills:[]},
   {id:2,title:'Chapter 2 · Scarlet Devil Mansion',body:'Win to clear this chapter. Three stars: claim Scarlet Devil Mansion, finish Remilia’s ability with three Mansion cards in hand, and use Flandre to discard an opponent’s hand card.',skills:['sdm'],introduced:'sdm'},
-  {id:3,title:'Chapter 3 · Hakugyokurou',body:'Hakugyokurou abilities join Scarlet Devil Mansion. Win to clear this chapter. Three stars: claim Hakugyokurou, gain four points from one Yuyuko placement, and win before the opponent reaches four points.',skills:['sdm','hakugyokurou'],introduced:'hakugyokurou'}
+  {id:3,title:'Chapter 3 · Hakugyokurou',body:'Hakugyokurou abilities join Scarlet Devil Mansion. Win to clear this chapter. Three stars: claim Hakugyokurou, gain four points from one Yuyuko placement, and win before the opponent reaches four points.',skills:['sdm','hakugyokurou'],introduced:'hakugyokurou'},
+  {id:4,title:'Chapter 4 · Eientei',body:'Eientei abilities join Scarlet Devil Mansion and Hakugyokurou. Win to clear this chapter. Three stars: claim Eientei, gain four points from one Kaguya placement, and hold at least ten cards at once.',skills:['sdm','hakugyokurou','hourai'],introduced:'hourai'}
 ];
 function storyFactionCards(faction){return CARDS.filter(card=>card.faction===faction&&!card.shopExpansion).map(card=>card.id);}
 function storyScarletCards(){return storyFactionCards('sdm');}
 function storyChapterCards(chapter){const faction=STORY_CHAPTERS.find(level=>level.id===chapter)?.introduced;return faction?storyFactionCards(faction):[];}
-function dealLearningOpening(match,{scarletOpening=false,hakugyokurouOpening=false,shop=false}={}){
+function dealLearningOpening(match,{scarletOpening=false,hakugyokurouOpening=false,eienteiOpening=false,shop=false}={}){
   const deck=shuffle(CARDS.filter(card=>!card.token&&!card.shopkeeper&&!card.shopExpansion).map(card=>card.id));
-  const hand=deck.splice(0,6),protectedId=scarletOpening?'sdm_remilia':hakugyokurouOpening?'haku_yuyuko':null;
+  const hand=deck.splice(0,6),protectedId=scarletOpening?'sdm_remilia':hakugyokurouOpening?'haku_yuyuko':eienteiOpening?'hourai_kaguya':null;
   const exchange=id=>{
     const source=deck.indexOf(id);if(source<0)return;
     const slots=hand.map((card,index)=>card===protectedId?-1:index).filter(index=>index>=0);
@@ -5881,6 +5898,18 @@ function dealLearningOpening(match,{scarletOpening=false,hakugyokurouOpening=fal
       [hand[slot],deck[index]]=[deck[index],hand[slot]];
     }
   }
+  if(eienteiOpening){
+    if(!hand.includes('hourai_kaguya'))exchange('hourai_kaguya');
+    if(!hand.some(id=>id!=='hourai_kaguya'&&CARD[id].faction==='hourai')){
+      const options=deck.filter(id=>CARD[id].faction==='hourai');exchange(options[Math.floor(Math.random()*options.length)]);
+    }
+    // Preserve unique originals for the opponent without adding a seventh card to either hand.
+    const neutral=id=>!['sdm','hourai'].includes(CARD[id].faction)&&id!=='haku_yuyuko';
+    const release=slot=>{const index=deck.findIndex(neutral);[hand[slot],deck[index]]=[deck[index],hand[slot]];};
+    if(hand.includes('haku_yuyuko'))release(hand.indexOf('haku_yuyuko'));
+    for(const faction of ['sdm','hourai'])while(hand.filter(id=>CARD[id].faction===faction).length>3)
+      release(hand.findIndex(id=>id!==protectedId&&CARD[id].faction===faction));
+  }
   const hands=[shuffle(hand),...match.players.slice(1).map(()=>deck.splice(0,6))];
   if(hakugyokurouOpening){
     const rival=hands[1];
@@ -5891,7 +5920,20 @@ function dealLearningOpening(match,{scarletOpening=false,hakugyokurouOpening=fal
       [rival[slot],deck[index]]=[deck[index],rival[slot]];
     }
   }
-  const reservedFaction=scarletOpening?'sdm':hakugyokurouOpening?'hakugyokurou':null;
+  if(eienteiOpening){
+    const rival=hands[1],swapIn=(id,slots)=>{
+      const index=deck.indexOf(id),slot=slots[Math.floor(Math.random()*slots.length)];
+      [rival[slot],deck[index]]=[deck[index],rival[slot]];
+    };
+    if(!rival.includes('haku_yuyuko'))swapIn('haku_yuyuko',rival.map((_,index)=>index));
+    for(const faction of ['sdm','hourai'])while(rival.filter(id=>CARD[id].faction===faction).length!==1){
+      const needs=rival.filter(id=>CARD[id].faction===faction).length<1;
+      const slots=rival.map((id,index)=>id!=='haku_yuyuko'&&(needs?!['sdm','hourai'].includes(CARD[id].faction):CARD[id].faction===faction)?index:-1).filter(index=>index>=0);
+      const id=deck.find(id=>needs?CARD[id].faction===faction:!['sdm','hourai'].includes(CARD[id].faction)&&id!=='haku_yuyuko');
+      swapIn(id,slots);
+    }
+  }
+  const reservedFaction=scarletOpening?'sdm':hakugyokurouOpening?'hakugyokurou':eienteiOpening?'hourai':null;
   if(reservedFaction){
     // takeFromDrawPile pops the end: reserve undealt lesson cards among the next five draws.
     const core=new Set(storyFactionCards(reservedFaction)),reserved=deck.filter(id=>core.has(id)),rest=deck.filter(id=>!core.has(id));
@@ -5909,10 +5951,10 @@ function configureStoryMatch(match,chapter){
   const definition=STORY_CHAPTERS.find(level=>level.id===chapter);if(!definition)throw Error('Unknown story chapter.');
   match.kourindouEnabled=false;match.shopCards=[];match.board=Array.from({length:SIZE},()=>Array(SIZE).fill(null));
   match.wasteland=Array.from({length:SIZE},()=>Array(SIZE).fill(false));
-  const hands=dealLearningOpening(match,{scarletOpening:chapter===2,hakugyokurouOpening:chapter===3});
+  const hands=dealLearningOpening(match,{scarletOpening:chapter===2,hakugyokurouOpening:chapter===3,eienteiOpening:chapter===4});
   match.storyMatch={chapter,humanSeat:0,aiSeat:1,skillFactions:definition.skills.slice(),openingHand:hands[0].slice(),
-    sdmCards:storyScarletCards(),sdmPlaced:[],hakuCards:storyFactionCards('hakugyokurou'),hakuPlaced:[],opponentReachedFour:false,
-    progress:chapter===3?{haku:false,yuyuko:false}:{sdm:false,remilia:false,flandre:false}};
+    sdmCards:storyScarletCards(),sdmPlaced:[],hakuCards:storyFactionCards('hakugyokurou'),hakuPlaced:[],houraiCards:storyFactionCards('hourai'),houraiPlaced:[],opponentReachedFour:false,
+    progress:chapter===4?{hourai:false,kaguya:false,handTen:false}:chapter===3?{haku:false,yuyuko:false}:{sdm:false,remilia:false,flandre:false}};
   match.revealHand(0,hands[0],[1]);match.winner=null;match.stalemateMessage='';match.logLines=[];
   match.log('The match begins. Reach 7 discard points to win.');
 }
@@ -5931,6 +5973,11 @@ function storyStarGoals(match){
     {key:'yuyuko',label:'Yuyuko: gain four points from one placement',done:progress.yuyuko},
     {key:'race',label:'Win before the opponent reaches four points',done:storyMatchComplete(match)&&!storyRaceLost(match),failed:storyRaceLost(match)}
   ];
+  if(story.chapter===4)return [
+    {key:'hourai',label:'Claim Eientei',done:progress.hourai},
+    {key:'kaguya',label:'Kaguya: gain four points from one placement',done:progress.kaguya},
+    {key:'handTen',label:'Hold at least ten cards at once',done:progress.handTen}
+  ];
   return [];
 }
 function storyMatchStars(match){
@@ -5939,6 +5986,7 @@ function storyMatchStars(match){
 }
 function storyScarletAllPlaced(match){return match.storyMatch.sdmCards.every(id=>match.storyMatch.sdmPlaced.includes(id));}
 function storyHakugyokurouAllPlaced(match){return match.storyMatch.hakuCards.every(id=>match.storyMatch.hakuPlaced.includes(id));}
+function storyEienteiAllPlaced(match){return match.storyMatch.houraiCards.every(id=>match.storyMatch.houraiPlaced.includes(id));}
 function storyRaceLost(match){const story=match.storyMatch;return story.opponentReachedFour || match.winCount(match.players[story.aiSeat])>=4;}
 
 /* ===================== UI layer ===================== */
@@ -8477,6 +8525,19 @@ Object.assign(ZH_TEXT,{
   'The opponent reached four points. This star is unavailable this match; you can still win and clear the chapter.':'电脑已经达到四分，本局无法获得竞速星星，仍可获胜通关。',
   'Gain four points from Yuyuko’s placement, including her ability and faction claims.':'放置幽幽子时合计获得四分；技能和随后收取阵营的分数都算。',
   'Win to finish this introductory chapter.':'赢下这局，即可完成基础教学。'
+});
+Object.assign(ZH_TEXT,{
+  'Chapter 4 · Eientei':'第四关 · 永远亭',
+  'Eientei abilities join Scarlet Devil Mansion and Hakugyokurou. Win to clear this chapter. Three stars: claim Eientei, gain four points from one Kaguya placement, and hold at least ten cards at once.':'永远亭、红魔馆与白玉楼技能均已开放，获胜即可通关。三星目标：收取永远亭、一次放置辉夜获得四分，以及手牌达到十张或以上。',
+  'Claim Eientei':'收取永远亭阵营',
+  'Kaguya: gain four points from one placement':'辉夜：一次放置获得四分（含随后收取）',
+  'Hold at least ten cards at once':'手牌达到十张或以上',
+  'Gain four points from Kaguya’s placement, including its resulting faction claims.':'放置辉夜时合计获得四分；技能带来的后续放置和收取阵营都算。',
+  'Connect four Eientei cards and claim the faction.':'连接四张永远亭卡牌，收取该阵营。',
+  'Use card-gaining abilities to hold at least ten cards at once.':'利用获取手牌的技能，使手牌曾达到十张或以上。',
+  'DEBUG · Reset stars':'DEBUG · 重置星星',
+  'DEBUG · Stars reset':'DEBUG · 星星已重置',
+  'DEBUG · Could not reset stars':'DEBUG · 未能重置星星'
 });
 function setCardAbilityTitle(node,cardId,{createdPreview=false}={}){
   const locked=game?.cardAbilityEnabled?.(cardId)===false;node.hidden=locked;
@@ -12676,7 +12737,7 @@ function aiTeachingFallbackAction(p,allowTrade=true){
   if(game.canDrawNormally(p))return {type:'draw'};
   if(game.isPlacementBlocked(p))return {type:'pass'};
   const protectedFactions=new Set((game.storyMatch?.openingHand||game.tutorialLesson?.openingHand||[]).map(id=>CARD[id]?.faction));
-  if(game.storyMatch?.chapter>=2)protectedFactions.delete('sdm');
+  if(game.storyMatch?.chapter>=3)protectedFactions.delete('sdm');
   let best=null;
   for(const id of game.players[p].hand){
     for(const cell of game.emptyOrWastelandForCard(CARD[id],p).filter(at=>inBounds(at.r,at.c))){
@@ -12770,22 +12831,24 @@ async function aiDecideAction(playerIdx,...args){
 }
 function aiStoryPlacement(p,id,cells){
   const story=game.storyMatch;if(!story)return null;
-  const scarlet=CARD[id]?.faction==='sdm';
+  const scarlet=CARD[id]?.faction==='sdm',stall=story.chapter===2&&!storyScarletAllPlaced(game);
+  if(story.chapter===2&&scarlet&&(game.reserveAges[p][id]||0)<=3)return null;
   const protect=new Set(story.openingHand.map(card=>CARD[card].faction)),focus=aiLearningFourFaction(game,story);let best=null;
   for(const cell of cells.filter(at=>inBounds(at.r,at.c)&&!game.cardAt(at.r,at.c))){
     const pick=aiWithPlacement(id,cell,()=>{
       const claims=aiCurrentClaims(p),points=claims.reduce((n,claim)=>n+claim.points,0);
-      if(story.chapter===1&&(game.winCount(game.players[p])+points>3 || claims.some(claim=>protect.has(claim.faction))))return null;
-      if(story.chapter===3&&!story.progress.haku&&claims.some(claim=>claim.faction==='hakugyokurou'))return null;
+      if((story.chapter===1||stall)&&(game.winCount(game.players[p])+points>3 || claims.some(claim=>protect.has(claim.faction))))return null;
+      if(story.chapter===2&&!story.progress.sdm&&claims.some(claim=>claim.faction==='sdm'))return null;
+      if(story.chapter===3&&cardBaseId(id)!=='haku_youmu'&&!story.progress.haku&&claims.some(claim=>claim.faction==='hakugyokurou'))return null;
       const faction=CARD[id].faction,members=game.factionCells(faction),others=members.filter(at=>at.r!==cell.r||at.c!==cell.c);
       const distance=others.length?Math.min(...others.map(at=>Math.abs(at.r-cell.r)+Math.abs(at.c-cell.c))):0;
       const adjacent=DIRS4.filter(([dr,dc])=>game.boardMatchesFaction(cell.r+dr,cell.c+dc,faction)).length;
       const room=DIRS4.filter(([dr,dc])=>inBounds(cell.r+dr,cell.c+dc)&&!game.cardAt(cell.r+dr,cell.c+dc)).length;
       const support=story.chapter===1&&faction===focus?1000:0;
-      const knownRed=story.chapter>=2&&scarlet?game.knownHandCards(p,'sdm').filter(card=>card.playerIdx!==p).length:0;
+      const knownRed=story.chapter>=3&&scarlet?game.knownHandCards(p,'sdm').filter(card=>card.playerIdx!==p).length:0;
       const redClaim=claims.some(claim=>claim.faction==='sdm');
-      const redGain=story.chapter>=2&&id==='sdm_remilia'?knownRed:0;
-      const redPlan=story.chapter>=2&&scarlet?200+(redClaim?10000:0)+redGain*500:0;
+      const redGain=story.chapter>=3&&id==='sdm_remilia'?knownRed:0;
+      const redPlan=story.chapter>=3&&scarlet?200+(redClaim?10000:0)+redGain*500:0;
       const value=support+points*100+adjacent*12-distance*5+room+redPlan;
       return {cell,value,redClaim,redGain};
     },p);
@@ -12794,19 +12857,32 @@ function aiStoryPlacement(p,id,cells){
   return best;
 }
 async function aiStoryMentorAction(p,allowTrade=true){
-  const story=game.storyMatch;
-  if(story.chapter>=2)return aiFactionStoryAction(p,allowTrade);
+  const story=game.storyMatch,stall=story.chapter===2&&!storyScarletAllPlaced(game);
+  if(story.chapter===4)return aiEienteiStoryAction(p,allowTrade);
+  if(story.chapter===3)return aiFactionStoryAction(p,allowTrade);
   if(game.isPlacementBlocked(p))return aiTeachingFallbackAction(p,allowTrade);
-  let best=null;
+  if(stall&&game.canDrawNormally(p))return {type:'draw'};
+  let best=null,scarlet=null;
   for(const id of game.players[p].hand){
+    const red=CARD[id]?.faction==='sdm';
+    if(stall&&!red&&game.mainBoardCells().filter(cell=>CARD[game.cardAt(cell.r,cell.c)]?.faction!=='sdm').length>=6)continue;
     const pick=aiStoryPlacement(p,id,game.emptyOrWastelandForCard(CARD[id],p));if(!pick)continue;
-    if(!best||pick.value>best.value)best={...pick,cardId:id};
+    const entry={...pick,cardId:id};
+    if(stall&&red){if(!scarlet||entry.value>scarlet.value)scarlet=entry;}
+    else if(!best||entry.value>best.value)best=entry;
   }
+  best ||= scarlet;
   return best?{type:'place',cardId:best.cardId,r:best.cell.r,c:best.cell.c}:aiTeachingFallbackAction(p,allowTrade);
 }
 async function aiFactionStoryAction(p,allowTrade=true){
   if(game.isPlacementBlocked(p))return aiTeachingFallbackAction(p,allowTrade);
-  const stall=game.storyMatch.chapter===2?!storyScarletAllPlaced(game):!storyHakugyokurouAllPlaced(game);let best=null,urgent=null;
+  const youmu=game.players[p].hand.find(id=>cardBaseId(id)==='haku_youmu');
+  if(youmu){
+    const cells=aiForcedPlacementCells(game,youmu,game.emptyOrWastelandForCard(CARD[youmu],p));
+    const pick=aiStoryPlacement(p,youmu,cells),cell=pick?.cell||cells[0];
+    if(cell)return {type:'place',cardId:youmu,r:cell.r,c:cell.c};
+  }
+  const stall=!storyHakugyokurouAllPlaced(game);let best=null,urgent=null;
   for(const id of game.players[p].hand){
     const pick=aiStoryPlacement(p,id,game.emptyOrWastelandForCard(CARD[id],p));if(!pick)continue;
     const action={...pick,cardId:id};
@@ -12815,6 +12891,20 @@ async function aiFactionStoryAction(p,allowTrade=true){
   }
   const action=urgent || (stall&&game.canDrawNormally(p)?null:best);
   return action?{type:'place',cardId:action.cardId,r:action.cell.r,c:action.cell.c}:aiTeachingFallbackAction(p,allowTrade);
+}
+async function aiEienteiStoryAction(p,allowTrade=true){
+  if(game.isPlacementBlocked(p))return aiTeachingFallbackAction(p,allowTrade);
+  const stall=!storyEienteiAllPlaced(game);let best=null,skill=null;
+  for(const id of game.players[p].hand){
+    const pick=aiStoryPlacement(p,id,game.emptyOrWastelandForCard(CARD[id],p));
+    if(pick&&(!best||pick.value>best.value))best={...pick,cardId:id};
+    if(!game.cardAbilityEnabled(id)||game.isCardAbilityDisabled(id))continue;
+    const candidate=aiEvaluateCard(p,id);
+    if(candidate&&!candidate.lowPriority&&(!skill||aiBetterCandidate(candidate,skill)))skill=candidate;
+  }
+  if(skill)return {type:'place',cardId:skill.cardId,r:skill.cell.r,c:skill.cell.c};
+  if(stall&&game.canDrawNormally(p))return {type:'draw'};
+  return best?{type:'place',cardId:best.cardId,r:best.cell.r,c:best.cell.c}:aiTeachingFallbackAction(p,allowTrade);
 }
 function aiBestTrade(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiBestTrade(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiBestTrade(playerIdx,...args) : aiCurrentBestTrade(playerIdx,...args);}
 function aiTwoCardFactionTrade(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiTwoCardFactionTrade(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiTwoCardFactionTrade(playerIdx,...args) : aiCurrentTwoCardFactionTrade(playerIdx,...args);}
@@ -13254,6 +13344,7 @@ async function doPlayerAction(playerIdx){
   const activeGame=game;
   if(!activeGame || activeGame.cancelled) return {};
   if(activeGame.aiTestMode && !await waitAITestReady(activeGame))return {};
+  if(game!==activeGame || activeGame.cancelled)return {};
   const player = game.players[playerIdx];
   if(!player.isAI) humanActionResolving = false;
   if(!game.isPlacementBlocked(playerIdx) && game.forcedPlay[playerIdx]){
@@ -13269,7 +13360,7 @@ async function doPlayerAction(playerIdx){
         game.log(`${player.name} must place ${cardObj.name} (Reisen's decree).`);
         renderAll();
         let cell;
-        if(player.isAI){ await sleep(600); cell = aiChooseForcedCell(playerIdx,cardId,cells); }
+        if(player.isAI){ await sleep(600); if(game!==activeGame||activeGame.cancelled)return {}; cell = aiChooseForcedCell(playerIdx,cardId,cells); }
         else { cell = await humanPick(game,playerIdx,'pickCell',[`Reisen's decree: you must place ${cardObj.name}`,cells]); }
         if(game!==activeGame || activeGame.cancelled) return {};
         if(!player.isAI) humanActionResolving = true;
@@ -13452,6 +13543,7 @@ async function runNextTurn(){
   try{
   if(activeGame.aiTestMode){
     if(!await waitAITestReady(activeGame))return;
+    if(game!==activeGame || activeGame.cancelled)return;
     if(activeGame.testMetrics.turns>=600){activeGame.testAbortReason='turn-limit';await finishAITestRound(activeGame);return;}
   }
   const p = game.currentPlayerIdx;
@@ -14673,8 +14765,8 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='a904a5a7157e544cf8099baa36d200e7ef6d079fcd62708d6b091d24aa2cb8f4';
-const AI_EVALUATION_POLICY_DIGEST='078cfbb01a6ad85483e69b613e04aeca035e620970f1c037156603f406ad77fa';
+const AI_EVALUATION_RULES_DIGEST='e046113515bb3f77e926cf97a75601700241ba96d16dd6580f24a273d371c201';
+const AI_EVALUATION_POLICY_DIGEST='b72e1a24237291e7cd9f520b5376e03dfbe7901c51062a81765556f28a495b8e';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
   if(!source)throw new Error('Game source is unavailable.');
@@ -14760,7 +14852,7 @@ function evalForkSummary(report){
   return {groups,invalidPairs,conclusion,completedPairs:report.pairs.length};
 }
 function evalValidateSnapshot(snapshot){
-  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-16-story-hakugyokurou-active-mentor-v16','2026-10-15-guided-opening-scarlet-reserve-v15','2026-10-15-random-learning-renewal-v14','2026-10-15-story-opening-chapters-v13','2026-10-14-original-creation-blueprints-v12','2026-10-14-guided-final-match-v11','2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
+  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-16-story-stars-placement-v17','2026-10-16-story-hakugyokurou-active-mentor-v16','2026-10-15-guided-opening-scarlet-reserve-v15','2026-10-15-random-learning-renewal-v14','2026-10-15-story-opening-chapters-v13','2026-10-14-original-creation-blueprints-v12','2026-10-14-guided-final-match-v11','2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
   const state=snapshot.state,n=state?.players?.length,size=snapshot.size;
   if(![4,5].includes(size) || ![2,3,4].includes(n) || !Number.isInteger(state.currentPlayerIdx) || state.currentPlayerIdx<0 || state.currentPlayerIdx>=n)throw new Error('Invalid position dimensions.');
   if(state.numPlayers!==n || state.players.some((p,i)=>p.idx!==i || !Array.isArray(p.hand) || !Array.isArray(p.discard)))throw new Error('Invalid position dimensions.');
@@ -15181,7 +15273,7 @@ el('customize-toggle').addEventListener('click', () => {
 });
 
 function resetGameView(){
-  if(game)game.cancelled=true;
+  if(game){game.cancelled=true;cancelMatchSleeps(game);}
   const resolveHumanTurn=window.__resolveHumanTurn;window.__resolveHumanTurn=null;
   resolveHumanTurn?.({});
   closeTitleMemoryGame(false);
@@ -15671,6 +15763,13 @@ function saveStoryStars(chapter,stars){
   const chapters=storyProgressRecords();chapters[chapter]=Math.max(chapters[chapter]??0,stars);
   try{window.localStorage?.setItem(STORY_PROGRESS_KEY,JSON.stringify({version:2,chapters}));}catch(_error){}
 }
+function resetStoryStars(){
+  // Keep chapter clears, but let every earned star be acquired again.
+  const chapters=Object.fromEntries(Object.keys(storyProgressRecords()).map(id=>[id,0]));
+  try{window.localStorage?.setItem(STORY_PROGRESS_KEY,JSON.stringify({version:2,chapters}));}
+  catch(_error){setRuleText(el('story-debug-reset'),'DEBUG · Could not reset stars');return;}
+  openStoryMenu();setRuleText(el('story-debug-reset'),'DEBUG · Stars reset');
+}
 function clearStoryMatch(){
   closeStoryIntroCards();
   const previous=storyState;storyState=null;previous?.cancel();storyMenuChapter=null;
@@ -15688,6 +15787,7 @@ function openStoryMenu(){
   storyMenuChapter=null;el('story-title').textContent='Story Mode';
   setRuleText(el('story-intro'),'Learn the table one chapter at a time. Available chapters can be tried and replayed.');
   el('story-card-grid').replaceChildren();el('story-card-grid').hidden=true;el('story-card-instruction').hidden=true;el('story-begin').hidden=true;el('story-levels').hidden=false;
+  el('story-debug-reset').hidden=false;setRuleText(el('story-debug-reset'),'DEBUG · Reset stars');
   const levels=el('story-levels');levels.replaceChildren();const cleared=storyClearedChapters();
   for(const chapter of STORY_CHAPTERS){
     const button=document.createElement('button');button.type='button';
@@ -15703,7 +15803,7 @@ function showStoryChapterIntro(chapter){
   const definition=STORY_CHAPTERS.find(level=>level.id===chapter);if(!definition||online||game&&!game.cancelled&&!isStoryMatch())return;
   if(isStoryMatch())returnToMainMenu();closeStoryIntroCards();storyMenuChapter=chapter;
   el('story-title').textContent=definition.title;setRuleText(el('story-intro'),definition.body);
-  el('story-levels').hidden=true;el('story-begin').hidden=false;
+  el('story-levels').hidden=true;el('story-debug-reset').hidden=true;el('story-begin').hidden=false;
   const grid=el('story-card-grid'),introduced=storyChapterCards(chapter);grid.replaceChildren();grid.hidden=!introduced.length;el('story-card-instruction').hidden=!introduced.length;
   if(introduced.length){
     setRuleText(el('story-card-instruction'),'Click a glowing card to read its ability. Drag cards freely to move and stack them.');
@@ -15754,7 +15854,8 @@ function openStoryChapter(chapter){
   game=state.practice=new Game(2,practiceUI,null,{aiDifficulty:'hard',kourindouEnabled:false});configureStoryMatch(game,chapter);
   el('setup').style.display='none';el('game').classList.add('active');document.body.classList.add('tutorial-practice','story-practice');
   el('tutorial-coach').hidden=false;dockTutorialCoach(document.body.classList.contains('game-mobile'));renderStoryCoach();
-  runNextTurn();window.scrollTo(0,0);queueMobileViewport();
+  // Paint the six-card deal before an AI first turn can draw for everyone.
+  renderAll(true);runNextTurn();window.scrollTo(0,0);queueMobileViewport();
 }
 function updateStoryProgress(){
   if(!isStoryMatch())return;const state=storyState;state.complete=storyMatchComplete(game);
@@ -15771,7 +15872,7 @@ function renderStoryCoach(){
   const goals=storyStarGoals(game),raceLost=state.chapter===3&&storyRaceLost(game);
   const stars=state.complete?storyMatchStars(game):0;
   const heading=state.complete?ruleTextHtml('Stars earned')+': '+'★'.repeat(stars)+'☆'.repeat(3-stars):goals.length?ruleTextHtml('Star objectives'):'';
-  const hint=state.complete?'Chapter cleared. Replay to improve your stars.':game.winner||game.stalemateMessage?'Win to clear this chapter. Extra objectives award stars.':raceLost?'The opponent reached four points. This star is unavailable this match; you can still win and clear the chapter.':state.chapter===3?!progress.yuyuko?'Gain four points from Yuyuko’s placement, including her ability and faction claims.':!progress.haku?'Connect Yuyuko and Youmu to claim Hakugyokurou.':'Win before the opponent reaches four points.':state.chapter===1?'Win to finish this introductory chapter.':!progress.remilia?'Try Remilia while the other Mansion cards are still in hands.':!progress.flandre?'With Flandre, choose the opponent and send one of their hand cards to their discard pile.':!progress.sdm?'Connect four Mansion cards and claim the faction.':'Win the match to clear this chapter.';
+  const hint=state.complete?'Chapter cleared. Replay to improve your stars.':game.winner||game.stalemateMessage?'Win to clear this chapter. Extra objectives award stars.':raceLost?'The opponent reached four points. This star is unavailable this match; you can still win and clear the chapter.':state.chapter===4?!progress.kaguya?'Gain four points from Kaguya’s placement, including its resulting faction claims.':!progress.hourai?'Connect four Eientei cards and claim the faction.':!progress.handTen?'Use card-gaining abilities to hold at least ten cards at once.':'Win the match to clear this chapter.':state.chapter===3?!progress.yuyuko?'Gain four points from Yuyuko’s placement, including her ability and faction claims.':!progress.haku?'Connect Yuyuko and Youmu to claim Hakugyokurou.':'Win before the opponent reaches four points.':state.chapter===1?'Win to finish this introductory chapter.':!progress.remilia?'Try Remilia while the other Mansion cards are still in hands.':!progress.flandre?'With Flandre, choose the opponent and send one of their hand cards to their discard pile.':!progress.sdm?'Connect four Mansion cards and claim the faction.':'Win the match to clear this chapter.';
   el('tutorial-feedback').innerHTML='<span class="story-stars">'+heading+'</span><span class="tutorial-checklist">'+goals.map(goal=>'<span class="tutorial-goal'+(goal.done?' done':'')+(goal.failed?' failed':'')+'">'+(goal.failed?'✗':goal.done?'★':'☆')+' '+ruleTextHtml(goal.label)+'</span>').join('')+'</span>'+ruleTextHtml(hint);
   el('tutorial-back').disabled=false;setRuleText(el('tutorial-back'),'Chapters');el('tutorial-next').disabled=!state.complete;
   const next=STORY_CHAPTERS.some(chapter=>chapter.id===state.chapter+1);
@@ -15782,6 +15883,7 @@ function storyStep(delta){
   const next=storyState.chapter+1;if(STORY_CHAPTERS.some(chapter=>chapter.id===next))showStoryChapterIntro(next);else openStoryMenu();
 }
 el('story-start').addEventListener('click',openStoryMenu);
+el('story-debug-reset').addEventListener('click',resetStoryStars);
 el('story-close').addEventListener('click',()=>{if(storyMenuChapter!==null)openStoryMenu();else closeStoryMenu();});
 el('story-begin').addEventListener('click',()=>{if(storyMenuChapter!==null)openStoryChapter(storyMenuChapter);});
 el('story-overlay').addEventListener('click',event=>{if(event.target===el('story-overlay'))closeStoryMenu();});
