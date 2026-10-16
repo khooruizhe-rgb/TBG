@@ -137,7 +137,7 @@ vm.runInContext(html.slice(html.indexOf('const TUTORIALS='),html.indexOf('let tu
     A.setLanguage(language);A.openCardDetails('sdm_sakuya');
     ok(el('card-detail-ability').textContent==='Zawarudo!','Sakuya details preserve the exclamation mark in '+language);A.closeCardDetails();
   }
-  for(const chapter of [2,3,4]){
+  for(const chapter of [2,3,4,5]){
     U.show(chapter);const intro=el('story-intro');
     for(const language of ['en','zh-CN','en']){
       A.setLanguage(language);vm.runInContext('localizeElement(el("story-intro"));',ctx);
@@ -188,6 +188,12 @@ vm.runInContext(html.slice(html.indexOf('const TUTORIALS='),html.indexOf('let tu
   trigger(cards[0],'pointerdown');now+=60;trigger(cards[0],'pointerup');
   ok(el('card-detail-overlay').classList.contains('show')&&cards[0].classList.contains('story-card-seen'),'One tap inspects an Eientei card');A.closeCardDetails();U.close();
   ok(U.session()===null&&U.slides()===0&&resizeCount()===listenerBase,'Closing the Eientei introduction releases all listeners and gestures');
+  U.show(5);flush();cards=U.session().cards;
+  ok(cards.length===4&&cards.every(card=>card.dataset.cardId.startsWith('mtn_')),'Chapter five renews the four core Mountain cards');
+  ok(cards.every(card=>card.values.get('--story-glow-color')===vm.runInContext('FACTIONS.mountain.color',ctx)),'Mountain introduction glow inherits its faction color');
+  trigger(cards[0],'pointerdown');now+=60;trigger(cards[0],'pointerup');
+  ok(el('card-detail-overlay').classList.contains('show')&&cards[0].classList.contains('story-card-seen'),'One tap inspects a Mountain card');A.closeCardDetails();U.close();
+  ok(U.session()===null&&U.slides()===0&&resizeCount()===listenerBase,'Closing the Mountain introduction releases all listeners and gestures');
   U.show(1);ok(U.session()===null&&el('story-card-grid').hidden,'Chapter one has no skill-renewal cards');U.close();
   A.setLanguage('zh-CN');ok(A.translateGameText('Click a glowing card to read its ability. Drag cards freely to move and stack them.').includes('单击')&&A.translateGameText('Back')==='退出','The introduction instructions and Back-to-exit label are localized');
   const result={status:'pass',count:checks.length,checks,samples:rules.samples,exerciseSamples:rules.exerciseSamples,randomMatches:rules.randomMatches,rulesVersion:rules.rulesVersion,scope:'512 seeded random story openings with chapter-two next-five-draw guarantees, 256 restored fixed-hand tutorial openings, 384 fixed exercise configurations with actual completions, complete production matches, bilingual Sakuya titles, real renderers and shared pointer physics in a controlled DOM; no browser pixel verification'};

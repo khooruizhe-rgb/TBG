@@ -154,12 +154,12 @@ vm.runInContext(`(async()=>{
   ok(JSON.stringify(captureAIEvaluationSnapshot(game))===afterRestart,'Restart during a pending action also prevents the old follow-up loop from advancing the new match');
 
   returnToMainMenu();testStorage.clear();saveStoryStars(2,3);saveStoryStars(3,2);saveStoryStars(4,1);testStorage.set('unrelated-setting','keep');openStoryMenu();
-  assert.equal(el('story-levels').children.length,4);assert(!el('story-debug-reset').hidden);el('story-debug-reset').events.click();
+  assert.equal(el('story-levels').children.length,5);assert(!el('story-debug-reset').hidden);el('story-debug-reset').events.click();
   ok([2,3,4].every(chapter=>storyBestStars(chapter)===0)&&storyBestStars(1)===null&&storyClearedChapters().length===3&&testStorage.get('unrelated-setting')==='keep','The DEBUG button resets only earned star ratings, preserves clears and unrelated settings, and does not invent a chapter-one clear');
   saveStoryStars(4,3);ok(storyBestStars(4)===3,'Stars can be acquired again after a DEBUG reset');
   showStoryChapterIntro(4);ok(el('story-card-grid').children.length===4&&el('story-debug-reset').hidden,'Chapter four introduces four Eientei cards and hides the DEBUG control during its introduction');
   el('story-begin').events.click();ok(game.storyMatch.chapter===4&&game.players.every(p=>p.hand.length===6),'The chapter-four introduction launches a real constrained six-card deal');
-  game.winner=game.players[0];updateStoryProgress();el('restart-btn').events.click();ok(game===null&&storyMenuChapter===null&&el('story-levels').children.length===4,'Finishing the last available chapter returns to four-chapter selection');
+  game.winner=game.players[0];updateStoryProgress();el('restart-btn').events.click();ok(game===null&&storyMenuChapter===5&&el('story-card-grid').children.length===4,'Finishing chapter four opens the Mountain introduction');
   returnToMainMenu();
   return {status:'pass',count:checks.length,checks,randomOpenings:512,walkthroughs,productionMatches,rulesVersion:REWORK_RULES_VERSION,scope:'Real constrained deals, actual skills, nested placement/claim ownership, independent stars, six random full matches, mandatory legal actions, pure planning, real turn cancellation and controlled UI restart/debug lifecycle. No browser pixel verification.'};
 })()`,ctx).then(async result=>{

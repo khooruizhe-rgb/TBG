@@ -1,6 +1,6 @@
 {
   "status": "pass",
-  "count": 43,
+  "count": 44,
   "checks": [
     "Nitori waits without a quick-claim card at easy",
     "Hecatia waits without a quick-claim card at easy",
@@ -30,6 +30,7 @@
     "Sakuya sees the concrete Mountain pairing instead of two abstract extra turns",
     "The real Sakuya follow-ups claim the set and complete hand cleanup",
     "A full hand and quick card do not bypass illegal wasteland destinations",
+    "Active Suwako makes the same wasteland follow-up a legal quick Mountain collection",
     "Kutaka can use its wasteland permission to find a safe alternative finish",
     "Terrain forecasts restore every wasteland tile",
     "The terrain-aware route actually claims Hecatia without placing illegally",

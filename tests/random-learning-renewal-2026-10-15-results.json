@@ -1,6 +1,6 @@
 {
   "status": "pass",
-  "count": 81,
+  "count": 88,
   "checks": [
     "Story hands remain random; the final tutorial restores both fixed hands while shuffling its remaining deck: 1",
     "Only chapter two reserves Remilia and another Mansion card: 1",
@@ -51,6 +51,9 @@
     "The chapter 4 introduction stays free of card links after switching to en",
     "The chapter 4 introduction stays free of card links after switching to zh-CN",
     "The chapter 4 introduction stays free of card links after switching to en",
+    "The chapter 5 introduction stays free of card links after switching to en",
+    "The chapter 5 introduction stays free of card links after switching to zh-CN",
+    "The chapter 5 introduction stays free of card links after switching to en",
     "The introduction has four freely movable large cards",
     "Mansion introduction glow inherits the actual Mansion faction color",
     "Each introduction card has fresh art, a worn layer, a renewal scan and an invitation glow: sdm_remilia",
@@ -81,6 +84,10 @@
     "Eientei introduction glow inherits its blue faction color",
     "One tap inspects an Eientei card",
     "Closing the Eientei introduction releases all listeners and gestures",
+    "Chapter five renews the four core Mountain cards",
+    "Mountain introduction glow inherits its faction color",
+    "One tap inspects a Mountain card",
+    "Closing the Mountain introduction releases all listeners and gestures",
     "Chapter one has no skill-renewal cards",
     "The introduction instructions and Back-to-exit label are localized"
   ],
@@ -173,8 +180,8 @@
     {
       "mode": 1,
       "turns": 39,
-      "ending": "stalemate",
-      "winner": null,
+      "ending": "win",
+      "winner": 0,
       "points": [
         2,
         0
@@ -206,7 +213,7 @@
       "ending": "win",
       "winner": 0,
       "points": [
-        7,
+        8,
         0
       ],
       "progress": {
@@ -216,6 +223,6 @@
       }
     }
   ],
-  "rulesVersion": "2026-10-16-story-private-opening-v19",
+  "rulesVersion": "2026-10-16-story-mountain-collection-v20",
   "scope": "512 seeded random story openings with chapter-two next-five-draw guarantees, 256 restored fixed-hand tutorial openings, 384 fixed exercise configurations with actual completions, complete production matches, bilingual Sakuya titles, real renderers and shared pointer physics in a controlled DOM; no browser pixel verification"
 }

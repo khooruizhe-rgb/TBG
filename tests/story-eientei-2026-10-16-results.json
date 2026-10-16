@@ -36,7 +36,7 @@
     "Stars can be acquired again after a DEBUG reset",
     "Chapter four introduces four Eientei cards and hides the DEBUG control during its introduction",
     "The chapter-four introduction launches a real constrained six-card deal",
-    "Finishing the last available chapter returns to four-chapter selection",
+    "Finishing chapter four opens the Mountain introduction",
     "Cancelling retired-match animation/turn waits releases their timers immediately without touching the next match"
   ],
   "randomOpenings": 512,
@@ -326,6 +326,6 @@
       }
     }
   ],
-  "rulesVersion": "2026-10-16-story-private-opening-v19",
+  "rulesVersion": "2026-10-16-story-mountain-collection-v20",
   "scope": "Real constrained deals, actual skills, nested placement/claim ownership, independent stars, six random full matches, mandatory legal actions, pure planning, real turn cancellation and controlled UI restart/debug lifecycle. No browser pixel verification."
 }

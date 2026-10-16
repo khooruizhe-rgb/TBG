@@ -68,9 +68,13 @@ vm.runInContext(`(async()=>{
     else if(!progress.four)id=game.players[0].hand.includes('mtn_sanae')?'mtn_sanae':'mtn_aya';
     else if(!progress.two)id=game.players[0].hand.includes('haku_youmu')?'haku_youmu':'haku_yuyuko';
     else id='marisa';
-    assert(game.players[0].hand.includes(id),'The lesson path must retain '+id);
+    assert(game.players[0].hand.includes(id),'The lesson path must retain '+id+' '+JSON.stringify({order,firstCell,hand:game.players[0].hand,progress,logs:game.logLines.slice(-20),board:game.board}));
     const cells=game.emptyOrWastelandForCard(CARD[id],0).filter(cell=>inBounds(cell.r,cell.c));
-    const cell=id==='mtn_sanae'&&firstCell&&cells.some(at=>at.r===firstCell.r&&at.c===firstCell.c)?firstCell:aiCurrentFactionPlacement(0,id,cells);
+    // With Suwako active, newly legal wasteland can lie too far from the set.
+    // Keep the instructed route completable with the remaining real cards.
+    const firstFits=id==='mtn_sanae'&&firstCell&&cells.some(at=>at.r===firstCell.r&&at.c===firstCell.c)
+      && aiWithPlacement(id,firstCell,()=>aiCanConnectFaction('mountain',Math.max(0,4-game.factionCells('mountain').length)),0);
+    const cell=firstFits?firstCell:aiCurrentFactionPlacement(0,id,cells);
     assert(cell,'A learner landing must exist for '+id);
     game.removeFromHand(0,id);return await game.internalPlace(id,cell.r,cell.c,0,0);
   }

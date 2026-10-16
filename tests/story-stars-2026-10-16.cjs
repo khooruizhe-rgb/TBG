@@ -67,7 +67,7 @@ vm.runInContext(`(async()=>{
   returnToMainMenu();testStorage.clear();testStorage.set(STORY_PROGRESS_KEY,JSON.stringify([1,2]));
   ok(storyBestStars(1)===3&&storyBestStars(2)===3&&storyBestStars(3)===null,'Legacy full-objective chapter clears migrate to three stars without inventing a new clear');
   saveStoryStars(3,0);const migrated=JSON.parse(testStorage.get(STORY_PROGRESS_KEY));
-  ok(migrated.version===2&&migrated.chapters['3']===0&&storyClearedChapters().includes(3),'One atomic progress record distinguishes a zero-star clear from an unplayed chapter');
+  ok(migrated.version===3&&migrated.chapters['3'].legacyStars===0&&migrated.chapters['3'].goals.length===0&&storyClearedChapters().includes(3),'One atomic progress record distinguishes a zero-star clear from an unplayed chapter');
   for(const value of ['null','false','{','{"version":2,"chapters":{"2":5,"3":-1}}']){testStorage.set(STORY_PROGRESS_KEY,value);assert.deepEqual(storyProgressRecords(),{});}
   ok(true,'Malformed records and out-of-range star counts are rejected');
   testStorage.clear();

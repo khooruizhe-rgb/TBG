@@ -17,7 +17,7 @@ vm.runInContext(`(async()=>{
     game.startingCardIds=new Set([...used,...game.drawPile]);game.handKnowledge=game.players.map(()=>new Map());game.reserveAges=game.players.map(()=>({}));
     game.ui.pickOwnHandCards=async()=>null;game.ui.pickCell=async(t,cells)=>cells[0];game.pickUI=async(p,method,args)=>game.ui[method]?.(...args);
   }
-  for(const chapter of [1,2,3,4]){
+  for(const chapter of [1,2,3,4,5]){
     for(let seed=0;seed<32;seed++){
       const g=fresh(chapter,seed);assert(g.handKnowledge.every(memory=>memory.size===0));assert(!('openingHand' in g.storyMatch));
       assert(g.knownHandCards(1).every(card=>card.playerIdx===1));assert.equal(g.knownHandCards(1).length,6);
@@ -40,7 +40,7 @@ vm.runInContext(`(async()=>{
   fresh();configureTutorialMatch(game);fresh();ok(game.handKnowledge.every(memory=>memory.size===0),'Leaving the tutorial does not carry its special knowledge into an ordinary match');
 
   const variants=[['sdm_flandre','sdm_patchouli','reimu','marisa','yuuka','medicine'],['mtn_sanae','mtn_aya','reimu','marisa','yuuka','medicine']];
-  for(const mode of ['current','previous','baseline',1,2,3,4]){
+  for(const mode of ['current','previous','baseline',1,2,3,4,5]){
     const observations=[];
     for(const human of variants){
       fresh(typeof mode==='number'?mode:null,44,2,'hard',typeof mode==='string'?mode:'current');arrange([human,['sdm_remilia','hourai_mokou']]);
@@ -73,5 +73,5 @@ vm.runInContext(`(async()=>{
   const snapshot=evalNewOpening('stability-validation-0',2,4,'hard'),complete=await evalRunMatch(snapshot,['current','current'],'stability-validation-0');
   ok(complete.reason==='win'||complete.reason==='stalemate','A complete ordinary match ends without runtime errors, conservation failures or a turn-limit abort under the private-hand estimate');
   const ordinaryMatch={reason:complete.reason,winner:complete.winner,points:complete.points,turns:complete.turns};
-  return {status:'pass',count:checks.length,checks,storyOpenings:128,ordinaryOpenings:216,tutorialOpenings:16,comparisons,ordinaryMatch,rulesVersion:REWORK_RULES_VERSION,scope:'Actual ordinary/story/tutorial deals, hidden-hand counterfactual decisions across seven policies/modes, ignored legacy opening lists, actual Aya/Reisen skills and Satori chooser, public acquisitions, memory expiry and an ordinary full match. Introduction language-switch coverage is in the renewal suite; no browser pixel verification.'};
+  return {status:'pass',count:checks.length,checks,storyOpenings:160,ordinaryOpenings:216,tutorialOpenings:16,comparisons,ordinaryMatch,rulesVersion:REWORK_RULES_VERSION,scope:'Actual ordinary/story/tutorial deals, hidden-hand counterfactual decisions across eight policies/modes, ignored legacy opening lists, actual Aya/Reisen skills and Satori chooser, public acquisitions, memory expiry and an ordinary full match. Introduction language-switch coverage is in the renewal suite; no browser pixel verification.'};
 })()`,ctx).then(result=>{fs.writeFileSync(__dirname+'/story-private-opening-2026-10-16-results.json',JSON.stringify(result,null,2)+'\n');console.log(result.count+' private-opening and legitimate-information checks passed');}).catch(error=>{console.error(error.stack);process.exitCode=1;});

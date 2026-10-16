@@ -1,0 +1,129 @@
+{
+  "status": "pass",
+  "count": 58,
+  "checks": [
+    "Chapter 2 unions distinct objectives over three victories without double-counting repeats or granting a single-run color",
+    "Chapter 2 records a real three-objective victory and preserves its faction-colored stars on later replays",
+    "Chapter 3 unions distinct objectives over three victories without double-counting repeats or granting a single-run color",
+    "Chapter 3 records a real three-objective victory and preserves its faction-colored stars on later replays",
+    "Chapter 4 unions distinct objectives over three victories without double-counting repeats or granting a single-run color",
+    "Chapter 4 records a real three-objective victory and preserves its faction-colored stars on later replays",
+    "Chapter 5 unions distinct objectives over three victories without double-counting repeats or granting a single-run color",
+    "Chapter 5 records a real three-objective victory and preserves its faction-colored stars on later replays",
+    "Legacy counts preserve unknown objective identities; old three-star runs retain full objectives and their perfect marker",
+    "A legacy two-star floor cannot be double-counted and can finish through new distinct objectives",
+    "DEBUG clears objective identities, legacy counts and perfect colors while preserving clears and unrelated settings",
+    "Malformed and uncleared records cannot create stars",
+    "Duplicate or unknown objectives, invalid floors and incomplete perfect markers are sanitized",
+    "The victory requirement still controls banking objectives and clearing the chapter",
+    "A real single-run completion still colors the current result when storage is unavailable",
+    "Neither card can enter wasteland before an active Suwako is already on the board; Kanako’s original blueprint loses its old permission",
+    "Active Suwako grants all Mountain bodies, including the fifth card, wasteland entry without granting it to other factions",
+    "Actual Kanako placement uses Suwako’s permission and leaves the terrain intact",
+    "Removing the last active Suwako immediately removes the shared permission",
+    "A Suwako silenced by Rinnosuke grants no wasteland permission",
+    "Overwriting Suwako removes the aura",
+    "The current AI recognizes a remaining Mountain connection through Suwako-enabled wasteland",
+    "Faction placement chooses the actual one-card wasteland bridge instead of an isolated legal tile",
+    "The evaluated wasteland bridge produces a real four-card claim",
+    "Suwako’s aura respects the chapter skill unlock: 4",
+    "Suwako’s aura respects the chapter skill unlock: 5",
+    "Kanako still doubles Suwako’s three-tile placement while the new shared aura remains active",
+    "A created Suwako’s aura requires its creation surcharge and does not activate before payment: false",
+    "A created Suwako’s aura requires its creation surcharge and does not activate before payment: true",
+    "512 private six-card Mountain deals preserve stock, all constraints, cumulative unlocks and varied next-five reserve positions",
+    "A story table has no hidden shop tiles that could create phantom human actions or prevent stalemate",
+    "The constrained fifth-chapter deal terminates even under constant randomness",
+    "The fifth-chapter AI delays through legal shared draws until all core Mountain cards have appeared",
+    "A useful unlocked skill takes precedence over fifth-chapter delay",
+    "The fifth-chapter AI still makes a mandatory legal placement instead of strategically passing",
+    "A correct guess before reading a newspaper does not satisfy the reading goal",
+    "Folded unsubscribed papers and invalid paper IDs cannot count as reading",
+    "Reading alone followed by a wrong guess cannot earn the guess star",
+    "Aya’s real placement reads hands and collects Mountain, without pretending that producing the newspaper was viewing it",
+    "After reading the actual newspaper, a real correct Patchouli guess records the goal and transfers the card",
+    "The actual turn loop exhausts shared draws, detects both players have no legal action, and awards a three-star 4–3 story victory by stalemate",
+    "The same real route saves every objective and its Mountain-colored perfect result",
+    "Actual tied or opponent-led stalemates record the goal but do not invent a player victory: false {\"actions\":[false,false],\"progress\":{\"mountain\":false,\"stalemate\":true,\"newsGuess\":false},\"score\":[0,0],\"spaces\":[[[\"reimu\",[]]],[[\"marisa\",[]]]],\"draw\":[false,false]}",
+    "Actual tied or opponent-led stalemates record the goal but do not invent a player victory: true {\"actions\":[false,false],\"progress\":{\"mountain\":false,\"stalemate\":true,\"newsGuess\":false},\"winner\":1,\"score\":[0,1],\"spaces\":[[[\"reimu\",[]]],[[\"marisa\",[]]]],\"draw\":[false,false]}",
+    "An incorrect early end-stalemate call cannot award the no-legal-action objective",
+    "Four complete random Mountain matches terminate without errors, strategic passes, conservation failures or turn-limit aborts",
+    "The fifth chapter introduces four new core cards",
+    "Clearing the fifth and last chapter returns to five-chapter selection",
+    "A newly produced newspaper retains its masthead and does not count as read merely by rendering its closed report disclosure",
+    "The real capture-phase toggle handler records opening the reports and refreshes chapter goals",
+    "Read reports remain expanded on subsequent real log renders",
+    "An unsubscribed rival newspaper retains its folded cover and paid subscription control",
+    "A real subscription transfers its payment and makes reports available without pretending that payment itself was reading",
+    "Only opening a connected, readable report disclosure can record the subscribed newspaper",
+    "The actual en detail renderer shows Suwako’s shared aura and Kanako’s removed permission",
+    "The actual zh-CN detail renderer shows Suwako’s shared aura and Kanako’s removed permission",
+    "The actual menu renders three cumulatively collected stars without a single-run color",
+    "A single-run perfect record applies the real Mountain color custom property to the menu rating"
+  ],
+  "randomOpenings": 512,
+  "productionMatches": [
+    {
+      "seed": 0,
+      "turns": 35,
+      "winner": 0,
+      "stalemate": true,
+      "points": [
+        5,
+        2
+      ],
+      "progress": {
+        "mountain": true,
+        "stalemate": true,
+        "newsGuess": false
+      }
+    },
+    {
+      "seed": 1,
+      "turns": 18,
+      "winner": 0,
+      "stalemate": false,
+      "points": [
+        8,
+        0
+      ],
+      "progress": {
+        "mountain": true,
+        "stalemate": false,
+        "newsGuess": false
+      }
+    },
+    {
+      "seed": 2,
+      "turns": 34,
+      "winner": 0,
+      "stalemate": true,
+      "points": [
+        5,
+        2
+      ],
+      "progress": {
+        "mountain": true,
+        "stalemate": true,
+        "newsGuess": false
+      }
+    },
+    {
+      "seed": 3,
+      "turns": 29,
+      "winner": null,
+      "stalemate": true,
+      "points": [
+        0,
+        0
+      ],
+      "progress": {
+        "mountain": false,
+        "stalemate": true,
+        "newsGuess": false
+      }
+    }
+  ],
+  "rulesVersion": "2026-10-16-story-mountain-collection-v20",
+  "scope": "Actual goal unions and legacy migration, single-run colors and reset, Suwako original/copy/muting rules, constrained private fifth-chapter deals, real skill and read chronology, a complete prepared legal endgame route through the real turn loop, four random matches and controlled chapter lifecycle. Actual newspaper toggle/subscription events, bilingual card details and faction-color menu style are also checked with a controlled DOM; browser pixels are not verified."
+}

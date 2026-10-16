@@ -65,8 +65,9 @@ vm.runInContext(`(async()=>{
   const sakuya=aiEvaluateCard(0,'sdm_sakuya');ok(sakuya?.rate>=4&&!sakuya.lowPriority,'Sakuya sees the concrete Mountain pairing instead of two abstract extra turns');
   game.removeFromHand(0,'sdm_sakuya');const stopped=await game.internalPlace('sdm_sakuya',sakuya.cell.r,sakuya.cell.c,0,0);await resolveFollowups(0,stopped);
   ok(game.players[0].discard.includes('mtn_nitori')&&game.winCount(game.players[0])===4,'The real Sakuya follow-ups claim the set and complete hand cleanup');
-  setup();hold(0,['mtn_nitori','mtn_kanako','mtn_sanae']);put('mtn_suwako',0,0);game.wasteland=Array.from({length:4},()=>Array(4).fill(true));game.wasteland[0][1]=false;
+  setup();hold(0,['mtn_nitori','mtn_kanako','mtn_sanae']);put('mtn_aya',0,0);game.wasteland=Array.from({length:4},()=>Array(4).fill(true));game.wasteland[0][1]=false;
   ok(!aiGuardedSetup(0,'mtn_nitori',{r:0,c:1}),'A full hand and quick card do not bypass illegal wasteland destinations');
+  put('mtn_suwako',0,0);ok(aiGuardedSetup(0,'mtn_nitori',{r:0,c:1}),'Active Suwako makes the same wasteland follow-up a legal quick Mountain collection');
   setup();hold(0,['hell_hecatia','sdm_sakuya','hell_kutaka','hell_eiki']);put('hell_clownpiece',0,0);
   game.wasteland=Array.from({length:4},()=>Array(4).fill(true));for(const [r,c]of [[0,1],[1,0],[1,1],[3,3]])game.wasteland[r][c]=false;
   const terrainBefore=JSON.stringify(game.wasteland);

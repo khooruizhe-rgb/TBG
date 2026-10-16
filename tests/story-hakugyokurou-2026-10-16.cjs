@@ -99,9 +99,9 @@ vm.runInContext(`(async()=>{
   ok(canAct(1)&&(await aiDecideAction(1)).type==='draw','A placement-blocked teacher still draws whenever drawing is legal');
   setup(3,1);arrange({hands:[[],['reimu']],emptyPile:true});game.wasteland=game.wasteland.map(row=>row.map(()=>true));
   ok(!canAct(1)&&(await aiDecideAction(1)).type==='pass','Terrain with no legal landing and no draw is a genuine unavailable turn');
-  setup('tutorial',1);arrange({hands:[[],['reimu']],emptyPile:true,shop:['shop_rinnosuke','mtn_kanako','sdm_meiling','hourai_tewi']});game.wasteland=game.wasteland.map(row=>row.map(()=>true));
+  setup('tutorial',1);arrange({hands:[[],['reimu']],emptyPile:true,shop:['shop_rinnosuke','hell_clownpiece','sdm_meiling','hourai_tewi']});game.wasteland=game.wasteland.map(row=>row.map(()=>true));
   ok(canAct(1)&&(await aiDecideAction(1)).type==='trade','A teaching opponent can trade for a card that permits its otherwise unavailable placement');
-  await originalAction(1);ok(game.tradedThisTurn[1]&&game.isOnBoard('mtn_kanako'),'The actual teaching turn trades once and completes the legal placement');
+  await originalAction(1);ok(game.tradedThisTurn[1]&&game.isOnBoard('hell_clownpiece'),'The actual teaching turn trades once and completes the legal placement');
 
   setup(3,1);arrange({hands:[[],['hourai_mokou']]});
   ok((await aiDecideAction(1)).type==='draw','Before both Hakugyokurou cards appear, the opponent delays through legal shared draws');
