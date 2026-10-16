@@ -1,0 +1,134 @@
+{
+  "status": "pass",
+  "count": 48,
+  "checks": [
+    "Chapter 1 begins without shared opening knowledge, a hidden opening list or a faction inferred from that list across 32 actual deals",
+    "Chapter 2 begins without shared opening knowledge, a hidden opening list or a faction inferred from that list across 32 actual deals",
+    "Chapter 3 begins without shared opening knowledge, a hidden opening list or a faction inferred from that list across 32 actual deals",
+    "Chapter 4 begins without shared opening knowledge, a hidden opening list or a faction inferred from that list across 32 actual deals",
+    "Ordinary 2-player easy/current openings expose only each AI’s own hand across eight deals",
+    "Ordinary 2-player easy/previous openings expose only each AI’s own hand across eight deals",
+    "Ordinary 2-player easy/baseline openings expose only each AI’s own hand across eight deals",
+    "Ordinary 2-player normal/current openings expose only each AI’s own hand across eight deals",
+    "Ordinary 2-player normal/previous openings expose only each AI’s own hand across eight deals",
+    "Ordinary 2-player normal/baseline openings expose only each AI’s own hand across eight deals",
+    "Ordinary 2-player hard/current openings expose only each AI’s own hand across eight deals",
+    "Ordinary 2-player hard/previous openings expose only each AI’s own hand across eight deals",
+    "Ordinary 2-player hard/baseline openings expose only each AI’s own hand across eight deals",
+    "Ordinary 3-player easy/current openings expose only each AI’s own hand across eight deals",
+    "Ordinary 3-player easy/previous openings expose only each AI’s own hand across eight deals",
+    "Ordinary 3-player easy/baseline openings expose only each AI’s own hand across eight deals",
+    "Ordinary 3-player normal/current openings expose only each AI’s own hand across eight deals",
+    "Ordinary 3-player normal/previous openings expose only each AI’s own hand across eight deals",
+    "Ordinary 3-player normal/baseline openings expose only each AI’s own hand across eight deals",
+    "Ordinary 3-player hard/current openings expose only each AI’s own hand across eight deals",
+    "Ordinary 3-player hard/previous openings expose only each AI’s own hand across eight deals",
+    "Ordinary 3-player hard/baseline openings expose only each AI’s own hand across eight deals",
+    "Ordinary 4-player easy/current openings expose only each AI’s own hand across eight deals",
+    "Ordinary 4-player easy/previous openings expose only each AI’s own hand across eight deals",
+    "Ordinary 4-player easy/baseline openings expose only each AI’s own hand across eight deals",
+    "Ordinary 4-player normal/current openings expose only each AI’s own hand across eight deals",
+    "Ordinary 4-player normal/previous openings expose only each AI’s own hand across eight deals",
+    "Ordinary 4-player normal/baseline openings expose only each AI’s own hand across eight deals",
+    "Ordinary 4-player hard/current openings expose only each AI’s own hand across eight deals",
+    "Ordinary 4-player hard/previous openings expose only each AI’s own hand across eight deals",
+    "Ordinary 4-player hard/baseline openings expose only each AI’s own hand across eight deals",
+    "Only the final tutorial keeps all six starting cards, without gaining knowledge of subsequent hidden draws",
+    "Leaving the tutorial does not carry its special knowledge into an ordinary match",
+    "Policy current makes the same decision and Remilia estimate when two unrevealed Mansion cards are exchanged with hidden deck cards",
+    "Policy previous makes the same decision and Remilia estimate when two unrevealed Mansion cards are exchanged with hidden deck cards",
+    "Policy baseline makes the same decision and Remilia estimate when two unrevealed Mansion cards are exchanged with hidden deck cards",
+    "Policy 1 makes the same decision and Remilia estimate when two unrevealed Mansion cards are exchanged with hidden deck cards",
+    "Policy 2 makes the same decision and Remilia estimate when two unrevealed Mansion cards are exchanged with hidden deck cards",
+    "Policy 3 makes the same decision and Remilia estimate when two unrevealed Mansion cards are exchanged with hidden deck cards",
+    "Policy 4 makes the same decision and Remilia estimate when two unrevealed Mansion cards are exchanged with hidden deck cards",
+    "A legitimately revealed hand makes Remilia’s gain exact and enables the chapter-three gathering opportunity",
+    "Shared drawing reveals no opponent starting cards or the opponent’s new draw",
+    "The real Aya skill still records exactly four revealed opponent cards and creates a newspaper",
+    "The real Satori chooser reveals only four cards while keeping the other two unknown",
+    "The real Reisen skill can reveal the target hand and impose its chosen mandatory card",
+    "A publicly acquired card grants knowledge of that card, without exposing the rest of the hand",
+    "A revealed card leaving the hand clears its remembered location",
+    "A complete ordinary match ends without runtime errors, conservation failures or a turn-limit abort under the private-hand estimate"
+  ],
+  "storyOpenings": 128,
+  "ordinaryOpenings": 216,
+  "tutorialOpenings": 16,
+  "comparisons": [
+    {
+      "mode": "current",
+      "action": {
+        "type": "place",
+        "cardId": "sdm_remilia",
+        "r": 0,
+        "c": 0
+      },
+      "gain": 0.5294117647058824
+    },
+    {
+      "mode": "previous",
+      "action": {
+        "type": "place",
+        "cardId": "sdm_remilia",
+        "r": 0,
+        "c": 0
+      },
+      "gain": 0.5294117647058824
+    },
+    {
+      "mode": "baseline",
+      "action": {
+        "type": "place",
+        "cardId": "sdm_remilia",
+        "r": 0,
+        "c": 0
+      },
+      "gain": 0.5294117647058824
+    },
+    {
+      "mode": 1,
+      "action": {
+        "type": "place",
+        "cardId": "sdm_remilia",
+        "r": 1,
+        "c": 1
+      },
+      "gain": 0.5294117647058824
+    },
+    {
+      "mode": 2,
+      "action": {
+        "type": "draw"
+      },
+      "gain": 0.5294117647058824
+    },
+    {
+      "mode": 3,
+      "action": {
+        "type": "draw"
+      },
+      "gain": 0.5294117647058824
+    },
+    {
+      "mode": 4,
+      "action": {
+        "type": "place",
+        "cardId": "sdm_remilia",
+        "r": 0,
+        "c": 0
+      },
+      "gain": 0.5294117647058824
+    }
+  ],
+  "ordinaryMatch": {
+    "reason": "win",
+    "winner": 0,
+    "points": [
+      7,
+      1
+    ],
+    "turns": 24
+  },
+  "rulesVersion": "2026-10-16-story-private-opening-v19",
+  "scope": "Actual ordinary/story/tutorial deals, hidden-hand counterfactual decisions across seven policies/modes, ignored legacy opening lists, actual Aya/Reisen skills and Satori chooser, public acquisitions, memory expiry and an ordinary full match. Introduction language-switch coverage is in the renewal suite; no browser pixel verification."
+}

@@ -41,7 +41,7 @@ vm.runInContext(`(async()=>{
       const hands=[['sdm_remilia','sdm_flandre','haku_youmu','haku_yuyuko','yuuka','medicine'],['sdm_patchouli','sdm_sakuya','hourai_mokou','temple_shou','mtn_kanako','mtn_suwako']];
       game.players.forEach((player,i)=>player.hand=hands[i].slice());const used=new Set(hands.flat());
       game.drawPile=shuffle(CARDS.filter(card=>!card.token&&!card.shopkeeper&&!card.shopExpansion&&!used.has(card.id)).map(card=>card.id));
-      game.startingCardIds=new Set([...used,...game.drawPile]);game.storyMatch.openingHand=hands[0].slice();game.handKnowledge=game.players.map(()=>new Map());game.revealHand(0,hands[0],[1]);
+      game.startingCardIds=new Set([...used,...game.drawPile]);game.handKnowledge=game.players.map(()=>new Map());
     }
     game.ui.pickOwnHandCards=async()=>null;game.ui.pickCell=async(t,cells)=>cells[0];game.ui.promptText=async()=>null;
     game.pickUI=async(p,method,args)=>game.ui[method](...args);game.choosePlayer=async()=>1;
@@ -54,7 +54,7 @@ vm.runInContext(`(async()=>{
     setup(chapter,actor);const ids=inventory(game);
     ok(game.numPlayers===2&&game.currentPlayerIdx===actor&&!game.kourindouEnabled&&game.players.every(p=>p.hand.length===6),'The chapter keeps a randomized first actor, two six-card hands and a basic table: '+chapter+'/'+actor);
     ok(ids.length===new Set(ids).size&&ids.length===game.startingCardIds.size&&ids.every(id=>game.startingCardIds.has(id)),'A chapter uses unique real cards with conserved inventory: '+chapter+'/'+actor);
-    ok(game.players[0].hand.every(id=>game.handKnowledge[1].get(id)===0)&&game.handKnowledge[0].size===0,'The mentor alone knows the opening player hand: '+chapter+'/'+actor);
+    ok(game.handKnowledge.every(memory=>memory.size===0)&&!('openingHand' in game.storyMatch),'The story AI has no opening-hand knowledge or stored opening list: '+chapter+'/'+actor);
   }
   for(const card of CARDS.filter(card=>!card.token&&!card.shopkeeper)){
     setup(1);game.board[1][1]=card.id;const before=JSON.stringify(game.testRuleState());const flags=await game.resolveAbility(card.id,1,1,0,0);

@@ -4,7 +4,7 @@
   "checks": [
     "512 real Eientei deals keep both six-card hands random with all required originals",
     "Undealt Eientei appears within the next five actual draws and both first actors remain possible",
-    "All 512 deals conserve 36 unique cards, expose the opening only to the mentor and unlock exactly three factions",
+    "All 512 deals conserve 36 unique cards, keep both opening hands private and unlock exactly three factions",
     "Constrained dealing terminates without duplicate or missing cards even with constant randomness",
     "Only chapter two restores the older Mansion holding strategy",
     "Chapter two holds Mansion cards through the first three turns and admits them from the fourth",
@@ -267,31 +267,31 @@
     },
     {
       "seed": 2,
-      "turns": 25,
+      "turns": 21,
       "winner": 0,
       "stalemate": false,
       "points": [
         8,
-        6
+        2
       ],
       "progress": {
-        "hourai": false,
-        "kaguya": false,
+        "hourai": true,
+        "kaguya": true,
         "handTen": false
       }
     },
     {
       "seed": 3,
-      "turns": 39,
-      "winner": null,
-      "stalemate": true,
+      "turns": 11,
+      "winner": 1,
+      "stalemate": false,
       "points": [
-        4,
-        5
+        0,
+        8
       ],
       "progress": {
-        "hourai": true,
-        "kaguya": true,
+        "hourai": false,
+        "kaguya": false,
         "handTen": false
       }
     },
@@ -312,20 +312,20 @@
     },
     {
       "seed": 5,
-      "turns": 17,
+      "turns": 33,
       "winner": 1,
       "stalemate": false,
       "points": [
-        5,
-        8
+        4,
+        7
       ],
       "progress": {
-        "hourai": false,
-        "kaguya": false,
+        "hourai": true,
+        "kaguya": true,
         "handTen": false
       }
     }
   ],
-  "rulesVersion": "2026-10-16-story-eientei-opening-v18",
+  "rulesVersion": "2026-10-16-story-private-opening-v19",
   "scope": "Real constrained deals, actual skills, nested placement/claim ownership, independent stars, six random full matches, mandatory legal actions, pure planning, real turn cancellation and controlled UI restart/debug lifecycle. No browser pixel verification."
 }

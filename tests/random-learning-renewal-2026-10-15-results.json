@@ -1,6 +1,6 @@
 {
   "status": "pass",
-  "count": 72,
+  "count": 81,
   "checks": [
     "Story hands remain random; the final tutorial restores both fixed hands while shuffling its remaining deck: 1",
     "Only chapter two reserves Remilia and another Mansion card: 1",
@@ -28,7 +28,7 @@
     "Guided page 5 restores fixed lesson hands and merchandise",
     "The real rules complete the restored fixed single-step exercise 5",
     "Conditional dealing terminates even under a constant RNG",
-    "The story mentor retains support for the random player faction",
+    "The story AI can support a faction after its cards are legitimately revealed",
     "Story mentor planning preserves the board, hands, knowledge and statistics",
     "An actual production 1 match ends without a runtime error or turn-limit abort",
     "An actual production 2 match ends without a runtime error or turn-limit abort",
@@ -42,6 +42,15 @@
     "Leaving the story restores the original card appearance and ability",
     "Sakuya details preserve the exclamation mark in en",
     "Sakuya details preserve the exclamation mark in zh-CN",
+    "The chapter 2 introduction stays free of card links after switching to en",
+    "The chapter 2 introduction stays free of card links after switching to zh-CN",
+    "The chapter 2 introduction stays free of card links after switching to en",
+    "The chapter 3 introduction stays free of card links after switching to en",
+    "The chapter 3 introduction stays free of card links after switching to zh-CN",
+    "The chapter 3 introduction stays free of card links after switching to en",
+    "The chapter 4 introduction stays free of card links after switching to en",
+    "The chapter 4 introduction stays free of card links after switching to zh-CN",
+    "The chapter 4 introduction stays free of card links after switching to en",
     "The introduction has four freely movable large cards",
     "Mansion introduction glow inherits the actual Mansion faction color",
     "Each introduction card has fresh art, a worn layer, a renewal scan and an invitation glow: sdm_remilia",
@@ -207,6 +216,6 @@
       }
     }
   ],
-  "rulesVersion": "2026-10-16-story-eientei-opening-v18",
+  "rulesVersion": "2026-10-16-story-private-opening-v19",
   "scope": "512 seeded random story openings with chapter-two next-five-draw guarantees, 256 restored fixed-hand tutorial openings, 384 fixed exercise configurations with actual completions, complete production matches, bilingual Sakuya titles, real renderers and shared pointer physics in a controlled DOM; no browser pixel verification"
 }

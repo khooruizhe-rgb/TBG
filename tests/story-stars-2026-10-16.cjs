@@ -15,7 +15,7 @@ vm.runInContext(`(async()=>{
     game.players.forEach((player,index)=>{player.hand=hands[index].slice();player.discard=discards[index].slice();});
     for(const[r,c,id]of board)game.setCardAt(r,c,id);const used=[...hands.flat(),...board.map(cell=>cell[2]),...discards.flat()];assert.equal(new Set(used).size,used.length);
     game.drawPile=emptyPile?[]:shuffle(CARDS.filter(card=>!card.token&&!card.shopkeeper&&!card.shopExpansion&&!used.includes(card.id)).map(card=>card.id));
-    game.startingCardIds=new Set([...used,...game.drawPile]);game.storyMatch.openingHand=hands[0].slice();game.handKnowledge=game.players.map(()=>new Map());game.revealHand(0,hands[0],[1]);
+    game.startingCardIds=new Set([...used,...game.drawPile]);game.handKnowledge=game.players.map(()=>new Map());
     game.reserveAges=game.players.map(()=>({}));game.winner=null;game.logLines=[];
   }
   async function place(id,p=0,r=1,c=1){assert(game.players[p].hand.includes(id));game.removeFromHand(p,id);return game.internalPlace(id,r,c,p,0);}
@@ -59,7 +59,7 @@ vm.runInContext(`(async()=>{
     Math.random=()=>{throw Error('Planning must not consume RNG');};try{action=await aiDecideAction(1);}finally{Math.random=random;}
     ok((chapter===2?action.type==='draw':action.type==='place'&&action.cardId==='sdm_patchouli')&&before===JSON.stringify(captureAIEvaluationSnapshot(game))&&metrics===JSON.stringify(game.testMetrics),'Chapter '+chapter+' applies its own claim-versus-delay preference without mutating the real state');
     await originalAction(1);ok(game.winCount(game.players[1])===(chapter===2?0:4),'Chapter '+chapter+' executes its chosen delay or Mansion collection');
-    make(chapter);arrange({hands:[['sdm_flandre','sdm_patchouli'],['sdm_remilia','sdm_sakuya']]});action=await aiDecideAction(1);
+    make(chapter);arrange({hands:[['sdm_flandre','sdm_patchouli'],['sdm_remilia','sdm_sakuya']]});game.revealHand(0,game.players[0].hand,[1]);action=await aiDecideAction(1);
     ok(chapter===2?action.type==='draw':action.type==='place'&&action.cardId==='sdm_remilia','Chapter '+chapter+' applies its own Remilia-versus-delay preference');
     make(chapter);arrange({hands:[[],['sdm_flandre']]});ok((await aiDecideAction(1)).type==='draw','Chapter '+chapter+' still delays through a legal draw when no urgent Mansion opportunity exists');
   }

@@ -22,7 +22,7 @@ vm.runInContext(`(async()=>{
     const used=[...hands.flat(),...discards.flat(),...board.map(cell=>cell[2])];assert.equal(new Set(used).size,used.length);
     game.drawPile=emptyPile?[]:shuffle(CARDS.filter(card=>!card.token&&!card.shopkeeper&&!card.shopExpansion&&!used.includes(card.id)).map(card=>card.id));
     game.startingCardIds=new Set([...used,...game.drawPile]);game.handKnowledge=game.players.map(()=>new Map());game.reserveAges=game.players.map(()=>({}));
-    game.storyMatch.openingHand=hands[0].slice();game.revealHand(0,hands[0],[1]);game.winner=null;game.stalemateMessage='';game.logLines=[];
+    game.winner=null;game.stalemateMessage='';game.logLines=[];
   }
   function inventory(){return [...game.drawPile,...game.mainBoardCells().map(cell=>game.cardAt(cell.r,cell.c)),...game.players.flatMap(p=>[...p.hand,...p.discard])];}
   async function place(id,p=0,r=0,c=0){assert(game.players[p].hand.includes(id));game.removeFromHand(p,id);return game.internalPlace(id,r,c,p,0);}
@@ -34,14 +34,14 @@ vm.runInContext(`(async()=>{
     assert(rival.includes('haku_yuyuko'));assert.equal(rival.filter(id=>CARD[id].faction==='sdm').length,1);assert.equal(rival.filter(id=>CARD[id].faction==='hourai').length,1);
     const ids=inventory();assert.equal(ids.length,36);assert.equal(new Set(ids).size,36);assert(ids.every(id=>g.startingCardIds.has(id)));
     assert(CARDS.every(card=>g.cardAbilityEnabled(card.id)===['sdm','hakugyokurou','hourai'].includes(card.faction)));
-    assert(human.every(id=>g.handKnowledge[1].get(id)===0));assert.equal(g.handKnowledge[0].size,0);
+    assert(g.handKnowledge.every(memory=>memory.size===0));assert(!('openingHand' in g.storyMatch));
     const absent=storyFactionCards('hourai').filter(id=>!human.includes(id)&&!rival.includes(id)),draws=Array.from({length:5},()=>g.takeFromDrawPile(0));
     assert(absent.every(id=>draws.includes(id)));absent.forEach(id=>positions.add(draws.indexOf(id)+1));
     humanHands.add(human.slice().sort().join(','));rivalHands.add(rival.slice().sort().join(','));
   }
   ok(humanHands.size>480&&rivalHands.size>480,'512 real Eientei deals keep both six-card hands random with all required originals');
   ok(positions.size===5&&actors.size===2,'Undealt Eientei appears within the next five actual draws and both first actors remain possible');
-  ok(true,'All 512 deals conserve 36 unique cards, expose the opening only to the mentor and unlock exactly three factions');
+  ok(true,'All 512 deals conserve 36 unique cards, keep both opening hands private and unlock exactly three factions');
   const random=Math.random;
   for(const value of [0,.999999]){make();Math.random=()=>value;try{configureStoryMatch(game,4);assert(game.players.every(p=>p.hand.length===6));assert(game.players[0].hand.includes('hourai_kaguya'));assert(game.players[1].hand.includes('haku_yuyuko'));assert.equal(new Set(inventory()).size,36);}finally{Math.random=random;}}
   ok(true,'Constrained dealing terminates without duplicate or missing cards even with constant randomness');
@@ -59,7 +59,7 @@ vm.runInContext(`(async()=>{
   make(2,0,1);arrange({hands:[['sdm_remilia'],['sdm_flandre']],emptyPile:true});assert.equal((await aiDecideAction(1)).cardId,'sdm_flandre');
   ok(true,'The holding preference still yields to the mandatory legal-action rule');
   for(const board of [[],[[1,1,'haku_yuyuko']]]){
-    make(3,1,1);arrange({hands:[['sdm_flandre'],['haku_youmu','sdm_remilia']],board});
+    make(3,1,1);arrange({hands:[['sdm_flandre'],['haku_youmu','sdm_remilia']],board});game.revealHand(0,game.players[0].hand,[1]);
     let calls=0;const before=JSON.stringify(captureAIEvaluationSnapshot(game)),metrics=JSON.stringify(game.testMetrics);Math.random=()=>{calls++;throw Error('Planning must remain pure');};
     let action;try{action=await aiDecideAction(1);}finally{Math.random=random;}
     assert.equal(action.cardId,'haku_youmu');assert.equal(calls,0);assert.equal(before,JSON.stringify(captureAIEvaluationSnapshot(game)));assert.equal(metrics,JSON.stringify(game.testMetrics));

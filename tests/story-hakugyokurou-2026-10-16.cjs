@@ -22,7 +22,7 @@ vm.runInContext(`(async()=>{
     const used=[...hands.flat(),...discards.flat(),...board.map(cell=>cell[2]),...shop];assert.equal(used.length,new Set(used).size);
     game.drawPile=emptyPile?[]:shuffle(CARDS.filter(card=>!card.token&&!card.shopkeeper&&!card.shopExpansion&&!used.includes(card.id)).map(card=>card.id));
     game.startingCardIds=new Set([...used,...game.drawPile]);game.handKnowledge=game.players.map(()=>new Map());game.reserveAges=game.players.map(()=>({}));
-    const lesson=game.storyMatch||game.tutorialLesson;lesson.openingHand=hands[0].slice();game.revealHand(0,hands[0],[1]);
+    if(game.tutorialLesson){game.tutorialLesson.openingHand=hands[0].slice();game.revealHand(0,hands[0],[1]);}
     game.winner=null;game.stalemateMessage='';game.logLines=[];
   }
   async function place(id,p=0,r=1,c=1){assert(game.players[p].hand.includes(id),'Retain '+id+' in '+JSON.stringify(game.players[p].hand)+'; progress '+JSON.stringify(game.storyMatch?.progress)+'; log '+JSON.stringify(game.logLines.slice(-12)));game.removeFromHand(p,id);return game.internalPlace(id,r,c,p,0);}
@@ -34,7 +34,7 @@ vm.runInContext(`(async()=>{
     assert(human.includes('haku_yuyuko'));assert.equal(rival.filter(id=>CARD[id].faction==='sdm').length,2);
     assert(g.players.every(p=>p.hand.length===6));assert.equal(g.currentPlayerIdx,seed%2);assert(!g.kourindouEnabled&&g.shopCards.length===0);
     assert.equal(ids.length,36);assert.equal(new Set(ids).size,36);assert(ids.every(id=>g.startingCardIds.has(id)));
-    assert(human.every(id=>g.handKnowledge[1].get(id)===0));assert.equal(g.handKnowledge[0].size,0);
+    assert(g.handKnowledge.every(memory=>memory.size===0));assert(!('openingHand' in g.storyMatch));
     assert(CARDS.every(card=>g.cardAbilityEnabled(card.id)===['sdm','hakugyokurou'].includes(card.faction)));
     const absent=storyFactionCards('hakugyokurou').filter(id=>!human.includes(id)&&!rival.includes(id)),deck=g.drawPile.slice();
     const next=Array.from({length:5},()=>g.takeFromDrawPile(0));assert(absent.every(id=>next.includes(id)));
@@ -44,7 +44,7 @@ vm.runInContext(`(async()=>{
   ok(humanHands.size>240&&rivalHands.size>240,'Both chapter-three hands vary across 256 actual randomized openings');
   ok(positions.size===5&&missingCounts.has(0)&&missingCounts.has(1),'Undealt Youmu is reserved in any of the actual next five draw positions, while already-dealt cards stay in hand');
   ok(actors.size===2,'Chapter three preserves either first actor');
-  ok(true,'Every seeded opening has Yuyuko, exactly two opponent Mansion cards, unique stock, cumulative skills and correct mentor knowledge');
+  ok(true,'Every seeded opening has Yuyuko, exactly two opponent Mansion cards, unique stock, cumulative skills and private opening hands');
   const random=Math.random;
   for(const value of [0,.999999]){setup(3,0,'constant');Math.random=()=>value;try{configureStoryMatch(game,3);ok(game.players[0].hand.includes('haku_yuyuko')&&game.players[1].hand.filter(id=>CARD[id].faction==='sdm').length===2,'Constrained dealing terminates with constant randomness '+value);}finally{Math.random=random;}}
 
@@ -109,7 +109,7 @@ vm.runInContext(`(async()=>{
   setup(3,1);arrange({hands:[[],['sdm_patchouli']],board:[[1,0,'sdm_remilia'],[1,1,'sdm_flandre'],[2,1,'sdm_sakuya']]});
   let action=await aiDecideAction(1);ok(action.type==='place'&&action.cardId==='sdm_patchouli','An immediate Mansion collection takes priority over chapter-three stalling');
   await originalAction(1);ok(game.winCount(game.players[1])===4&&storyRaceLost(game),'The opponent really collects Mansion and the race fails at its four points');
-  setup(3,1);arrange({hands:[['sdm_flandre','sdm_patchouli'],['sdm_remilia','sdm_sakuya']]});
+  setup(3,1);arrange({hands:[['sdm_flandre','sdm_patchouli'],['sdm_remilia','sdm_sakuya']]});game.revealHand(0,game.players[0].hand,[1]);
   const redBefore=JSON.stringify(captureAIEvaluationSnapshot(game)),redMetrics=JSON.stringify(game.testMetrics);Math.random=()=>{throw Error('Chapter-three planning must not consume RNG');};
   try{action=await aiDecideAction(1);}finally{Math.random=random;}
   ok(redBefore===JSON.stringify(captureAIEvaluationSnapshot(game))&&redMetrics===JSON.stringify(game.testMetrics),'Mansion pursuit changes no real state, metrics, race history or randomness during planning');

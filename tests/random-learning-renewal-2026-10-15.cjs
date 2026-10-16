@@ -22,7 +22,7 @@ vm.runInContext(html.slice(html.indexOf('const TUTORIALS='),html.indexOf('let tu
         assert.equal(match.currentPlayerIdx,actor);assert(match.players.every(p=>p.hand.length===6));
         assert.equal(ids.length,new Set(ids).size);assert.equal(ids.length,match.startingCardIds.size);assert(ids.every(id=>match.startingCardIds.has(id)));
         assert(match.players.every(p=>p.hand.every(id=>!CARD[id].token&&!CARD[id].shopkeeper&&!CARD[id].shopExpansion)));
-        assert(human.every(id=>match.handKnowledge[1].get(id)===0));assert.equal(match.handKnowledge[0].size,0);
+        assert.equal(match.handKnowledge[0].size,0);if(mode==='tutorial')assert(human.every(id=>match.handKnowledge[1].get(id)===0));else{assert.equal(match.handKnowledge[1].size,0);assert(!('openingHand' in match.storyMatch));}
         const red=human.filter(id=>CARD[id].faction==='sdm').length;redCounts.add(red);
         if(!human.includes('sdm_remilia'))withoutRemilia++;
         if(mode===2){
@@ -77,11 +77,11 @@ vm.runInContext(html.slice(html.indexOf('const TUTORIALS='),html.indexOf('let tu
     try{configureStoryMatch(constant,2);ok(constant.players[0].hand.includes('sdm_remilia')&&constant.players[0].hand.some(id=>id!=='sdm_remilia'&&CARD[id].faction==='sdm'),'Conditional dealing terminates even under a constant RNG');}finally{Math.random=rng;}
     opening(1,'adaptive');
     const hands=[['palace_satori','palace_koishi','haku_youmu','haku_yuyuko','marisa','hell_clownpiece'],['palace_rin','palace_utsuho','hourai_mokou','temple_shou','heaven_tenshi','heaven_iku']];
-    game.players.forEach((p,i)=>p.hand=hands[i].slice());game.storyMatch.openingHand=hands[0].slice();game.handKnowledge=game.players.map(()=>new Map());game.revealHand(0,hands[0],[1]);
+    game.players.forEach((p,i)=>p.hand=hands[i].slice());game.handKnowledge=game.players.map(()=>new Map());game.revealHand(0,hands[0],[1]);
     const state=JSON.stringify(captureAIEvaluationSnapshot(game)),metrics=JSON.stringify(game.testMetrics);let focus;
     Math.random=()=>{throw Error('Adaptive mentoring must not consume RNG');};
     try{focus=aiLearningFourFaction(game,game.storyMatch);await aiStoryMentorAction(1);}finally{Math.random=rng;}
-    ok(focus==='palace','The story mentor retains support for the random player faction');
+    ok(focus==='palace','The story AI can support a faction after its cards are legitimately revealed');
     ok(state===JSON.stringify(captureAIEvaluationSnapshot(game))&&metrics===JSON.stringify(game.testMetrics),'Story mentor planning preserves the board, hands, knowledge and statistics');
     const randomMatches=[];
     for(const mode of [1,2,'tutorial']){
@@ -136,6 +136,13 @@ vm.runInContext(html.slice(html.indexOf('const TUTORIALS='),html.indexOf('let tu
   for(const language of ['en','zh-CN']){
     A.setLanguage(language);A.openCardDetails('sdm_sakuya');
     ok(el('card-detail-ability').textContent==='Zawarudo!','Sakuya details preserve the exclamation mark in '+language);A.closeCardDetails();
+  }
+  for(const chapter of [2,3,4]){
+    U.show(chapter);const intro=el('story-intro');
+    for(const language of ['en','zh-CN','en']){
+      A.setLanguage(language);vm.runInContext('localizeElement(el("story-intro"));',ctx);
+      ok(!intro.innerHTML.includes('card-reference')&&!intro.innerHTML.includes('data-inspect-card'),'The chapter '+chapter+' introduction stays free of card links after switching to '+language);
+    }U.close();
   }
   const listenerBase=resizeCount();U.show(2);flush();let cards=U.session().cards;
   ok(cards.length===4&&parseFloat(el('story-card-grid').values.get('--story-card-width'))>=180,'The introduction has four freely movable large cards');
