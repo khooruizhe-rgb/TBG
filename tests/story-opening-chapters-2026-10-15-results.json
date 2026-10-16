@@ -77,9 +77,9 @@
     "A legal Mansion placement takes precedence over strategic holding when it is the only available action: 2",
     "A legal Mansion placement takes precedence over strategic holding when it is the only available action: 3",
     "A legal Mansion placement takes precedence over strategic holding when it is the only available action: 4",
-    "Reacquiring a Mansion card resets its three-turn holding time",
+    "Reacquiring a Mansion card does not impose a holding restriction",
     "Before every Mansion card has appeared, AI prefers a legal shared draw over playing mature Mansion cards",
-    "When both hands are full, AI spends a safe non-Mansion card before a Mansion card",
+    "When hands are full, the AI can develop Mansion without preferring filler cards",
     "Once all core Mansion cards have appeared, the opponent resumes placing cards",
     "The delay condition records past placements even after faction collection empties the board",
     "Story planning does not mutate state, statistics or randomness",
@@ -211,10 +211,10 @@
     "The walkthrough conserves all original cards: 2/1/14",
     "A real full story match clears every objective: 2/1/15",
     "The walkthrough conserves all original cards: 2/1/15",
-    "A victory without extra goals cannot clear chapter two",
-    "Each extra objective is required: sdm",
-    "Each extra objective is required: remilia",
-    "Each extra objective is required: flandre",
+    "A zero-star victory clears chapter two",
+    "Each extra objective awards one independent star: sdm",
+    "Each extra objective awards one independent star: remilia",
+    "Each extra objective awards one independent star: flandre",
     "All extra goals without victory are insufficient",
     "Chapter one requires victory without impossible ability objectives",
     "Story chapters do not mutate global printed card definitions",
@@ -222,7 +222,7 @@
     "Chapter two shows all four active core cards before a match begins",
     "Start chapter launches one real match after the card introduction",
     "Story matches retain normal placement and shared drawing with the shop omitted",
-    "Winning with missing goals offers Retry",
+    "Winning with missing goals saves a zero-star clear and permits the next chapter",
     "A true clear records progress and enables chapter navigation",
     "Finishing chapter two retires its match and opens the Hakugyokurou skill introduction",
     "Clearing chapter one leads to the Mansion skill introduction",
@@ -1067,6 +1067,6 @@
       }
     }
   ],
-  "rulesVersion": "2026-10-16-story-hakugyokurou-active-mentor-v16",
+  "rulesVersion": "2026-10-16-story-stars-placement-v17",
   "scope": "Shipped story rules and AI, complete real-rule walkthroughs and controlled chapter UI lifecycle; no browser pixel verification"
 }

@@ -1,6 +1,6 @@
 {
   "status": "pass",
-  "count": 66,
+  "count": 68,
   "checks": [
     "Story hands remain random; the final tutorial restores both fixed hands while shuffling its remaining deck: 1",
     "Only chapter two reserves Remilia and another Mansion card: 1",
@@ -43,6 +43,7 @@
     "Sakuya details preserve the exclamation mark in en",
     "Sakuya details preserve the exclamation mark in zh-CN",
     "The introduction has four freely movable large cards",
+    "Mansion introduction glow inherits the actual Mansion faction color",
     "Each introduction card has fresh art, a worn layer, a renewal scan and an invitation glow: sdm_remilia",
     "Each introduction card has fresh art, a worn layer, a renewal scan and an invitation glow: sdm_flandre",
     "Each introduction card has fresh art, a worn layer, a renewal scan and an invitation glow: sdm_patchouli",
@@ -63,11 +64,12 @@
     "Reduced motion keeps cards draggable while skipping renewal motion and throws",
     "Starting the chapter disposes of the introduction before launching one game loop",
     "Chapter three renews only the two newly unlocked Hakugyokurou cards",
+    "Hakugyokurou introduction glow inherits its own pink faction color",
     "One tap inspects a chapter-three card using the real shared handler",
     "Dragging a chapter-three card does not open its details",
     "Closing the two-card introduction clears its gestures and listeners",
     "Chapter one has no skill-renewal cards",
-    "The new introduction instructions are localized"
+    "The introduction instructions and Back-to-exit label are localized"
   ],
   "samples": {
     "1": {
@@ -172,11 +174,11 @@
     },
     {
       "mode": 2,
-      "turns": 20,
-      "ending": "win",
-      "winner": 0,
+      "turns": 45,
+      "ending": "stalemate",
+      "winner": null,
       "points": [
-        9,
+        5,
         0
       ],
       "progress": {
@@ -201,6 +203,6 @@
       }
     }
   ],
-  "rulesVersion": "2026-10-16-story-hakugyokurou-active-mentor-v16",
+  "rulesVersion": "2026-10-16-story-stars-placement-v17",
   "scope": "512 seeded random story openings with chapter-two next-five-draw guarantees, 256 restored fixed-hand tutorial openings, 384 fixed exercise configurations with actual completions, complete production matches, bilingual Sakuya titles, real renderers and shared pointer physics in a controlled DOM; no browser pixel verification"
 }

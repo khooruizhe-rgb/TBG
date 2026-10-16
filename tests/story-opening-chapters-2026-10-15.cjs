@@ -90,10 +90,10 @@ vm.runInContext(`(async()=>{
     ok(action.type==='place'&&CARD[action.cardId].faction==='sdm','A legal Mansion placement takes precedence over strategic holding when it is the only available action: '+turn);
   }
   setup(2);game.beginPlayerTurn(1);game.beginPlayerTurn(1);game.beginPlayerTurn(1);game.beginPlayerTurn(1);game.removeFromHand(1,'sdm_sakuya');game.addToHand(1,'sdm_sakuya');
-  ok(!aiStoryPlacement(1,'sdm_sakuya',game.emptyCells(1)),'Reacquiring a Mansion card resets its three-turn holding time');
+  ok(!!aiStoryPlacement(1,'sdm_sakuya',game.emptyCells(1)),'Reacquiring a Mansion card does not impose a holding restriction');
   setup(2);game.reserveAges[1]={sdm_patchouli:99,sdm_sakuya:99};ok((await aiDecideAction(1)).type==='draw','Before every Mansion card has appeared, AI prefers a legal shared draw over playing mature Mansion cards');
   setup(2);game.players[0].hand.push('hell_kutaka');game.players[1].hand.push('sage_ran');game.reserveAges[1]={sdm_patchouli:99,sdm_sakuya:99};
-  let action=await aiDecideAction(1);ok(action.type==='place'&&CARD[action.cardId].faction!=='sdm','When both hands are full, AI spends a safe non-Mansion card before a Mansion card');
+  let action=await aiDecideAction(1);ok(action.type==='place'&&CARD[action.cardId].faction==='sdm','When hands are full, the AI can develop Mansion without preferring filler cards');
   setup(2);game.storyMatch.sdmPlaced=storyScarletCards();action=await aiDecideAction(1);
   ok(action.type==='place','Once all core Mansion cards have appeared, the opponent resumes placing cards');
   const record=game.storyMatch.sdmPlaced.slice();game.board=Array.from({length:4},()=>Array(4).fill(null));
@@ -121,8 +121,8 @@ vm.runInContext(`(async()=>{
     walkthroughs.push({chapter,actor,opening,turns,playerPoints:match.winCount(match.players[0]),opponentPoints:match.winCount(match.players[1]),progress:{...match.storyMatch.progress}});
   }
   setup(2);game.winner=game.players[0];
-  ok(!storyMatchComplete(game),'A victory without extra goals cannot clear chapter two');
-  for(const key of ['sdm','remilia','flandre']){game.storyMatch.progress={sdm:true,remilia:true,flandre:true};game.storyMatch.progress[key]=false;ok(!storyMatchComplete(game),'Each extra objective is required: '+key);}
+  ok(storyMatchComplete(game)&&storyMatchStars(game)===0,'A zero-star victory clears chapter two');
+  for(const key of ['sdm','remilia','flandre']){game.storyMatch.progress={sdm:true,remilia:true,flandre:true};game.storyMatch.progress[key]=false;ok(storyMatchComplete(game)&&storyMatchStars(game)===2,'Each extra objective awards one independent star: '+key);}
   game.storyMatch.progress={sdm:true,remilia:true,flandre:true};game.winner=game.players[1];ok(!storyMatchComplete(game),'All extra goals without victory are insufficient');
   setup(1);game.winner=game.players[0];ok(storyMatchComplete(game),'Chapter one requires victory without impossible ability objectives');
   ok(JSON.stringify(CARDS)===definitions,'Story chapters do not mutate global printed card definitions');
@@ -132,7 +132,7 @@ vm.runInContext(`(async()=>{
   const starts=storyLoopStarts;el('story-begin').events.click();const old=game;
   ok(isStoryMatch()&&game.storyMatch.chapter===2&&storyLoopStarts===starts+1&&!el('story-overlay').classList.contains('show'),'Start chapter launches one real match after the card introduction');
   ok(!tutorialAllowsTrade()&&tutorialAllowsAction('place','sdm_remilia')&&tutorialAllowsAction('draw'),'Story matches retain normal placement and shared drawing with the shop omitted');
-  game.winner=game.players[0];updateTutorialProgress();ok(!storyState.complete&&el('restart-btn').textContent==='Retry','Winning with missing goals offers Retry');
+  game.winner=game.players[0];updateTutorialProgress();ok(storyState.complete&&storyBestStars(2)===0&&!el('tutorial-next').disabled,'Winning with missing goals saves a zero-star clear and permits the next chapter');
   game.storyMatch.progress={sdm:true,remilia:true,flandre:true};updateTutorialProgress();ok(storyState.complete&&storyClearedChapters().includes(2)&&!el('tutorial-next').disabled,'A true clear records progress and enables chapter navigation');
   el('restart-btn').events.click();ok(old.cancelled&&game===null&&storyState===null&&storyMenuChapter===3&&el('story-card-grid').children.length===2,'Finishing chapter two retires its match and opens the Hakugyokurou skill introduction');
   showStoryChapterIntro(1);el('story-begin').events.click();game.winner=game.players[0];updateTutorialProgress();el('restart-btn').events.click();
@@ -140,7 +140,7 @@ vm.runInContext(`(async()=>{
   el('story-begin').events.click();const retired=game;game.storyMatch.progress.remilia=true;let idleResolved=0;window.__resolveHumanTurn=()=>idleResolved++;el('tutorial-retry').events.click();
   ok(retired.cancelled&&game!==retired&&!Object.values(game.storyMatch.progress).some(Boolean),'Retry resets objectives, holding ages and the entire old match');
   ok(idleResolved===1&&window.__resolveHumanTurn===null,'Story retry resolves the retired idle human turn and releases its controls');
-  game.winner=game.players[0];updateTutorialProgress();const beforeKey=game;pressStoryKey('n');
+  game.winner=game.players[1];updateTutorialProgress();const beforeKey=game;pressStoryKey('n');
   ok(game!==beforeKey&&beforeKey.cancelled&&game.storyMatch.chapter===2&&ordinaryRestarts===0,'N retries the current story chapter instead of starting an ordinary match');
   game.winner=game.players[0];game.storyMatch.progress={sdm:true,remilia:true,flandre:true};updateTutorialProgress();pressStoryKey('n');
   ok(game===null&&storyMenuChapter===3&&el('story-card-grid').children.length===2&&ordinaryRestarts===0,'N after chapter two follows the Hakugyokurou introduction');

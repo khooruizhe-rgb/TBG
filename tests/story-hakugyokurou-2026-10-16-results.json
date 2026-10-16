@@ -19,11 +19,11 @@
     "Three opponent points leave the race open",
     "The exact fourth opponent point permanently records a lost race",
     "Dropping below four later cannot erase the earlier race failure",
-    "All goals clear only when victory precedes the fourth opponent point: 0",
-    "All goals clear only when victory precedes the fourth opponent point: 3",
-    "All goals clear only when victory precedes the fourth opponent point: 4",
-    "Victory still requires the actual haku objective",
-    "Victory still requires the actual yuyuko objective",
+    "Victory clears the chapter while the race awards one independent star: 0",
+    "Victory clears the chapter while the race awards one independent star: 3",
+    "Victory clears the chapter while the race awards one independent star: 4",
+    "The haku objective awards a star without gating victory",
+    "The yuyuko objective awards a star without gating victory",
     "Teaching mode tutorial places a legal card even without strategic ability value: reimu",
     "The mandatory-action fallback preserves rules, metrics and randomness: tutorial/reimu",
     "The actual turn executes its mandatory legal placement: tutorial/reimu",
@@ -48,8 +48,8 @@
     "Teaching mode 3 places a legal card even without strategic ability value: haku_yuyuko",
     "The mandatory-action fallback preserves rules, metrics and randomness: 3/haku_yuyuko",
     "The actual turn executes its mandatory legal placement: 3/haku_yuyuko",
-    "The three-turn Mansion holding preference yields when its young card is the only legal move",
-    "A safe alternative preserves the Mansion holding preference",
+    "A newly acquired Mansion card can be played immediately",
+    "A filler alternative does not make the AI avoid its Mansion card",
     "The actual Youmu extra action also places a strategically unwanted but legal remaining card",
     "An actual placement block and empty deck allow a pass",
     "A placement-blocked teacher still draws whenever drawing is legal",
@@ -349,25 +349,25 @@
         1
       ],
       "progress": {
-        "haku": true,
+        "haku": false,
         "yuyuko": false
       },
       "raceLost": false
     },
     {
       "seed": 1,
-      "turns": 43,
-      "winner": null,
-      "stalemate": true,
+      "turns": 32,
+      "winner": 0,
+      "stalemate": false,
       "points": [
-        3,
-        4
+        8,
+        1
       ],
       "progress": {
-        "haku": true,
+        "haku": false,
         "yuyuko": false
       },
-      "raceLost": true
+      "raceLost": false
     },
     {
       "seed": 2,
@@ -431,18 +431,18 @@
     },
     {
       "seed": 6,
-      "turns": 23,
+      "turns": 19,
       "winner": 0,
       "stalemate": false,
       "points": [
-        10,
-        5
+        8,
+        1
       ],
       "progress": {
-        "haku": true,
+        "haku": false,
         "yuyuko": false
       },
-      "raceLost": true
+      "raceLost": false
     },
     {
       "seed": 7,
@@ -470,6 +470,6 @@
     4,
     5
   ],
-  "rulesVersion": "2026-10-16-story-hakugyokurou-active-mentor-v16",
+  "rulesVersion": "2026-10-16-story-stars-placement-v17",
   "scope": "Actual constrained deals, rule-level action availability and executed teaching turns, real cost/score/claim/race ownership, sixteen arranged legal mid-match clears, eight complete actual random matches without a strategic teaching pass, and chapter lifecycle in a controlled DOM. No random-opening clear guarantee or browser pixel verification."
 }

@@ -2726,8 +2726,8 @@ body:not(:has(#game.active)):not(.title-memory-active) #app{position:relative;z-
 #story-card-grid .story-ability-card .board-card{position:absolute;inset:0;width:100%;height:100%;font-size:clamp(11px,calc(var(--story-card-width)*.076),17px);border-radius:inherit;}
 #story-card-grid .story-ability-card .cname{font-size:inherit;}
 .story-ability-card>.story-old-face{z-index:2;animation:storyCardRenew 1350ms ease-in-out var(--story-refresh-delay,0ms) both;}
-.story-ability-card>.story-refresh-scan{position:absolute;left:0;right:0;top:0;height:3px;z-index:4;background:#fff9cb;box-shadow:0 0 12px 5px #ffe6a1,0 0 28px #ffe297;pointer-events:none;animation:storyCardScan 1350ms ease-in-out var(--story-refresh-delay,0ms) both;}
-.story-ability-card>.story-card-glow{position:absolute;inset:-5px;z-index:5;border:3px solid #73ecff;border-radius:16px;box-shadow:0 0 0 1px #19749bbf,0 0 18px 6px #18bce4b3,0 0 34px 10px #319be680,inset 0 0 12px #8df3ffb3;pointer-events:none;animation:storyCardInvite 1800ms ease-in-out infinite;}
+.story-ability-card>.story-refresh-scan{position:absolute;left:0;right:0;top:0;height:3px;z-index:4;background:color-mix(in srgb,var(--story-glow-color) 25%,white);box-shadow:0 0 12px 5px var(--story-glow-color),0 0 28px var(--story-glow-color);pointer-events:none;animation:storyCardScan 1350ms ease-in-out var(--story-refresh-delay,0ms) both;}
+.story-ability-card>.story-card-glow{position:absolute;inset:-5px;z-index:5;border:3px solid var(--story-glow-color);border-radius:16px;box-shadow:0 0 0 1px var(--story-glow-color),0 0 18px 6px color-mix(in srgb,var(--story-glow-color) 75%,transparent),0 0 34px 10px color-mix(in srgb,var(--story-glow-color) 50%,transparent),inset 0 0 12px color-mix(in srgb,var(--story-glow-color) 65%,white);pointer-events:none;animation:storyCardInvite 1800ms ease-in-out infinite;}
 .story-card-seen>.story-card-glow{animation:none;opacity:.2;}
 .story-ability-card.table-card-dragging>.story-card-glow{animation-play-state:paused;}
 @keyframes storyCardRenew{from{clip-path:inset(0 0 0 0)}to{clip-path:inset(100% 0 0 0)}}
@@ -4742,6 +4742,8 @@ class Game {
       if(!this.canOverrideTarget(cardId,occupied) || !this.moveBoardToHand(r,c,playerIdx,'yukari')) return {};
       this.recordTestAbility(cardId,'sage_yukari',true);
     } else if(!occupied && this.wastelandAt(r,c) && !this.canPlaceOnWasteland(CARD[cardId])) return {};
+    const storyScoreBefore=this.storyMatch?.chapter===3 && playerIdx===this.storyMatch.humanSeat && cardBaseId(cardId)==='haku_yuyuko'
+      ?this.winCount(this.players[playerIdx]):null;
     delete this.borrowedAbilities[cardId];
     this.setCardAt(r,c,cardId);
     this.recordTestPlacement(cardId,playerIdx);
@@ -4780,6 +4782,7 @@ class Game {
     // This also catches Koishi gained during the ability (Sanae, Mokou, Ran, Satori, etc.).
     if(depth<6) await this.resolveKoishiCascade(depth,playerIdx);
     else this.checkClaims(playerIdx);
+    if(storyScoreBefore!==null && this.winCount(this.players[playerIdx])-storyScoreBefore>=4)this.storyMatch.progress.yuyuko=true;
     this.checkWin();
     this.render();
     return flags;
@@ -5108,16 +5111,14 @@ class Game {
           self.log(`${me} declines Yuyuko's cost — the ability is skipped.`);
           break;
         }
-        const destroyed=[];let gained=0;
+        const destroyed=[];
         if(self.ui && self.ui.onSakuraBloom){
           try{ self.ui.onSakuraBloom({r,c}); }catch(_error){}
         }
         for(const cell of shuffle(adjacent).slice(0,x)){
-          const target=self.cardAt(cell.r,cell.c);destroyed.push(CARD[target].name);
-          if(self.moveBoardToDiscard(cell.r,cell.c,playerIdx,'yuyuko'))gained+=self.pointValue(target);
+          destroyed.push(CARD[self.cardAt(cell.r,cell.c)].name);
+          self.moveBoardToDiscard(cell.r,cell.c,playerIdx,'yuyuko');
         }
-        if(self.storyMatch?.chapter===3 && playerIdx===self.storyMatch.humanSeat && gained>=4
-          && cardBaseId(self.ruleContext?.actor||cardId)==='haku_yuyuko')self.storyMatch.progress.yuyuko=true;
         self.log(`${meS} Yuyuko randomly sends ${destroyed.join(', ')} to their discard pile (Cost ${roman[x]}).`);
         break;
       }
@@ -5576,7 +5577,7 @@ class Game {
 }
 
 /* 2026-10-12: creation, private newspapers and instance ability changes. */
-const REWORK_RULES_VERSION='2026-10-16-story-hakugyokurou-active-mentor-v16';
+const REWORK_RULES_VERSION='2026-10-16-story-stars-placement-v17';
 Game.prototype.canCreateWithMatara=function(){return this.mainBoardCells().length>=4;};
 let nextCreatedCard=0,nextHiddenChoice=0;
 const COPY_PASSIVES=new Set(['sage_yukari','sage_kasen','mtn_nitori','hell_hecatia','palace_koishi']);
@@ -5852,8 +5853,8 @@ Game.prototype.sanaeDrawCount=function(){return (this.hasActiveAbility('mtn_kana
 /* Story matches share the normal rules; chapter state only unlocks printed abilities. */
 const STORY_CHAPTERS=[
   {id:1,title:'Chapter 1 · The first table',body:'Cards have no abilities in this chapter. Place cards beside their faction, use Draw for Everyone when needed, and win the match. Try the two-card pair before finishing the four-card faction.',skills:[]},
-  {id:2,title:'Chapter 2 · Scarlet Devil Mansion',body:'Scarlet Devil Mansion abilities are now active. Win, claim that faction, finish Remilia’s ability with three Mansion cards in hand, and use Flandre to send an opponent’s hand card to their discard pile.',skills:['sdm'],introduced:'sdm'},
-  {id:3,title:'Chapter 3 · Hakugyokurou',body:'Hakugyokurou abilities are now active alongside Scarlet Devil Mansion. Claim Hakugyokurou, gain four points with one use of Yuyuko’s ability, and win before the opponent reaches four points.',skills:['sdm','hakugyokurou'],introduced:'hakugyokurou'}
+  {id:2,title:'Chapter 2 · Scarlet Devil Mansion',body:'Win to clear this chapter. Three stars: claim Scarlet Devil Mansion, finish Remilia’s ability with three Mansion cards in hand, and use Flandre to discard an opponent’s hand card.',skills:['sdm'],introduced:'sdm'},
+  {id:3,title:'Chapter 3 · Hakugyokurou',body:'Hakugyokurou abilities join Scarlet Devil Mansion. Win to clear this chapter. Three stars: claim Hakugyokurou, gain four points from one Yuyuko placement, and win before the opponent reaches four points.',skills:['sdm','hakugyokurou'],introduced:'hakugyokurou'}
 ];
 function storyFactionCards(faction){return CARDS.filter(card=>card.faction===faction&&!card.shopExpansion).map(card=>card.id);}
 function storyScarletCards(){return storyFactionCards('sdm');}
@@ -5916,9 +5917,25 @@ function configureStoryMatch(match,chapter){
   match.log('The match begins. Reach 7 discard points to win.');
 }
 function storyMatchComplete(match){
-  const story=match?.storyMatch;
-  return !!story && match.winner?.idx===story.humanSeat && (story.chapter===1 || Object.values(story.progress).every(Boolean))
-    && (story.chapter!==3 || !storyRaceLost(match));
+  return !!match?.storyMatch && match.winner?.idx===match.storyMatch.humanSeat;
+}
+function storyStarGoals(match){
+  const story=match.storyMatch,progress=story.progress;
+  if(story.chapter===2)return [
+    {key:'sdm',label:'Claim Scarlet Devil Mansion',done:progress.sdm},
+    {key:'remilia',label:'Remilia: hold three Mansion cards after her ability',done:progress.remilia},
+    {key:'flandre',label:'Flandre: discard an opponent hand card',done:progress.flandre}
+  ];
+  if(story.chapter===3)return [
+    {key:'haku',label:'Claim Hakugyokurou',done:progress.haku},
+    {key:'yuyuko',label:'Yuyuko: gain four points from one placement',done:progress.yuyuko},
+    {key:'race',label:'Win before the opponent reaches four points',done:storyMatchComplete(match)&&!storyRaceLost(match),failed:storyRaceLost(match)}
+  ];
+  return [];
+}
+function storyMatchStars(match){
+  if(!storyMatchComplete(match))return 0;
+  const goals=storyStarGoals(match);return goals.length?goals.filter(goal=>goal.done).length:3;
 }
 function storyScarletAllPlaced(match){return match.storyMatch.sdmCards.every(id=>match.storyMatch.sdmPlaced.includes(id));}
 function storyHakugyokurouAllPlaced(match){return match.storyMatch.hakuCards.every(id=>match.storyMatch.hakuPlaced.includes(id));}
@@ -7963,7 +7980,7 @@ const ZH_TEXT={
   "Pay a cost and choose an area": "支付代价并选择区域",
   "Step inside": "走进香霖堂",
   "Try a trade": "尝试交易",
-  "Back": "上一步",
+  "Back": "退出",
   "Retry": "重试",
   "Next": "下一步",
   "Finish": "完成",
@@ -8449,6 +8466,18 @@ Object.assign(ZH_TEXT,{
   'Connect Yuyuko and Youmu to claim Hakugyokurou.':'连接幽幽子与妖梦，收取白玉楼阵营。'
 });
 Object.assign(ZH_TEXT,{'Click a glowing card to read its ability. Drag cards freely to move and stack them.':'单击发光的卡牌查看技能。可以自由拖动、移动或叠放卡牌。'});
+Object.assign(ZH_TEXT,{
+  'Win to clear this chapter. Three stars: claim Scarlet Devil Mansion, finish Remilia’s ability with three Mansion cards in hand, and use Flandre to discard an opponent’s hand card.':'获胜即可通关。三星目标：收取红魔馆，发动蕾米莉亚后手持三张红魔馆卡牌，以及用芙兰朵露将对手手牌放入其弃牌区。',
+  'Hakugyokurou abilities join Scarlet Devil Mansion. Win to clear this chapter. Three stars: claim Hakugyokurou, gain four points from one Yuyuko placement, and win before the opponent reaches four points.':'白玉楼与红魔馆技能均已开放，获胜即可通关。三星目标：收取白玉楼、一次放置幽幽子获得四分，以及在电脑达到四分前获胜。',
+  'Yuyuko: gain four points from one placement':'幽幽子：一次放置获得四分（含技能与收取）',
+  'Stars earned':'获得星级',
+  'Star objectives':'三星目标',
+  'Chapter cleared. Replay to improve your stars.':'本关通关。可以重玩以提升星级。',
+  'Win to clear this chapter. Extra objectives award stars.':'获胜即可通关，额外目标用于获得星星。',
+  'The opponent reached four points. This star is unavailable this match; you can still win and clear the chapter.':'电脑已经达到四分，本局无法获得竞速星星，仍可获胜通关。',
+  'Gain four points from Yuyuko’s placement, including her ability and faction claims.':'放置幽幽子时合计获得四分；技能和随后收取阵营的分数都算。',
+  'Win to finish this introductory chapter.':'赢下这局，即可完成基础教学。'
+});
 function setCardAbilityTitle(node,cardId,{createdPreview=false}={}){
   const locked=game?.cardAbilityEnabled?.(cardId)===false;node.hidden=locked;
   // Pick once for this view; translation and observer updates keep the same title.
@@ -12647,6 +12676,7 @@ function aiTeachingFallbackAction(p,allowTrade=true){
   if(game.canDrawNormally(p))return {type:'draw'};
   if(game.isPlacementBlocked(p))return {type:'pass'};
   const protectedFactions=new Set((game.storyMatch?.openingHand||game.tutorialLesson?.openingHand||[]).map(id=>CARD[id]?.faction));
+  if(game.storyMatch?.chapter>=2)protectedFactions.delete('sdm');
   let best=null;
   for(const id of game.players[p].hand){
     for(const cell of game.emptyOrWastelandForCard(CARD[id],p).filter(at=>inBounds(at.r,at.c))){
@@ -12740,25 +12770,22 @@ async function aiDecideAction(playerIdx,...args){
 }
 function aiStoryPlacement(p,id,cells){
   const story=game.storyMatch;if(!story)return null;
-  const scarlet=CARD[id]?.faction==='sdm',stall=story.chapter===2&&!storyScarletAllPlaced(game);
-  if(story.chapter===2&&scarlet&&(game.reserveAges[p][id]||0)<=3)return null;
+  const scarlet=CARD[id]?.faction==='sdm';
   const protect=new Set(story.openingHand.map(card=>CARD[card].faction)),focus=aiLearningFourFaction(game,story);let best=null;
   for(const cell of cells.filter(at=>inBounds(at.r,at.c)&&!game.cardAt(at.r,at.c))){
     const pick=aiWithPlacement(id,cell,()=>{
       const claims=aiCurrentClaims(p),points=claims.reduce((n,claim)=>n+claim.points,0);
-      if((story.chapter===1||stall)&&(game.winCount(game.players[p])+points>3 || claims.some(claim=>protect.has(claim.faction))))return null;
-      if(story.chapter===2&&!story.progress.sdm&&claims.some(claim=>claim.faction==='sdm'))return null;
+      if(story.chapter===1&&(game.winCount(game.players[p])+points>3 || claims.some(claim=>protect.has(claim.faction))))return null;
       if(story.chapter===3&&!story.progress.haku&&claims.some(claim=>claim.faction==='hakugyokurou'))return null;
       const faction=CARD[id].faction,members=game.factionCells(faction),others=members.filter(at=>at.r!==cell.r||at.c!==cell.c);
       const distance=others.length?Math.min(...others.map(at=>Math.abs(at.r-cell.r)+Math.abs(at.c-cell.c))):0;
       const adjacent=DIRS4.filter(([dr,dc])=>game.boardMatchesFaction(cell.r+dr,cell.c+dc,faction)).length;
       const room=DIRS4.filter(([dr,dc])=>inBounds(cell.r+dr,cell.c+dc)&&!game.cardAt(cell.r+dr,cell.c+dc)).length;
       const support=story.chapter===1&&faction===focus?1000:0;
-      const knownRed=story.chapter===3&&scarlet?game.knownHandCards(p,'sdm').filter(card=>card.playerIdx!==p).length:0;
+      const knownRed=story.chapter>=2&&scarlet?game.knownHandCards(p,'sdm').filter(card=>card.playerIdx!==p).length:0;
       const redClaim=claims.some(claim=>claim.faction==='sdm');
-      const redGain=story.chapter===3&&id==='sdm_remilia'?knownRed:0;
-      const ownRed=game.players[p].hand.filter(card=>card!==id&&CARD[card].faction==='sdm').length;
-      const redPlan=story.chapter===3&&scarlet?200+(redClaim?10000:0)+redGain*500-(id==='sdm_sakuya'&&ownRed+others.length<3?500:0):0;
+      const redGain=story.chapter>=2&&id==='sdm_remilia'?knownRed:0;
+      const redPlan=story.chapter>=2&&scarlet?200+(redClaim?10000:0)+redGain*500:0;
       const value=support+points*100+adjacent*12-distance*5+room+redPlan;
       return {cell,value,redClaim,redGain};
     },p);
@@ -12767,25 +12794,19 @@ function aiStoryPlacement(p,id,cells){
   return best;
 }
 async function aiStoryMentorAction(p,allowTrade=true){
-  const story=game.storyMatch,stall=story.chapter===2&&!storyScarletAllPlaced(game);
-  if(story.chapter===3)return aiHakugyokurouStoryAction(p,allowTrade);
-  if(game.isPlacementBlocked(p))return game.canDrawNormally(p)?{type:'draw'}:{type:'pass'};
-  if(stall&&game.canDrawNormally(p))return {type:'draw'};
-  let best=null,scarlet=null;
+  const story=game.storyMatch;
+  if(story.chapter>=2)return aiFactionStoryAction(p,allowTrade);
+  if(game.isPlacementBlocked(p))return aiTeachingFallbackAction(p,allowTrade);
+  let best=null;
   for(const id of game.players[p].hand){
-    const red=CARD[id]?.faction==='sdm';
-    if(stall&&!red&&game.mainBoardCells().filter(cell=>CARD[game.cardAt(cell.r,cell.c)]?.faction!=='sdm').length>=6)continue;
     const pick=aiStoryPlacement(p,id,game.emptyOrWastelandForCard(CARD[id],p));if(!pick)continue;
-    const entry={...pick,cardId:id};
-    if(stall&&red){if(!scarlet||entry.value>scarlet.value)scarlet=entry;}
-    else if(!best||entry.value>best.value)best=entry;
+    if(!best||pick.value>best.value)best={...pick,cardId:id};
   }
-  best ||= scarlet;
   return best?{type:'place',cardId:best.cardId,r:best.cell.r,c:best.cell.c}:aiTeachingFallbackAction(p,allowTrade);
 }
-async function aiHakugyokurouStoryAction(p,allowTrade=true){
+async function aiFactionStoryAction(p,allowTrade=true){
   if(game.isPlacementBlocked(p))return aiTeachingFallbackAction(p,allowTrade);
-  const stall=!storyHakugyokurouAllPlaced(game);let best=null,urgent=null;
+  const stall=game.storyMatch.chapter===2?!storyScarletAllPlaced(game):!storyHakugyokurouAllPlaced(game);let best=null,urgent=null;
   for(const id of game.players[p].hand){
     const pick=aiStoryPlacement(p,id,game.emptyOrWastelandForCard(CARD[id],p));if(!pick)continue;
     const action={...pick,cardId:id};
@@ -14652,8 +14673,8 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='bd265c6a10e323a68a096e461dcb8a1b7e8851894487ba1437ed0e2e0ef48d90';
-const AI_EVALUATION_POLICY_DIGEST='7ef6c3cb7a9211d5dbaa31c754425d5c5d47efa6d055647f8f2b218a6b9d3077';
+const AI_EVALUATION_RULES_DIGEST='a904a5a7157e544cf8099baa36d200e7ef6d079fcd62708d6b091d24aa2cb8f4';
+const AI_EVALUATION_POLICY_DIGEST='078cfbb01a6ad85483e69b613e04aeca035e620970f1c037156603f406ad77fa';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
   if(!source)throw new Error('Game source is unavailable.');
@@ -14739,7 +14760,7 @@ function evalForkSummary(report){
   return {groups,invalidPairs,conclusion,completedPairs:report.pairs.length};
 }
 function evalValidateSnapshot(snapshot){
-  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-15-guided-opening-scarlet-reserve-v15','2026-10-15-random-learning-renewal-v14','2026-10-15-story-opening-chapters-v13','2026-10-14-original-creation-blueprints-v12','2026-10-14-guided-final-match-v11','2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
+  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-16-story-hakugyokurou-active-mentor-v16','2026-10-15-guided-opening-scarlet-reserve-v15','2026-10-15-random-learning-renewal-v14','2026-10-15-story-opening-chapters-v13','2026-10-14-original-creation-blueprints-v12','2026-10-14-guided-final-match-v11','2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
   const state=snapshot.state,n=state?.players?.length,size=snapshot.size;
   if(![4,5].includes(size) || ![2,3,4].includes(n) || !Number.isInteger(state.currentPlayerIdx) || state.currentPlayerIdx<0 || state.currentPlayerIdx>=n)throw new Error('Invalid position dimensions.');
   if(state.numPlayers!==n || state.players.some((p,i)=>p.idx!==i || !Array.isArray(p.hand) || !Array.isArray(p.discard)))throw new Error('Invalid position dimensions.');
@@ -15636,8 +15657,19 @@ el('tutorial-next').addEventListener('click',()=>tutorialStep(1));
 let storyState=null,storyMenuChapter=null,storyReturnFocus=null,storyIntroSession=null;
 const STORY_PROGRESS_KEY='tbg-story-chapters-v1';
 function isStoryMatch(){return !!storyState&&storyState.practice===game;}
-function storyClearedChapters(){
-  try{const value=JSON.parse(window.localStorage?.getItem(STORY_PROGRESS_KEY)||'[]');return Array.isArray(value)?value.filter(id=>STORY_CHAPTERS.some(chapter=>chapter.id===id)):[];}catch(_error){return [];}
+function storyProgressRecords(){
+  try{
+    const value=JSON.parse(window.localStorage?.getItem(STORY_PROGRESS_KEY)||'[]');
+    if(Array.isArray(value))return Object.fromEntries(value.filter(id=>STORY_CHAPTERS.some(chapter=>chapter.id===id)).map(id=>[id,3]));
+    if(value?.version!==2 || !value.chapters || typeof value.chapters!=='object' || Array.isArray(value.chapters))return {};
+    return Object.fromEntries(Object.entries(value.chapters).filter(([id,stars])=>STORY_CHAPTERS.some(chapter=>String(chapter.id)===id)&&Number.isInteger(stars)&&stars>=0&&stars<=3));
+  }catch(_error){return {};}
+}
+function storyClearedChapters(){return Object.keys(storyProgressRecords()).map(Number);}
+function storyBestStars(chapter){return storyProgressRecords()[chapter]??null;}
+function saveStoryStars(chapter,stars){
+  const chapters=storyProgressRecords();chapters[chapter]=Math.max(chapters[chapter]??0,stars);
+  try{window.localStorage?.setItem(STORY_PROGRESS_KEY,JSON.stringify({version:2,chapters}));}catch(_error){}
 }
 function clearStoryMatch(){
   closeStoryIntroCards();
@@ -15661,7 +15693,8 @@ function openStoryMenu(){
     const button=document.createElement('button');button.type='button';
     const title=document.createElement('strong');title.textContent=chapter.title;
     const description=document.createElement('small');setRuleText(description,chapter.body);
-    const status=document.createElement('small');status.textContent=cleared.includes(chapter.id)?'Cleared':'Not cleared';
+    const status=document.createElement('small'),label=document.createElement('span'),rating=document.createElement('span'),best=storyBestStars(chapter.id);
+    setRuleText(label,cleared.includes(chapter.id)?'Cleared':'Not cleared');rating.textContent=best===null?'':' '+'★'.repeat(best)+'☆'.repeat(3-best);status.append(label,rating);
     button.append(title,description,status);button.addEventListener('click',()=>showStoryChapterIntro(chapter.id));levels.appendChild(button);
   }
   el('story-overlay').classList.add('show');el('story-panel').focus();
@@ -15679,6 +15712,7 @@ function showStoryChapterIntro(chapter){
       const card=document.createElement('div');card.className='table-scatter-card table-card-moved story-ability-card';card.dataset.cardId=id;card.dataset.storyCard='true';card.dataset.angle=String([-5,3,-3,5][index]);
       card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',CARD[id].name);card.setAttribute('aria-describedby','story-card-instruction');card.setAttribute('aria-keyshortcuts','Enter Space I ArrowLeft ArrowRight ArrowUp ArrowDown');
       card.style.setProperty('--table-angle',card.dataset.angle+'deg');card.style.setProperty('--story-refresh-delay',index*100+'ms');
+      card.style.setProperty('--story-glow-color',FACTIONS[CARD[id].faction].color);
       card.innerHTML=`<div class="story-new-face">${cardBoardHtml(id)}</div><div class="story-old-face" aria-hidden="true">${cardBoardHtml(id,{wornPreview:true})}</div><span class="story-refresh-scan" aria-hidden="true"></span><span class="story-card-glow" aria-hidden="true"></span>`;
       for(const [event,handler]of [['pointerdown',onTitleCardPointerDown],['pointermove',onTitleCardPointerMove],['pointerup',onTitleCardPointerUp],['pointercancel',onTitleCardPointerCancel],['lostpointercapture',onTitleCardPointerCancel],['click',onTitleCardClick],['keydown',onTitleCardKeyDown]])card.addEventListener(event,handler);
       grid.appendChild(card);session.cards.push(card);
@@ -15713,7 +15747,7 @@ function openStoryChapter(chapter){
   if(!STORY_CHAPTERS.some(level=>level.id===chapter)||online||game&&!game.cancelled&&!isStoryMatch())return;
   resetGameView();closeAITestDashboard();updateAITestControls();SIZE=4;
   let cancel;const cancelled=new Promise(resolve=>{cancel=resolve;});
-  const state={chapter,cancel,cancelled,practice:null,complete:false,saved:false};storyState=state;
+  const state={chapter,cancel,cancelled,practice:null,complete:false,savedStars:null};storyState=state;
   const practiceUI={...ui};
   for(const name of ['pickPlayer','pickFromList','pickOwnHandCard','pickOwnHandCards','pickHandCard','pickCardPool','arrangeDrawPileCards','pickRectByDrag','pickCell','promptText'])
     practiceUI[name]=(...args)=>Promise.race([ui[name](...args),cancelled.then(()=>name==='pickRectByDrag'?[]:null)]);
@@ -15724,17 +15758,21 @@ function openStoryChapter(chapter){
 }
 function updateStoryProgress(){
   if(!isStoryMatch())return;const state=storyState;state.complete=storyMatchComplete(game);
-  if(state.complete&&!state.saved){state.saved=true;try{window.localStorage?.setItem(STORY_PROGRESS_KEY,JSON.stringify([...new Set([...storyClearedChapters(),state.chapter])]));}catch(_error){}}
+  if(state.complete){
+    const stars=storyMatchStars(game);
+    if(state.savedStars!==stars){saveStoryStars(state.chapter,stars);state.savedStars=stars;}
+  }
   renderStoryCoach();
 }
 function renderStoryCoach(){
-  if(!isStoryMatch())return;const state=storyState,definition=STORY_CHAPTERS[state.chapter-1],progress=game.storyMatch.progress,won=game.winner?.idx===0;
+  if(!isStoryMatch())return;const state=storyState,definition=STORY_CHAPTERS[state.chapter-1],progress=game.storyMatch.progress;
   el('tutorial-progress').innerHTML=ruleTextHtml('Story Mode')+' · '+state.chapter+' / '+STORY_CHAPTERS.length;
   el('tutorial-title').textContent=definition.title;setRuleText(el('tutorial-copy'),definition.body);
-  const raceLost=state.chapter===3&&storyRaceLost(game);
-  const goals=state.chapter===1?[['Victory',won]]:state.chapter===3?[['Claim Hakugyokurou',progress.haku],['Yuyuko: gain four points with one ability',progress.yuyuko],['Win before the opponent reaches four points',won&&!raceLost,raceLost],['Victory',won]]:[['Claim Scarlet Devil Mansion',progress.sdm],['Remilia: hold three Mansion cards after her ability',progress.remilia],['Flandre: discard an opponent hand card',progress.flandre],['Victory',won]];
-  const hint=state.complete?'All objectives complete. Chapter cleared.':raceLost?'The opponent reached four points. Retry this chapter to complete the race objective.':game.winner||game.stalemateMessage?'Win and complete every objective in the same match. Retry to try again.':state.chapter===3?!progress.yuyuko?'Keep four payment cards and surround an empty square on all four sides for Yuyuko.':!progress.haku?'Connect Yuyuko and Youmu to claim Hakugyokurou.':'Win before the opponent reaches four points.':state.chapter===1?'Start with the two-card pair, then connect four Mansion cards. Abilities and extra-turn effects are inactive.':!progress.remilia?'Try Remilia while the other Mansion cards are still in hands.':!progress.flandre?'With Flandre, choose the opponent and send one of their hand cards to their discard pile.':!progress.sdm&&game.winCount(game.players[0])<2?'Before finishing Mansion with Sakuya, claim a two-card faction. Unused cards return when time resumes.':!progress.sdm?'Connect four Mansion cards and claim the faction.':'Win the match to clear this chapter.';
-  el('tutorial-feedback').innerHTML='<span class="tutorial-checklist">'+goals.map(([label,done,failed])=>'<span class="tutorial-goal'+(done?' done':'')+(failed?' failed':'')+'">'+(failed?'✗':done?'✓':'○')+' '+ruleTextHtml(label)+'</span>').join('')+'</span>'+ruleTextHtml(hint);
+  const goals=storyStarGoals(game),raceLost=state.chapter===3&&storyRaceLost(game);
+  const stars=state.complete?storyMatchStars(game):0;
+  const heading=state.complete?ruleTextHtml('Stars earned')+': '+'★'.repeat(stars)+'☆'.repeat(3-stars):goals.length?ruleTextHtml('Star objectives'):'';
+  const hint=state.complete?'Chapter cleared. Replay to improve your stars.':game.winner||game.stalemateMessage?'Win to clear this chapter. Extra objectives award stars.':raceLost?'The opponent reached four points. This star is unavailable this match; you can still win and clear the chapter.':state.chapter===3?!progress.yuyuko?'Gain four points from Yuyuko’s placement, including her ability and faction claims.':!progress.haku?'Connect Yuyuko and Youmu to claim Hakugyokurou.':'Win before the opponent reaches four points.':state.chapter===1?'Win to finish this introductory chapter.':!progress.remilia?'Try Remilia while the other Mansion cards are still in hands.':!progress.flandre?'With Flandre, choose the opponent and send one of their hand cards to their discard pile.':!progress.sdm?'Connect four Mansion cards and claim the faction.':'Win the match to clear this chapter.';
+  el('tutorial-feedback').innerHTML='<span class="story-stars">'+heading+'</span><span class="tutorial-checklist">'+goals.map(goal=>'<span class="tutorial-goal'+(goal.done?' done':'')+(goal.failed?' failed':'')+'">'+(goal.failed?'✗':goal.done?'★':'☆')+' '+ruleTextHtml(goal.label)+'</span>').join('')+'</span>'+ruleTextHtml(hint);
   el('tutorial-back').disabled=false;setRuleText(el('tutorial-back'),'Chapters');el('tutorial-next').disabled=!state.complete;
   const next=STORY_CHAPTERS.some(chapter=>chapter.id===state.chapter+1);
   setRuleText(el('tutorial-next'),next?'Next chapter':'Chapters');setRuleText(el('restart-btn'),state.complete?(next?'Next chapter':'Chapters'):'Retry');

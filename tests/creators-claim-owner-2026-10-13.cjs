@@ -114,6 +114,6 @@ vm.runInContext(`(async()=>{
   await game.resolveAbility('sage_matara',1,1,0,0);ok(game.players[0].hand.some(id=>CARD[id]?.createdCopy&&!game.isOnBoard(id)),'A created card with no legal destination remains in hand');
   setup();const saved=copied('hourai_reisen',2);hold(0,[saved]);game.startingCardIds=new Set([saved]);
   const snap=captureAIEvaluationSnapshot(game);snap.rulesVersion='2026-10-13-matara-threshold-eirin-v6';
-  evalRestore(snap,['current','current','current']);ok(game.players[0].hand.includes(saved)&&CARD[saved].abilityMultiplier===2&&REWORK_RULES_VERSION.endsWith('v16'),'Regular v6 snapshots restore their existing double cards under the swapped rules');
+  evalRestore(snap,['current','current','current']);ok(game.players[0].hand.includes(saved)&&CARD[saved].abilityMultiplier===2&&REWORK_RULES_VERSION.endsWith('v17'),'Regular v6 snapshots restore their existing double cards under the swapped rules');
   return {status:'pass',count:checks.length,checks,details,rulesVersion:REWORK_RULES_VERSION,scope:'Actual placements, costs, ownership, deterministic previews and three-card offer bounds'};
 })()`,ctx).then(result=>{fs.writeFileSync(__dirname+'/creators-claim-owner-2026-10-13-results.json',JSON.stringify(result,null,2)+'\n');console.log(result.count+' creator/claim-owner checks passed');}).catch(error=>{console.error(error.stack);process.exitCode=1;});

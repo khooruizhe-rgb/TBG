@@ -74,9 +74,9 @@ vm.runInContext(`(async()=>{
   for(const rivalPoints of [0,3,4]){
     setup();arrange({discards:[['mtn_sanae','mtn_aya','hourai_mokou','temple_shou','sage_ran','yuuka','medicine'],['sdm_remilia','sdm_flandre','sdm_sakuya','sdm_patchouli'].slice(0,rivalPoints)]});
     game.storyMatch.progress={haku:true,yuyuko:true};game.checkWin();
-    ok(storyMatchComplete(game)===(rivalPoints<4),'All goals clear only when victory precedes the fourth opponent point: '+rivalPoints);
+    ok(storyMatchComplete(game)&&storyMatchStars(game)===(rivalPoints<4?3:2),'Victory clears the chapter while the race awards one independent star: '+rivalPoints);
   }
-  for(const missing of ['haku','yuyuko']){setup();game.storyMatch.progress={haku:true,yuyuko:true};game.storyMatch.progress[missing]=false;game.winner=game.players[0];ok(!storyMatchComplete(game),'Victory still requires the actual '+missing+' objective');}
+  for(const missing of ['haku','yuyuko']){setup();game.storyMatch.progress={haku:true,yuyuko:true};game.storyMatch.progress[missing]=false;game.winner=game.players[0];ok(storyMatchComplete(game)&&storyMatchStars(game)===2,'The '+missing+' objective awards a star without gating victory');}
 
   for(const mode of ['tutorial',1,2,3])for(const card of ['reimu','haku_yuyuko']){
     setup(mode,1);arrange({hands:[[],[card]],emptyPile:true});
@@ -87,9 +87,9 @@ vm.runInContext(`(async()=>{
     await originalAction(1);ok(game.isOnBoard(card),'The actual turn executes its mandatory legal placement: '+mode+'/'+card);
   }
   setup(2,1);arrange({hands:[[],['sdm_sakuya']],emptyPile:true});
-  ok((await aiDecideAction(1)).type==='place','The three-turn Mansion holding preference yields when its young card is the only legal move');
+  ok((await aiDecideAction(1)).type==='place','A newly acquired Mansion card can be played immediately');
   setup(2,1);arrange({hands:[[],['sdm_sakuya','hourai_mokou']],emptyPile:true});
-  ok((await aiDecideAction(1)).cardId==='hourai_mokou','A safe alternative preserves the Mansion holding preference');
+  ok((await aiDecideAction(1)).cardId==='sdm_sakuya','A filler alternative does not make the AI avoid its Mansion card');
   setup(3,1);arrange({hands:[[],['haku_youmu','reimu']],emptyPile:true});
   const followup=await originalAction(1);await afterAction(1,followup);
   ok(game.isOnBoard('haku_youmu')&&game.isOnBoard('reimu')&&!game.players[1].hand.length,'The actual Youmu extra action also places a strategically unwanted but legal remaining card');

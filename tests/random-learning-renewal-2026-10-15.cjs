@@ -139,6 +139,7 @@ vm.runInContext(html.slice(html.indexOf('const TUTORIALS='),html.indexOf('let tu
   }
   const listenerBase=resizeCount();U.show(2);flush();let cards=U.session().cards;
   ok(cards.length===4&&parseFloat(el('story-card-grid').values.get('--story-card-width'))>=180,'The introduction has four freely movable large cards');
+  ok(cards.every(card=>card.values.get('--story-glow-color')===vm.runInContext('FACTIONS.sdm.color',ctx)),'Mansion introduction glow inherits the actual Mansion faction color');
   for(const card of cards){
     ok(card.innerHTML.includes('story-new-face')&&card.innerHTML.includes('story-old-face')&&card.innerHTML.includes('card-rin-worn')&&card.innerHTML.includes('story-refresh-scan')&&card.innerHTML.includes('story-card-glow'),'Each introduction card has fresh art, a worn layer, a renewal scan and an invitation glow: '+card.dataset.cardId);
   }
@@ -168,13 +169,14 @@ vm.runInContext(html.slice(html.indexOf('const TUTORIALS='),html.indexOf('let tu
   U.show(2);flush();el('story-begin').events.click[0]();ok(loopStarts===1&&U.session()===null&&!el('story-overlay').classList.contains('show'),'Starting the chapter disposes of the introduction before launching one game loop');
   ctx.resetGameView();U.show(3);flush();cards=U.session().cards;
   ok(cards.length===2&&cards.every(card=>['haku_yuyuko','haku_youmu'].includes(card.dataset.cardId)),'Chapter three renews only the two newly unlocked Hakugyokurou cards');
+  ok(cards.every(card=>card.values.get('--story-glow-color')===vm.runInContext('FACTIONS.hakugyokurou.color',ctx)),'Hakugyokurou introduction glow inherits its own pink faction color');
   const third=cards[0],thirdRect=third.getBoundingClientRect();trigger(third,'pointerdown');now+=60;trigger(third,'pointerup');
   ok(el('card-detail-overlay').classList.contains('show')&&third.classList.contains('story-card-seen'),'One tap inspects a chapter-three card using the real shared handler');A.closeCardDetails();now+=500;
   const other=cards[1],otherRect=other.getBoundingClientRect();trigger(other,'pointerdown');now+=25;trigger(other,'pointermove',{clientX:otherRect.left+otherRect.width/2+35});now+=25;trigger(other,'pointerup',{clientX:otherRect.left+otherRect.width/2+35});trigger(other,'click');
   ok(!el('card-detail-overlay').classList.contains('show')&&!other.classList.contains('story-card-seen'),'Dragging a chapter-three card does not open its details');U.close();
   ok(U.session()===null&&U.slides()===0&&resizeCount()===listenerBase,'Closing the two-card introduction clears its gestures and listeners');
   U.show(1);ok(U.session()===null&&el('story-card-grid').hidden,'Chapter one has no skill-renewal cards');U.close();
-  A.setLanguage('zh-CN');ok(A.translateGameText('Click a glowing card to read its ability. Drag cards freely to move and stack them.').includes('单击'),'The new introduction instructions are localized');
+  A.setLanguage('zh-CN');ok(A.translateGameText('Click a glowing card to read its ability. Drag cards freely to move and stack them.').includes('单击')&&A.translateGameText('Back')==='退出','The introduction instructions and Back-to-exit label are localized');
   const result={status:'pass',count:checks.length,checks,samples:rules.samples,exerciseSamples:rules.exerciseSamples,randomMatches:rules.randomMatches,rulesVersion:rules.rulesVersion,scope:'512 seeded random story openings with chapter-two next-five-draw guarantees, 256 restored fixed-hand tutorial openings, 384 fixed exercise configurations with actual completions, complete production matches, bilingual Sakuya titles, real renderers and shared pointer physics in a controlled DOM; no browser pixel verification'};
   fs.writeFileSync(__dirname+'/random-learning-renewal-2026-10-15-results.json',JSON.stringify(result,null,2)+'\n');console.log(result.count+' learning and renewal checks passed across 768 production openings');
 })().catch(error=>{console.error(error.stack);process.exitCode=1;});
