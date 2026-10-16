@@ -116,9 +116,9 @@
     {
       "actor": 0,
       "seed": 0,
-      "turns": 3,
+      "turns": 5,
       "points": [
-        7,
+        8,
         0
       ],
       "progress": {
@@ -144,9 +144,9 @@
     {
       "actor": 0,
       "seed": 2,
-      "turns": 3,
+      "turns": 5,
       "points": [
-        7,
+        8,
         0
       ],
       "progress": {
@@ -341,33 +341,33 @@
   "productionMatches": [
     {
       "seed": 0,
-      "turns": 33,
+      "turns": 28,
+      "winner": 1,
+      "stalemate": false,
+      "points": [
+        2,
+        7
+      ],
+      "progress": {
+        "haku": false,
+        "yuyuko": false
+      },
+      "raceLost": true
+    },
+    {
+      "seed": 1,
+      "turns": 8,
       "winner": 0,
       "stalemate": false,
       "points": [
-        10,
-        3
+        7,
+        0
       ],
       "progress": {
         "haku": true,
         "yuyuko": false
       },
       "raceLost": false
-    },
-    {
-      "seed": 1,
-      "turns": 18,
-      "winner": 0,
-      "stalemate": false,
-      "points": [
-        7,
-        4
-      ],
-      "progress": {
-        "haku": true,
-        "yuyuko": false
-      },
-      "raceLost": true
     },
     {
       "seed": 2,
@@ -386,41 +386,41 @@
     },
     {
       "seed": 3,
-      "turns": 43,
-      "winner": 1,
-      "stalemate": true,
+      "turns": 28,
+      "winner": 0,
+      "stalemate": false,
       "points": [
-        2,
+        8,
         5
       ],
       "progress": {
-        "haku": true,
+        "haku": false,
         "yuyuko": false
       },
       "raceLost": true
     },
     {
       "seed": 4,
-      "turns": 15,
+      "turns": 21,
       "winner": 0,
       "stalemate": false,
       "points": [
-        9,
-        0
+        7,
+        4
       ],
       "progress": {
         "haku": false,
         "yuyuko": false
       },
-      "raceLost": false
+      "raceLost": true
     },
     {
       "seed": 5,
-      "turns": 40,
+      "turns": 41,
       "winner": 0,
       "stalemate": true,
       "points": [
-        5,
+        6,
         4
       ],
       "progress": {
@@ -431,26 +431,26 @@
     },
     {
       "seed": 6,
-      "turns": 17,
+      "turns": 25,
       "winner": 0,
       "stalemate": false,
       "points": [
-        8,
+        10,
         3
       ],
       "progress": {
-        "haku": false,
+        "haku": true,
         "yuyuko": false
       },
       "raceLost": false
     },
     {
       "seed": 7,
-      "turns": 22,
+      "turns": 32,
       "winner": 0,
       "stalemate": false,
       "points": [
-        7,
+        10,
         1
       ],
       "progress": {

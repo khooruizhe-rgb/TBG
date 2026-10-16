@@ -19,11 +19,13 @@ vm.runInContext(`(async()=>{
   }
   for(const chapter of [1,2,3,4,5]){
     for(let seed=0;seed<32;seed++){
-      const g=fresh(chapter,seed);assert(g.handKnowledge.every(memory=>memory.size===0));assert(!('openingHand' in g.storyMatch));
-      assert(g.knownHandCards(1).every(card=>card.playerIdx===1));assert.equal(g.knownHandCards(1).length,6);
-      assert.equal(aiLearningFourFaction(g,g.storyMatch),null);assert.equal(aiLearningProtectedFactions(g,1).size,0);
+      const g=fresh(chapter,seed);assert(!('openingHand' in g.storyMatch));
+      if(chapter===1){
+        assert.equal(g.handKnowledge[0].size,0);assert.equal(g.handKnowledge[1].size,6);assert(g.players[0].hand.every(id=>g.handKnowledge[1].get(id)===0));assert.equal(g.knownHandCards(1).length,12);
+        assert.equal(aiLearningProtectedFactions(g,1).size,new Set(g.players[0].hand.map(id=>CARD[id].faction)).size);
+      }else{assert(g.handKnowledge.every(memory=>memory.size===0));assert(g.knownHandCards(1).every(card=>card.playerIdx===1));assert.equal(g.knownHandCards(1).length,6);assert.equal(aiLearningFourFaction(g,g.storyMatch),null);assert.equal(aiLearningProtectedFactions(g,1).size,0);}
     }
-    ok(true,'Chapter '+chapter+' begins without shared opening knowledge, a hidden opening list or a faction inferred from that list across 32 actual deals');
+    ok(true,'Chapter '+chapter+' shares only the first chapter’s six opening cards; later chapters keep private starts and no hidden opening list across 32 actual deals');
   }
   for(const n of [2,3,4])for(const difficulty of Object.keys(AI_DIFFICULTIES))for(const policy of ['current','previous','baseline']){
     for(let seed=0;seed<8;seed++){
@@ -36,7 +38,7 @@ vm.runInContext(`(async()=>{
     fresh(null,seed);configureTutorialMatch(game);assert.equal(aiTutorialKnownHand(game).length,6);assert(game.players[0].hand.every(id=>game.handKnowledge[1].get(id)===0));
     const next=game.takeFromDrawPile(0);game.addToHand(0,next);assert(!aiTutorialKnownHand(game).includes(next));
   }
-  ok(true,'Only the final tutorial keeps all six starting cards, without gaining knowledge of subsequent hidden draws');
+  ok(true,'The final tutorial keeps all six starting cards, without gaining knowledge of subsequent hidden draws');
   fresh();configureTutorialMatch(game);fresh();ok(game.handKnowledge.every(memory=>memory.size===0),'Leaving the tutorial does not carry its special knowledge into an ordinary match');
 
   const variants=[['sdm_flandre','sdm_patchouli','reimu','marisa','yuuka','medicine'],['mtn_sanae','mtn_aya','reimu','marisa','yuuka','medicine']];

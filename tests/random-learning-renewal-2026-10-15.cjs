@@ -22,7 +22,7 @@ vm.runInContext(html.slice(html.indexOf('const TUTORIALS='),html.indexOf('let tu
         assert.equal(match.currentPlayerIdx,actor);assert(match.players.every(p=>p.hand.length===6));
         assert.equal(ids.length,new Set(ids).size);assert.equal(ids.length,match.startingCardIds.size);assert(ids.every(id=>match.startingCardIds.has(id)));
         assert(match.players.every(p=>p.hand.every(id=>!CARD[id].token&&!CARD[id].shopkeeper&&!CARD[id].shopExpansion)));
-        assert.equal(match.handKnowledge[0].size,0);if(mode==='tutorial')assert(human.every(id=>match.handKnowledge[1].get(id)===0));else{assert.equal(match.handKnowledge[1].size,0);assert(!('openingHand' in match.storyMatch));}
+        assert.equal(match.handKnowledge[0].size,0);if(mode==='tutorial'||mode===1)assert(human.every(id=>match.handKnowledge[1].get(id)===0));else{assert.equal(match.handKnowledge[1].size,0);assert(!('openingHand' in match.storyMatch));}
         const red=human.filter(id=>CARD[id].faction==='sdm').length;redCounts.add(red);
         if(!human.includes('sdm_remilia'))withoutRemilia++;
         if(mode===2){

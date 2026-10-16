@@ -194,15 +194,15 @@
     },
     {
       "mode": 2,
-      "turns": 20,
+      "turns": 29,
       "ending": "win",
       "winner": 0,
       "points": [
-        9,
+        1,
         0
       ],
       "progress": {
-        "sdm": true,
+        "sdm": false,
         "remilia": false,
         "flandre": false
       }

@@ -5997,6 +5997,7 @@ function configureStoryMatch(match,chapter){
     sdmCards:storyScarletCards(),sdmPlaced:[],hakuCards:storyFactionCards('hakugyokurou'),hakuPlaced:[],houraiCards:storyFactionCards('hourai'),houraiPlaced:[],opponentReachedFour:false,
     mountainCards:storyFactionCards('mountain'),mountainPlaced:[],readPapers:[],
     progress:chapter===5?{mountain:false,stalemate:false,newsGuess:false}:chapter===4?{hourai:false,kaguya:false,handTen:false}:chapter===3?{haku:false,yuyuko:false}:{sdm:false,remilia:false,flandre:false}};
+  if(chapter===1)match.revealHand(match.storyMatch.humanSeat,match.players[match.storyMatch.humanSeat].hand,[match.storyMatch.aiSeat]);
   match.winner=null;match.stalemateMessage='';match.logLines=[];
   match.log('The match begins. Reach 7 discard points to win.');
 }
@@ -12917,6 +12918,29 @@ async function aiDecideAction(playerIdx,...args){
   const action=await (game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiDecideAction(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline'?AI_FROZEN_POLICY.aiDecideAction(playerIdx,...args):aiCurrentDecideAction(playerIdx,...args));
   return action;
 }
+function aiStoryThreeCardAction(p){
+  const story=game.storyMatch;
+  if(![2,3].includes(story?.chapter)||p!==story.aiSeat||game.isPlacementBlocked(p))return null;
+  const hand=game.players[p].hand,publiclyUnavailable=new Set([...hand,...game.players.flatMap(player=>player.discard),...game.boardCells().map(cell=>game.cardAt(cell.r,cell.c))]);
+  const stock=game.startingCardIds||new Set(CARDS.filter(card=>!card.token&&!card.shopkeeper&&!card.shopExpansion).map(card=>card.id));
+  let best=null;
+  for(const id of hand){
+    const faction=CARD[id]?.faction;if(FACTIONS[faction]?.size!==4)continue;
+    if(story.chapter===2&&faction==='sdm'&&!storyScarletAllPlaced(game))continue;
+    const count=game.factionCells(faction).length,material=hand.filter(card=>game.cardMatchesFaction(card,faction)).length;
+    if(count>=3||count+material<2||![...stock].some(card=>CARD[card]?.faction===faction&&!publiclyUnavailable.has(card)))continue;
+    const cells=game.emptyOrWastelandForCard(CARD[id],p).filter(cell=>inBounds(cell.r,cell.c)&&!game.cardAt(cell.r,cell.c)
+      && aiWithPlacement(id,cell,()=>{
+        const members=game.factionCells(faction),missing=3-members.length;
+        return (missing===0?game.isConnected(members):aiCanConnectFaction(faction,missing))
+          && aiCanConnectFaction(faction,4-members.length);
+      },p));
+    const pick=aiStoryPlacement(p,id,cells);if(!pick)continue;
+    const value=(count+material>=3?10000:0)+count*1000+pick.value;
+    if(!best||value>best.value)best={type:'place',cardId:id,r:pick.cell.r,c:pick.cell.c,value};
+  }
+  return best&&{type:best.type,cardId:best.cardId,r:best.r,c:best.c};
+}
 function aiStoryPlacement(p,id,cells){
   const story=game.storyMatch;if(!story)return null;
   const scarlet=CARD[id]?.faction==='sdm',stall=story.chapter===2&&!storyScarletAllPlaced(game);
@@ -12949,6 +12973,7 @@ async function aiStoryMentorAction(p,allowTrade=true){
   if(story.chapter>=4)return aiSkilledStoryAction(p,allowTrade);
   if(story.chapter===3)return aiFactionStoryAction(p,allowTrade);
   if(game.isPlacementBlocked(p))return aiTeachingFallbackAction(p,allowTrade);
+  const support=aiStoryThreeCardAction(p);if(support)return support;
   if(stall&&game.canDrawNormally(p))return {type:'draw'};
   let best=null,scarlet=null;
   for(const id of game.players[p].hand){
@@ -12970,6 +12995,7 @@ async function aiFactionStoryAction(p,allowTrade=true){
     const pick=aiStoryPlacement(p,youmu,cells),cell=pick?.cell||cells[0];
     if(cell)return {type:'place',cardId:youmu,r:cell.r,c:cell.c};
   }
+  const support=aiStoryThreeCardAction(p);if(support)return support;
   const stall=!storyHakugyokurouAllPlaced(game);let best=null,urgent=null;
   for(const id of game.players[p].hand){
     const pick=aiStoryPlacement(p,id,game.emptyOrWastelandForCard(CARD[id],p));if(!pick)continue;
@@ -14862,8 +14888,8 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='065f4dee079a5df333ed16ced48df25dcbd94b74f76a07e555796972ae089e43';
-const AI_EVALUATION_POLICY_DIGEST='f1a1912962ca3d6e8de514a63b60b366d27a11c874aaf2def12ff577bad82367';
+const AI_EVALUATION_RULES_DIGEST='1f6e59ebd4e0793a4f9f0aef399178f5bc607552ab3acd020154f666ab1d1c9a';
+const AI_EVALUATION_POLICY_DIGEST='0b0090567305b2f1d89f1209d2bc112885f8d64488e601aa784c5d001d38c065';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
   if(!source)throw new Error('Game source is unavailable.');

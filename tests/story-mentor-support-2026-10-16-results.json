@@ -1,0 +1,126 @@
+{
+  "status": "pass",
+  "count": 55,
+  "checks": [
+    "Chapter 1 keeps six-card random deals, first actor and conservation; only chapter one reveals exactly the learner’s opening six across 64 deals",
+    "Chapter 2 keeps six-card random deals, first actor and conservation; only chapter one reveals exactly the learner’s opening six across 64 deals",
+    "Chapter 3 keeps six-card random deals, first actor and conservation; only chapter one reveals exactly the learner’s opening six across 64 deals",
+    "Chapter 4 keeps six-card random deals, first actor and conservation; only chapter one reveals exactly the learner’s opening six across 64 deals",
+    "Chapter 5 keeps six-card random deals, first actor and conservation; only chapter one reveals exactly the learner’s opening six across 64 deals",
+    "First-chapter opening knowledge expires when a card leaves and does not follow its later hidden return",
+    "Legitimately public acquisitions remain visible after the starting-hand exception",
+    "The first-chapter mentor uses the actual opening clue to support the learner’s four-card faction",
+    "Leaving chapter one does not carry opening knowledge into ordinary play",
+    "Chapter 2 really stages three connected hourai cards before delay draws, without scoring them for the opponent or mutating forecasts",
+    "The learner can place the real fourth hourai card and collect all four in chapter 2",
+    "Chapter 2 really stages three connected mountain cards before delay draws, without scoring them for the opponent or mutating forecasts",
+    "The learner can place the real fourth mountain card and collect all four in chapter 2",
+    "Chapter 2 really stages three connected palace cards before delay draws, without scoring them for the opponent or mutating forecasts",
+    "The learner can place the real fourth palace card and collect all four in chapter 2",
+    "Chapter 2 really stages three connected sage cards before delay draws, without scoring them for the opponent or mutating forecasts",
+    "The learner can place the real fourth sage card and collect all four in chapter 2",
+    "Chapter 2 really stages three connected hell cards before delay draws, without scoring them for the opponent or mutating forecasts",
+    "The learner can place the real fourth hell card and collect all four in chapter 2",
+    "Chapter 2 really stages three connected temple cards before delay draws, without scoring them for the opponent or mutating forecasts",
+    "The learner can place the real fourth temple card and collect all four in chapter 2",
+    "Chapter 3 really stages three connected hourai cards before delay draws, without scoring them for the opponent or mutating forecasts",
+    "The learner can place the real fourth hourai card and collect all four in chapter 3",
+    "Chapter 3 really stages three connected mountain cards before delay draws, without scoring them for the opponent or mutating forecasts",
+    "The learner can place the real fourth mountain card and collect all four in chapter 3",
+    "Chapter 3 really stages three connected palace cards before delay draws, without scoring them for the opponent or mutating forecasts",
+    "The learner can place the real fourth palace card and collect all four in chapter 3",
+    "Chapter 3 really stages three connected sage cards before delay draws, without scoring them for the opponent or mutating forecasts",
+    "The learner can place the real fourth sage card and collect all four in chapter 3",
+    "Chapter 3 really stages three connected hell cards before delay draws, without scoring them for the opponent or mutating forecasts",
+    "The learner can place the real fourth hell card and collect all four in chapter 3",
+    "Chapter 3 really stages three connected temple cards before delay draws, without scoring them for the opponent or mutating forecasts",
+    "The learner can place the real fourth temple card and collect all four in chapter 3",
+    "Chapter 2 starts with matching pairs and continues the same public set when its third card is drawn",
+    "Chapter 2 bridges two separated cards into a connected three-card offer with room for the fourth",
+    "Chapter 2 does not advertise a collection when its own hand contains every possible Palace finisher",
+    "Chapter 2 stops the dedicated support plan at three and does not use it to take the fourth",
+    "Chapter 2 respects terrain and uses a legal draw when no staging landing exists",
+    "Chapter 2 respects a placement blockade",
+    "Chapter 2 still takes an otherwise unattractive mandatory legal placement",
+    "Chapter 2 makes the same support decision after unseen human and deck cards are exchanged",
+    "Chapter 3 starts with matching pairs and continues the same public set when its third card is drawn",
+    "Chapter 3 bridges two separated cards into a connected three-card offer with room for the fourth",
+    "Chapter 3 does not advertise a collection when its own hand contains every possible Palace finisher",
+    "Chapter 3 stops the dedicated support plan at three and does not use it to take the fourth",
+    "Chapter 3 respects terrain and uses a legal draw when no staging landing exists",
+    "Chapter 3 respects a placement blockade",
+    "Chapter 3 still takes an otherwise unattractive mandatory legal placement",
+    "Chapter 3 makes the same support decision after unseen human and deck cards are exchanged",
+    "Chapter two keeps delaying Mansion cards before all core Mansion cards have appeared, even after the three-turn hold",
+    "After the appearance condition is met, chapter two still admits Mansion support only after the holding period",
+    "Chapter three’s immediate Youmu rule remains ahead of an available three-card support route",
+    "The three-card support override is absent from chapter 1",
+    "The three-card support override is absent from chapter 4",
+    "The three-card support override is absent from chapter 5"
+  ],
+  "chapterOpenings": 320,
+  "stagingRoutes": [
+    {
+      "chapter": 2,
+      "faction": "hourai",
+      "learnerPoints": 4
+    },
+    {
+      "chapter": 2,
+      "faction": "mountain",
+      "learnerPoints": 4
+    },
+    {
+      "chapter": 2,
+      "faction": "palace",
+      "learnerPoints": 4
+    },
+    {
+      "chapter": 2,
+      "faction": "sage",
+      "learnerPoints": 4
+    },
+    {
+      "chapter": 2,
+      "faction": "hell",
+      "learnerPoints": 4
+    },
+    {
+      "chapter": 2,
+      "faction": "temple",
+      "learnerPoints": 4
+    },
+    {
+      "chapter": 3,
+      "faction": "hourai",
+      "learnerPoints": 4
+    },
+    {
+      "chapter": 3,
+      "faction": "mountain",
+      "learnerPoints": 4
+    },
+    {
+      "chapter": 3,
+      "faction": "palace",
+      "learnerPoints": 4
+    },
+    {
+      "chapter": 3,
+      "faction": "sage",
+      "learnerPoints": 4
+    },
+    {
+      "chapter": 3,
+      "faction": "hell",
+      "learnerPoints": 4
+    },
+    {
+      "chapter": 3,
+      "faction": "temple",
+      "learnerPoints": 4
+    }
+  ],
+  "rulesVersion": "2026-10-16-story-mountain-collection-v20",
+  "scope": "Real opening knowledge and expiry, privacy in chapters two through five and ordinary mode, actual three-card staging and learner claims across six factions in both chapters, planning purity, legal-action constraints and existing chapter priorities. Difficulty classification is based on actual configuration/dispatch, not measured equivalent win rates."
+}

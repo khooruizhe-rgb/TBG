@@ -142,7 +142,7 @@ vm.runInContext(`(async()=>{
   renderAll=render;runNextTurn=loop;ok(true,'Thirty-two chapter-three retries immediately paint exactly six cards before starting one turn loop and cancel every retired match');
   returnToMainMenu();
   let drawGame=null;
-  for(let seed=0;seed<64;seed++){make(3,seed,1);if((await aiDecideAction(1)).type==='draw'){drawGame=game;break;}}
+  for(let seed=0;seed<64;seed++){make(2,seed,1);if((await aiDecideAction(1)).type==='draw'){drawGame=game;break;}}
   assert(drawGame);const beforeDraw=inventory().slice().sort().join(',');await actualStoryRunNextTurn();
   ok(drawGame.players.every(p=>p.hand.length===7)&&inventory().slice().sort().join(',')===beforeDraw&&drawGame.logLines.some(line=>line.includes('draws for 2')),'A genuine AI-first shared draw explains seven cards before the player acts, with no duplicate deal');
   let release;const gate=new Promise(resolve=>{release=resolve;});doPlayerAction=async()=>{await gate;return {};};

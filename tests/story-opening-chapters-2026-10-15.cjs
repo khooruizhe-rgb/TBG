@@ -41,7 +41,7 @@ vm.runInContext(`(async()=>{
       const hands=[['sdm_remilia','sdm_flandre','haku_youmu','haku_yuyuko','yuuka','medicine'],['sdm_patchouli','sdm_sakuya','hourai_mokou','temple_shou','mtn_kanako','mtn_suwako']];
       game.players.forEach((player,i)=>player.hand=hands[i].slice());const used=new Set(hands.flat());
       game.drawPile=shuffle(CARDS.filter(card=>!card.token&&!card.shopkeeper&&!card.shopExpansion&&!used.has(card.id)).map(card=>card.id));
-      game.startingCardIds=new Set([...used,...game.drawPile]);game.handKnowledge=game.players.map(()=>new Map());
+      game.startingCardIds=new Set([...used,...game.drawPile]);game.handKnowledge=game.players.map(()=>new Map());if(chapter===1)game.revealHand(0,game.players[0].hand,[1]);
     }
     game.ui.pickOwnHandCards=async()=>null;game.ui.pickCell=async(t,cells)=>cells[0];game.ui.promptText=async()=>null;
     game.pickUI=async(p,method,args)=>game.ui[method](...args);game.choosePlayer=async()=>1;
@@ -54,7 +54,7 @@ vm.runInContext(`(async()=>{
     setup(chapter,actor);const ids=inventory(game);
     ok(game.numPlayers===2&&game.currentPlayerIdx===actor&&!game.kourindouEnabled&&game.players.every(p=>p.hand.length===6),'The chapter keeps a randomized first actor, two six-card hands and a basic table: '+chapter+'/'+actor);
     ok(ids.length===new Set(ids).size&&ids.length===game.startingCardIds.size&&ids.every(id=>game.startingCardIds.has(id)),'A chapter uses unique real cards with conserved inventory: '+chapter+'/'+actor);
-    ok(game.handKnowledge.every(memory=>memory.size===0)&&!('openingHand' in game.storyMatch),'The story AI has no opening-hand knowledge or stored opening list: '+chapter+'/'+actor);
+    ok((chapter===1?game.players[0].hand.every(id=>game.handKnowledge[1].get(id)===0)&&game.handKnowledge[0].size===0:game.handKnowledge.every(memory=>memory.size===0))&&!('openingHand' in game.storyMatch),'Only the first story chapter receives the learner opening hand, without a stored opening list: '+chapter+'/'+actor);
   }
   for(const card of CARDS.filter(card=>!card.token&&!card.shopkeeper)){
     setup(1);game.board[1][1]=card.id;const before=JSON.stringify(game.testRuleState());const flags=await game.resolveAbility(card.id,1,1,0,0);
@@ -91,7 +91,7 @@ vm.runInContext(`(async()=>{
   }
   setup(2);game.beginPlayerTurn(1);game.beginPlayerTurn(1);game.beginPlayerTurn(1);game.beginPlayerTurn(1);game.removeFromHand(1,'sdm_sakuya');game.addToHand(1,'sdm_sakuya');
   ok(!aiStoryPlacement(1,'sdm_sakuya',game.emptyCells(1)),'Reacquiring a Mansion card resets its three-turn holding preference');
-  setup(2);game.reserveAges[1]={sdm_patchouli:99,sdm_sakuya:99};ok((await aiDecideAction(1)).type==='draw','Before every Mansion card has appeared, AI prefers a legal shared draw over playing mature Mansion cards');
+  setup(2);game.removeFromHand(1,'mtn_suwako');game.drawPile.push('mtn_suwako');game.drawPile.splice(game.drawPile.indexOf('palace_rin'),1);game.addToHand(1,'palace_rin');game.reserveAges[1]={sdm_patchouli:99,sdm_sakuya:99};ok((await aiDecideAction(1)).type==='draw','Without a three-card support route, AI prefers a legal shared draw over playing mature Mansion cards before all Mansion cards appear');
   setup(2);game.players[0].hand.push('hell_kutaka');game.players[1].hand.push('sage_ran');game.reserveAges[1]={sdm_patchouli:99,sdm_sakuya:99};
   let action=await aiDecideAction(1);ok(action.type==='place'&&CARD[action.cardId].faction!=='sdm','When hands are full, the chapter-two AI prefers filler while Mansion awaits Remilia');
   setup(2);game.storyMatch.sdmPlaced=storyScarletCards();action=await aiDecideAction(1);
