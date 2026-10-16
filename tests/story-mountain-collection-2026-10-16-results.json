@@ -1,6 +1,6 @@
 {
   "status": "pass",
-  "count": 58,
+  "count": 73,
   "checks": [
     "Chapter 2 unions distinct objectives over three victories without double-counting repeats or granting a single-run color",
     "Chapter 2 records a real three-objective victory and preserves its faction-colored stars on later replays",
@@ -37,6 +37,21 @@
     "The fifth-chapter AI delays through legal shared draws until all core Mountain cards have appeared",
     "A useful unlocked skill takes precedence over fifth-chapter delay",
     "The fifth-chapter AI still makes a mandatory legal placement instead of strategically passing",
+    "Chapter five immediately plays mtn_kanako ahead of a useful Mokou skill and available shared draw; all Mountain cards previously seen: false",
+    "Chapter five immediately plays mtn_kanako ahead of a useful Mokou skill and available shared draw; all Mountain cards previously seen: true",
+    "Chapter five immediately plays mtn_suwako ahead of a useful Mokou skill and available shared draw; all Mountain cards previously seen: false",
+    "Chapter five immediately plays mtn_suwako ahead of a useful Mokou skill and available shared draw; all Mountain cards previously seen: true",
+    "Chapter five immediately plays mtn_sanae ahead of a useful Mokou skill and available shared draw; all Mountain cards previously seen: false",
+    "Chapter five immediately plays mtn_sanae ahead of a useful Mokou skill and available shared draw; all Mountain cards previously seen: true",
+    "Chapter five immediately plays mtn_aya ahead of a useful Mokou skill and available shared draw; all Mountain cards previously seen: false",
+    "Chapter five immediately plays mtn_aya ahead of a useful Mokou skill and available shared draw; all Mountain cards previously seen: true",
+    "A newly acquired Mountain card is played at the next action opportunity without waiting for reserve age",
+    "An unplayable Suwako does not force an illegal wasteland placement or block a legal shared draw",
+    "An active Suwako lets the immediate Mountain policy use a real legal wasteland landing",
+    "The new priority still respects an existing placement blockade",
+    "Multiple held Mountain cards still select a legal landing when space is limited",
+    "A mandatory Reisen command still resolves before the voluntary Mountain priority",
+    "The immediate Mountain rule is confined to chapter five and does not change chapter four",
     "A correct guess before reading a newspaper does not satisfy the reading goal",
     "Folded unsubscribed papers and invalid paper IDs cannot count as reading",
     "Reading alone followed by a wrong guess cannot earn the guess star",
@@ -65,16 +80,16 @@
   "productionMatches": [
     {
       "seed": 0,
-      "turns": 35,
+      "turns": 9,
       "winner": 0,
-      "stalemate": true,
+      "stalemate": false,
       "points": [
-        5,
-        2
+        9,
+        0
       ],
       "progress": {
         "mountain": true,
-        "stalemate": true,
+        "stalemate": false,
         "newsGuess": false
       }
     },
@@ -95,7 +110,7 @@
     },
     {
       "seed": 2,
-      "turns": 34,
+      "turns": 32,
       "winner": 0,
       "stalemate": true,
       "points": [
@@ -103,22 +118,22 @@
         2
       ],
       "progress": {
-        "mountain": true,
+        "mountain": false,
         "stalemate": true,
         "newsGuess": false
       }
     },
     {
       "seed": 3,
-      "turns": 29,
-      "winner": null,
+      "turns": 31,
+      "winner": 0,
       "stalemate": true,
       "points": [
-        0,
+        4,
         0
       ],
       "progress": {
-        "mountain": false,
+        "mountain": true,
         "stalemate": true,
         "newsGuess": false
       }

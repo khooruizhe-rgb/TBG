@@ -12982,6 +12982,15 @@ async function aiFactionStoryAction(p,allowTrade=true){
 }
 async function aiSkilledStoryAction(p,allowTrade=true){
   if(game.isPlacementBlocked(p))return aiTeachingFallbackAction(p,allowTrade);
+  if(game.storyMatch.chapter===5){
+    let mountain=null;
+    for(const id of game.players[p].hand){
+      if(CARD[id]?.faction!=='mountain')continue;
+      const pick=aiStoryPlacement(p,id,game.emptyOrWastelandForCard(CARD[id],p));
+      if(pick&&(!mountain||pick.value>mountain.value))mountain={...pick,cardId:id};
+    }
+    if(mountain)return {type:'place',cardId:mountain.cardId,r:mountain.cell.r,c:mountain.cell.c};
+  }
   const stall=game.storyMatch.chapter===5?!storyMountainAllPlaced(game):!storyEienteiAllPlaced(game);let best=null,skill=null;
   for(const id of game.players[p].hand){
     const pick=aiStoryPlacement(p,id,game.emptyOrWastelandForCard(CARD[id],p));
@@ -14854,7 +14863,7 @@ el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
 const AI_EVALUATION_RULES_DIGEST='065f4dee079a5df333ed16ced48df25dcbd94b74f76a07e555796972ae089e43';
-const AI_EVALUATION_POLICY_DIGEST='1cf61486a129c209133885b1d96633a31037175757f3b012eae7337da7f568be';
+const AI_EVALUATION_POLICY_DIGEST='f1a1912962ca3d6e8de514a63b60b366d27a11c874aaf2def12ff577bad82367';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
   if(!source)throw new Error('Game source is unavailable.');

@@ -79,6 +79,30 @@ vm.runInContext(`(async()=>{
   ok(game.isOnBoard('hourai_mokou')&&game.players[1].hand.length===2,'A useful unlocked skill takes precedence over fifth-chapter delay');
   make(5,1,1);arrange({hands:[[],['reimu']],emptyPile:true});await realAction(1);ok(game.isOnBoard('reimu'),'The fifth-chapter AI still makes a mandatory legal placement instead of strategically passing');
 
+  for(const id of storyFactionCards('mountain'))for(const allPlaced of [false,true]){
+    make(5,1,1);arrange({hands:[['reimu'],['hourai_mokou',id]],discards:[[],['temple_shou','temple_murasa']]});
+    if(allPlaced)game.storyMatch.mountainPlaced=storyFactionCards('mountain');
+    const before=JSON.stringify(captureAIEvaluationSnapshot(game)),action=await aiDecideAction(1);
+    assert.equal(action.type,'place');assert.equal(action.cardId,id);assert(game.emptyOrWastelandForCard(CARD[id],1).some(cell=>cell.r===action.r&&cell.c===action.c));
+    assert.equal(JSON.stringify(captureAIEvaluationSnapshot(game)),before);await realAction(1);evalConservation(game);
+    ok(game.isOnBoard(id)&&!game.players[1].hand.includes(id),'Chapter five immediately plays '+id+' ahead of a useful Mokou skill and available shared draw; all Mountain cards previously seen: '+allPlaced);
+  }
+  make(5,1,1);arrange({hands:[[],['reimu']]});game.drawPile=game.drawPile.filter(id=>id!=='mtn_aya').concat('mtn_aya');game.drawForEveryone(1);
+  const drawnAction=await aiDecideAction(1);ok(drawnAction.type==='place'&&drawnAction.cardId==='mtn_aya','A newly acquired Mountain card is played at the next action opportunity without waiting for reserve age');evalConservation(game);
+  make(5,1,1);arrange({hands:[[],['mtn_suwako','hourai_mokou']]});game.wasteland=game.wasteland.map(row=>row.map(()=>true));
+  ok((await aiDecideAction(1)).type==='draw','An unplayable Suwako does not force an illegal wasteland placement or block a legal shared draw');
+  make(5,1,1);arrange({hands:[[],['mtn_kanako','hourai_mokou']],board:[[0,0,'mtn_suwako']]});game.wasteland=game.wasteland.map(row=>row.map(()=>true));
+  const wasteAction=await aiDecideAction(1);assert.equal(wasteAction.cardId,'mtn_kanako');await realAction(1);evalConservation(game);
+  ok(game.isOnBoard('mtn_kanako'),'An active Suwako lets the immediate Mountain policy use a real legal wasteland landing');
+  make(5,1,1);arrange({hands:[[],['mtn_aya']]});game.placementBlockedForTurn[1]=true;
+  ok((await aiDecideAction(1)).type==='draw'&&game.players[1].hand.includes('mtn_aya'),'The new priority still respects an existing placement blockade');
+  make(5,1,1);arrange({hands:[[],['mtn_kanako','mtn_aya']]});game.wasteland=game.wasteland.map(row=>row.map(()=>true));game.wasteland[1][1]=false;
+  const multiple=await aiDecideAction(1);ok(multiple.type==='place'&&CARD[multiple.cardId].faction==='mountain'&&multiple.r===1&&multiple.c===1,'Multiple held Mountain cards still select a legal landing when space is limited');
+  make(5,1,1);arrange({hands:[['marisa'],['mtn_suwako','reimu']]});game.forcedPlay[1]='reimu';await realAction(1);evalConservation(game);
+  ok(game.isOnBoard('reimu')&&game.players[1].hand.includes('mtn_suwako'),'A mandatory Reisen command still resolves before the voluntary Mountain priority');
+  make(4,1,1);arrange({hands:[[],['mtn_aya','hourai_mokou']],discards:[[],['temple_shou','temple_murasa']]});
+  ok((await aiDecideAction(1)).cardId==='hourai_mokou','The immediate Mountain rule is confined to chapter five and does not change chapter four');
+
   make();arrange({hands:[['sdm_patchouli'],['marisa']]});game.choosePlayer=async()=>1;game.ui.promptText=async()=>CARD.marisa.name;await place('sdm_patchouli');ok(!game.storyMatch.progress.newsGuess,'A correct guess before reading a newspaper does not satisfy the reading goal');
   make();arrange({hands:[['sdm_patchouli'],['marisa']]});const hiddenPaper=game.addNewspaper(1,[{targetIdx:0,player:'You',cardIds:['sdm_patchouli'],names:{}}],'Test');
   ok(!game.recordStoryNewspaperRead(0,hiddenPaper.paperId)&&!game.recordStoryNewspaperRead(0,999),'Folded unsubscribed papers and invalid paper IDs cannot count as reading');
