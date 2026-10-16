@@ -1,0 +1,209 @@
+{
+  "status": "pass",
+  "count": 91,
+  "checks": [
+    "Chapter 1, actor 0: the actual turn entry ends immediately with the existing score, unopened deck and unchanged hands, without starting or requesting a draw turn",
+    "Chapter 1, actor 1: the actual turn entry ends immediately with the existing score, unopened deck and unchanged hands, without starting or requesting a draw turn",
+    "Chapter 2, actor 0: the actual turn entry ends immediately with the existing score, unopened deck and unchanged hands, without starting or requesting a draw turn",
+    "Chapter 2, actor 1: the actual turn entry ends immediately with the existing score, unopened deck and unchanged hands, without starting or requesting a draw turn",
+    "Chapter 3, actor 0: the actual turn entry ends immediately with the existing score, unopened deck and unchanged hands, without starting or requesting a draw turn",
+    "Chapter 3, actor 1: the actual turn entry ends immediately with the existing score, unopened deck and unchanged hands, without starting or requesting a draw turn",
+    "Chapter 4, actor 0: the actual turn entry ends immediately with the existing score, unopened deck and unchanged hands, without starting or requesting a draw turn",
+    "Chapter 4, actor 1: the actual turn entry ends immediately with the existing score, unopened deck and unchanged hands, without starting or requesting a draw turn",
+    "Chapter 5, actor 0: the actual turn entry ends immediately with the existing score, unopened deck and unchanged hands, without starting or requesting a draw turn",
+    "Chapter 5, actor 1: the actual turn entry ends immediately with the existing score, unopened deck and unchanged hands, without starting or requesting a draw turn",
+    "Chapter 6, actor 0: the actual turn entry ends immediately with the existing score, unopened deck and unchanged hands, without starting or requesting a draw turn",
+    "Chapter 6, actor 1: the actual turn entry ends immediately with the existing score, unopened deck and unchanged hands, without starting or requesting a draw turn",
+    "A newly closed board cancels free placements, Sakuya follow-ups and scheduled dancer turns before asking for meaningless draws: {\"skipAdvance\":true}",
+    "A newly closed board cancels free placements, Sakuya follow-ups and scheduled dancer turns before asking for meaningless draws: {\"extraTurns\":2}",
+    "A newly closed board cancels free placements, Sakuya follow-ups and scheduled dancer turns before asking for meaningless draws: {}",
+    "A nested follow-up also stops at a closed story table",
+    "Early stalemate preserves an opponent victory and cannot invent a player clear",
+    "Early stalemate preserves a tied result and cannot invent a player clear",
+    "An ordinary empty board space prevents early ending without mutating the position",
+    "Wasteland counts as closed terrain when no remaining card has legal wasteland entry",
+    "An active Suwako keeps the match alive when a remaining Mountain card can enter the empty wasteland",
+    "A real shop purchase of Kutaka can still enter wasteland and prevents early ending",
+    "Temporary placement blocks are ignored only for the eventual-placement check and are never mutated",
+    "A locked Yukari in the deck cannot keep an otherwise closed story table alive",
+    "An unlocked playable card anywhere in the deck, including beneath unusable draws, keeps the game alive",
+    "A legal override still in hand prevents premature ending even when the entire remaining deck is unusable",
+    "A forced unplayable card and a timed blockade do not hide a placement that becomes available after they expire",
+    "An available trade for a legally placeable card preserves play without executing the trade or teaching the AI hidden hand information",
+    "The preserved shop continuation is a real executable trade, not a hypothetical placement",
+    "An empty shop space that the human can legally use prevents a premature full-main-board ending",
+    "AI-only seats cannot invent a shop placement forbidden by their normal placement rules",
+    "The end judge uses rule legality instead of optional AI evaluation filters",
+    "The same full position in ordinary mode still executes its original shared draw rather than adopting the story rule",
+    "The original tutorial does not acquire the story-only ending rule",
+    "The actual en chapter-list description has no nested card links and retains the no-link option for later language refresh",
+    "The actual en chapter-list description has no nested card links and retains the no-link option for later language refresh",
+    "The actual en chapter-list description has no nested card links and retains the no-link option for later language refresh",
+    "The actual en chapter-list description has no nested card links and retains the no-link option for later language refresh",
+    "The actual en chapter-list description has no nested card links and retains the no-link option for later language refresh",
+    "The actual en chapter-list description has no nested card links and retains the no-link option for later language refresh",
+    "The actual en chapter 1 introduction is free of inline card links",
+    "The actual en chapter 1 objectives and hints have no inline card links while current-match stars remain visible",
+    "The actual en chapter 2 introduction is free of inline card links",
+    "The actual en chapter 2 objectives and hints have no inline card links while current-match stars remain visible",
+    "The actual en chapter 3 introduction is free of inline card links",
+    "The actual en chapter 3 objectives and hints have no inline card links while current-match stars remain visible",
+    "The actual en chapter 4 introduction is free of inline card links",
+    "The actual en chapter 4 objectives and hints have no inline card links while current-match stars remain visible",
+    "The actual en chapter 5 introduction is free of inline card links",
+    "The actual en chapter 5 objectives and hints have no inline card links while current-match stars remain visible",
+    "The actual en chapter 6 introduction is free of inline card links",
+    "The actual en chapter 6 objectives and hints have no inline card links while current-match stars remain visible",
+    "The actual zh-CN chapter-list description has no nested card links and retains the no-link option for later language refresh",
+    "The actual zh-CN chapter-list description has no nested card links and retains the no-link option for later language refresh",
+    "The actual zh-CN chapter-list description has no nested card links and retains the no-link option for later language refresh",
+    "The actual zh-CN chapter-list description has no nested card links and retains the no-link option for later language refresh",
+    "The actual zh-CN chapter-list description has no nested card links and retains the no-link option for later language refresh",
+    "The actual zh-CN chapter-list description has no nested card links and retains the no-link option for later language refresh",
+    "The actual zh-CN chapter 1 introduction is free of inline card links",
+    "The actual zh-CN chapter 1 objectives and hints have no inline card links while current-match stars remain visible",
+    "The actual zh-CN chapter 2 introduction is free of inline card links",
+    "The actual zh-CN chapter 2 objectives and hints have no inline card links while current-match stars remain visible",
+    "The actual zh-CN chapter 3 introduction is free of inline card links",
+    "The actual zh-CN chapter 3 objectives and hints have no inline card links while current-match stars remain visible",
+    "The actual zh-CN chapter 4 introduction is free of inline card links",
+    "The actual zh-CN chapter 4 objectives and hints have no inline card links while current-match stars remain visible",
+    "The actual zh-CN chapter 5 introduction is free of inline card links",
+    "The actual zh-CN chapter 5 objectives and hints have no inline card links while current-match stars remain visible",
+    "The actual zh-CN chapter 6 introduction is free of inline card links",
+    "The actual zh-CN chapter 6 objectives and hints have no inline card links while current-match stars remain visible",
+    "The actual en chapter-list description has no nested card links and retains the no-link option for later language refresh",
+    "The actual en chapter-list description has no nested card links and retains the no-link option for later language refresh",
+    "The actual en chapter-list description has no nested card links and retains the no-link option for later language refresh",
+    "The actual en chapter-list description has no nested card links and retains the no-link option for later language refresh",
+    "The actual en chapter-list description has no nested card links and retains the no-link option for later language refresh",
+    "The actual en chapter-list description has no nested card links and retains the no-link option for later language refresh",
+    "The actual en chapter 1 introduction is free of inline card links",
+    "The actual en chapter 1 objectives and hints have no inline card links while current-match stars remain visible",
+    "The actual en chapter 2 introduction is free of inline card links",
+    "The actual en chapter 2 objectives and hints have no inline card links while current-match stars remain visible",
+    "The actual en chapter 3 introduction is free of inline card links",
+    "The actual en chapter 3 objectives and hints have no inline card links while current-match stars remain visible",
+    "The actual en chapter 4 introduction is free of inline card links",
+    "The actual en chapter 4 objectives and hints have no inline card links while current-match stars remain visible",
+    "The actual en chapter 5 introduction is free of inline card links",
+    "The actual en chapter 5 objectives and hints have no inline card links while current-match stars remain visible",
+    "The actual en chapter 6 introduction is free of inline card links",
+    "The actual en chapter 6 objectives and hints have no inline card links while current-match stars remain visible",
+    "Ordinary rule text retains its existing clickable card references",
+    "The en early-ending win and tie messages are translated by the actual localization path",
+    "The zh-CN early-ending win and tie messages are translated by the actual localization path"
+  ],
+  "routes": [
+    {
+      "chapter": 1,
+      "actor": 0,
+      "points": [
+        2,
+        1
+      ],
+      "preservedDeck": 15
+    },
+    {
+      "chapter": 1,
+      "actor": 1,
+      "points": [
+        2,
+        1
+      ],
+      "preservedDeck": 15
+    },
+    {
+      "chapter": 2,
+      "actor": 0,
+      "points": [
+        2,
+        1
+      ],
+      "preservedDeck": 15
+    },
+    {
+      "chapter": 2,
+      "actor": 1,
+      "points": [
+        2,
+        1
+      ],
+      "preservedDeck": 15
+    },
+    {
+      "chapter": 3,
+      "actor": 0,
+      "points": [
+        2,
+        1
+      ],
+      "preservedDeck": 15
+    },
+    {
+      "chapter": 3,
+      "actor": 1,
+      "points": [
+        2,
+        1
+      ],
+      "preservedDeck": 15
+    },
+    {
+      "chapter": 4,
+      "actor": 0,
+      "points": [
+        2,
+        1
+      ],
+      "preservedDeck": 15
+    },
+    {
+      "chapter": 4,
+      "actor": 1,
+      "points": [
+        2,
+        1
+      ],
+      "preservedDeck": 15
+    },
+    {
+      "chapter": 5,
+      "actor": 0,
+      "points": [
+        2,
+        1
+      ],
+      "preservedDeck": 15
+    },
+    {
+      "chapter": 5,
+      "actor": 1,
+      "points": [
+        2,
+        1
+      ],
+      "preservedDeck": 15
+    },
+    {
+      "chapter": 6,
+      "actor": 0,
+      "points": [
+        2,
+        1
+      ],
+      "preservedDeck": 15
+    },
+    {
+      "chapter": 6,
+      "actor": 1,
+      "points": [
+        2,
+        1
+      ],
+      "preservedDeck": 15
+    }
+  ],
+  "rulesVersion": "2026-10-16-story-no-draw-stalemate-v22",
+  "scope": "Real rule-level placements and production turn and follow-up entry points, all six chapters and both first actors, conserved real-card positions, immediate scored stalemate without draws, unchanged deck/hands, race and Mountain goals, ties/opponent wins, normal/tutorial isolation, wasteland permissions, temporary blocks, deep-deck and held overrides, actual trade continuation, human versus AI shop scope, and heuristic independence. Actual bilingual chapter selection, introductions and match-coach renderers are checked with preserved card click handlers and language-refresh options; browser pixels are not verified."
+}

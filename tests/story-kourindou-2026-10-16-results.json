@@ -26,7 +26,7 @@
     "The actual en sixth-chapter introduction shows all seven faction-colored renewed cards and keeps the surprise threshold hidden",
     "The actual zh-CN sixth-chapter introduction shows all seven faction-colored renewed cards and keeps the surprise threshold hidden"
   ],
-  "rulesVersion": "2026-10-16-story-kourindou-physics-v21",
+  "rulesVersion": "2026-10-16-story-no-draw-stalemate-v22",
   "randomOpenings": 512,
   "burstRoutes": 16,
   "productionMatches": [

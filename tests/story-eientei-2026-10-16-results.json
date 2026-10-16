@@ -267,7 +267,7 @@
     },
     {
       "seed": 2,
-      "turns": 36,
+      "turns": 25,
       "winner": 1,
       "stalemate": true,
       "points": [
@@ -282,7 +282,7 @@
     },
     {
       "seed": 3,
-      "turns": 41,
+      "turns": 35,
       "winner": 1,
       "stalemate": true,
       "points": [
@@ -326,6 +326,6 @@
       }
     }
   ],
-  "rulesVersion": "2026-10-16-story-kourindou-physics-v21",
+  "rulesVersion": "2026-10-16-story-no-draw-stalemate-v22",
   "scope": "Real constrained deals, actual skills, nested placement/claim ownership, independent stars, six random full matches, mandatory legal actions, pure planning, real turn cancellation and controlled UI restart/debug lifecycle. No browser pixel verification."
 }

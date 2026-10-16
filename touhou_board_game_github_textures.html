@@ -4184,8 +4184,8 @@ class Game {
   }
 
   emptyCells(playerIdx=null){return this.abilityCells(playerIdx,this.allTiles()).filter(({r,c})=>!this.cardAt(r,c) && !this.wastelandAt(r,c));}
-  emptyOrWastelandForCard(card,playerIdx=this.currentPlayerIdx){
-    if(this.isPlacementBlocked(playerIdx))return [];
+  emptyOrWastelandForCard(card,playerIdx=this.currentPlayerIdx,ignoreTemporaryBlock=false){
+    if(!ignoreTemporaryBlock && this.isPlacementBlocked(playerIdx))return [];
     return this.abilityCells(playerIdx,this.allTiles()).filter(({r,c})=>{
       if(this.cardAt(r,c)) return this.canOverrideTarget(card.id,this.cardAt(r,c)) && this.canSelectBoardCard(r,c,this.abilityId(card.id)==='sage_yukari')
         && (this.abilityId(card.id)==='sage_yukari' || this.canMoveBoardCard(r,c));
@@ -5611,7 +5611,7 @@ class Game {
 }
 
 /* 2026-10-12: creation, private newspapers and instance ability changes. */
-const REWORK_RULES_VERSION='2026-10-16-story-kourindou-physics-v21';
+const REWORK_RULES_VERSION='2026-10-16-story-no-draw-stalemate-v22';
 Game.prototype.canCreateWithMatara=function(){return this.mainBoardCells().length>=4;};
 let nextCreatedCard=0,nextHiddenChoice=0;
 const COPY_PASSIVES=new Set(['sage_yukari','sage_kasen','mtn_nitori','hell_hecatia','palace_koishi']);
@@ -5891,6 +5891,22 @@ Game.prototype.kanakoMultiplier=function(){
 Game.prototype.sanaeDrawCount=function(){return (this.hasActiveAbility('mtn_kanako')?2:1)*this.kanakoMultiplier();};
 
 /* Story matches share the normal rules; chapter state only unlocks printed abilities. */
+Game.prototype.storyDrawOnlyStalemate=function(){
+  if(!this.storyMatch || this.cancelled || this.winner || this.stalemateMessage)return false;
+  if(this.board.some((row,r)=>row.some((id,c)=>!id&&!this.wasteland[r][c])))return false;
+  // Judge eventual rule-legal placements, without using an AI's strategic filters
+  // or mistaking a temporary Murasa blockade for a permanently closed table.
+  const canPlace=(id,p)=>!!CARD[id]&&this.emptyOrWastelandForCard(CARD[id],p,true).length>0;
+  const canDraw=p=>p.hand.length<NORMAL_HAND_LIMIT;
+  if(this.players.some(p=>p.hand.some(id=>canPlace(id,p.idx))))return false;
+  if(this.players.some(p=>canDraw(p)&&this.drawPile.some(id=>canPlace(id,p.idx))))return false;
+  if(this.kourindouEnabled && this.shopkeeperAvailable()){
+    const merchandise=this.tradeCells(),canOffer=id=>CARD[id]&&!CARD[id].token&&!CARD[id].shopkeeper;
+    if(this.players.some(p=>(p.hand.some(canOffer)||canDraw(p)&&this.drawPile.some(canOffer))
+      && merchandise.some(cell=>canPlace(this.cardAt(cell.r,cell.c),p.idx))))return false;
+  }
+  return true;
+};
 Game.prototype.recordStoryNewspaperSubscription=function(p,paperId){
   const story=this.storyMatch,paper=this.paperReports.find(item=>item.paperId===paperId);
   if(this.cancelled || story?.chapter!==5 || p!==story.humanSeat || !paper || paper.ownerIdx===p || !paper.subscribers.includes(p))return false;
@@ -8379,6 +8395,8 @@ const ZH_DYNAMIC=[
   [/^(.+) \((.+)[’']s discard\)$/,(_,card,p)=>`${card}（${p} 的弃牌堆）`],
   [/^(.+) is thinking\.\.\.$/,(_,p)=>`${p} 正在思考……`],
   [/^(.+) wins with (\d+) discard points!$/,(_,p,n)=>`${p} 以 ${n} 点弃牌分数获胜！`],
+  [/^No more cards can be placed\. (.+) wins by stalemate with (\d+) discard points?!$/,(_,p,n)=>`已无卡牌可以继续放置。${p} 以 ${n} 点弃牌分数赢得僵局！`],
+  [/^No more cards can be placed\. Stalemate! (.+) tie with (\d+) discard points? each\.$/,(_,p,n)=>`已无卡牌可以继续放置。${p} 各有 ${n} 点弃牌分数，平局！`],
   [/^No one has a legal move left\. (.+) wins by stalemate with (\d+) discard points?!$/,(_,p,n)=>`所有玩家均无合法行动。${p} 以 ${n} 点弃牌分数赢得僵局！`],
   [/^No one has a legal move left\. Stalemate! (.+) tie with (\d+) discard points? each\.$/,(_,p,n)=>`所有玩家均无合法行动。${p} 各有 ${n} 点弃牌分数，平局！`],
   [/^Hand: (\d+) · Discard: (\d+)\/7$/,(_,h,d)=>`手牌：${h} · 弃牌：${d}/7`],
@@ -8637,7 +8655,7 @@ Object.assign(ZH_TEXT,{
   'Three stars collected. Complete all objectives in one match to color them.':'已累计收集三星。在一局中完成全部目标，可让星星获得阵营颜色。',
   'Subscribe to a newspaper, then make a correct card guess.':'订阅报纸后，使用猜牌技能正确猜中一次卡牌。',
   'Connect four Youkai Mountain cards and claim the faction.':'连接四张妖怪之山卡牌，收取该阵营。',
-  'Leave every player without a legal action to reach stalemate. The unique highest score wins.':'让所有玩家都没有合法行动，形成僵局；分数独占最高者获胜。'
+  'Fill the board so no remaining card can be placed. The unique highest score wins.':'填满棋盘，使剩余卡牌都无法继续放置。弃牌分数唯一最高的玩家获胜。'
 });
 function setCardAbilityTitle(node,cardId,{createdPreview=false}={}){
   const locked=game?.cardAbilityEnabled?.(cardId)===false;node.hidden=locked;
@@ -10510,20 +10528,26 @@ function canAct(playerIdx){
     && game.tradeCells().some(cell=>game.emptyOrWastelandForCard(CARD[game.cardAt(cell.r,cell.c)]).length>0);
 }
 
+function endStoryIfNoPlacement(){
+  if(!game?.storyDrawOnlyStalemate())return false;
+  endStalemate();return true;
+}
 function endStalemate(){
+  const drawOnly=game.storyDrawOnlyStalemate();
   let max=-1, winners=[];
   for(const p of game.players){
     const wc = game.winCount(p);
     if(wc>max){ max=wc; winners=[p]; }
     else if(wc===max){ winners.push(p); }
   }
-  if(game.storyMatch && game.players.every(player=>!canAct(player.idx))){
+  if(game.storyMatch && (drawOnly || game.players.every(player=>!canAct(player.idx)))){
     if(game.storyMatch.chapter===5)game.storyMatch.progress.stalemate=true;
     if(winners.length===1)game.winner=winners[0];
   }
+  const reason=drawOnly?'No more cards can be placed.':'No one has a legal move left.';
   game.stalemateMessage = winners.length===1
-    ? `No one has a legal move left. ${winners[0].name} wins by stalemate with ${max} discard point${max===1?'':'s'}!`
-    : `No one has a legal move left. Stalemate! ${winners.map(w=>w.name).join(' & ')} tie with ${max} discard point${max===1?'':'s'} each.`;
+    ? `${reason} ${winners[0].name} wins by stalemate with ${max} discard point${max===1?'':'s'}!`
+    : `${reason} Stalemate! ${winners.map(w=>w.name).join(' & ')} tie with ${max} discard point${max===1?'':'s'} each.`;
   game.log(game.stalemateMessage);
 }
 
@@ -13611,7 +13635,7 @@ async function doPlayerAction(playerIdx){
    skipping straight over another player's entire turn. */
 async function resolveFollowups(playerIdx, flags){
   const activeGame=game;
-  if(game.winner || game.stalemateMessage){
+  if(game.winner || game.stalemateMessage || endStoryIfNoPlacement()){
     if(flags && flags.cancelExtra) flags.cancelExtra();
     return;
   }
@@ -13652,7 +13676,7 @@ async function resolveFollowups(playerIdx, flags){
 
 async function afterAction(playerIdx, flags, scheduledExtra=0){
   const activeGame=game;
-  if(game.winner || game.stalemateMessage){
+  if(game.winner || game.stalemateMessage || endStoryIfNoPlacement()){
     if(flags && flags.cancelExtra) flags.cancelExtra();
     renderAll();
     return;
@@ -13692,6 +13716,9 @@ async function runNextTurn(){
     if(!await waitAITestReady(activeGame))return;
     if(game!==activeGame || activeGame.cancelled)return;
     if(activeGame.testMetrics.turns>=600){activeGame.testAbortReason='turn-limit';await finishAITestRound(activeGame);return;}
+  }
+  if(endStoryIfNoPlacement()){
+    renderAll();if(activeGame.aiTestMode)await finishAITestRound(activeGame);return;
   }
   const p = game.currentPlayerIdx;
   game.beginPlayerTurn(p);
@@ -14974,7 +15001,7 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='e68fd25a74d3c4043c3dcab29231714aca41c2aed1036c3fcd871ebc382f70f2';
+const AI_EVALUATION_RULES_DIGEST='9c37f652baecb65f9b0db990c5f2bc4905f17cdd6cff24882ac7dc4f9faf2847';
 const AI_EVALUATION_POLICY_DIGEST='c2a4a2e32ac0aa88ca64af6d7368a6378d3c95f58fdf5deeab9d3d9a34259c8c';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
@@ -15061,7 +15088,7 @@ function evalForkSummary(report){
   return {groups,invalidPairs,conclusion,completedPairs:report.pairs.length};
 }
 function evalValidateSnapshot(snapshot){
-  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-16-story-mountain-collection-v20','2026-10-16-story-private-opening-v19','2026-10-16-story-eientei-opening-v18','2026-10-16-story-stars-placement-v17','2026-10-16-story-hakugyokurou-active-mentor-v16','2026-10-15-guided-opening-scarlet-reserve-v15','2026-10-15-random-learning-renewal-v14','2026-10-15-story-opening-chapters-v13','2026-10-14-original-creation-blueprints-v12','2026-10-14-guided-final-match-v11','2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
+  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-16-story-kourindou-physics-v21','2026-10-16-story-mountain-collection-v20','2026-10-16-story-private-opening-v19','2026-10-16-story-eientei-opening-v18','2026-10-16-story-stars-placement-v17','2026-10-16-story-hakugyokurou-active-mentor-v16','2026-10-15-guided-opening-scarlet-reserve-v15','2026-10-15-random-learning-renewal-v14','2026-10-15-story-opening-chapters-v13','2026-10-14-original-creation-blueprints-v12','2026-10-14-guided-final-match-v11','2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
   const state=snapshot.state,n=state?.players?.length,size=snapshot.size;
   if(![4,5].includes(size) || ![2,3,4].includes(n) || !Number.isInteger(state.currentPlayerIdx) || state.currentPlayerIdx<0 || state.currentPlayerIdx>=n)throw new Error('Invalid position dimensions.');
   if(state.numPlayers!==n || state.players.some((p,i)=>p.idx!==i || !Array.isArray(p.hand) || !Array.isArray(p.discard)))throw new Error('Invalid position dimensions.');
@@ -16024,7 +16051,7 @@ function openStoryMenu(){
   for(const chapter of STORY_CHAPTERS){
     const button=document.createElement('button');button.type='button';
     const title=document.createElement('strong');title.textContent=chapter.title;
-    const description=document.createElement('small');setRuleText(description,chapter.body);
+    const description=document.createElement('small');setRuleText(description,chapter.body,{cards:false});
     const status=document.createElement('small'),label=document.createElement('span'),rating=document.createElement('span'),best=storyBestStars(chapter.id);
     setRuleText(label,cleared.includes(chapter.id)?'Cleared':'Not cleared');rating.textContent=best===null?'':' '+'★'.repeat(best)+'☆'.repeat(3-best);
     rating.className='story-star-rating'+(storyChapterPerfect(chapter.id)?' story-stars-perfect':'');rating.style.setProperty('--story-star-color',storyStarColor(chapter.id));
@@ -16101,18 +16128,18 @@ function updateStoryProgress(){
 }
 function renderStoryCoach(){
   if(!isStoryMatch())return;const state=storyState,definition=STORY_CHAPTERS[state.chapter-1],progress=game.storyMatch.progress;
-  el('tutorial-progress').innerHTML=ruleTextHtml('Story Mode')+' · '+state.chapter+' / '+STORY_CHAPTERS.length;
+  el('tutorial-progress').innerHTML=ruleTextHtml('Story Mode',{cards:false})+' · '+state.chapter+' / '+STORY_CHAPTERS.length;
   el('tutorial-title').textContent=definition.title;setRuleText(el('tutorial-copy'),'');
   const goals=storyStarGoals(game),raceLost=state.chapter===3&&storyRaceLost(game);
   const earned=goals.length?goals.filter(goal=>goal.done).length:state.complete?3:0;
-  const heading=(goals.length?ruleTextHtml('Match objectives')+' ':'')+'<span class="story-star-rating" aria-label="'+earned+' / 3">'+'★'.repeat(earned)+'☆'.repeat(3-earned)+'</span>';
+  const heading=(goals.length?ruleTextHtml('Match objectives',{cards:false})+' ':'')+'<span class="story-star-rating" aria-label="'+earned+' / 3">'+'★'.repeat(earned)+'☆'.repeat(3-earned)+'</span>';
   el('tutorial-feedback').classList.toggle('story-perfect',state.complete&&earned===3);
   el('tutorial-feedback').style.setProperty('--story-star-color',storyStarColor(state.chapter));
-  const hint=state.complete?'Chapter cleared.':game.winner||game.stalemateMessage?'Win the match to clear this chapter.':raceLost?'The opponent reached four points. This objective is unavailable this match; you can still win and clear the chapter.':state.chapter===6?!progress.twoFactions?'Use trades and card abilities to claim two different factions.':!progress.lockedFaction?'Claim a faction whose core cards still have no abilities.':'Do something that surprises me!':state.chapter===5?!progress.newsGuess?'Subscribe to a newspaper, then make a correct card guess.':!progress.mountain?'Connect four Youkai Mountain cards and claim the faction.':!progress.stalemate?'Leave every player without a legal action to reach stalemate. The unique highest score wins.':'Win the match to clear this chapter.':state.chapter===4?!progress.kaguya?'Gain four points from Kaguya’s placement, including its resulting faction claims.':!progress.hourai?'Connect four Eientei cards and claim the faction.':!progress.handTen?'Use card-gaining abilities to hold at least ten cards at once.':'Win the match to clear this chapter.':state.chapter===3?!progress.yuyuko?'Gain four points from Yuyuko’s placement, including her ability and faction claims.':!progress.haku?'Connect Yuyuko and Youmu to claim Hakugyokurou.':'Win before the opponent reaches four points.':state.chapter===1?'Win to finish this introductory chapter.':!progress.remilia?'Try Remilia while the other Mansion cards are still in hands.':!progress.flandre?'With Flandre, choose the opponent and send one of their hand cards to their discard pile.':!progress.sdm?'Connect four Mansion cards and claim the faction.':'Win the match to clear this chapter.';
+  const hint=state.complete?'Chapter cleared.':game.winner||game.stalemateMessage?'Win the match to clear this chapter.':raceLost?'The opponent reached four points. This objective is unavailable this match; you can still win and clear the chapter.':state.chapter===6?!progress.twoFactions?'Use trades and card abilities to claim two different factions.':!progress.lockedFaction?'Claim a faction whose core cards still have no abilities.':'Do something that surprises me!':state.chapter===5?!progress.newsGuess?'Subscribe to a newspaper, then make a correct card guess.':!progress.mountain?'Connect four Youkai Mountain cards and claim the faction.':!progress.stalemate?'Fill the board so no remaining card can be placed. The unique highest score wins.':'Win the match to clear this chapter.':state.chapter===4?!progress.kaguya?'Gain four points from Kaguya’s placement, including its resulting faction claims.':!progress.hourai?'Connect four Eientei cards and claim the faction.':!progress.handTen?'Use card-gaining abilities to hold at least ten cards at once.':'Win the match to clear this chapter.':state.chapter===3?!progress.yuyuko?'Gain four points from Yuyuko’s placement, including her ability and faction claims.':!progress.haku?'Connect Yuyuko and Youmu to claim Hakugyokurou.':'Win before the opponent reaches four points.':state.chapter===1?'Win to finish this introductory chapter.':!progress.remilia?'Try Remilia while the other Mansion cards are still in hands.':!progress.flandre?'With Flandre, choose the opponent and send one of their hand cards to their discard pile.':!progress.sdm?'Connect four Mansion cards and claim the faction.':'Win the match to clear this chapter.';
   el('tutorial-feedback').innerHTML='<span class="story-match-objectives">'+heading+'</span><span class="tutorial-checklist">'+goals.map(goal=>{
     const done=goal.done,failed=goal.failed&&!done;
-    return '<span class="tutorial-goal'+(done?' done':'')+(failed?' failed':'')+'">'+(failed?'✗':done?'✓':'○')+' '+ruleTextHtml(goal.label)+'</span>';
-  }).join('')+'</span>'+ruleTextHtml(hint);
+    return '<span class="tutorial-goal'+(done?' done':'')+(failed?' failed':'')+'">'+(failed?'✗':done?'✓':'○')+' '+ruleTextHtml(goal.label,{cards:false})+'</span>';
+  }).join('')+'</span>'+ruleTextHtml(hint,{cards:false});
   el('tutorial-back').disabled=false;setRuleText(el('tutorial-back'),'Chapters');el('tutorial-next').disabled=!state.complete;
   const next=STORY_CHAPTERS.some(chapter=>chapter.id===state.chapter+1);
   setRuleText(el('tutorial-next'),next?'Next chapter':'Chapters');setRuleText(el('restart-btn'),state.complete?(next?'Next chapter':'Chapters'):'Retry');

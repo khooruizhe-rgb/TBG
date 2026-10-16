@@ -153,6 +153,6 @@
     ],
     "turns": 24
   },
-  "rulesVersion": "2026-10-16-story-kourindou-physics-v21",
+  "rulesVersion": "2026-10-16-story-no-draw-stalemate-v22",
   "scope": "Actual ordinary/story/tutorial deals, hidden-hand counterfactual decisions across nine policies/modes, ignored legacy opening lists, actual Aya/Reisen skills and Satori chooser, public acquisitions, memory expiry and an ordinary full match. Introduction language-switch coverage is in the renewal suite; no browser pixel verification."
 }

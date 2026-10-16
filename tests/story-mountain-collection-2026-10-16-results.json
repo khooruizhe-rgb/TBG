@@ -58,7 +58,7 @@
     "A paid subscription followed by a wrong guess cannot earn the guess star",
     "Aya’s real placement reads hands and collects Mountain, without pretending that producing the newspaper was viewing it",
     "After paying for the actual newspaper, a real correct Patchouli guess records the goal and transfers the card",
-    "The actual turn loop exhausts shared draws, detects both players have no legal action, and awards a three-star 4–3 story victory by stalemate",
+    "The actual turn loop directly awards a three-star 4–3 story stalemate on the first closed-board check, preserving the remaining deck and both hands",
     "The same real route saves every objective and its perfect menu rating and colors the three stars earned in this match",
     "Actual tied or opponent-led stalemates record the goal but do not invent a player victory: false {\"actions\":[false,false],\"progress\":{\"mountain\":false,\"stalemate\":true,\"newsGuess\":false},\"score\":[0,0],\"spaces\":[[[\"reimu\",[]]],[[\"marisa\",[]]]],\"draw\":[false,false]}",
     "Actual tied or opponent-led stalemates record the goal but do not invent a player victory: true {\"actions\":[false,false],\"progress\":{\"mountain\":false,\"stalemate\":true,\"newsGuess\":false},\"winner\":1,\"score\":[0,1],\"spaces\":[[[\"reimu\",[]]],[[\"marisa\",[]]]],\"draw\":[false,false]}",
@@ -109,7 +109,7 @@
     },
     {
       "seed": 2,
-      "turns": 36,
+      "turns": 21,
       "winner": 1,
       "stalemate": true,
       "points": [
@@ -124,7 +124,7 @@
     },
     {
       "seed": 3,
-      "turns": 29,
+      "turns": 15,
       "winner": 0,
       "stalemate": true,
       "points": [
@@ -138,6 +138,6 @@
       }
     }
   ],
-  "rulesVersion": "2026-10-16-story-kourindou-physics-v21",
+  "rulesVersion": "2026-10-16-story-no-draw-stalemate-v22",
   "scope": "Actual goal unions and legacy migration, single-run colors and reset, Suwako original/copy/muting rules, constrained private fifth-chapter deals, real skill and subscription chronology, a complete prepared legal endgame route through the real turn loop, four random matches and controlled chapter lifecycle. Actual newspaper subscription and direct-report rendering, bilingual card details and faction-color menu style are also checked with a controlled DOM; browser pixels are not verified."
 }

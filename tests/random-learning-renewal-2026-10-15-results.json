@@ -179,7 +179,7 @@
   "randomMatches": [
     {
       "mode": 1,
-      "turns": 39,
+      "turns": 24,
       "ending": "win",
       "winner": 0,
       "points": [
@@ -223,6 +223,6 @@
       }
     }
   ],
-  "rulesVersion": "2026-10-16-story-kourindou-physics-v21",
+  "rulesVersion": "2026-10-16-story-no-draw-stalemate-v22",
   "scope": "512 seeded random story openings with chapter-two next-five-draw guarantees, 256 restored fixed-hand tutorial openings, 384 fixed exercise configurations with actual completions, complete production matches, bilingual Sakuya titles, real renderers and shared pointer physics in a controlled DOM; no browser pixel verification"
 }
