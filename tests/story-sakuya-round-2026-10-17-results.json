@@ -1,0 +1,523 @@
+{
+  "status": "pass",
+  "count": 16,
+  "checks": [
+    "1,024 real chapter-six deals contain exactly one original Sakuya and five random originals, retain private six-card hands and conserve all 40 cards",
+    "The first actor and Sakuya’s position in the hand remain randomized",
+    "A seeded deal remains reproducible",
+    "Chapter 1 does not inherit the sixth chapter’s guaranteed Sakuya",
+    "Chapter 2 does not inherit the sixth chapter’s guaranteed Sakuya",
+    "Chapter 3 does not inherit the sixth chapter’s guaranteed Sakuya",
+    "Chapter 4 does not inherit the sixth chapter’s guaranteed Sakuya",
+    "Chapter 5 does not inherit the sixth chapter’s guaranteed Sakuya",
+    "Sixteen actual Sakuya chains use her two bonus turns to collect two four-card factions, score eight points and earn all three stars",
+    "Exactly seven points from real claims and an ability across the original turn and both extra turns satisfies the threshold",
+    "A nested free Youmu placement keeps the same scoring window and six points do not earn the seven-point star",
+    "A nonwinning Sakuya chain completes both bonus turns, sweeps the remaining hand once, resumes time and advances to the opponent once",
+    "Extra turns still consume Murasa-style restrictions and reset trading independently of the shared story scoring window",
+    "A scheduled dancer extra turn also shares its original turn’s scoring window",
+    "A separate regular turn resets the baseline even when the same player acts again",
+    "A v23 regular-turn AI evaluation snapshot still imports with its original card inventory"
+  ],
+  "routes": [
+    {
+      "seed": 1,
+      "actions": [
+        {
+          "type": "place",
+          "cardId": "sdm_sakuya",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "sdm_flandre",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "temple_murasa",
+          "score": 4,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        }
+      ],
+      "points": 8,
+      "stars": 3
+    },
+    {
+      "seed": 2,
+      "actions": [
+        {
+          "type": "place",
+          "cardId": "sdm_sakuya",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "sdm_flandre",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "temple_murasa",
+          "score": 4,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        }
+      ],
+      "points": 8,
+      "stars": 3
+    },
+    {
+      "seed": 3,
+      "actions": [
+        {
+          "type": "place",
+          "cardId": "sdm_sakuya",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "sdm_flandre",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "temple_murasa",
+          "score": 4,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        }
+      ],
+      "points": 8,
+      "stars": 3
+    },
+    {
+      "seed": 4,
+      "actions": [
+        {
+          "type": "place",
+          "cardId": "sdm_sakuya",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "sdm_flandre",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "temple_murasa",
+          "score": 4,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        }
+      ],
+      "points": 8,
+      "stars": 3
+    },
+    {
+      "seed": 5,
+      "actions": [
+        {
+          "type": "place",
+          "cardId": "sdm_sakuya",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "sdm_flandre",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "temple_murasa",
+          "score": 4,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        }
+      ],
+      "points": 8,
+      "stars": 3
+    },
+    {
+      "seed": 6,
+      "actions": [
+        {
+          "type": "place",
+          "cardId": "sdm_sakuya",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "sdm_flandre",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "temple_murasa",
+          "score": 4,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        }
+      ],
+      "points": 8,
+      "stars": 3
+    },
+    {
+      "seed": 7,
+      "actions": [
+        {
+          "type": "place",
+          "cardId": "sdm_sakuya",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "sdm_flandre",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "temple_murasa",
+          "score": 4,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        }
+      ],
+      "points": 8,
+      "stars": 3
+    },
+    {
+      "seed": 8,
+      "actions": [
+        {
+          "type": "place",
+          "cardId": "sdm_sakuya",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "sdm_flandre",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "temple_murasa",
+          "score": 4,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        }
+      ],
+      "points": 8,
+      "stars": 3
+    },
+    {
+      "seed": 9,
+      "actions": [
+        {
+          "type": "place",
+          "cardId": "sdm_sakuya",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "sdm_flandre",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "temple_murasa",
+          "score": 4,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        }
+      ],
+      "points": 8,
+      "stars": 3
+    },
+    {
+      "seed": 10,
+      "actions": [
+        {
+          "type": "place",
+          "cardId": "sdm_sakuya",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "sdm_flandre",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "temple_murasa",
+          "score": 4,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        }
+      ],
+      "points": 8,
+      "stars": 3
+    },
+    {
+      "seed": 11,
+      "actions": [
+        {
+          "type": "place",
+          "cardId": "sdm_sakuya",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "sdm_flandre",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "temple_murasa",
+          "score": 4,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        }
+      ],
+      "points": 8,
+      "stars": 3
+    },
+    {
+      "seed": 12,
+      "actions": [
+        {
+          "type": "place",
+          "cardId": "sdm_sakuya",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "sdm_flandre",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "temple_murasa",
+          "score": 4,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        }
+      ],
+      "points": 8,
+      "stars": 3
+    },
+    {
+      "seed": 13,
+      "actions": [
+        {
+          "type": "place",
+          "cardId": "sdm_sakuya",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "sdm_flandre",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "temple_murasa",
+          "score": 4,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        }
+      ],
+      "points": 8,
+      "stars": 3
+    },
+    {
+      "seed": 14,
+      "actions": [
+        {
+          "type": "place",
+          "cardId": "sdm_sakuya",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "sdm_flandre",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "temple_murasa",
+          "score": 4,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        }
+      ],
+      "points": 8,
+      "stars": 3
+    },
+    {
+      "seed": 15,
+      "actions": [
+        {
+          "type": "place",
+          "cardId": "sdm_sakuya",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "sdm_flandre",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "temple_murasa",
+          "score": 4,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        }
+      ],
+      "points": 8,
+      "stars": 3
+    },
+    {
+      "seed": 16,
+      "actions": [
+        {
+          "type": "place",
+          "cardId": "sdm_sakuya",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "sdm_flandre",
+          "score": 0,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        },
+        {
+          "type": "place",
+          "cardId": "temple_murasa",
+          "score": 4,
+          "startScore": 0,
+          "blocked": false,
+          "traded": false
+        }
+      ],
+      "points": 8,
+      "stars": 3
+    }
+  ],
+  "rulesVersion": "2026-10-17-story-sakuya-round-v24",
+  "randomOpenings": 1024,
+  "scope": "Actual engine, opening dealer, production action/follow-up flow, real faction claims, threshold boundary, nested free placement, hand sweep, time-stop cancellation and per-turn controls; no browser-pixel claims."
+}

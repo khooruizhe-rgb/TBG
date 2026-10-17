@@ -27,61 +27,61 @@
     "The actual en sixth-chapter introduction shows the three faction-colored renewed cards and keeps the surprise threshold hidden",
     "The actual zh-CN sixth-chapter introduction shows the three faction-colored renewed cards and keeps the surprise threshold hidden"
   ],
-  "rulesVersion": "2026-10-17-story-unlocked-shop-v23",
+  "rulesVersion": "2026-10-17-story-sakuya-round-v24",
   "randomOpenings": 512,
   "burstRoutes": 16,
   "productionMatches": [
     {
       "seed": 1,
-      "actions": 13,
+      "actions": 19,
       "reason": "win",
       "winner": 1,
       "points": [
-        0,
+        6,
         7
       ],
-      "place": 9,
-      "draw": 4,
-      "trade": 3
+      "place": 12,
+      "draw": 7,
+      "trade": 7
     },
     {
       "seed": 2,
-      "actions": 11,
+      "actions": 25,
+      "reason": "win",
+      "winner": 0,
+      "points": [
+        8,
+        1
+      ],
+      "place": 14,
+      "draw": 10,
+      "trade": 6
+    },
+    {
+      "seed": 3,
+      "actions": 12,
       "reason": "win",
       "winner": 0,
       "points": [
         7,
         0
       ],
-      "place": 6,
-      "draw": 3,
-      "trade": 2
-    },
-    {
-      "seed": 3,
-      "actions": 27,
-      "reason": "stalemate",
-      "winner": 0,
-      "points": [
-        5,
-        0
-      ],
-      "place": 15,
-      "draw": 11,
-      "trade": 6
+      "place": 9,
+      "draw": 2,
+      "trade": 3
     },
     {
       "seed": 4,
-      "actions": 18,
+      "actions": 26,
       "reason": "win",
       "winner": 1,
       "points": [
         0,
-        10
+        9
       ],
-      "place": 11,
-      "draw": 6,
-      "trade": 4
+      "place": 14,
+      "draw": 11,
+      "trade": 6
     }
   ],
   "scope": "Real core rules, private random openings, normal-AI dispatch and difficulty features, shop exchanges, fifth-card and trap unlocks, actual faction claims and an eight-point one-turn Meiling route, current-only/cumulative stars, controlled chapter lifecycle and four full random matches. Browser pixels are not verified."
