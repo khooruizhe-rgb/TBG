@@ -1067,6 +1067,6 @@
       }
     }
   ],
-  "rulesVersion": "2026-10-17-story-sakuya-round-v24",
+  "rulesVersion": "2026-10-17-story-first-stalemate-v25",
   "scope": "Shipped story rules and AI, complete real-rule walkthroughs and controlled chapter UI lifecycle; no browser pixel verification"
 }

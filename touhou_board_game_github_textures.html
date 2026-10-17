@@ -2815,8 +2815,17 @@ body:not(:has(#game.active)):not(.title-memory-active) #app{position:relative;z-
 @media(orientation:landscape) and (max-height:500px){#creation-panel{padding:12px}#creation-title{font-size:15px;margin-bottom:6px}.creation-printer{height:24px}.creation-option{width:min(22vw,28dvh,150px);gap:5px}.creation-inspect{padding:4px 10px;font-size:11px}#creation-status{margin-top:6px;font-size:11px;min-height:1.4em}}
 @media(prefers-reduced-motion:reduce){.creation-printing,.creation-printing::after{animation:none}.creation-face.creation-flying,#creation-overlay{transition:none}}
 /* Shared preferences remain readable in native fullscreen and on narrow phones. */
-.settings-gear{display:inline-grid;place-items:center;min-width:40px;min-height:40px;font:24px/1 sans-serif;padding:5px 9px}
-#app #game-toolbar .settings-gear,#setup #menu-fullscreen-controls .settings-gear{font:22px/1 sans-serif;padding:4px 7px;min-width:34px;min-height:32px}
+.settings-gear{display:inline-grid;place-items:center;min-width:38px;min-height:38px;padding:4px}
+#settings-launchers{position:fixed;left:calc(env(safe-area-inset-left) + 8px);top:calc(env(safe-area-inset-top) + 6px);z-index:240;display:flex}
+#settings-launchers .settings-gear{width:38px;height:38px;min-width:38px;min-height:38px;padding:4px;background:#f5ead8e6;border:1px solid #b5946d;border-radius:9px;box-shadow:0 2px 6px #170d0b30}
+.settings-icon{display:block;width:28px;height:28px;object-fit:contain;pointer-events:none}
+#settings-launchers #game-settings-btn{display:none}
+body:has(#game.active) #settings-launchers #menu-settings-btn{display:none}
+body:has(#game.active) #settings-launchers #game-settings-btn{display:grid}
+body:has(#game.active) #game-toolbar{padding-left:44px}
+body:not(.mobile-device) #menu-fullscreen-controls{display:none}
+body.mobile-landscape #settings-launchers .settings-gear{width:32px;height:32px;min-width:32px;min-height:32px;padding:3px}
+body.mobile-landscape #settings-launchers .settings-icon{width:24px;height:24px}
 #game-toolbar #debug-menu-btn{font-size:10px;padding:5px 6px}
 #settings-dialog{display:none;position:fixed;inset:0;margin:auto;width:min(460px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;padding:20px;border:1px solid #b5946d;border-radius:12px;background:#f6ead3;color:#493321;box-shadow:0 16px 48px #10091380;z-index:1400}
 #settings-dialog.show{display:block}
@@ -2834,6 +2843,15 @@ body:not(:has(#game.active)):not(.title-memory-active) #app{position:relative;z-
 body.fixed-card-shadow .table-scatter-card:is(.table-card-dragging,.table-card-sliding),body.fixed-card-shadow #byakuren-peek-overlay .table-scatter-card:is(.table-card-dragging,.table-card-sliding){filter:drop-shadow(4px 9px 5px #170d0b7a)}
 body.light-card-shadows .table-scatter-card:is(.table-card-dragging,.table-card-sliding),body.light-card-shadows #byakuren-peek-overlay .table-scatter-card:is(.table-card-dragging,.table-card-sliding){filter:drop-shadow(3px 6px 3px #170d0b66)}
 @media(max-width:480px){#settings-dialog{padding:16px}.settings-gear{min-width:36px;min-height:36px;font-size:22px}}
+/* Mirror only the phone's landscape regions; card faces and text keep their orientation. */
+body.mobile-landscape.mobile-mirrored #board-panel{grid-template-columns:minmax(0,1fr) var(--mobile-hand-width,190px)}
+body.mobile-landscape.mobile-mirrored #board-wrap{grid-column:1}
+body.mobile-landscape.mobile-mirrored #hand-area{grid-column:2}
+body.mobile-landscape.mobile-mirrored #instruction-bar{left:5px;right:calc(var(--mobile-hand-width,190px) + 12px)}
+body.mobile-landscape.mobile-mirrored.mobile-has-shop .layout{grid-template-columns:var(--mobile-shop-width,136px) minmax(0,1fr)}
+body.mobile-landscape.mobile-mirrored.mobile-has-shop #board-panel{grid-column:2;grid-row:1}
+body.mobile-landscape.mobile-mirrored.mobile-has-shop #log-panel{grid-column:1;grid-row:1}
+body.mobile-landscape.mobile-mirrored.mobile-log-open #log-panel{left:calc(env(safe-area-inset-left) + 6px);right:auto}
 </style>
 </head>
 <body>
@@ -2857,6 +2875,10 @@ body.light-card-shadows .table-scatter-card:is(.table-card-dragging,.table-card-
 <div class="crown-backdrop" id="crown-backdrop-a" aria-hidden="true"></div>
 <div class="crown-backdrop" id="crown-backdrop-b" aria-hidden="true"></div>
 <div class="stars"></div>
+<div id="settings-launchers">
+  <button id="menu-settings-btn" class="pill-btn settings-gear" type="button" aria-label="Settings" title="Settings" aria-haspopup="dialog" aria-expanded="false" aria-controls="settings-dialog"><img class="settings-icon" src="https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/ui/settings-gear.png" width="28" height="28" alt="" draggable="false"></button>
+  <button id="game-settings-btn" class="pill-btn settings-gear" type="button" aria-label="Settings" title="Settings" aria-haspopup="dialog" aria-expanded="false" aria-controls="settings-dialog"><img class="settings-icon" src="https://raw.githubusercontent.com/khooruizhe-rgb/TBG/main/touhou_uploaded_images/images/ui/settings-gear.png" width="28" height="28" alt="" draggable="false"></button>
+</div>
 <div id="title-table-cards" role="region" aria-label="Cards on the table"></div>
 <div id="title-memory-status" hidden>
   <strong>Memory match</strong><p id="title-memory-message" role="status">Match two cards from the same faction. You can still move them freely.</p>
@@ -2877,7 +2899,7 @@ body.light-card-shadows .table-scatter-card:is(.table-card-dragging,.table-card-
       <h1><span class="menu-japanese" lang="ja">幻想郷</span>Boundary of Fates</h1>
       <div class="menu-divider" aria-hidden="true"><span>☯</span></div>
     </div>
-    <div id="menu-fullscreen-controls"><button id="menu-settings-btn" class="pill-btn settings-gear" type="button" aria-label="Settings" title="Settings" aria-haspopup="dialog" aria-expanded="false" aria-controls="settings-dialog">⚙</button><button id="menu-fullscreen-btn" class="pill-btn" type="button" aria-pressed="false">Fullscreen</button><span id="menu-fullscreen-message" role="status"></span></div>
+    <div id="menu-fullscreen-controls"><button id="menu-fullscreen-btn" class="pill-btn" type="button" aria-pressed="false">Fullscreen</button><span id="menu-fullscreen-message" role="status"></span></div>
     <div class="menu-settings">
 
       <fieldset class="menu-setting"><legend>Players</legend>
@@ -2937,7 +2959,7 @@ body.light-card-shadows .table-scatter-card:is(.table-card-dragging,.table-card-
     <div id="game-toolbar">
       <button id="main-menu-btn" class="pill-btn" type="button">Main Menu</button>
       <button id="fullscreen-btn" class="pill-btn" type="button" aria-pressed="false">Fullscreen</button>
-      <button id="game-settings-btn" class="pill-btn settings-gear" type="button" aria-label="Settings" title="Settings" aria-haspopup="dialog" aria-expanded="false" aria-controls="settings-dialog">⚙</button>
+      
       <button id="journal-btn" class="pill-btn" type="button" aria-expanded="false" aria-controls="log-panel">Log</button>
       <button id="debug-menu-btn" class="pill-btn" type="button" aria-expanded="false" aria-controls="debug-panel" aria-label="Debug tools">DEBUG</button>
       <button id="ai-test-stats-btn" class="pill-btn" type="button" title="D / F8: open test data and pause" hidden>Test data (D / F8)</button>
@@ -3015,7 +3037,8 @@ body.light-card-shadows .table-scatter-card:is(.table-card-dragging,.table-card-
 <dialog id="settings-dialog" aria-modal="true" aria-labelledby="settings-title" tabindex="-1">
   <div class="settings-heading"><h2 id="settings-title">Settings</h2><button id="settings-close" class="pill-btn" type="button">Close</button></div>
   <label class="settings-row" for="settings-language"><span>Language</span><select id="settings-language" aria-label="Language"><option value="en">English</option><option value="zh-CN">简体中文</option></select></label>
-  <label class="settings-row" for="settings-physics"><span>Card physics</span><select id="settings-physics"><option value="physical">New · rotation and momentum</option><option value="classic">Classic · direct movement</option></select></label>
+  <label class="settings-toggle"><input id="settings-mirror-phone" type="checkbox"><span>Mirror phone layout · swap hand and shop</span></label>
+  <label class="settings-row" for="settings-physics"><span>Card physics</span><select id="settings-physics"><option value="physical">New · rotation and momentum</option><option value="classic">Previous · original physics</option></select></label>
   <label class="settings-toggle"><input id="settings-fixed-shadow" type="checkbox"><span>Fixed drag shadow</span></label>
   <label class="settings-toggle"><input id="settings-light-shadow" type="checkbox"><span>Lighter drag shadows and glow</span></label>
 </dialog>
@@ -5676,7 +5699,7 @@ class Game {
 }
 
 /* 2026-10-12: creation, private newspapers and instance ability changes. */
-const REWORK_RULES_VERSION='2026-10-17-story-sakuya-round-v24';
+const REWORK_RULES_VERSION='2026-10-17-story-first-stalemate-v25';
 Game.prototype.canCreateWithMatara=function(){return this.mainBoardCells().length>=4;};
 let nextCreatedCard=0,nextHiddenChoice=0;
 const COPY_PASSIVES=new Set(['sage_yukari','sage_kasen','mtn_nitori','hell_hecatia','palace_koishi']);
@@ -5985,7 +6008,7 @@ Game.prototype.recordStoryCorrectGuess=function(p,target,id){
   if(!this.cancelled && story?.chapter===5 && p===story.humanSeat && (story.subscribedPapers?.length || this.paperReports.some(paper=>paper.ownerIdx!==p&&paper.subscribers.includes(p))) && this.players[target]?.hand.includes(id))story.progress.newsGuess=true;
 };
 const STORY_CHAPTERS=[
-  {id:1,title:'Chapter 1 · The first table',body:'Cards have no abilities in this chapter. Place cards beside their faction, use Draw for Everyone when needed, and win the match. Try the two-card pair before finishing the four-card faction.',skills:[]},
+  {id:1,title:'Chapter 1 · The first table',body:'Cards have no abilities in this chapter. Place cards beside their faction and use Draw for Everyone when needed. Win or reach stalemate to clear the chapter. Try the two-card pair before finishing the four-card faction.',skills:[]},
   {id:2,title:'Chapter 2 · Scarlet Devil Mansion',body:'Win to clear this chapter. Three stars: claim Scarlet Devil Mansion, finish Remilia’s ability with three Mansion cards in hand, and use Flandre to discard an opponent’s hand card.',skills:['sdm'],introduced:'sdm',hint:'Try waiting a few turns before playing Remilia.'},
   {id:3,title:'Chapter 3 · Hakugyokurou',body:'Hakugyokurou abilities join Scarlet Devil Mansion. Win to clear this chapter. Three stars: claim Hakugyokurou, gain four points from one Yuyuko placement, and win before the opponent reaches four points.',skills:['sdm','hakugyokurou'],introduced:'hakugyokurou',hint:'Disrupting your opponent’s claims is another way to stop them from winning.'},
   {id:4,title:'Chapter 4 · Eientei',body:'Eientei abilities join Scarlet Devil Mansion and Hakugyokurou. Win to clear this chapter. Three stars: claim Eientei, gain four points from one Kaguya placement, and hold at least ten cards at once.',skills:['sdm','hakugyokurou','hourai'],introduced:'hourai'},
@@ -6095,7 +6118,7 @@ function configureStoryMatch(match,chapter){
   match.shopTiles=match.kourindouEnabled?[[0,1],[1,0],[1,1],[1,2]].map(([r,c],slot)=>({r:SIZE+2+r,c,slot,wasteland:false})):[];match.board=Array.from({length:SIZE},()=>Array(SIZE).fill(null));
   match.wasteland=Array.from({length:SIZE},()=>Array(SIZE).fill(false));
   dealLearningOpening(match,{scarletOpening:chapter===2,hakugyokurouOpening:chapter===3,eienteiOpening:chapter===4,mountainOpening:chapter===5,sakuyaOpening:chapter===6,shop:match.kourindouEnabled,shopPool:storyShopCards(chapter)});
-  match.storyMatch={chapter,humanSeat:0,aiSeat:1,skillFactions:definition.skills.slice(),
+  match.storyMatch={chapter,humanSeat:0,aiSeat:1,stalemateClear:false,skillFactions:definition.skills.slice(),
     sdmCards:storyScarletCards(),sdmPlaced:[],hakuCards:storyFactionCards('hakugyokurou'),hakuPlaced:[],houraiCards:storyFactionCards('hourai'),houraiPlaced:[],opponentReachedFour:false,
     mountainCards:storyFactionCards('mountain'),mountainPlaced:[],subscribedPapers:[],claimedFactions:[],turnSeat:match.currentPlayerIdx,turnStartScore:0,
     progress:chapter===6?{twoFactions:false,lockedFaction:false,surprise:false}:chapter===5?{mountain:false,stalemate:false,newsGuess:false}:chapter===4?{hourai:false,kaguya:false,handTen:false}:chapter===3?{haku:false,yuyuko:false}:{sdm:false,remilia:false,flandre:false}};
@@ -8641,8 +8664,13 @@ ZH_DYNAMIC.unshift([/^Create copy: ability cost \+(\d+)(.*)$/,(_,n,tail)=>`创�
 Object.assign(ZH_TEXT,{"F8 opens test data and pauses the test. Closing this window keeps it paused.": "按 F8 打开测试数据并暂停。关闭窗口后保持暂停。", "D / F8: open test data and pause": "D / F8：打开测试数据并暂停", "Test data (D / F8)": "测试数据（D / F8）"});
 Object.assign(ZH_TEXT,{
   'Settings':'设置','Language':'语言','Card physics':'卡牌物理',
-  'New · rotation and momentum':'新版 · 旋转与惯性','Classic · direct movement':'旧版 · 直接跟手',
-  'Fixed drag shadow':'固定拖动阴影','Lighter drag shadows and glow':'较轻的拖动阴影与光晕'
+  'New · rotation and momentum':'新版 · 旋转与惯性','Previous · original physics':'旧版 · 原有物理',
+  'Fixed drag shadow':'固定拖动阴影','Lighter drag shadows and glow':'较轻的拖动阴影与光晕',
+  'Mirror phone layout · swap hand and shop':'手机镜像布局 · 交换手牌与交易区',
+  'Chapter 1 cleared by stalemate!':'第一关僵局通关！',
+  'No more cards can be placed. Chapter 1 cleared by stalemate!':'已无卡牌可以继续放置。第一关僵局通关！',
+  'No one has a legal move left. Chapter 1 cleared by stalemate!':'所有玩家都已无法行动。第一关僵局通关！',
+  'Cards have no abilities in this chapter. Place cards beside their faction and use Draw for Everyone when needed. Win or reach stalemate to clear the chapter. Try the two-card pair before finishing the four-card faction.':'本章所有卡牌都没有技能。将卡牌放在同阵营旁，必要时使用全员抽牌。获胜或进入僵局均可通关。试试先收取两卡阵营，再完成四卡阵营。'
 });
 function translateGameText(value){
   const original=String(value);if(gameLanguage!=='zh-CN')return original;
@@ -10033,7 +10061,9 @@ function renderAll(immediate=false){
   if((game.winner||game.stalemateMessage)&&el('card-detail-overlay').classList.contains('show'))closeCardDetails();
   if(game.winner){
     if(announcedGameResult!==game){announcedGameResult=game;playGameCue('victory');}
-    el('winner-text').textContent = `${game.winner.name} wins with ${game.winCount(game.winner)} discard points!`;
+    el('winner-text').textContent = game.storyMatch?.chapter===1 && game.storyMatch.stalemateClear
+      ? 'Chapter 1 cleared by stalemate!'
+      : `${game.winner.name} wins with ${game.winCount(game.winner)} discard points!`;
     el('winner-banner').classList.add('show');
   } else if(game.stalemateMessage){
     if(announcedGameResult!==game){announcedGameResult=game;playGameCue('stalemate');}
@@ -10651,10 +10681,13 @@ function endStalemate(){
   }
   if(game.storyMatch && (drawOnly || game.players.every(player=>!canAct(player.idx)))){
     if(game.storyMatch.chapter===5)game.storyMatch.progress.stalemate=true;
-    if(winners.length===1)game.winner=winners[0];
+    if(game.storyMatch.chapter===1){game.storyMatch.stalemateClear=true;game.winner=game.players[game.storyMatch.humanSeat];}
+    else if(winners.length===1)game.winner=winners[0];
   }
   const reason=drawOnly?'No more cards can be placed.':'No one has a legal move left.';
-  game.stalemateMessage = winners.length===1
+  game.stalemateMessage = game.storyMatch?.chapter===1 && game.storyMatch.stalemateClear
+    ? `${reason} Chapter 1 cleared by stalemate!`
+    : winners.length===1
     ? `${reason} ${winners[0].name} wins by stalemate with ${max} discard point${max===1?'':'s'}!`
     : `${reason} Stalemate! ${winners.map(w=>w.name).join(' & ')} tie with ${max} discard point${max===1?'':'s'} each.`;
   game.log(game.stalemateMessage);
@@ -14132,6 +14165,23 @@ function stepHandDragPhysics(body,target,dt,reduced=false){
   return body;
 }
 
+function stepPreviousHandDragPhysics(body,target,dt,reduced=false){
+  dt=Math.min(.034,Math.max(.001,dt));
+  if(reduced){body.x=target.x;body.y=target.y;body.vx=body.vy=body.angle=body.tilt=0;body.scale=1;return body;}
+  const stiffness=190,damping=23;
+  body.vx+=(stiffness*(target.x-body.x)-damping*body.vx)*dt;
+  body.vy+=(stiffness*(target.y-body.y)-damping*body.vy)*dt;
+  body.x+=body.vx*dt;body.y+=body.vy*dt;
+  // Keep rapid cross-screen gestures close enough to the hand to feel connected.
+  const dx=target.x-body.x,dy=target.y-body.y,distance=Math.hypot(dx,dy);
+  if(distance>65){body.x=target.x-dx/distance*65;body.y=target.y-dy/distance*65;}
+  const ease=1-Math.exp(-14*dt);
+  body.angle+=(Math.max(-12,Math.min(12,body.vx*.012))-body.angle)*ease;
+  body.tilt+=(Math.max(-7,Math.min(7,-body.vy*.008))-body.tilt)*ease;
+  body.scale+=(1.055+Math.min(.02,Math.hypot(body.vx,body.vy)/40000)-body.scale)*ease;
+  return body;
+}
+
 function handDragTransform(body){
   return `translate3d(${body.x}px,${body.y}px,0) translate(-50%,-50%) perspective(650px) rotateZ(${body.angle}deg) rotateX(${body.tilt}deg) scale(${body.scale})`;
 }
@@ -14166,7 +14216,7 @@ function runPhysicalCardDrag(drag,isActive){
   drag.body={x:drag.origin.left+drag.origin.width/2,y:drag.origin.top+drag.origin.height/2,vx:0,vy:0,angle:0,tilt:0,scale:1};
   drag.goal={x:drag.body.x,y:drag.body.y};
   drag.reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  drag.classic=cardPhysicsIsClassic();
+  drag.previousPhysics=cardPhysicsIsPrevious();
   let previous=performance.now();
   const tick=now=>{
     if(!isActive() || !drag.ghost?.isConnected)return;
@@ -14174,7 +14224,8 @@ function runPhysicalCardDrag(drag,isActive){
       const target=handDragTarget(drag.point.x,drag.point.y);drag.targetDirty=false;
       if(drag.target!==target){drag.target?.classList.remove('drag-hover');drag.target=target;target?.classList.add('drag-hover');}
     }
-    stepHandDragPhysics(drag.body,drag.goal,(now-previous)/1000,drag.reduced||drag.classic);previous=now;
+    const step=drag.previousPhysics?stepPreviousHandDragPhysics:stepHandDragPhysics;
+    step(drag.body,drag.goal,(now-previous)/1000,drag.reduced);previous=now;
     paintHandDrag(drag);drag.frame=requestAnimationFrame(tick);
   };
   paintHandDrag(drag);drag.frame=requestAnimationFrame(tick);
@@ -14334,27 +14385,30 @@ const CARD_PRESENTATION_KEY='boundary-card-presentation-v1';
 function loadCardPresentationSettings(){
   try{
     const saved=JSON.parse(window.localStorage?.getItem(CARD_PRESENTATION_KEY)||'{}')||{};
-    return {physics:saved.physics==='classic'?'classic':'physical',fixedShadow:saved.fixedShadow===true,lightShadow:saved.lightShadow===true};
-  }catch(_error){return {physics:'physical',fixedShadow:false,lightShadow:false};}
+    return {physics:saved.physics==='classic'?'classic':'physical',fixedShadow:saved.fixedShadow===true,lightShadow:saved.lightShadow===true,mirrorPhone:saved.mirrorPhone===true};
+  }catch(_error){return {physics:'physical',fixedShadow:false,lightShadow:false,mirrorPhone:false};}
 }
 let cardPresentationSettings=loadCardPresentationSettings();
 let cardDragGeometryVersion=0,settingsReturnFocus=null;
 const tableCardGeometries=new WeakMap();
 function invalidateCardDragGeometry(){cardDragGeometryVersion++;}
-function cardPhysicsIsClassic(){return cardPresentationSettings.physics==='classic';}
+function cardPhysicsIsPrevious(){return cardPresentationSettings.physics==='classic';}
 function applyCardPresentationSettings(){
   document.body.classList.toggle('fixed-card-shadow',cardPresentationSettings.fixedShadow);
   document.body.classList.toggle('light-card-shadows',cardPresentationSettings.lightShadow);
+  document.body.classList.toggle('mobile-mirrored',cardPresentationSettings.mirrorPhone);
   el('settings-physics').value=cardPresentationSettings.physics;
   el('settings-fixed-shadow').checked=cardPresentationSettings.fixedShadow;
   el('settings-light-shadow').checked=cardPresentationSettings.lightShadow;
+  el('settings-mirror-phone').checked=cardPresentationSettings.mirrorPhone;
 }
 function setCardPresentationSetting(key,value){
   if(key==='physics')cardPresentationSettings.physics=value==='classic'?'classic':'physical';
-  else if(key==='fixedShadow'||key==='lightShadow')cardPresentationSettings[key]=value===true;
+  else if(key==='fixedShadow'||key==='lightShadow'||key==='mirrorPhone')cardPresentationSettings[key]=value===true;
   else return;
   try{window.localStorage?.setItem(CARD_PRESENTATION_KEY,JSON.stringify(cardPresentationSettings));}catch(_error){}
   applyCardPresentationSettings();
+  invalidateCardDragGeometry();queueMobileViewport();
 }
 function closeGameSettings(){
   const dialog=el('settings-dialog');dialog.classList.remove('show');
@@ -14387,6 +14441,7 @@ function initializeCardSettings(){
   el('settings-physics').addEventListener('change',event=>setCardPresentationSetting('physics',event.target.value));
   el('settings-fixed-shadow').addEventListener('change',event=>setCardPresentationSetting('fixedShadow',event.target.checked));
   el('settings-light-shadow').addEventListener('change',event=>setCardPresentationSetting('lightShadow',event.target.checked));
+  el('settings-mirror-phone').addEventListener('change',event=>setCardPresentationSetting('mirrorPhone',event.target.checked));
   const dialog=el('settings-dialog');
   dialog.addEventListener('cancel',event=>{event.preventDefault();closeGameSettings();});
   dialog.addEventListener('close',()=>{if(!dialog.open && dialog.classList.contains('show'))closeGameSettings();});
@@ -14454,10 +14509,6 @@ function stepTableCardSlide(body,dt,bounds){
   body.x=x;body.y=y;return body;
 }
 function stepTableCardDrag(drag,pointer,dt){
-  if(cardPhysicsIsClassic()){
-    drag.spin=0;
-    return moveTitleCard(drag.node,pointer.x-drag.offsetX,pointer.y-drag.offsetY,drag.rotation);
-  }
   const dx=pointer.x-drag.pointer.x,dy=pointer.y-drag.pointer.y;
   if(dt>0 && !window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches){
     const elapsed=Math.min(.1,dt),steps=Math.max(1,Math.ceil(elapsed/.008)),h=elapsed/steps;
@@ -14481,7 +14532,7 @@ function stopTableCardSlide(node,notify=true){
 }
 function clearTableCardSlides(notify=true){for(const node of [...tableCardSlides.keys()])stopTableCardSlide(node,notify);}
 function startTableCardSlide(drag,releasedAt){
-  if(cardPhysicsIsClassic() || window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches || drag.node.classList.contains('peek-taken'))return;
+  if(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches || drag.node.classList.contains('peek-taken'))return;
   const age=Math.max(0,releasedAt-drag.lastMotionAt),decay=Math.exp(-age/65),speed=Math.hypot(drag.vx,drag.vy)*decay;
   const spin=Math.max(-540,Math.min(540,drag.spin*decay));
   if(age>100 || speed<45&&Math.abs(spin)<12)return;
@@ -15239,7 +15290,7 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='157f9a5e12c4d8d2a9ad2a1869105ddf6d9dbfd29282ed2f3a7364b4921d4bf0';
+const AI_EVALUATION_RULES_DIGEST='eaa3aa5a168bb6f674f09ee70c49d26f61049b90215aeb0f901f91cd0feb7634';
 const AI_EVALUATION_POLICY_DIGEST='c2a4a2e32ac0aa88ca64af6d7368a6378d3c95f58fdf5deeab9d3d9a34259c8c';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
@@ -15326,7 +15377,7 @@ function evalForkSummary(report){
   return {groups,invalidPairs,conclusion,completedPairs:report.pairs.length};
 }
 function evalValidateSnapshot(snapshot){
-  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-17-story-unlocked-shop-v23','2026-10-16-story-no-draw-stalemate-v22','2026-10-16-story-kourindou-physics-v21','2026-10-16-story-mountain-collection-v20','2026-10-16-story-private-opening-v19','2026-10-16-story-eientei-opening-v18','2026-10-16-story-stars-placement-v17','2026-10-16-story-hakugyokurou-active-mentor-v16','2026-10-15-guided-opening-scarlet-reserve-v15','2026-10-15-random-learning-renewal-v14','2026-10-15-story-opening-chapters-v13','2026-10-14-original-creation-blueprints-v12','2026-10-14-guided-final-match-v11','2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
+  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-17-story-sakuya-round-v24','2026-10-17-story-unlocked-shop-v23','2026-10-16-story-no-draw-stalemate-v22','2026-10-16-story-kourindou-physics-v21','2026-10-16-story-mountain-collection-v20','2026-10-16-story-private-opening-v19','2026-10-16-story-eientei-opening-v18','2026-10-16-story-stars-placement-v17','2026-10-16-story-hakugyokurou-active-mentor-v16','2026-10-15-guided-opening-scarlet-reserve-v15','2026-10-15-random-learning-renewal-v14','2026-10-15-story-opening-chapters-v13','2026-10-14-original-creation-blueprints-v12','2026-10-14-guided-final-match-v11','2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
   const state=snapshot.state,n=state?.players?.length,size=snapshot.size;
   if(![4,5].includes(size) || ![2,3,4].includes(n) || !Number.isInteger(state.currentPlayerIdx) || state.currentPlayerIdx<0 || state.currentPlayerIdx>=n)throw new Error('Invalid position dimensions.');
   if(state.numPlayers!==n || state.players.some((p,i)=>p.idx!==i || !Array.isArray(p.hand) || !Array.isArray(p.discard)))throw new Error('Invalid position dimensions.');

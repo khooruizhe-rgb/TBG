@@ -1,0 +1,78 @@
+{
+  "status": "pass",
+  "count": 25,
+  "checks": [
+    "The uploaded 512-pixel transparent gear is used byte-for-byte as a real repository asset",
+    "Both menu and match use the supplied image outside the transformed menu/app ancestors",
+    "Settings are anchored at the viewport top left with phone safe-area spacing",
+    "Only the appropriate menu or match launcher is shown",
+    "The toolbar reserves space so the left settings gear cannot cover its first button",
+    "The phone landscape gear fits its toolbar height rather than overlapping the hand heading",
+    "The actual mirror checkbox changes the layout class, saves the choice and schedules new layout measurements",
+    "Mirror preference survives reload without changing the live rules state",
+    "Mirroring puts the hand to the right of the board, including matches without a shop",
+    "A phone shop match changes from hand/board/shop to shop/board/hand",
+    "Placement instructions and the journal drawer follow the mirrored sides",
+    "Mirroring rearranges regions without reversing text or card artwork",
+    "Turning mirror off restores the default layout preference",
+    "Mirror settings, the historical physics option and every first-chapter stalemate ending translate both ways",
+    "The previous hand solver is the exact body from the version before settings were added",
+    "Table grip, torque, angular drag, friction and edge collisions retain the exact previous-version equations",
+    "Historical spring, speed, tilt and scaling match the pinned solver at six frame intervals",
+    "Selecting previous physics routes the actual gesture through the original spring rather than direct following",
+    "Previous tabletop physics retains the original automatic rotation and release momentum",
+    "Switching back selects the optimized solver while retaining physical following",
+    "Both first actors clear chapter one on a tied, trailing or leading stalemate while keeping every actual card and score",
+    "A first-chapter stalemate follows the real progress-saving route",
+    "A closed first-chapter board completes before requesting bonus turns or further actions",
+    "Opponent wins and ties in chapters two through six, ordinary mode and the original tutorial keep their own ending rules",
+    "The result banner reports a chapter-one stalemate clear instead of inventing a points victory"
+  ],
+  "historicalCommit": "8acee0a787376d35a31558c24173ebdcf50016a1",
+  "endingRoutes": {
+    "cases": [
+      {
+        "actor": 0,
+        "a": 0,
+        "b": 0,
+        "cleared": true
+      },
+      {
+        "actor": 0,
+        "a": 0,
+        "b": 3,
+        "cleared": true
+      },
+      {
+        "actor": 0,
+        "a": 2,
+        "b": 1,
+        "cleared": true
+      },
+      {
+        "actor": 1,
+        "a": 0,
+        "b": 0,
+        "cleared": true
+      },
+      {
+        "actor": 1,
+        "a": 0,
+        "b": 3,
+        "cleared": true
+      },
+      {
+        "actor": 1,
+        "a": 2,
+        "b": 1,
+        "cleared": true
+      }
+    ],
+    "savedFirstChapter": 3,
+    "otherChapters": 10,
+    "tutorialIsolated": true,
+    "normalIsolated": true,
+    "followupsStopped": true
+  },
+  "scope": "Actual settings and gesture handlers, immutable historical physical equations, original icon bytes, CSS region declarations, native fullscreen regression, real closed-board turn/follow-up/progress entry points and result renderer; phone/browser pixels are not measured."
+}

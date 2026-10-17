@@ -18,11 +18,11 @@ const oldRect=Element.prototype.getBoundingClientRect;
 Element.prototype.getBoundingClientRect=function(){reads[this.dataset.titlePreview||this.dataset.storyCard?'card':this===el('story-card-grid')?'grid':'other']++;return oldRect.call(this);};
 Element.prototype.cloneNode=function(deep){const copy=new Element();copy.className=this.className;copy.dataset={...this.dataset};copy.attributes={...this.attributes};copy.rect=this.rect;if(deep)for(const child of this.children)copy.appendChild(child.cloneNode(true));return copy;};
 Element.prototype.animate=function(keyframes,options){this.lastAnimation={keyframes,options};return {finished:Promise.resolve(),cancel(){}};};
-for(const id of ['settings-dialog','menu-settings-btn','game-settings-btn','settings-language','settings-physics','settings-fixed-shadow','settings-light-shadow','settings-close','board','kourindou','hand']){
+for(const id of ['settings-dialog','menu-settings-btn','game-settings-btn','settings-language','settings-physics','settings-fixed-shadow','settings-light-shadow','settings-mirror-phone','settings-close','board','kourindou','hand']){
  el(id).id=id;if(!el(id).parentElement)document.body.appendChild(el(id));
 }
 const dialog=el('settings-dialog');dialog.rect={left:100,top:80,width:460,height:360,right:560,bottom:440};dialog.open=false;
-for(const id of ['settings-close','settings-language','settings-physics','settings-fixed-shadow','settings-light-shadow'])dialog.appendChild(el(id));
+for(const id of ['settings-close','settings-language','settings-physics','settings-fixed-shadow','settings-light-shadow','settings-mirror-phone'])dialog.appendChild(el(id));
 dialog.querySelectorAll=()=>dialog.children;
 dialog.showModal=function(){this.open=true;const index=layer.indexOf(this);if(index>=0)layer.splice(index,1);layer.push(this);};
 dialog.close=function(){if(!this.open)return;this.open=false;const index=layer.indexOf(this);if(index>=0)layer.splice(index,1);nativeClose.push(()=>dispatch(this,'close'));};
@@ -54,7 +54,7 @@ async function settle(){for(let i=0;i<8;i++)await Promise.resolve();flushClose()
 (async()=>{
  const controlsCss=html.match(/(?:^|\n)#menu-fullscreen-controls\{([^}]*)\}/)[1];
  ok(/display:flex/.test(controlsCss)&&html.includes('id="menu-settings-btn"')&&html.includes('id="game-settings-btn"')&&!html.includes('id="game-language"')&&!html.includes('id="menu-language"'),'The desktop menu and match expose gear buttons, with one language selector inside settings');
- ok(JSON.stringify(prefs())===JSON.stringify({physics:'physical',fixedShadow:false,lightShadow:false}),'Fresh preferences retain the current physical style and both original shadow effects');
+ ok(JSON.stringify(prefs())===JSON.stringify({physics:'physical',fixedShadow:false,lightShadow:false,mirrorPhone:false}),'Fresh preferences retain the current physical style and both original shadow effects');
  for(const id of ['menu-settings-btn','game-settings-btn']){
   el(id).focus();dispatch(el(id),'click');assert(dialog.open&&dialog.classList.contains('show')&&layer.at(-1)===dialog);assert.equal(document.activeElement,el('settings-language'));
   dispatch(el('settings-close'),'click');flushClose();assert(!dialog.open&&!dialog.classList.contains('show'));assert.equal(document.activeElement,el(id));
@@ -67,13 +67,13 @@ async function settle(){for(let i=0;i<8;i++)await Promise.resolve();flushClose()
  el('settings-physics').value='classic';dispatch(el('settings-physics'),'change',{target:el('settings-physics')});el('settings-fixed-shadow').checked=true;dispatch(el('settings-fixed-shadow'),'change',{target:el('settings-fixed-shadow')});el('settings-light-shadow').checked=true;dispatch(el('settings-light-shadow'),'change',{target:el('settings-light-shadow')});
  ok(prefs().physics==='classic'&&prefs().fixedShadow&&prefs().lightShadow&&document.body.classList.contains('fixed-card-shadow')&&document.body.classList.contains('light-card-shadows'),'Actual setting controls independently apply classic motion, fixed shadows and lighter glow');
  ok(JSON.stringify(prefs())===storage.get('boundary-card-presentation-v1')&&run('JSON.stringify(loadCardPresentationSettings())')===JSON.stringify(prefs()),'All three choices survive a new preference load');
- storage.set('boundary-card-presentation-v1','{"physics":"unknown","fixedShadow":"true","lightShadow":1}');ok(run('JSON.stringify(loadCardPresentationSettings())')===JSON.stringify({physics:'physical',fixedShadow:false,lightShadow:false}),'Invalid stored values cannot enable unintended modes');
+ storage.set('boundary-card-presentation-v1','{"physics":"unknown","fixedShadow":"true","lightShadow":1}');ok(run('JSON.stringify(loadCardPresentationSettings())')===JSON.stringify({physics:'physical',fixedShadow:false,lightShadow:false,mirrorPhone:false}),'Invalid stored values cannot enable unintended modes');
  storage.set('boundary-card-presentation-v1','{broken');ok(run('loadCardPresentationSettings().physics')==='physical','Malformed saved JSON safely uses the original visual defaults');
  const savedStorage=ctx.window.localStorage;ctx.window.localStorage={getItem(){throw Error('blocked');},setItem(){throw Error('blocked');}};
  run('setCardPresentationSetting("physics","physical");');ok(prefs().physics==='physical'&&run('loadCardPresentationSettings().physics')==='physical','Blocked browser storage still allows immediate setting changes');ctx.window.localStorage=savedStorage;
  run('setCardPresentationSetting("fixedShadow",false);setCardPresentationSetting("lightShadow",false);');
  for(const language of ['zh-CN','en']){
-  A.setLanguage(language);for(const text of ['Settings','Language','Card physics','New · rotation and momentum','Classic · direct movement','Fixed drag shadow','Lighter drag shadows and glow'])assert.equal(A.translateGameText(text)===text,language==='en',text);
+  A.setLanguage(language);for(const text of ['Settings','Language','Card physics','New · rotation and momentum','Previous · original physics','Fixed drag shadow','Lighter drag shadows and glow'])assert.equal(A.translateGameText(text)===text,language==='en',text);
  }ok(true,'Every settings label has an English and Chinese presentation');
  const nativeShow=dialog.showModal;dialog.showModal=undefined;dispatch(el('menu-settings-btn'),'click');ok(dialog.classList.contains('show')&&!dialog.open,'The same settings controls remain available when native dialogs are unavailable');dispatch(el('settings-close'),'click');dialog.showModal=nativeShow;
  let node=menuCard(),rect=node.getBoundingClientRect(),x=rect.left+rect.width/2,y=rect.top+rect.height/2;
@@ -91,7 +91,7 @@ async function settle(){for(let i=0;i<8;i++)await Promise.resolve();flushClose()
  ok(windowListeners.get('scroll').includes(run('invalidateCardDragGeometry'))&&viewportEvents.resize.includes(run('invalidateCardDragGeometry'))&&viewportEvents.scroll.includes(run('invalidateCardDragGeometry'))&&documentListeners.get('fullscreenchange').includes(run('invalidateCardDragGeometry')),'Scrolling, visual viewport changes and fullscreen changes all invalidate cached geometry');
  run('closeStoryMenu();setCardPresentationSetting("physics","classic");');node=menuCard();rect=node.getBoundingClientRect();x=rect.left+rect.width/2;y=rect.top+rect.height/2;const initialAngle=Number(node.dataset.angle);
  dispatch(node,'pointerdown',{pointerId:1,pointerType:'touch',clientX:x,clientY:y+25});dispatch(node,'pointermove',{pointerId:1,pointerType:'touch',clientX:x+80,clientY:y+25,timeStamp:now+=16});dispatch(node,'pointerup',{pointerId:1,pointerType:'touch',clientX:x+80,clientY:y+25,timeStamp:now});
- ok(Number(node.dataset.angle)===initialAngle&&run('tableCardSlides.size')===0,'Classic tabletop motion follows the grip without automatic rotation or a release throw');
+ ok(Number(node.dataset.angle)!==initialAngle&&run('tableCardSlides.size')===1,'Previous tabletop motion retains the original rotation and release throw');run('clearTableCardSlides();');
  run('setCardPresentationSetting("physics","physical");');node=menuCard();rect=node.getBoundingClientRect();x=rect.left+rect.width/2;y=rect.top+rect.height/2;
  dispatch(node,'pointerdown',{pointerId:1,pointerType:'touch',clientX:x,clientY:y+25});for(let i=1;i<=5;i++)dispatch(node,'pointermove',{pointerId:1,pointerType:'touch',clientX:x+i*15,clientY:y+25,timeStamp:now+=16});dispatch(node,'pointerup',{pointerId:1,pointerType:'touch',clientX:x+75,clientY:y+25,timeStamp:now});
  ok(run('tableCardSlides.size')===1,'Switching back restores the real physical release throw');dispatch(el('menu-settings-btn'),'click');ok(run('tableCardSlides.size')===0,'Opening settings retires active tabletop momentum before changing its mode');dispatch(el('settings-close'),'click');flushClose();
@@ -109,7 +109,7 @@ async function settle(){for(let i=0;i<8;i++)await Promise.resolve();flushClose()
  source=makeHand();hit=left;beginHand(source);frame();const beforeCancel=drops.length;fire('pointercancel');await settle();ok(!drag()&&drops.length===beforeCancel&&run('handDragSettlers.size')===0,'Cancelling a touch releases the gesture, animations and target without committing a card');
  source=makeHand();beginHand(source);frame();const ghost=drag().ghost;dispatch(el('game-settings-btn'),'click');ok(!drag()&&!ghost.isConnected&&frames.size===0&&run('pendingCellChoice===null'),'Opening settings cancels a held hand card and clears its pending animation and drag-only choice');dispatch(el('settings-close'),'click');flushClose();
  run('setCardPresentationSetting("physics","classic");');source=makeHand();beginHand(source);frame();
- const classic=drag();ok(classic.body.x===classic.goal.x&&classic.body.y===classic.goal.y&&classic.body.angle===0&&classic.body.tilt===0,'Classic hand dragging directly follows the latest grip with no spring delay or automatic tilt');fire('pointercancel');await settle();
+ const classic=drag();ok(classic.previousPhysics&&classic.body.x!==classic.goal.x&&classic.body.angle!==0,'Previous hand dragging uses the restored original spring and tilt instead of direct following');fire('pointercancel');await settle();
  run('setCardPresentationSetting("physics","physical");');source=makeHand();beginHand(source);frame();ok(drag().body.angle!==0&&drag().body.x!==drag().goal.x,'The physical hand mode retains spring following and visible rotation');
  const active=drag();active.body.vx=600;run('setCardPresentationSetting("fixedShadow",false);setCardPresentationSetting("lightShadow",false);');ctx.activeDrag=active;run('paintHandDrag(activeDrag);');const normalShadow=active.ghost.style.boxShadow;
  run('setCardPresentationSetting("fixedShadow",true);paintHandDrag(activeDrag);');ok(active.ghost.style.boxShadow.startsWith('0px 22px 34px')&&normalShadow!==active.ghost.style.boxShadow,'Fixed shadow stops the velocity-dependent offset while retaining the original blur and glow');
