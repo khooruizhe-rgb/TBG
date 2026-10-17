@@ -20,6 +20,7 @@ class Element{
  get isConnected(){let root=this;while(root.parentElement)root=root.parentElement;return root===document.body;}
  setPointerCapture(id){this.captures.add(id);}hasPointerCapture(id){return this.captures.has(id);}releasePointerCapture(id){this.captures.delete(id);}
  getBoundingClientRect(){if(this.rect)return {...this.rect,right:this.rect.left+this.rect.width,bottom:this.rect.top+this.rect.height};let width=144;
+  if(this.classList.contains('title-preview-compact'))width=parseFloat(document.body.values.get('--title-preview-card-width'))||width;
   if(this.classList.contains('title-memory-table-card'))width=parseFloat(document.body.values.get('--memory-card-width'))||width;
   if(this.dataset.peekCard==='true'){width=parseFloat(el('byakuren-peek-overlay').values.get('--peek-card-width'))||width;if(window.innerHeight<=600 && window.innerWidth>window.innerHeight)width=Math.min(width,window.innerHeight*.17);}
   const size={width,height:width*4/3},parse=(v,total)=>String(v).endsWith('%')?parseFloat(v)*total/100:parseFloat(v)||0;

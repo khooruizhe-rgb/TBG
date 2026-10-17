@@ -3,9 +3,9 @@ const root=path.resolve(__dirname,'..'),html=fs.readFileSync(root+'/touhou_board
 for(const [,code]of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(code);
 const builder=vm.createContext({});vm.runInContext(html.slice(html.indexOf('function buildAIEvaluationWorkerSource'),html.indexOf('\nfunction evalHashSeed')),builder);builder.html=html;
 class Node{
-  constructor(){this.children=[];this.parentElement=null;this.events={};this.dataset={};this.style={setProperty(){}};this.names=new Set();this.classList={add:n=>this.names.add(n),remove:n=>this.names.delete(n),contains:n=>this.names.has(n)};this.isConnected=true;}
+  constructor(){this.children=[];this.parentElement=null;this.events={};this.dataset={};this.attributes={};this.style={setProperty(){}};this.names=new Set();this.classList={add:n=>this.names.add(n),remove:n=>this.names.delete(n),contains:n=>this.names.has(n),toggle:(n,on)=>{if(on===undefined)on=!this.names.has(n);on?this.names.add(n):this.names.delete(n);return on;}};this.isConnected=true;}
   appendChild(child){child.parentElement=this;this.children.push(child);return child;}insertBefore(child){return this.appendChild(child);}prepend(child){child.parentElement=this;this.children.unshift(child);}
-  querySelector(){return new Node();}addEventListener(name,fn){this.events[name]=fn;}removeEventListener(name){delete this.events[name];}focus(){this.focused=true;}
+  querySelector(){return new Node();}addEventListener(name,fn){this.events[name]=fn;}removeEventListener(name){delete this.events[name];}setAttribute(name,value){this.attributes[name]=String(value);}focus(){this.focused=true;}
 }
 const nodes=new Map(),el=id=>{if(!nodes.has(id))nodes.set(id,new Node());return nodes.get(id);};
 const ctx=vm.createContext({console,setTimeout,clearTimeout,self:{},assert,el,performance:{now:()=>0},requestAnimationFrame:()=>1,cancelAnimationFrame(){},

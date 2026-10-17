@@ -184,6 +184,12 @@ test('All regular, fifth-card, crown, protection and multiplayer log announcemen
  const failures=[];for(const message of messages){const out=A.translateGameText(message);if(/[A-Za-z]{3,}/.test(out.replace(/\b[IVXLCDMN]+\b/g,'')))failures.push([message,out]);}
  assert.deepEqual(failures,[]);A.setGameLanguage('en');for(const message of messages)assert.equal(A.translateGameText(message),message);
 });
+test('Objective paper movement and fold controls translate both ways without replacing their listeners',()=>{
+ const values=[['Move objectives','移动目标纸张'],['Fold objectives','折叠目标'],['Unfold objectives','展开目标'],['Drag to move. Arrow keys move; Enter folds or unfolds.','拖动可移动纸张，也可用方向键移动，回车折叠或展开。']];
+ const button=el('paper-fold-language');let clicks=0;button.addEventListener('click',()=>clicks++);
+ for(const [en,zh]of values){button.setAttribute('aria-label',en);button.setAttribute('title',en);A.setGameLanguage('zh-CN');assert.equal(A.translateGameText(en),zh);assert.equal(button.getAttribute('aria-label'),zh);assert.equal(button.getAttribute('title'),zh);A.setGameLanguage('en');assert.equal(button.getAttribute('aria-label'),en);button.events.click();}
+ assert.equal(clicks,values.length);
+});
 test('Both live story language selectors refresh composed objectives without changing the match or an active choice',()=>{
  // Parse the real rendered fragments so TreeWalker sees text split by icons and
  // status marks, just as it does in the page, rather than an opaque HTML string.
