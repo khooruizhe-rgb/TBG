@@ -1,0 +1,314 @@
+{
+  "status": "pass",
+  "count": 17,
+  "checks": [
+    "Three stars collected across separate victories retain the ordinary cumulative rating",
+    "A saved single-match chapter-six perfect clear renders gold in chapter selection",
+    "The other faction chapters retain their existing perfect-star colors",
+    "Meeting all optional objectives before victory does not grant perfect-clear styling",
+    "The completed chapter-six match also renders its full stars in gold",
+    "At 32 controlled phone/shop/mirror layouts the actual sizing handler uses reclaimed draw-row space, never reduces the board and preserves game state",
+    "Repeated viewport refreshes preserve the same live pile and controls without reparenting or duplicating them",
+    "The pile, count and existing actions form a compact strip adjoining the hand",
+    "The draw strip follows the hand to the opposite side in mirrored play",
+    "The board keeps headroom for seats while narrow English draw labels can wrap inside the side strip",
+    "Portrait phones keep the same adjacent-hand draw strip",
+    "Returning to desktop restores the original pile position, DOM order and board actions",
+    "A smaller visual viewport recomputes a bounded board while keeping mobile controls docked",
+    "Leaving a match restores desktop anchors instead of retaining stale mobile placement",
+    "The moved original draw button executes the real shared draw once, and the sound button keeps its listener",
+    "Real draw flights measure the relocated pile face on both normal and mirrored phone layouts",
+    "Reduced-motion draws still update the correct pile count without adding a flight"
+  ],
+  "layouts": [
+    {
+      "width": 568,
+      "height": 320,
+      "shop": false,
+      "mirror": false,
+      "size": 4,
+      "before": 124,
+      "after": 158
+    },
+    {
+      "width": 568,
+      "height": 320,
+      "shop": false,
+      "mirror": false,
+      "size": 5,
+      "before": 124,
+      "after": 158
+    },
+    {
+      "width": 568,
+      "height": 320,
+      "shop": false,
+      "mirror": true,
+      "size": 4,
+      "before": 124,
+      "after": 158
+    },
+    {
+      "width": 568,
+      "height": 320,
+      "shop": false,
+      "mirror": true,
+      "size": 5,
+      "before": 124,
+      "after": 158
+    },
+    {
+      "width": 568,
+      "height": 320,
+      "shop": true,
+      "mirror": false,
+      "size": 4,
+      "before": 124,
+      "after": 158
+    },
+    {
+      "width": 568,
+      "height": 320,
+      "shop": true,
+      "mirror": false,
+      "size": 5,
+      "before": 124,
+      "after": 158
+    },
+    {
+      "width": 568,
+      "height": 320,
+      "shop": true,
+      "mirror": true,
+      "size": 4,
+      "before": 124,
+      "after": 158
+    },
+    {
+      "width": 568,
+      "height": 320,
+      "shop": true,
+      "mirror": true,
+      "size": 5,
+      "before": 124,
+      "after": 158
+    },
+    {
+      "width": 667,
+      "height": 375,
+      "shop": false,
+      "mirror": false,
+      "size": 4,
+      "before": 168,
+      "after": 202
+    },
+    {
+      "width": 667,
+      "height": 375,
+      "shop": false,
+      "mirror": false,
+      "size": 5,
+      "before": 168,
+      "after": 202
+    },
+    {
+      "width": 667,
+      "height": 375,
+      "shop": false,
+      "mirror": true,
+      "size": 4,
+      "before": 168,
+      "after": 202
+    },
+    {
+      "width": 667,
+      "height": 375,
+      "shop": false,
+      "mirror": true,
+      "size": 5,
+      "before": 168,
+      "after": 202
+    },
+    {
+      "width": 667,
+      "height": 375,
+      "shop": true,
+      "mirror": false,
+      "size": 4,
+      "before": 168,
+      "after": 202
+    },
+    {
+      "width": 667,
+      "height": 375,
+      "shop": true,
+      "mirror": false,
+      "size": 5,
+      "before": 168,
+      "after": 202
+    },
+    {
+      "width": 667,
+      "height": 375,
+      "shop": true,
+      "mirror": true,
+      "size": 4,
+      "before": 168,
+      "after": 202
+    },
+    {
+      "width": 667,
+      "height": 375,
+      "shop": true,
+      "mirror": true,
+      "size": 5,
+      "before": 168,
+      "after": 202
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "shop": false,
+      "mirror": false,
+      "size": 4,
+      "before": 180,
+      "after": 214
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "shop": false,
+      "mirror": false,
+      "size": 5,
+      "before": 180,
+      "after": 214
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "shop": false,
+      "mirror": true,
+      "size": 4,
+      "before": 180,
+      "after": 214
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "shop": false,
+      "mirror": true,
+      "size": 5,
+      "before": 180,
+      "after": 214
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "shop": true,
+      "mirror": false,
+      "size": 4,
+      "before": 180,
+      "after": 214
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "shop": true,
+      "mirror": false,
+      "size": 5,
+      "before": 180,
+      "after": 214
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "shop": true,
+      "mirror": true,
+      "size": 4,
+      "before": 180,
+      "after": 214
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "shop": true,
+      "mirror": true,
+      "size": 5,
+      "before": 180,
+      "after": 214
+    },
+    {
+      "width": 960,
+      "height": 432,
+      "shop": false,
+      "mirror": false,
+      "size": 4,
+      "before": 214,
+      "after": 248
+    },
+    {
+      "width": 960,
+      "height": 432,
+      "shop": false,
+      "mirror": false,
+      "size": 5,
+      "before": 214,
+      "after": 248
+    },
+    {
+      "width": 960,
+      "height": 432,
+      "shop": false,
+      "mirror": true,
+      "size": 4,
+      "before": 214,
+      "after": 248
+    },
+    {
+      "width": 960,
+      "height": 432,
+      "shop": false,
+      "mirror": true,
+      "size": 5,
+      "before": 214,
+      "after": 248
+    },
+    {
+      "width": 960,
+      "height": 432,
+      "shop": true,
+      "mirror": false,
+      "size": 4,
+      "before": 214,
+      "after": 248
+    },
+    {
+      "width": 960,
+      "height": 432,
+      "shop": true,
+      "mirror": false,
+      "size": 5,
+      "before": 214,
+      "after": 248
+    },
+    {
+      "width": 960,
+      "height": 432,
+      "shop": true,
+      "mirror": true,
+      "size": 4,
+      "before": 214,
+      "after": 248
+    },
+    {
+      "width": 960,
+      "height": 432,
+      "shop": true,
+      "mirror": true,
+      "size": 5,
+      "before": 214,
+      "after": 248
+    }
+  ],
+  "scope": "Actual persistence and menu/match star renderers; phone docking, original draw handler and flight functions, controlled portrait/landscape/shop/mirror/visual-viewport rectangles and desktop restoration. CSS declarations and sizing are checked; physical browser pixels and phone FPS are not measured."
+}

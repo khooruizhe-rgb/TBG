@@ -2218,7 +2218,7 @@ body.mobile-landscape #hand .hand-card{width:100%;height:var(--mobile-card-heigh
 body.mobile-landscape #hand .hand-card .icon-row{font-size:10px;}
 body.mobile-landscape #hand .hand-card .cname{font-size:inherit;line-height:1.12;}
 body.mobile-landscape #hand .hand-card:hover{transform:none;}
-body.mobile-landscape #table-wrap{flex:1;min-height:0;width:100%;max-width:none;padding:40px 0 0;margin:0;display:flex;align-items:center;justify-content:center;}
+body.mobile-landscape #table-wrap{flex:1;min-height:0;width:100%;max-width:none;padding:32px 0 0;margin:0;display:flex;align-items:center;justify-content:center;}
 body.mobile-landscape #board{width:var(--mobile-board-width,180px);max-width:none;gap:3px;}
 body.mobile-landscape #board .cell{border-radius:6px;}
 body.mobile-landscape .board-card{padding:2px 1px;border-radius:5px;font-size:clamp(8px,var(--mobile-board-font,10px),12px);}
@@ -2852,6 +2852,22 @@ body.mobile-landscape.mobile-mirrored.mobile-has-shop .layout{grid-template-colu
 body.mobile-landscape.mobile-mirrored.mobile-has-shop #board-panel{grid-column:2;grid-row:1}
 body.mobile-landscape.mobile-mirrored.mobile-has-shop #log-panel{grid-column:1;grid-row:1}
 body.mobile-landscape.mobile-mirrored.mobile-log-open #log-panel{left:calc(env(safe-area-inset-left) + 6px);right:auto}
+/* The phone's pile and draw controls share a compact strip beside the hand. */
+#mobile-draw-dock{display:none}
+body.game-mobile #hand-area{display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;grid-template-columns:minmax(0,1fr);gap:3px}
+body.game-mobile #hand-title{grid-row:1;grid-column:1}
+body.game-mobile #hand-choice-bar{grid-row:2;grid-column:1}
+body.game-mobile #hand{grid-row:3;grid-column:1;min-height:0}
+body.game-mobile #mobile-draw-dock{grid-row:4;grid-column:1;display:grid;grid-template-columns:42px minmax(0,1fr);align-items:center;gap:6px;padding:5px 2px 2px;border-top:1px solid #bea482;min-width:0}
+body.game-mobile #mobile-draw-dock #draw-pile{position:static;transform:none;gap:3px;min-width:0}
+body.game-mobile #mobile-draw-dock .pile-card-face{width:22px;height:27px;border-width:1px;font-size:14px}
+body.game-mobile #mobile-draw-dock #draw-pile-label{font-size:0;line-height:1}
+body.game-mobile #mobile-draw-dock #draw-pile-count{font-size:14px;line-height:1.2;padding:1px 4px;min-width:1.7em;margin-left:0}
+body.game-mobile #mobile-draw-dock #controls{display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:3px;margin:0;background:transparent;min-width:0}
+body.game-mobile #mobile-draw-dock #controls .big-btn{padding:5px 6px;font-size:11px;min-height:30px;white-space:normal;line-height:1.2}
+body.game-mobile #mobile-draw-dock #controls .pill-btn{padding:3px 5px;font-size:10px;min-height:22px;white-space:normal;line-height:1.2}
+body.game-mobile:not(.mobile-landscape) #mobile-draw-dock{width:min(100%,260px);justify-self:start}
+body.game-mobile:not(.mobile-landscape) #table-wrap{padding-top:56px}
 </style>
 </head>
 <body>
@@ -3001,6 +3017,7 @@ body.mobile-landscape.mobile-mirrored.mobile-log-open #log-panel{left:calc(env(s
             </div>
           </div>
           <div id="hand"></div>
+          <div id="mobile-draw-dock"></div>
         </div>
       </div>
 
@@ -16370,7 +16387,7 @@ function storyProgressRecords(){return Object.fromEntries(Object.entries(storyPr
 function storyClearedChapters(){return Object.keys(storyProgressRecords()).map(Number);}
 function storyBestStars(chapter){return storyProgressRecords()[chapter]??null;}
 function storyChapterPerfect(chapter){return storyProgressDetails()[chapter]?.perfect===true;}
-function storyStarColor(chapter){return FACTIONS[STORY_CHAPTERS.find(level=>level.id===chapter)?.introduced]?.color||'#c1973e';}
+function storyStarColor(chapter){return chapter===6?'#d4af37':FACTIONS[STORY_CHAPTERS.find(level=>level.id===chapter)?.introduced]?.color||'#c1973e';}
 function saveStoryStars(chapter,earned){
   if(!STORY_CHAPTERS.some(level=>level.id===chapter))return;
   const chapters=storyProgressDetails(),keys=STORY_GOAL_KEYS[chapter]||[],previous=chapters[chapter]||{cleared:true,goals:[],legacyStars:0,perfect:false};
@@ -16537,6 +16554,16 @@ function mobileHandMetrics(width,height,count=7){
   const cardHeight=Math.max(24,Math.floor(Math.min(cardWidth*1.25,(height-6-(rows-1)*4)/rows)));
   return {columns,cardHeight,font:Math.max(8,Math.min(12,cardWidth*.18))};
 }
+function dockMobileDrawArea(mobile){
+  const dock=el('mobile-draw-dock'),pile=el('draw-pile'),controls=el('controls');
+  if(mobile){
+    if(pile.parentElement!==dock)dock.appendChild(pile);
+    if(controls.parentElement!==dock)dock.appendChild(controls);
+  }else{
+    if(pile.parentElement===dock)el('table-wrap').insertBefore(pile,el('board'));
+    if(controls.parentElement===dock)el('board-wrap').appendChild(controls);
+  }
+}
 function syncMobileViewport(){
   mobileViewportFrame=0;
   const active=el('game').classList.contains('active');
@@ -16550,6 +16577,7 @@ function syncMobileViewport(){
   document.documentElement.classList.toggle('mobile-landscape',landscape);
   document.body.classList.toggle('mobile-has-shop',landscape && !!game?.kourindouEnabled);
   document.body.style.setProperty('--mobile-screen-height',`${height}px`);
+  dockMobileDrawArea(mobile);
   if(landscape){
     const padding=getComputedStyle(document.body);
     const room=width-parseFloat(padding.paddingLeft)-parseFloat(padding.paddingRight);
@@ -16559,7 +16587,7 @@ function syncMobileViewport(){
     const handWidth=Math.max(126,Math.min(232,panelWidth*.31));
     document.body.style.setProperty('--mobile-hand-width',`${handWidth}px`);
     const table=el('table-wrap').getBoundingClientRect();
-    const boardWidth=Math.max(36,Math.floor(Math.min(360,(table.height-52)*.8,table.width-132)));
+    const boardWidth=Math.max(36,Math.floor(Math.min(360,(table.height-44)*.8,table.width-132)));
     document.body.style.setProperty('--mobile-board-width',`${boardWidth}px`);
     document.body.style.setProperty('--mobile-board-font',`${Math.max(8,Math.min(12,boardWidth/SIZE*.21))}px`);
     const pendingCard=creationChoiceSession?.owner===game && creationChoiceSession.placeholder?.isConnected ? 1 : 0;
