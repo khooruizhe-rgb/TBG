@@ -1597,8 +1597,10 @@
   /* Full-size inspection view for hand cards. It reuses the embedded card art. */
   #card-detail-overlay{
     position:fixed; inset:0; z-index:75; display:none; align-items:center; justify-content:center;
-    padding:16px; overflow-y:auto; background:rgba(8,6,16,0.83); backdrop-filter:blur(4px);
+    box-sizing:border-box; width:100%; height:100%; max-width:none; max-height:none; margin:0; border:0;
+    padding:16px; overflow-y:auto; background:rgba(8,6,16,0.83); backdrop-filter:blur(4px); color:inherit;
   }
+  #card-detail-overlay::backdrop{background:transparent;}
   #card-detail-overlay.show{ display:flex; animation:detailBackdropIn 120ms ease-out both; }
   #card-detail{
     --detail-accent:#e8c874; --detail-ink:#fff5e1;
@@ -1710,8 +1712,8 @@
   }
   .hand-card .card-faction-badge{ --card-faction-icon-size:clamp(18px,1.7vw,24px); }
   .custom-card-tile .card-faction-badge{ --card-faction-icon-size:18px; }
-  body.mobile-landscape .board-card .card-faction-badge{ --card-faction-icon-size:clamp(12px,2.4vh,16px); }
-  body.mobile-landscape #hand .hand-card .card-faction-badge{ --card-faction-icon-size:clamp(14px,3.6vh,18px); }
+  body.game-mobile .board-card .card-faction-badge{ --card-faction-icon-size:clamp(10px,2.2vh,13px); }
+  body.game-mobile #hand .hand-card .card-faction-badge{ --card-faction-icon-size:clamp(12px,2.8vh,15px); }
   #card-detail-icon.card-detail-faction-emoji{
     display:flex; align-items:center; justify-content:center; overflow:visible;
     font-size:3rem; line-height:1;
@@ -2212,13 +2214,13 @@ body.mobile-landscape #hand-area{grid-column:1;grid-row:1;display:flex;flex-dire
 body.mobile-landscape #hand-area h3{flex:none;margin:0 0 3px !important;padding:0 0 3px;font-size:11px;}
 body.mobile-landscape #hand{flex:1;min-height:0;display:grid;grid-template-columns:repeat(var(--mobile-hand-columns,3),minmax(0,1fr));grid-auto-rows:var(--mobile-card-height,76px);align-content:start;gap:4px;padding:2px 1px 4px;overflow:auto;scrollbar-width:thin;}
 body.mobile-landscape #hand .hand-card{width:100%;height:var(--mobile-card-height,76px);min-height:0;padding:3px 2px;font-size:var(--mobile-card-font,9px);flex:none;}
-body.mobile-landscape #hand .hand-card .icon-row{font-size:11px;}
+body.mobile-landscape #hand .hand-card .icon-row{font-size:10px;}
 body.mobile-landscape #hand .hand-card .cname{font-size:inherit;line-height:1.12;}
 body.mobile-landscape #hand .hand-card:hover{transform:none;}
 body.mobile-landscape #table-wrap{flex:1;min-height:0;width:100%;max-width:none;padding:40px 0 0;margin:0;display:flex;align-items:center;justify-content:center;}
 body.mobile-landscape #board{width:var(--mobile-board-width,180px);max-width:none;gap:3px;}
 body.mobile-landscape #board .cell{border-radius:6px;}
-body.mobile-landscape .board-card{padding:2px 1px;border-radius:5px;font-size:clamp(6px,var(--mobile-board-font,8px),10px);}
+body.mobile-landscape .board-card{padding:2px 1px;border-radius:5px;font-size:clamp(8px,var(--mobile-board-font,10px),12px);}
 body.mobile-landscape .seat{width:58px;gap:1px;}
 body.mobile-landscape .seat .avatar{width:27px;height:27px;font-size:17px;}
 body.mobile-landscape .seat .sname{font-size:9px;}
@@ -2253,14 +2255,25 @@ body.mobile-landscape.mobile-log-open #log-panel > h3,body.mobile-landscape.mobi
 body.mobile-landscape.mobile-log-open #log{display:flex;flex:1;min-height:0;max-height:none;}
 body.mobile-landscape.mobile-log-open #shop-panel{display:none;}
 body.mobile-landscape #game-toolbar{position:relative;z-index:220;}
-body.mobile-landscape #card-detail{width:min(340px,48vw);height:calc(100dvh - 20px);max-height:none;}
-body.mobile-landscape .card-detail-header{--detail-icon-size:38px;min-height:44px;grid-template-columns:38px minmax(0,1fr) 22px;}
-body.mobile-landscape .card-detail-marks{--detail-mark-size:22px;gap:2px;}
-body.mobile-landscape .card-detail-claim-size svg{width:16px;height:16px;}
-body.mobile-landscape .card-detail-name{font-size:16px;}
-body.mobile-landscape .card-detail-ability{font-size:16px;margin-bottom:5px;}
-body.mobile-landscape .card-detail-description{font-size:11px;line-height:1.25;}
-body.mobile-landscape .card-detail-effect{padding:7px;}
+@media(max-width:980px),(any-pointer:coarse){
+  .card-detail-header{--detail-icon-size:44px;min-height:56px;grid-template-columns:var(--detail-icon-size) minmax(0,1fr) 24px;}
+  .card-detail-marks{--detail-mark-size:24px;gap:2px;}
+  .card-detail-claim-size svg{width:16px;height:16px;}
+  .card-detail-name{font-size:clamp(24px,6vw,34px);}
+  .card-detail-ability{font-size:clamp(18px,4.6vw,26px);margin-bottom:6px;}
+  .card-detail-description{font-size:clamp(16px,3.8vw,20px);line-height:1.4;}
+  .card-detail-effect{max-height:54%;padding:10px 12px;}
+}
+@media(orientation:landscape) and (max-height:700px) and (max-width:1400px){
+  #card-detail{width:min(380px,52vw);height:calc(100dvh - 24px);max-height:calc(100dvh - 24px);aspect-ratio:auto;}
+  .card-detail-header{--detail-icon-size:32px;min-height:42px;grid-template-columns:var(--detail-icon-size) minmax(0,1fr) 22px;padding:4px 10px 2px;}
+  .card-detail-marks{--detail-mark-size:20px;gap:2px;}
+  .card-detail-claim-size svg{width:14px;height:14px;}
+  .card-detail-name{font-size:clamp(20px,2.8vw,26px);}
+  .card-detail-ability{font-size:clamp(18px,2.5vw,22px);margin-bottom:6px;}
+  .card-detail-description{font-size:clamp(14px,1.8vw,17px);line-height:1.4;}
+  .card-detail-effect{max-height:56%;padding:8px 10px;}
+}
 body.mobile-landscape #modal-box{max-height:calc(100dvh - 24px);overflow:auto;padding:12px;}
 body.mobile-landscape #look-into-panel{max-height:calc(100dvh - 20px);padding:10px;overflow:auto;}
 body.mobile-landscape #look-into-cards{padding:10px 5px;}
@@ -2500,6 +2513,10 @@ body.title-memory-active:not(:has(#game.active)) #setup{visibility:hidden;pointe
 .title-memory-table-card .board-card .card-faction-badge,.title-preview-compact .board-card .card-faction-badge{--card-faction-icon-size:clamp(12px,calc(var(--memory-card-width,var(--title-preview-card-width))*.18),28px)}
 .title-memory-table-card .table-card-back,.title-preview-compact .table-card-back{border-width:3px}
 .title-memory-table-card .table-card-back span,.title-preview-compact .table-card-back span{font-size:clamp(22px,calc(var(--memory-card-width,var(--title-preview-card-width))*.3),46px)}
+.title-preview-compact .board-card .cname{font-size:clamp(11px,calc(var(--memory-card-width,var(--title-preview-card-width))*.135),18px);line-height:1.16}
+.title-preview-compact .board-card .icon-row{font-size:clamp(10px,calc(var(--memory-card-width,var(--title-preview-card-width))*.13),18px)}
+.title-preview-compact .board-card .card-faction-badge{--card-faction-icon-size:clamp(10px,calc(var(--memory-card-width,var(--title-preview-card-width))*.125),18px)}
+.title-preview-compact .table-card-back span{font-size:clamp(18px,calc(var(--memory-card-width,var(--title-preview-card-width))*.24),36px)}
 .title-memory-arranging{transition:left .42s cubic-bezier(.2,.7,.2,1),top .42s cubic-bezier(.2,.7,.2,1),transform .42s cubic-bezier(.2,.7,.2,1),width .42s ease;pointer-events:none}
 .title-memory-matched{filter:drop-shadow(0 0 8px #b6e8a0);pointer-events:none}
 .title-memory-flying{transition:left .65s cubic-bezier(.5,0,.8,.25),top .65s cubic-bezier(.5,0,.8,.25),transform .65s ease-in;pointer-events:none}
@@ -2741,6 +2758,11 @@ body:not(:has(#game.active)):not(.title-memory-active) #app{position:relative;z-
 .story-ability-card>.story-new-face,.story-ability-card>.story-old-face{position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none;}
 #story-card-grid .story-ability-card .board-card{position:absolute;inset:0;width:100%;height:100%;font-size:clamp(11px,calc(var(--story-card-width)*.076),17px);border-radius:inherit;}
 #story-card-grid .story-ability-card .cname{font-size:inherit;}
+@media(max-width:980px),(any-pointer:coarse){
+  #story-card-grid .story-ability-card .cname{font-size:clamp(13px,calc(var(--story-card-width)*.105),20px);line-height:1.16;}
+  #story-card-grid .story-ability-card .icon-row{font-size:clamp(12px,calc(var(--story-card-width)*.105),19px);}
+  #story-card-grid .story-ability-card .card-faction-badge{--card-faction-icon-size:clamp(13px,calc(var(--story-card-width)*.11),20px);}
+}
 .story-ability-card>.story-old-face{z-index:2;animation:storyCardRenew 1350ms ease-in-out var(--story-refresh-delay,0ms) both;}
 .story-ability-card>.story-refresh-scan{position:absolute;left:0;right:0;top:0;height:3px;z-index:4;background:color-mix(in srgb,var(--story-glow-color) 25%,white);box-shadow:0 0 12px 5px var(--story-glow-color),0 0 28px var(--story-glow-color);pointer-events:none;animation:storyCardScan 1350ms ease-in-out var(--story-refresh-delay,0ms) both;}
 .story-ability-card>.story-card-glow{position:absolute;inset:-5px;z-index:5;border:3px solid var(--story-glow-color);border-radius:16px;box-shadow:0 0 0 1px var(--story-glow-color),0 0 18px 6px color-mix(in srgb,var(--story-glow-color) 75%,transparent),0 0 34px 10px color-mix(in srgb,var(--story-glow-color) 50%,transparent),inset 0 0 12px color-mix(in srgb,var(--story-glow-color) 65%,white);pointer-events:none;animation:storyCardInvite 1800ms ease-in-out infinite;}
@@ -3110,7 +3132,7 @@ body:not(:has(#game.active)):not(.title-memory-active) #app{position:relative;z-
   </section>
 </div>
 
-<div id="card-detail-overlay" role="dialog" aria-modal="true" aria-labelledby="card-detail-name">
+<dialog id="card-detail-overlay" role="dialog" aria-modal="true" aria-labelledby="card-detail-name">
   <div id="card-detail" tabindex="-1">
     <div class="card-low-ink-lines" aria-hidden="true"></div>
     <div class="card-detail-header">
@@ -3129,7 +3151,7 @@ body:not(:has(#game.active)):not(.title-memory-active) #app{position:relative;z-
       <p class="card-detail-description" id="card-detail-description"></p>
     </div>
   </div>
-</div>
+</dialog>
 
 <div id="rule-term-popover" role="tooltip" aria-labelledby="rule-term-title" hidden>
   <h4 id="rule-term-title"></h4>
@@ -8931,6 +8953,20 @@ function renderCardClaimSize(card){
   const colours=CLAIM_MARK_PALETTES[card.faction] || Array(size).fill(FACTIONS[card.faction].color);
   marker.innerHTML=`<svg viewBox="0 0 18 18" aria-hidden="true">${squares.map(([x,y],i)=>`<rect x="${x}" y="${y}" width="7" height="7" rx=".5" fill="${colours[i]}"/>`).join('')}</svg>`;
 }
+function showCardDetailsDialog(raise=false){
+  const overlay=el('card-detail-overlay');
+  overlay.classList.add('show');
+  if(typeof overlay.showModal!=='function')return;
+  // Native modal dialogs stay in the browser's top layer, above fullscreen.
+  const focused=overlay.contains(document.activeElement)?document.activeElement:null;
+  const popover=el('rule-term-popover');
+  if(popover.parentElement!==overlay)overlay.appendChild(popover);
+  try{
+    if(raise&&overlay.open)overlay.close();
+    if(!overlay.open)overlay.showModal();
+  }catch(_error){/* The ordinary overlay remains usable if native dialogs are unavailable. */}
+  if(focused?.isConnected)focused.focus({preventScroll:true});
+}
 
 function openCardDetails(cardId,{followReference=false,createdPreview=false}={}){
   const c = createdPreview?originalCardBlueprint(cardId):CARD[cardId];
@@ -9003,7 +9039,7 @@ function openCardDetails(cardId,{followReference=false,createdPreview=false}={})
   const borrowed=!createdPreview && game?.cardAbilityEnabled?.(cardId)!==false && game?.borrowedAbilities?.[cardId];
   setRuleText(el('card-detail-description'),borrowed && game.isOnBoard(cardId) ? `Using ${CARD[borrowed].name}’s ability.\n${CARD[borrowed].desc}` : dynamicCardDescription(cardId,inHand,{createdPreview}));
   el('card-detail-description').parentElement.scrollTop=0;
-  el('card-detail-overlay').classList.add('show');
+  showCardDetailsDialog();
   requestAnimationFrame(fitCardDetailHeadings);
   detail.focus({preventScroll:true});
 }
@@ -9017,13 +9053,23 @@ function backCardDetails(){
 
 function closeCardDetails(){
   closeRuleTerm();
-  el('card-detail-overlay').classList.remove('show');
+  const overlay=el('card-detail-overlay');overlay.classList.remove('show');
+  if(overlay.open&&typeof overlay.close==='function')overlay.close();
+  const popover=el('rule-term-popover');if(popover.parentElement===overlay)document.body.appendChild(popover);
   if(detailReturnFocus && detailReturnFocus.isConnected) detailReturnFocus.focus();
   detailReturnFocus = null;
   detailCardId=null;
   detailCreatedPreview=false;
   detailHistory.length=0;
 }
+el('card-detail-overlay').addEventListener('cancel',event=>{
+  event.preventDefault();
+  if(detailHistory.length)backCardDetails();else closeCardDetails();
+});
+el('card-detail-overlay').addEventListener('close',()=>{
+  // Ignore a queued close from raising the same open dialog after fullscreen.
+  const overlay=el('card-detail-overlay');if(!overlay.open&&overlay.classList.contains('show'))closeCardDetails();
+});
 el('card-detail').addEventListener('dblclick',event=>{
   if(event.target.closest?.('[data-inspect-card], [data-rule-term]')) return;
   event.preventDefault();event.stopPropagation();
@@ -9953,6 +9999,7 @@ function renderAll(immediate=false){
     queueAITestStatsRender();
     return;
   }
+  if((game.winner||game.stalemateMessage)&&el('card-detail-overlay').classList.contains('show'))closeCardDetails();
   if(game.winner){
     if(announcedGameResult!==game){announcedGameResult=game;playGameCue('victory');}
     el('winner-text').textContent = `${game.winner.name} wins with ${game.winCount(game.winner)} discard points!`;
@@ -16284,7 +16331,7 @@ function mobileHandMetrics(width,height,count=7){
   const columns=width>=174 ? 3 : 2,rows=Math.ceil(Math.max(7,Math.min(9,count))/columns);
   const cardWidth=(width-10-(columns-1)*4)/columns;
   const cardHeight=Math.max(24,Math.floor(Math.min(cardWidth*1.25,(height-6-(rows-1)*4)/rows)));
-  return {columns,cardHeight,font:Math.max(7,Math.min(10,cardWidth*.15))};
+  return {columns,cardHeight,font:Math.max(8,Math.min(12,cardWidth*.18))};
 }
 function syncMobileViewport(){
   mobileViewportFrame=0;
@@ -16310,7 +16357,7 @@ function syncMobileViewport(){
     const table=el('table-wrap').getBoundingClientRect();
     const boardWidth=Math.max(36,Math.floor(Math.min(360,(table.height-52)*.8,table.width-132)));
     document.body.style.setProperty('--mobile-board-width',`${boardWidth}px`);
-    document.body.style.setProperty('--mobile-board-font',`${Math.max(6,Math.min(10,boardWidth/SIZE*.18))}px`);
+    document.body.style.setProperty('--mobile-board-font',`${Math.max(8,Math.min(12,boardWidth/SIZE*.21))}px`);
     const pendingCard=creationChoiceSession?.owner===game && creationChoiceSession.placeholder?.isConnected ? 1 : 0;
     const hand=el('hand').getBoundingClientRect(),metrics=mobileHandMetrics(hand.width,hand.height,(game?.players[displayedHandSeat()]?.hand.length||0)+pendingCard);
     document.body.style.setProperty('--mobile-hand-columns',metrics.columns);
@@ -16394,6 +16441,10 @@ function onGameFullscreenChange(){
   const full=!!fullscreenElement();
   for(const id of ['fullscreen-btn','menu-fullscreen-btn']){el(id).textContent=full?'Exit Fullscreen':'Fullscreen';el(id).setAttribute('aria-pressed',String(full));}
   if(!full){try{screen.orientation?.unlock();}catch(_error){}}
+  if(el('card-detail-overlay').classList.contains('show')){
+    showCardDetailsDialog(true);
+    requestAnimationFrame(()=>{fitCardDetailHeadings();positionRuleTerm();});
+  }
   queueMobileViewport();
 }
 function onAutomaticMobileFullscreen(event){
