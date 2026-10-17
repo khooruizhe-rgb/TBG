@@ -1,6 +1,6 @@
 {
   "status": "pass",
-  "count": 39,
+  "count": 47,
   "checks": [
     "All four later chapters override a hard caller with Easy and actually dispatch card evaluation to the basic evaluator without advanced difficulty features",
     "The actual chapter 2 opener starts Easy AI",
@@ -40,7 +40,15 @@
     "The zh-CN race-failure hint describes the current objective rather than a stored star",
     "Chapter one retains its mentor base while using the same clean in-match panel",
     "Leaving story mode restores the original tutorial instructions and removes the story-only hiding class",
-    "Ordinary Hard matches retain their selected difficulty"
+    "Ordinary Hard matches retain their selected difficulty",
+    "Chapter 2 displays the exact requested en hint before and after objective updates, without inline links or a stored-star carryover",
+    "Chapter 3 displays the exact requested en hint before and after objective updates, without inline links or a stored-star carryover",
+    "Chapter 5 displays the exact requested en hint before and after objective updates, without inline links or a stored-star carryover",
+    "Chapter 6 displays the exact requested en hint before and after objective updates, without inline links or a stored-star carryover",
+    "Chapter 2 displays the exact requested zh-CN hint before and after objective updates, without inline links or a stored-star carryover",
+    "Chapter 3 displays the exact requested zh-CN hint before and after objective updates, without inline links or a stored-star carryover",
+    "Chapter 5 displays the exact requested zh-CN hint before and after objective updates, without inline links or a stored-star carryover",
+    "Chapter 6 displays the exact requested zh-CN hint before and after objective updates, without inline links or a stored-star carryover"
   ],
   "scope": "Actual Easy evaluator dispatch and live chapter openers; real translated coach/menu renderers with replay, current-only progress, race failure, persistent cumulative/perfect stars, ordinary difficulty and tutorial restoration in a controlled DOM. Browser pixels are not verified."
 }

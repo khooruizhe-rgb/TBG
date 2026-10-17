@@ -53,5 +53,20 @@ render.returnToMainMenu();A.setLanguage('en');run('openStoryChapter(1);');ok(run
 render.returnToMainMenu();run('openTutorial(0);');
 ok(el('tutorial-copy').innerHTML.includes('Select')&&el('tutorial-copy').innerHTML.includes('Sanae')&&!documentFixture.body.classList.contains('story-practice'),'Leaving story mode restores the original tutorial instructions and removes the story-only hiding class');
 render.returnToMainMenu();run('game=new Game(2,{},null,{aiDifficulty:"hard"});');ok(run('game.aiDifficulty')==='hard'&&!run('game.storyMatch'),'Ordinary Hard matches retain their selected difficulty');
+const chapterHints={
+  2:['Try waiting a few turns before playing Remilia.','试试看先等几回合再放下蕾米莉亚吧。'],
+  3:['Disrupting your opponent’s claims is another way to stop them from winning.','破坏对方的收取，也是阻止胜利的方法哦。'],
+  5:['Is a correct guess all you need? Could there be a clever shortcut?','只需要正确的猜测吗？是否有办法投机取巧呢？'],
+  6:['What? An OTK? No way... haha.','什么？OTK？怎么可能嘛...哈哈。']
+};
+for(const language of ['en','zh-CN'])for(const [chapter,texts]of Object.entries(chapterHints)){
+  render.returnToMainMenu();A.setLanguage(language);run('openStoryChapter('+chapter+');');const hint=texts[language==='en'?0:1];
+  assert(feedback().includes(hint));assert(!/data-inspect-card|data-rule-term|<button/.test(feedback()));assert(feedback().includes('☆☆☆'));
+  run('for(const key of STORY_GOAL_KEYS['+chapter+'])game.storyMatch.progress[key]=true;'+(chapter==='3'?'game.storyMatch.opponentReachedFour=true;':'')+'updateStoryProgress();');
+  assert(feedback().includes(hint));if(chapter==='3')assert(feedback().includes('tutorial-goal failed')&&feedback().includes(language==='en'?'This objective is unavailable':'本局无法完成此目标'));
+  if(chapter==='6')assert.deepEqual(Array.from(run('game.shopCards.slice(1).sort()')),['hourai_tewi','mtn_nitori','sdm_meiling']);
+  ok(true,'Chapter '+chapter+' displays the exact requested '+language+' hint before and after objective updates, without inline links or a stored-star carryover');
+}
+render.returnToMainMenu();
 const result={status:'pass',count:checks.length,checks,scope:'Actual Easy evaluator dispatch and live chapter openers; real translated coach/menu renderers with replay, current-only progress, race failure, persistent cumulative/perfect stars, ordinary difficulty and tutorial restoration in a controlled DOM. Browser pixels are not verified.'};
 fs.writeFileSync(__dirname+'/story-match-objectives-easy-2026-10-16-results.json',JSON.stringify(result,null,2)+'\n');console.log(result.count+' current-match objectives and Easy-story checks passed');

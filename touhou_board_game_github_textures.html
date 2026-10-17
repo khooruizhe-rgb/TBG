@@ -5611,7 +5611,7 @@ class Game {
 }
 
 /* 2026-10-12: creation, private newspapers and instance ability changes. */
-const REWORK_RULES_VERSION='2026-10-16-story-no-draw-stalemate-v22';
+const REWORK_RULES_VERSION='2026-10-17-story-unlocked-shop-v23';
 Game.prototype.canCreateWithMatara=function(){return this.mainBoardCells().length>=4;};
 let nextCreatedCard=0,nextHiddenChoice=0;
 const COPY_PASSIVES=new Set(['sage_yukari','sage_kasen','mtn_nitori','hell_hecatia','palace_koishi']);
@@ -5705,7 +5705,8 @@ Game.prototype.cardAbilityEnabled=function(id){
   const story=this.storyMatch;if(!story)return true;
   const card=originalCardBlueprint(id)||CARD[id];
   if(card?.token)return story.chapter>=6;
-  return card?.shopkeeper||card?.shopExpansion ? story.chapter>=6 : story.skillFactions.includes(card?.faction);
+  if(card?.shopkeeper)return story.chapter>=6;
+  return (!card?.shopExpansion||story.chapter>=6)&&story.skillFactions.includes(card?.faction);
 };
 Game.prototype.abilityId=function(id){return !this.cardAbilityEnabled(id)?'__story_no_ability':this.permanentAbilities?.[id] || this.borrowedAbilities?.[id] || CARD[id]?.copiedAbility || (CARD[id]?.token&&/^trap_token/.test(id)?'trap_token':cardBaseId(id));};
 const originalPointValue=Game.prototype.pointValue;
@@ -5920,17 +5921,18 @@ Game.prototype.recordStoryCorrectGuess=function(p,target,id){
 };
 const STORY_CHAPTERS=[
   {id:1,title:'Chapter 1 · The first table',body:'Cards have no abilities in this chapter. Place cards beside their faction, use Draw for Everyone when needed, and win the match. Try the two-card pair before finishing the four-card faction.',skills:[]},
-  {id:2,title:'Chapter 2 · Scarlet Devil Mansion',body:'Win to clear this chapter. Three stars: claim Scarlet Devil Mansion, finish Remilia’s ability with three Mansion cards in hand, and use Flandre to discard an opponent’s hand card.',skills:['sdm'],introduced:'sdm'},
-  {id:3,title:'Chapter 3 · Hakugyokurou',body:'Hakugyokurou abilities join Scarlet Devil Mansion. Win to clear this chapter. Three stars: claim Hakugyokurou, gain four points from one Yuyuko placement, and win before the opponent reaches four points.',skills:['sdm','hakugyokurou'],introduced:'hakugyokurou'},
+  {id:2,title:'Chapter 2 · Scarlet Devil Mansion',body:'Win to clear this chapter. Three stars: claim Scarlet Devil Mansion, finish Remilia’s ability with three Mansion cards in hand, and use Flandre to discard an opponent’s hand card.',skills:['sdm'],introduced:'sdm',hint:'Try waiting a few turns before playing Remilia.'},
+  {id:3,title:'Chapter 3 · Hakugyokurou',body:'Hakugyokurou abilities join Scarlet Devil Mansion. Win to clear this chapter. Three stars: claim Hakugyokurou, gain four points from one Yuyuko placement, and win before the opponent reaches four points.',skills:['sdm','hakugyokurou'],introduced:'hakugyokurou',hint:'Disrupting your opponent’s claims is another way to stop them from winning.'},
   {id:4,title:'Chapter 4 · Eientei',body:'Eientei abilities join Scarlet Devil Mansion and Hakugyokurou. Win to clear this chapter. Three stars: claim Eientei, gain four points from one Kaguya placement, and hold at least ten cards at once.',skills:['sdm','hakugyokurou','hourai'],introduced:'hourai'},
-  {id:5,title:'Chapter 5 · Youkai Mountain',body:'Youkai Mountain abilities are now active too. Win to clear this chapter. Three stars: claim Youkai Mountain, end the game in stalemate, and subscribe to a newspaper before making a correct guess.',skills:['sdm','hakugyokurou','hourai','mountain'],introduced:'mountain'},
-  {id:6,title:'Chapter 6 · Kourindou',body:'Kourindou opens for trading, and the fifth cards now have abilities. The opponent uses Medium AI. Win to clear this chapter. Three stars: claim two factions, claim a faction whose abilities are still locked, and do something that surprises me!',skills:['sdm','hakugyokurou','hourai','mountain'],introduced:'kourindou'}
+  {id:5,title:'Chapter 5 · Youkai Mountain',body:'Youkai Mountain abilities are now active too. Win to clear this chapter. Three stars: claim Youkai Mountain, end the game in stalemate, and subscribe to a newspaper before making a correct guess.',skills:['sdm','hakugyokurou','hourai','mountain'],introduced:'mountain',hint:'Is a correct guess all you need? Could there be a clever shortcut?'},
+  {id:6,title:'Chapter 6 · Kourindou',body:'Kourindou opens for trading. Meiling, Tewi and Nitori are the fifth cards of unlocked factions available here. The opponent uses Medium AI. Win to clear this chapter. Three stars: claim two factions, claim a faction whose abilities are still locked, and do something that surprises me!',skills:['sdm','hakugyokurou','hourai','mountain'],introduced:'kourindou',hint:'What? An OTK? No way... haha.'}
 ];
 const STORY_GOAL_KEYS={1:[],2:['sdm','remilia','flandre'],3:['haku','yuyuko','race'],4:['hourai','kaguya','handTen'],5:['mountain','stalemate','newsGuess'],6:['twoFactions','lockedFaction','surprise']};
 function storyFactionCards(faction){return CARDS.filter(card=>card.faction===faction&&!card.shopExpansion).map(card=>card.id);}
 function storyScarletCards(){return storyFactionCards('sdm');}
-function storyChapterCards(chapter){if(chapter===6)return CARDS.filter(card=>card.shopExpansion).map(card=>card.id);const faction=STORY_CHAPTERS.find(level=>level.id===chapter)?.introduced;return faction?storyFactionCards(faction):[];}
-function dealLearningOpening(match,{scarletOpening=false,hakugyokurouOpening=false,eienteiOpening=false,mountainOpening=false,shop=false}={}){
+function storyShopCards(chapter){const skills=STORY_CHAPTERS.find(level=>level.id===chapter)?.skills||[];return chapter>=6?CARDS.filter(card=>card.shopExpansion&&skills.includes(card.faction)).map(card=>card.id):[];}
+function storyChapterCards(chapter){if(chapter===6)return storyShopCards(chapter);const faction=STORY_CHAPTERS.find(level=>level.id===chapter)?.introduced;return faction?storyFactionCards(faction):[];}
+function dealLearningOpening(match,{scarletOpening=false,hakugyokurouOpening=false,eienteiOpening=false,mountainOpening=false,shop=false,shopPool=null}={}){
   const deck=shuffle(CARDS.filter(card=>!card.token&&!card.shopkeeper&&!card.shopExpansion).map(card=>card.id));
   const hand=deck.splice(0,6),protectedId=scarletOpening?'sdm_remilia':hakugyokurouOpening?'haku_yuyuko':eienteiOpening?'hourai_kaguya':mountainOpening?'mtn_kanako':null;
   const exchange=id=>{
@@ -6015,7 +6017,7 @@ function dealLearningOpening(match,{scarletOpening=false,hakugyokurouOpening=fal
   }
   match.players.forEach((player,index)=>{player.hand=hands[index];player.discard=[];});
   match.drawPile=deck;
-  match.shopCards=shop?['shop_rinnosuke',...shuffle(CARDS.filter(card=>card.shopExpansion).map(card=>card.id)).slice(0,3)]:[];
+  match.shopCards=shop?['shop_rinnosuke',...shuffle((shopPool||CARDS.filter(card=>card.shopExpansion).map(card=>card.id)).slice()).slice(0,3)]:[];
   match.startingCardIds=new Set([...hands.flat(),...deck,...match.shopCards]);
   match.handKnowledge=match.players.map(()=>new Map());match.reserveAges=match.players.map(()=>({}));
   return hands;
@@ -6026,7 +6028,7 @@ function configureStoryMatch(match,chapter){
   match.kourindouEnabled=chapter>=6;match.shopCards=[];
   match.shopTiles=match.kourindouEnabled?[[0,1],[1,0],[1,1],[1,2]].map(([r,c],slot)=>({r:SIZE+2+r,c,slot,wasteland:false})):[];match.board=Array.from({length:SIZE},()=>Array(SIZE).fill(null));
   match.wasteland=Array.from({length:SIZE},()=>Array(SIZE).fill(false));
-  dealLearningOpening(match,{scarletOpening:chapter===2,hakugyokurouOpening:chapter===3,eienteiOpening:chapter===4,mountainOpening:chapter===5,shop:match.kourindouEnabled});
+  dealLearningOpening(match,{scarletOpening:chapter===2,hakugyokurouOpening:chapter===3,eienteiOpening:chapter===4,mountainOpening:chapter===5,shop:match.kourindouEnabled,shopPool:storyShopCards(chapter)});
   match.storyMatch={chapter,humanSeat:0,aiSeat:1,skillFactions:definition.skills.slice(),
     sdmCards:storyScarletCards(),sdmPlaced:[],hakuCards:storyFactionCards('hakugyokurou'),hakuPlaced:[],houraiCards:storyFactionCards('hourai'),houraiPlaced:[],opponentReachedFour:false,
     mountainCards:storyFactionCards('mountain'),mountainPlaced:[],subscribedPapers:[],claimedFactions:[],turnSeat:match.currentPlayerIdx,turnStartScore:0,
@@ -8634,7 +8636,11 @@ Object.assign(ZH_TEXT,{
   [CARD.mtn_suwako.desc]:ZH_CARDS.mtn_suwako[2],
   'Chapter 5 · Youkai Mountain':'第五关 · 妖怪之山',
   'Chapter 6 · Kourindou':'第六关 · 香霖堂',
-  'Kourindou opens for trading, and the fifth cards now have abilities. The opponent uses Medium AI. Win to clear this chapter. Three stars: claim two factions, claim a faction whose abilities are still locked, and do something that surprises me!':'香霖堂开放交易，各阵营第五张卡的技能已解锁。对手使用中等 AI，获胜即可通关。三星目标：收取两个阵营、收取一个尚未解锁技能的阵营、做点让我惊讶的东西吧！',
+  'Try waiting a few turns before playing Remilia.':'试试看先等几回合再放下蕾米莉亚吧。',
+  'Disrupting your opponent’s claims is another way to stop them from winning.':'破坏对方的收取，也是阻止胜利的方法哦。',
+  'Is a correct guess all you need? Could there be a clever shortcut?':'只需要正确的猜测吗？是否有办法投机取巧呢？',
+  'What? An OTK? No way... haha.':'什么？OTK？怎么可能嘛...哈哈。',
+  'Kourindou opens for trading. Meiling, Tewi and Nitori are the fifth cards of unlocked factions available here. The opponent uses Medium AI. Win to clear this chapter. Three stars: claim two factions, claim a faction whose abilities are still locked, and do something that surprises me!':'香霖堂开放交易，本关只提供已解锁阵营的第五张卡：红美铃、因幡帝与河城荷取。对手使用中等 AI，获胜即可通关。三星目标：收取两个阵营、收取一个尚未解锁技能的阵营、做点让我惊讶的东西吧！',
   'Claim two factions':'收取两个阵营',
   'Claim a faction whose abilities are still locked':'收取一个尚未解锁技能的阵营',
   'Do something that surprises me!':'做点让我惊讶的东西吧！',
@@ -15001,7 +15007,7 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='9c37f652baecb65f9b0db990c5f2bc4905f17cdd6cff24882ac7dc4f9faf2847';
+const AI_EVALUATION_RULES_DIGEST='b994090e8352fab89d61705a0c8c24d573e042b342838430da50cb22fbc1ac2f';
 const AI_EVALUATION_POLICY_DIGEST='c2a4a2e32ac0aa88ca64af6d7368a6378d3c95f58fdf5deeab9d3d9a34259c8c';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
@@ -15088,7 +15094,7 @@ function evalForkSummary(report){
   return {groups,invalidPairs,conclusion,completedPairs:report.pairs.length};
 }
 function evalValidateSnapshot(snapshot){
-  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-16-story-kourindou-physics-v21','2026-10-16-story-mountain-collection-v20','2026-10-16-story-private-opening-v19','2026-10-16-story-eientei-opening-v18','2026-10-16-story-stars-placement-v17','2026-10-16-story-hakugyokurou-active-mentor-v16','2026-10-15-guided-opening-scarlet-reserve-v15','2026-10-15-random-learning-renewal-v14','2026-10-15-story-opening-chapters-v13','2026-10-14-original-creation-blueprints-v12','2026-10-14-guided-final-match-v11','2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
+  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-16-story-no-draw-stalemate-v22','2026-10-16-story-kourindou-physics-v21','2026-10-16-story-mountain-collection-v20','2026-10-16-story-private-opening-v19','2026-10-16-story-eientei-opening-v18','2026-10-16-story-stars-placement-v17','2026-10-16-story-hakugyokurou-active-mentor-v16','2026-10-15-guided-opening-scarlet-reserve-v15','2026-10-15-random-learning-renewal-v14','2026-10-15-story-opening-chapters-v13','2026-10-14-original-creation-blueprints-v12','2026-10-14-guided-final-match-v11','2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
   const state=snapshot.state,n=state?.players?.length,size=snapshot.size;
   if(![4,5].includes(size) || ![2,3,4].includes(n) || !Number.isInteger(state.currentPlayerIdx) || state.currentPlayerIdx<0 || state.currentPlayerIdx>=n)throw new Error('Invalid position dimensions.');
   if(state.numPlayers!==n || state.players.some((p,i)=>p.idx!==i || !Array.isArray(p.hand) || !Array.isArray(p.discard)))throw new Error('Invalid position dimensions.');
@@ -16135,11 +16141,12 @@ function renderStoryCoach(){
   const heading=(goals.length?ruleTextHtml('Match objectives',{cards:false})+' ':'')+'<span class="story-star-rating" aria-label="'+earned+' / 3">'+'★'.repeat(earned)+'☆'.repeat(3-earned)+'</span>';
   el('tutorial-feedback').classList.toggle('story-perfect',state.complete&&earned===3);
   el('tutorial-feedback').style.setProperty('--story-star-color',storyStarColor(state.chapter));
-  const hint=state.complete?'Chapter cleared.':game.winner||game.stalemateMessage?'Win the match to clear this chapter.':raceLost?'The opponent reached four points. This objective is unavailable this match; you can still win and clear the chapter.':state.chapter===6?!progress.twoFactions?'Use trades and card abilities to claim two different factions.':!progress.lockedFaction?'Claim a faction whose core cards still have no abilities.':'Do something that surprises me!':state.chapter===5?!progress.newsGuess?'Subscribe to a newspaper, then make a correct card guess.':!progress.mountain?'Connect four Youkai Mountain cards and claim the faction.':!progress.stalemate?'Fill the board so no remaining card can be placed. The unique highest score wins.':'Win the match to clear this chapter.':state.chapter===4?!progress.kaguya?'Gain four points from Kaguya’s placement, including its resulting faction claims.':!progress.hourai?'Connect four Eientei cards and claim the faction.':!progress.handTen?'Use card-gaining abilities to hold at least ten cards at once.':'Win the match to clear this chapter.':state.chapter===3?!progress.yuyuko?'Gain four points from Yuyuko’s placement, including her ability and faction claims.':!progress.haku?'Connect Yuyuko and Youmu to claim Hakugyokurou.':'Win before the opponent reaches four points.':state.chapter===1?'Win to finish this introductory chapter.':!progress.remilia?'Try Remilia while the other Mansion cards are still in hands.':!progress.flandre?'With Flandre, choose the opponent and send one of their hand cards to their discard pile.':!progress.sdm?'Connect four Mansion cards and claim the faction.':'Win the match to clear this chapter.';
+  const hint=state.complete?'Chapter cleared.':game.winner||game.stalemateMessage?'Win the match to clear this chapter.':definition.hint|| (state.chapter===4?!progress.kaguya?'Gain four points from Kaguya’s placement, including its resulting faction claims.':!progress.hourai?'Connect four Eientei cards and claim the faction.':!progress.handTen?'Use card-gaining abilities to hold at least ten cards at once.':'Win the match to clear this chapter.':'Win to finish this introductory chapter.');
+  const raceWarning=raceLost&&!state.complete&&!game.winner&&!game.stalemateMessage?'The opponent reached four points. This objective is unavailable this match; you can still win and clear the chapter.':'';
   el('tutorial-feedback').innerHTML='<span class="story-match-objectives">'+heading+'</span><span class="tutorial-checklist">'+goals.map(goal=>{
     const done=goal.done,failed=goal.failed&&!done;
     return '<span class="tutorial-goal'+(done?' done':'')+(failed?' failed':'')+'">'+(failed?'✗':done?'✓':'○')+' '+ruleTextHtml(goal.label,{cards:false})+'</span>';
-  }).join('')+'</span>'+ruleTextHtml(hint,{cards:false});
+  }).join('')+'</span>'+(raceWarning?ruleTextHtml(raceWarning,{cards:false})+'<br>':'')+ruleTextHtml(hint,{cards:false});
   el('tutorial-back').disabled=false;setRuleText(el('tutorial-back'),'Chapters');el('tutorial-next').disabled=!state.complete;
   const next=STORY_CHAPTERS.some(chapter=>chapter.id===state.chapter+1);
   setRuleText(el('tutorial-next'),next?'Next chapter':'Chapters');setRuleText(el('restart-btn'),state.complete?(next?'Next chapter':'Chapters'):'Retry');

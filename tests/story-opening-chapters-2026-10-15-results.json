@@ -1067,6 +1067,6 @@
       }
     }
   ],
-  "rulesVersion": "2026-10-16-story-no-draw-stalemate-v22",
+  "rulesVersion": "2026-10-17-story-unlocked-shop-v23",
   "scope": "Shipped story rules and AI, complete real-rule walkthroughs and controlled chapter UI lifecycle; no browser pixel verification"
 }

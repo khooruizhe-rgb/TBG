@@ -1,9 +1,10 @@
 {
   "status": "pass",
-  "count": 23,
+  "count": 24,
   "checks": [
-    "512 random chapter-six deals preserve two private six-card hands, all 36 originals and four shop cards, random first actor and all 35 merchandise combinations",
-    "Kourindou introduces exactly the seven fifth cards",
+    "512 random chapter-six deals preserve two private six-card hands, all 36 originals and four shop cards, random first actor and all six positions of the three unlocked-faction fifth cards",
+    "Kourindou introduces only Meiling, Tewi and Nitori",
+    "Ordinary matches retain all seven fifth cards, independently of chapter six’s restricted stock",
     "The three optional goals include the literal surprise request without disclosing its threshold",
     "Chapter six dispatches both its decision and forced-placement planning to the ordinary AI, with no teaching delay or three-card assistance",
     "Earlier chapters retain Easy teaching opponents and lock the fifth cards until chapter six",
@@ -12,7 +13,7 @@
     "An actual locked Hakurei pair earns the locked-faction goal and counts as one distinct faction",
     "A second, different actual faction claim completes the two-faction objective",
     "Collecting an already unlocked faction cannot satisfy the locked-faction objective",
-    "A fifth card with an unlocked skill can help collect its still-locked core faction",
+    "All four original Temple cards can satisfy the locked-faction objective without an unavailable fifth card",
     "Opponent claims never satisfy the player’s goals",
     "Sixteen real Meiling placements push the disconnected fourth Hell card into place, claim Mansion and Hell, earn eight points in one turn and complete all three goals before the win is banked",
     "Reaching seven total points after starting the turn with four is not seven points gained in one turn",
@@ -21,12 +22,12 @@
     "Chapter six banks distinct objectives over wins while each replay displays only its own stars",
     "A one-match full clear uses Kourindou’s color",
     "Finishing the sixth and final available chapter returns to the six-chapter menu",
-    "The actual introduction gives all seven fifth cards valid angles and both renewed and worn faces",
+    "The actual introduction gives the three unlocked-faction fifth cards valid angles and both renewed and worn faces",
     "Four real random chapter-six matches complete with ordinary Medium decisions, live shop trades and conserved cards, without strategic passes",
-    "The actual en sixth-chapter introduction shows all seven faction-colored renewed cards and keeps the surprise threshold hidden",
-    "The actual zh-CN sixth-chapter introduction shows all seven faction-colored renewed cards and keeps the surprise threshold hidden"
+    "The actual en sixth-chapter introduction shows the three faction-colored renewed cards and keeps the surprise threshold hidden",
+    "The actual zh-CN sixth-chapter introduction shows the three faction-colored renewed cards and keeps the surprise threshold hidden"
   ],
-  "rulesVersion": "2026-10-16-story-no-draw-stalemate-v22",
+  "rulesVersion": "2026-10-17-story-unlocked-shop-v23",
   "randomOpenings": 512,
   "burstRoutes": 16,
   "productionMatches": [
@@ -39,47 +40,47 @@
         0,
         7
       ],
-      "place": 10,
+      "place": 9,
+      "draw": 4,
+      "trade": 3
+    },
+    {
+      "seed": 2,
+      "actions": 11,
+      "reason": "win",
+      "winner": 0,
+      "points": [
+        7,
+        0
+      ],
+      "place": 6,
       "draw": 3,
       "trade": 2
     },
     {
-      "seed": 2,
-      "actions": 21,
-      "reason": "win",
-      "winner": 0,
-      "points": [
-        8,
-        1
-      ],
-      "place": 14,
-      "draw": 6,
-      "trade": 5
-    },
-    {
       "seed": 3,
-      "actions": 20,
+      "actions": 27,
       "reason": "stalemate",
       "winner": 0,
       "points": [
-        1,
+        5,
         0
       ],
-      "place": 9,
-      "draw": 10,
-      "trade": 5
+      "place": 15,
+      "draw": 11,
+      "trade": 6
     },
     {
       "seed": 4,
-      "actions": 16,
-      "reason": "stalemate",
+      "actions": 18,
+      "reason": "win",
       "winner": 1,
       "points": [
         0,
-        4
+        10
       ],
-      "place": 7,
-      "draw": 8,
+      "place": 11,
+      "draw": 6,
       "trade": 4
     }
   ],

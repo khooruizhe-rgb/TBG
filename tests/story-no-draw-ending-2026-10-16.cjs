@@ -38,7 +38,7 @@ vm.runInContext(`(async()=>{
  make();emptySpace();const untouched=JSON.stringify(captureAIEvaluationSnapshot(game));ok(!game.storyDrawOnlyStalemate()&&JSON.stringify(captureAIEvaluationSnapshot(game))===untouched,'An ordinary empty board space prevents early ending without mutating the position');
  make();emptySpace(true);ok(game.storyDrawOnlyStalemate(),'Wasteland counts as closed terrain when no remaining card has legal wasteland entry');
  make();emptySpace(true);swapBoardForDeck('mtn_kanako','mtn_suwako');ok(!game.storyDrawOnlyStalemate(),'An active Suwako keeps the match alive when a remaining Mountain card can enter the empty wasteland');
- make(6);emptySpace(true);assert(game.tradeCard(0,'haku_yuyuko',3));ok(game.players[0].hand.includes('hell_kutaka')&&!game.storyDrawOnlyStalemate(),'A real shop purchase of Kutaka can still enter wasteland and prevents early ending');evalConservation(game);
+ make(6);emptySpace(true);swapBoardForDeck('mtn_kanako','mtn_suwako');const stockSlot=game.shopCards.indexOf('mtn_nitori');assert(game.tradeCard(0,'haku_yuyuko',stockSlot));ok(game.players[0].hand.includes('mtn_nitori')&&!game.storyDrawOnlyStalemate(),'A real shop purchase of Nitori can enter wasteland under active Suwako and prevents early ending');evalConservation(game);
  game.placementBlockTurns[0]=2;game.placementBlockedForTurn[0]=true;const blocked=JSON.stringify(captureAIEvaluationSnapshot(game));ok(!game.storyDrawOnlyStalemate()&&JSON.stringify(captureAIEvaluationSnapshot(game))===blocked,'Temporary placement blocks are ignored only for the eventual-placement check and are never mutated');
  make(6);swapBoardForDeck('sage_yukari','marisa');ok(game.storyDrawOnlyStalemate(),'A locked Yukari in the deck cannot keep an otherwise closed story table alive');
  game.storyMatch.skillFactions.push('sage');const yi=game.drawPile.indexOf('sage_yukari');game.drawPile.splice(yi,1);game.drawPile.unshift('sage_yukari');assert(game.drawPile.at(-1)!=='sage_yukari');
@@ -69,7 +69,7 @@ vm.runInContext(`(async()=>{
   for(const button of el('story-levels').children){const description=button.children[1];render.description=description;ok(noLinks(description.innerHTML)&&run('ruleTextSources.get(description).options.cards===false'),'The actual '+language+' chapter-list description has no nested card links and retains the no-link option for later language refresh');}
   for(const chapter of [1,2,3,4,5,6]){
    render.returnToMainMenu();run('showStoryChapterIntro('+chapter+');');ok(noLinks(el('story-intro').innerHTML),'The actual '+language+' chapter '+chapter+' introduction is free of inline card links');
-   const count=chapter===1?0:chapter===6?7:chapter===3?2:4;assert.equal(el('story-card-grid').children.length,count);if(count)assert(el('story-card-grid').children.every(node=>node.events.click?.length===1));
+   const count=chapter===1?0:chapter===6?3:chapter===3?2:4;assert.equal(el('story-card-grid').children.length,count);if(count)assert(el('story-card-grid').children.every(node=>node.events.click?.length===1));
    run('closeStoryMenu();openStoryChapter('+chapter+');');ok(noLinks(el('tutorial-feedback').innerHTML),'The actual '+language+' chapter '+chapter+' objectives and hints have no inline card links while current-match stars remain visible');
    assert(el('tutorial-feedback').innerHTML.includes('☆☆☆'));if(chapter===2){run('game.storyMatch.progress.remilia=true;renderStoryCoach();');assert(noLinks(el('tutorial-feedback').innerHTML));}
   }

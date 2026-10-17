@@ -65,7 +65,7 @@
     "An incorrect early end-stalemate call cannot award the no-legal-action objective",
     "Four complete random Mountain matches terminate without errors, strategic passes, conservation failures or turn-limit aborts",
     "The fifth chapter introduces four new core cards",
-    "Clearing the fifth chapter opens the seven-card Kourindou introduction",
+    "Clearing the fifth chapter opens the three-card Kourindou introduction",
     "An owner newspaper displays reports directly with its newspaper layout and does not count as a paid subscription",
     "An unsubscribed rival newspaper retains its folded cover and paid subscription control",
     "Real payment immediately records subscription and displays its reports without an extra expansion action",
@@ -138,6 +138,6 @@
       }
     }
   ],
-  "rulesVersion": "2026-10-16-story-no-draw-stalemate-v22",
+  "rulesVersion": "2026-10-17-story-unlocked-shop-v23",
   "scope": "Actual goal unions and legacy migration, single-run colors and reset, Suwako original/copy/muting rules, constrained private fifth-chapter deals, real skill and subscription chronology, a complete prepared legal endgame route through the real turn loop, four random matches and controlled chapter lifecycle. Actual newspaper subscription and direct-report rendering, bilingual card details and faction-color menu style are also checked with a controlled DOM; browser pixels are not verified."
 }
