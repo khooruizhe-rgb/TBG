@@ -184,4 +184,60 @@ test('All regular, fifth-card, crown, protection and multiplayer log announcemen
  const failures=[];for(const message of messages){const out=A.translateGameText(message);if(/[A-Za-z]{3,}/.test(out.replace(/\b[IVXLCDMN]+\b/g,'')))failures.push([message,out]);}
  assert.deepEqual(failures,[]);A.setGameLanguage('en');for(const message of messages)assert.equal(A.translateGameText(message),message);
 });
+test('Both live story language selectors refresh composed objectives without changing the match or an active choice',()=>{
+ // Parse the real rendered fragments so TreeWalker sees text split by icons and
+ // status marks, just as it does in the page, rather than an opaque HTML string.
+ const decode=value=>value.replace(/&(amp|quot|apos|#39|lt|gt);/g,(_,key)=>({amp:'&',quot:'"',apos:"'",'#39':"'",lt:'<',gt:'>'}[key]));
+ const escape=value=>String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+ const voidTags=new Set(['BR','IMG','INPUT']),serialize=node=>node.nodeType===3?escape(node.nodeValue):'<'+node.tagName.toLowerCase()+Object.entries(node.attributes).map(([key,value])=>' '+key+'="'+escape(value)+'"').join('')+'>'+node.children.map(serialize).join('')+(voidTags.has(node.tagName)?'':'</'+node.tagName.toLowerCase()+'>');
+ Object.defineProperties(Node.prototype,{
+  textContent:{configurable:true,get(){return this.children.map(node=>node.nodeType===3?node.nodeValue:node.textContent).join('');},set(value){this.replaceChildren();text(String(value),this);}},
+  innerHTML:{configurable:true,get(){return this.children.map(serialize).join('');},set(value){
+   this.replaceChildren();const stack=[this];
+   for(const [token]of String(value).matchAll(/<[^>]+>|[^<]+/g)){
+    if(token.startsWith('</')){stack.pop();continue;}
+    if(token.startsWith('<')){
+     const [,tag,attributes]=token.match(/^<([\w-]+)([\s\S]*?)\/?\s*>$/),node=new Node(tag);
+     for(const match of attributes.matchAll(/([^\s=]+)(?:\s*=\s*"([^"]*)")?/g))node.setAttribute(match[1],decode(match[2]||''));
+     stack.at(-1).appendChild(node);if(!voidTags.has(node.tagName)&&!token.endsWith('/>'))stack.push(node);
+    }else text(decode(token),stack.at(-1));
+   }
+  }}
+ });
+ const oneLine=name=>js.match(new RegExp('^function '+name+'[^\\n]+','m'))[0];
+ vm.runInContext('let storyState=null;\n'+oneLine('isStoryMatch')+'\n'+oneLine('storyStarColor')+'\n'+slice('function renderStoryCoach(','function storyStep('),ctx);
+ const classes=new Set();el('tutorial-feedback').classList={toggle:(name,on)=>on?classes.add(name):classes.delete(name)};
+ const button=el('story-pending-choice'),input=new Node('input');let clicks=0;button.addEventListener('click',()=>clicks++);input.value='射命丸文';body.appendChild(input);
+ const run=code=>vm.runInContext(code,ctx),plain=value=>value.replace(/<[^>]*>/g,'').replace(/&(?:amp|quot|apos|#39|lt|gt);/g,'');
+ const snapshot=()=>run('JSON.stringify({state:storyState,match:game.testRuleState(),story:game.storyMatch,logs:game.logLines})');
+ for(const chapter of [1,2,3,4,5,6])for(const phase of ['opening','partial','won','lost']){
+  A.setGame(null);A.setGameLanguage('en');
+  run('game=new Game(2,{},null,{aiDifficulty:"easy"});configureStoryMatch(game,'+chapter+');storyState={chapter:'+chapter+',practice:game,complete:false,savedStars:null};');
+  if(phase==='partial')run('{const keys=STORY_GOAL_KEYS[storyState.chapter];if(keys.length)game.storyMatch.progress[keys[0]]=true;}'+(chapter===3?'game.storyMatch.opponentReachedFour=true;':''));
+  if(phase==='won')run('for(const key of STORY_GOAL_KEYS[storyState.chapter])game.storyMatch.progress[key]=true;game.winner=game.players[0];storyState.complete=true;');
+  if(phase==='lost')run('game.winner=game.players[1];');
+  run('renderStoryCoach();');
+  const match=run('game'),state=run('storyState'),before=snapshot(),stored=JSON.stringify([...storage]);
+  const english=el('tutorial-feedback').innerHTML,title=el('tutorial-title').textContent,stars=english.match(/[★☆]+/)[0];
+  for(const selector of ['game-language','menu-language']){
+   el(selector).events.change({target:{value:'zh-CN'}});
+   observer([{type:'childList',addedNodes:[el('tutorial-feedback')],removedNodes:[]}]);
+   const chinese=el('tutorial-feedback').innerHTML;
+   assert.equal(el('tutorial-title').textContent,A.translateGameText(title),chapter+'/'+phase+' title');
+   assert(!/[A-Za-z]{3,}/.test(plain(chinese).replace(/OTK/g,'')),chapter+'/'+phase+': '+plain(chinese));
+   assert(chinese.includes(stars));assert(el('tutorial-progress').innerHTML.includes('故事模式'));
+   assert(el('tutorial-back').innerHTML.includes('关卡选择'));assert.equal(el('tutorial-copy').innerHTML,'');
+   assert(!/data-inspect-card|data-rule-term|<button/.test(chinese));
+   if(chapter>1)assert(chinese.includes('本局目标'));
+   if(chapter===3&&phase==='partial')assert(chinese.includes('本局无法完成此目标')&&chinese.includes('tutorial-goal failed'));
+   if(phase==='won')assert(chinese.includes('本关通关。'));
+   if(phase==='lost')assert(chinese.includes('赢下这局，即可通关。'));
+   assert.equal(snapshot(),before);assert.equal(run('game'),match);assert.equal(run('storyState'),state);assert.equal(input.value,'射命丸文');button.events.click();
+   el(selector).events.change({target:{value:'en'}});
+   assert.equal(el('tutorial-feedback').innerHTML,english);assert.equal(el('tutorial-title').textContent,title);assert.equal(snapshot(),before);
+   assert.equal(JSON.stringify([...storage].filter(([key])=>key!=='boundary-language')),JSON.stringify(JSON.parse(stored).filter(([key])=>key!=='boundary-language')));
+  }
+ }
+ assert.equal(clicks,48);A.setGame(null);run('storyState=null;');A.setGameLanguage('en');
+});
 (async()=>{for(const [name,fn] of tests){await fn();console.log('PASS '+name);}console.log(`${tests.length}/${tests.length} language selection checks passed`);})().catch(error=>{console.error(error);process.exitCode=1;});

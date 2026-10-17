@@ -5924,7 +5924,7 @@ const STORY_CHAPTERS=[
   {id:2,title:'Chapter 2 · Scarlet Devil Mansion',body:'Win to clear this chapter. Three stars: claim Scarlet Devil Mansion, finish Remilia’s ability with three Mansion cards in hand, and use Flandre to discard an opponent’s hand card.',skills:['sdm'],introduced:'sdm',hint:'Try waiting a few turns before playing Remilia.'},
   {id:3,title:'Chapter 3 · Hakugyokurou',body:'Hakugyokurou abilities join Scarlet Devil Mansion. Win to clear this chapter. Three stars: claim Hakugyokurou, gain four points from one Yuyuko placement, and win before the opponent reaches four points.',skills:['sdm','hakugyokurou'],introduced:'hakugyokurou',hint:'Disrupting your opponent’s claims is another way to stop them from winning.'},
   {id:4,title:'Chapter 4 · Eientei',body:'Eientei abilities join Scarlet Devil Mansion and Hakugyokurou. Win to clear this chapter. Three stars: claim Eientei, gain four points from one Kaguya placement, and hold at least ten cards at once.',skills:['sdm','hakugyokurou','hourai'],introduced:'hourai'},
-  {id:5,title:'Chapter 5 · Youkai Mountain',body:'Youkai Mountain abilities are now active too. Win to clear this chapter. Three stars: claim Youkai Mountain, end the game in stalemate, and subscribe to a newspaper before making a correct guess.',skills:['sdm','hakugyokurou','hourai','mountain'],introduced:'mountain',hint:'Is a correct guess all you need? Could there be a clever shortcut?'},
+  {id:5,title:'Chapter 5 · Youkai Mountain',body:'Youkai Mountain abilities are now active too. Win to clear this chapter. Three stars: claim Youkai Mountain, end the game in stalemate, and subscribe to a newspaper before making a correct guess.',skills:['sdm','hakugyokurou','hourai','mountain'],introduced:'mountain',hint:'A correct guess is all you need? Could there be a clever shortcut?'},
   {id:6,title:'Chapter 6 · Kourindou',body:'Kourindou opens for trading. Meiling, Tewi and Nitori are the fifth cards of unlocked factions available here. The opponent uses Medium AI. Win to clear this chapter. Three stars: claim two factions, claim a faction whose abilities are still locked, and do something that surprises me!',skills:['sdm','hakugyokurou','hourai','mountain'],introduced:'kourindou',hint:'What? An OTK? No way... haha.'}
 ];
 const STORY_GOAL_KEYS={1:[],2:['sdm','remilia','flandre'],3:['haku','yuyuko','race'],4:['hourai','kaguya','handTen'],5:['mountain','stalemate','newsGuess'],6:['twoFactions','lockedFaction','surprise']};
@@ -8638,7 +8638,7 @@ Object.assign(ZH_TEXT,{
   'Chapter 6 · Kourindou':'第六关 · 香霖堂',
   'Try waiting a few turns before playing Remilia.':'试试看先等几回合再放下蕾米莉亚吧。',
   'Disrupting your opponent’s claims is another way to stop them from winning.':'破坏对方的收取，也是阻止胜利的方法哦。',
-  'Is a correct guess all you need? Could there be a clever shortcut?':'只需要正确的猜测吗？是否有办法投机取巧呢？',
+  'A correct guess is all you need? Could there be a clever shortcut?':'只需要正确的猜测吗？是否有办法投机取巧呢？',
   'What? An OTK? No way... haha.':'什么？OTK？怎么可能嘛...哈哈。',
   'Kourindou opens for trading. Meiling, Tewi and Nitori are the fifth cards of unlocked factions available here. The opponent uses Medium AI. Win to clear this chapter. Three stars: claim two factions, claim a faction whose abilities are still locked, and do something that surprises me!':'香霖堂开放交易，本关只提供已解锁阵营的第五张卡：红美铃、因幡帝与河城荷取。对手使用中等 AI，获胜即可通关。三星目标：收取两个阵营、收取一个尚未解锁技能的阵营、做点让我惊讶的东西吧！',
   'Claim two factions':'收取两个阵营',
@@ -8714,7 +8714,12 @@ function setGameLanguage(language){
   document.documentElement.lang=gameLanguage;
   document.title=translateGameText('幻想郷 · Boundary of Fates');
   for(const id of ['menu-language','game-language'])el(id).value=gameLanguage;
-  if(game && !game.cancelled)renderLog();
+  if(game && !game.cancelled){
+    renderLog();
+    // Rebuild composed objectives before localization: icons and status marks
+    // split their translated sentences across otherwise unrelated text nodes.
+    if(game.storyMatch)renderStoryCoach();
+  }
   refreshRuleTerm();
   const list=el('card-name-list');list.replaceChildren();
   for(const card of CARDS){if(card.token && card.id!=='trap_token')continue;const option=document.createElement('option');option.value=translateGameText(card.name);list.appendChild(option);}
@@ -15007,7 +15012,7 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='b994090e8352fab89d61705a0c8c24d573e042b342838430da50cb22fbc1ac2f';
+const AI_EVALUATION_RULES_DIGEST='e34ca700d6e24aafbb9bd462c436cfe52c0b0e604fb1786259c3aae2742670c5';
 const AI_EVALUATION_POLICY_DIGEST='c2a4a2e32ac0aa88ca64af6d7368a6378d3c95f58fdf5deeab9d3d9a34259c8c';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;

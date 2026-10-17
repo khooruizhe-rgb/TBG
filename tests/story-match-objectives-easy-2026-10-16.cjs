@@ -56,7 +56,7 @@ render.returnToMainMenu();run('game=new Game(2,{},null,{aiDifficulty:"hard"});')
 const chapterHints={
   2:['Try waiting a few turns before playing Remilia.','试试看先等几回合再放下蕾米莉亚吧。'],
   3:['Disrupting your opponent’s claims is another way to stop them from winning.','破坏对方的收取，也是阻止胜利的方法哦。'],
-  5:['Is a correct guess all you need? Could there be a clever shortcut?','只需要正确的猜测吗？是否有办法投机取巧呢？'],
+  5:['A correct guess is all you need? Could there be a clever shortcut?','只需要正确的猜测吗？是否有办法投机取巧呢？'],
   6:['What? An OTK? No way... haha.','什么？OTK？怎么可能嘛...哈哈。']
 };
 for(const language of ['en','zh-CN'])for(const [chapter,texts]of Object.entries(chapterHints)){
