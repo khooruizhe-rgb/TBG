@@ -2185,8 +2185,9 @@
 .cell.hand-arriving::before,.cell.hand-arriving::after{visibility:hidden;}
 .touch-drag-ghost{min-height:0 !important;min-width:0 !important;}
 #fullscreen-btn,#journal-btn,#mobile-screen-message,#mobile-landscape-hint{display:none;}
-#menu-fullscreen-controls{display:none;align-items:center;justify-content:center;gap:8px;margin:8px 0;color:#72543b;font-size:12px;line-height:1.4}
-body.mobile-device #menu-fullscreen-controls{display:flex}
+#menu-fullscreen-controls{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:8px 0;color:#72543b;font-size:12px;line-height:1.4}
+body.mobile-device #menu-fullscreen-controls{justify-content:center}
+body:not(.mobile-device) #menu-fullscreen-btn{display:none}
 body.game-mobile #mobile-screen-message:not(:empty){display:inline;font-size:10px;color:var(--muted);max-width:30vw}
 #mobile-landscape-hint{color:var(--muted);font-size:.78rem;text-align:center;margin:5px 0;}
 body.game-mobile #fullscreen-btn,body.game-mobile #mobile-landscape-hint{display:inline-block;}
@@ -2481,8 +2482,7 @@ body:not(:has(#game.active)) #setup{pointer-events:auto}
   #setup .menu-intro h1{font-size:25px}
   #setup .menu-intro .menu-kicker{display:none}
   #setup .menu-intro .menu-description{font-size:11px;line-height:1.4;margin-top:9px}
-  #setup .language-setting,#setup #menu-fullscreen-controls{grid-column:2;margin:0;font-size:11px}
-  #setup .language-setting{justify-content:flex-start}
+  #setup #menu-fullscreen-controls{grid-column:2;margin:0;font-size:11px}
   #setup #menu-fullscreen-controls{justify-content:flex-start;flex-wrap:wrap;gap:4px}
   #setup #menu-fullscreen-controls .pill-btn{padding:4px 7px;font-size:11px}
   #setup .menu-settings{grid-column:2;grid-template-columns:1fr;gap:5px;margin:0}
@@ -2595,9 +2595,6 @@ body.mobile-landscape .board-card,body.mobile-landscape #hand .hand-card{border-
 
 
 /* Locale controls and Byakuren's physical three-card table. */
-.language-setting{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:-9px 0 15px;color:#735337;font-size:12px}
-.language-setting select,#game-language{font:inherit;color:inherit;border:1px solid #b89d7888;border-radius:5px;padding:5px 7px;background:#fbf1df;cursor:pointer}
-#game-language{max-width:105px;font-size:11px}
 html[lang="zh-CN"]{font-family:'PingFang SC','Microsoft YaHei','Noto Serif JP',sans-serif}
 html[lang="zh-CN"] .menu-intro h1{letter-spacing:.06em}
 #byakuren-peek-overlay{display:none;position:fixed;inset:0;z-index:66;align-items:center;justify-content:center;padding:14px;background:#080510b0}
@@ -2817,6 +2814,26 @@ body:not(:has(#game.active)):not(.title-memory-active) #app{position:relative;z-
 @keyframes creationPrintHead{from{top:0}to{top:100%}}
 @media(orientation:landscape) and (max-height:500px){#creation-panel{padding:12px}#creation-title{font-size:15px;margin-bottom:6px}.creation-printer{height:24px}.creation-option{width:min(22vw,28dvh,150px);gap:5px}.creation-inspect{padding:4px 10px;font-size:11px}#creation-status{margin-top:6px;font-size:11px;min-height:1.4em}}
 @media(prefers-reduced-motion:reduce){.creation-printing,.creation-printing::after{animation:none}.creation-face.creation-flying,#creation-overlay{transition:none}}
+/* Shared preferences remain readable in native fullscreen and on narrow phones. */
+.settings-gear{display:inline-grid;place-items:center;min-width:40px;min-height:40px;font:24px/1 sans-serif;padding:5px 9px}
+#app #game-toolbar .settings-gear,#setup #menu-fullscreen-controls .settings-gear{font:22px/1 sans-serif;padding:4px 7px;min-width:34px;min-height:32px}
+#game-toolbar #debug-menu-btn{font-size:10px;padding:5px 6px}
+#settings-dialog{display:none;position:fixed;inset:0;margin:auto;width:min(460px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;padding:20px;border:1px solid #b5946d;border-radius:12px;background:#f6ead3;color:#493321;box-shadow:0 16px 48px #10091380;z-index:1400}
+#settings-dialog.show{display:block}
+#settings-dialog::backdrop{background:#100b18a6}
+#settings-dialog.show:not([open]){box-shadow:0 0 0 100vmax #100b18a6,0 16px 48px #10091380}
+#settings-dialog.show:not([open])::before{content:'';position:fixed;inset:0;z-index:-1}
+.settings-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px}
+.settings-heading h2{margin:0;font-size:22px}
+#settings-dialog .pill-btn{background:#fff6e5;color:#493321;border-color:#b5946d}
+.settings-row{display:grid;gap:8px;margin:16px 0;font-size:16px}
+.settings-row select{width:100%;min-height:42px;padding:8px;border:1px solid #b5946d;border-radius:6px;background:#fffaf0;color:#493321;font:inherit}
+.settings-toggle{display:flex;align-items:center;gap:12px;min-height:48px;font-size:16px;cursor:pointer}
+.settings-toggle input{width:20px;height:20px;flex:0 0 20px;accent-color:#8e5439}
+#settings-dialog :focus-visible{outline:3px solid #98663d;outline-offset:3px}
+body.fixed-card-shadow .table-scatter-card:is(.table-card-dragging,.table-card-sliding),body.fixed-card-shadow #byakuren-peek-overlay .table-scatter-card:is(.table-card-dragging,.table-card-sliding){filter:drop-shadow(4px 9px 5px #170d0b7a)}
+body.light-card-shadows .table-scatter-card:is(.table-card-dragging,.table-card-sliding),body.light-card-shadows #byakuren-peek-overlay .table-scatter-card:is(.table-card-dragging,.table-card-sliding){filter:drop-shadow(3px 6px 3px #170d0b66)}
+@media(max-width:480px){#settings-dialog{padding:16px}.settings-gear{min-width:36px;min-height:36px;font-size:22px}}
 </style>
 </head>
 <body>
@@ -2860,10 +2877,7 @@ body:not(:has(#game.active)):not(.title-memory-active) #app{position:relative;z-
       <h1><span class="menu-japanese" lang="ja">幻想郷</span>Boundary of Fates</h1>
       <div class="menu-divider" aria-hidden="true"><span>☯</span></div>
     </div>
-    <label class="language-setting">Language / 语言
-      <select id="menu-language" aria-label="Language / 语言"><option value="en">English</option><option value="zh-CN">简体中文</option></select>
-    </label>
-    <div id="menu-fullscreen-controls"><button id="menu-fullscreen-btn" class="pill-btn" type="button" aria-pressed="false">Fullscreen</button><span id="menu-fullscreen-message" role="status"></span></div>
+    <div id="menu-fullscreen-controls"><button id="menu-settings-btn" class="pill-btn settings-gear" type="button" aria-label="Settings" title="Settings" aria-haspopup="dialog" aria-expanded="false" aria-controls="settings-dialog">⚙</button><button id="menu-fullscreen-btn" class="pill-btn" type="button" aria-pressed="false">Fullscreen</button><span id="menu-fullscreen-message" role="status"></span></div>
     <div class="menu-settings">
 
       <fieldset class="menu-setting"><legend>Players</legend>
@@ -2923,9 +2937,9 @@ body:not(:has(#game.active)):not(.title-memory-active) #app{position:relative;z-
     <div id="game-toolbar">
       <button id="main-menu-btn" class="pill-btn" type="button">Main Menu</button>
       <button id="fullscreen-btn" class="pill-btn" type="button" aria-pressed="false">Fullscreen</button>
-      <select id="game-language" class="pill-btn" aria-label="Language / 语言"><option value="en">English</option><option value="zh-CN">简体中文</option></select>
+      <button id="game-settings-btn" class="pill-btn settings-gear" type="button" aria-label="Settings" title="Settings" aria-haspopup="dialog" aria-expanded="false" aria-controls="settings-dialog">⚙</button>
       <button id="journal-btn" class="pill-btn" type="button" aria-expanded="false" aria-controls="log-panel">Log</button>
-      <button id="debug-menu-btn" class="pill-btn" type="button" aria-expanded="false" aria-controls="debug-panel" aria-label="Debug tools">⚙</button>
+      <button id="debug-menu-btn" class="pill-btn" type="button" aria-expanded="false" aria-controls="debug-panel" aria-label="Debug tools">DEBUG</button>
       <button id="ai-test-stats-btn" class="pill-btn" type="button" title="D / F8: open test data and pause" hidden>Test data (D / F8)</button>
       <button id="ai-test-pause-btn" class="pill-btn" type="button" hidden>Pause test</button>
       <button id="ai-test-next-btn" class="pill-btn" type="button" hidden disabled>Next game (N)</button>
@@ -2998,6 +3012,13 @@ body:not(:has(#game.active)):not(.title-memory-active) #app{position:relative;z-
   </div>
 </div>
 
+<dialog id="settings-dialog" aria-modal="true" aria-labelledby="settings-title" tabindex="-1">
+  <div class="settings-heading"><h2 id="settings-title">Settings</h2><button id="settings-close" class="pill-btn" type="button">Close</button></div>
+  <label class="settings-row" for="settings-language"><span>Language</span><select id="settings-language" aria-label="Language"><option value="en">English</option><option value="zh-CN">简体中文</option></select></label>
+  <label class="settings-row" for="settings-physics"><span>Card physics</span><select id="settings-physics"><option value="physical">New · rotation and momentum</option><option value="classic">Classic · direct movement</option></select></label>
+  <label class="settings-toggle"><input id="settings-fixed-shadow" type="checkbox"><span>Fixed drag shadow</span></label>
+  <label class="settings-toggle"><input id="settings-light-shadow" type="checkbox"><span>Lighter drag shadows and glow</span></label>
+</dialog>
 <div id="debug-overlay">
   <section id="debug-panel" role="dialog" aria-labelledby="debug-title">
     <div class="ai-test-heading"><h3 id="debug-title">Debug tools</h3><button id="debug-close" type="button" class="pill-btn">Close</button></div>
@@ -8618,6 +8639,11 @@ Object.assign(ZH_TEXT,{"Create": "创造", "Placed: Draw a card.": "放置：抽
 ZH_DYNAMIC.unshift([/^Using (.+?)[’']s ability\.$/,(_,name)=>`正在使用${name}的技能。`]);
 ZH_DYNAMIC.unshift([/^Create copy: ability cost \+(\d+)(.*)$/,(_,n,tail)=>`创造复制：技能代价 +${n}。${tail.includes("Double abilities")?"双倍能力结算两次，代价只支付一次。":""}`]);
 Object.assign(ZH_TEXT,{"F8 opens test data and pauses the test. Closing this window keeps it paused.": "按 F8 打开测试数据并暂停。关闭窗口后保持暂停。", "D / F8: open test data and pause": "D / F8：打开测试数据并暂停", "Test data (D / F8)": "测试数据（D / F8）"});
+Object.assign(ZH_TEXT,{
+  'Settings':'设置','Language':'语言','Card physics':'卡牌物理',
+  'New · rotation and momentum':'新版 · 旋转与惯性','Classic · direct movement':'旧版 · 直接跟手',
+  'Fixed drag shadow':'固定拖动阴影','Lighter drag shadows and glow':'较轻的拖动阴影与光晕'
+});
 function translateGameText(value){
   const original=String(value);if(gameLanguage!=='zh-CN')return original;
   if(localizedTextCache.has(original))return localizedTextCache.get(original);
@@ -8721,7 +8747,7 @@ function renderCardAbilityTitle(node){
   if(node.textContent!==title)node.textContent=title;
 }
 function languageSkipsNode(node){
-  return !node.parentElement || !!node.parentElement.closest('script,style,input,textarea,#menu-language,#game-language,[lang="ja"]');
+  return !node.parentElement || !!node.parentElement.closest('script,style,input,textarea,#settings-language,[lang="ja"]');
 }
 function localizeTextNode(node){
   if(abilityTitleSources.has(node.parentElement)){renderCardAbilityTitle(node.parentElement);return;}
@@ -8732,7 +8758,7 @@ function localizeTextNode(node){
   if(node.nodeValue!==saved.rendered)node.nodeValue=saved.rendered;
 }
 function localizeElement(node){
-  if(node.matches?.('script,style,#menu-language,#game-language,option'))return;
+  if(node.matches?.('script,style,#settings-language,option'))return;
   const ruleSource=ruleTextSources.get(node);
   if(ruleSource){
     const rendered=ruleTextHtml(ruleSource.value,ruleSource.options);
@@ -8759,7 +8785,7 @@ function setGameLanguage(language){
   try{window.localStorage?.setItem('boundary-language',gameLanguage);}catch(_error){}
   document.documentElement.lang=gameLanguage;
   document.title=translateGameText('幻想郷 · Boundary of Fates');
-  for(const id of ['menu-language','game-language'])el(id).value=gameLanguage;
+  el('settings-language').value=gameLanguage;
   if(game && !game.cancelled){
     renderLog();
     // Rebuild composed objectives before localization: icons and status marks
@@ -8770,6 +8796,7 @@ function setGameLanguage(language){
   const list=el('card-name-list');list.replaceChildren();
   for(const card of CARDS){if(card.token && card.id!=='trap_token')continue;const option=document.createElement('option');option.value=translateGameText(card.name);list.appendChild(option);}
   localizeSubtree(document.body);
+  if(typeof invalidateCardDragGeometry==='function')invalidateCardDragGeometry();
   requestAnimationFrame(()=>{fitCardDetailHeadings();positionRuleTerm();positionRinnosukeBubble();queueMobileViewport();});
 }
 function initializeGameLanguage(){
@@ -8777,7 +8804,7 @@ function initializeGameLanguage(){
     const pattern=new RegExp('(^|[^A-Za-z])'+en+'(?=$|[^A-Za-z])','g');ZH_NAMES.push([pattern,ZH_CARDS[id][0]]);
   }
   localizedTextCache.clear();
-  for(const id of ['menu-language','game-language'])el(id).addEventListener('change',event=>setGameLanguage(event.target.value));
+  el('settings-language').addEventListener('change',event=>setGameLanguage(event.target.value));
   const observer=new MutationObserver(records=>{
     const roots=new Set();
     for(const record of records){
@@ -14084,19 +14111,24 @@ let handDragSettling=false;
 const handDragSettlers=new Set();
 
 function stepHandDragPhysics(body,target,dt,reduced=false){
-  dt=Math.min(.034,Math.max(.001,dt));
   if(reduced){body.x=target.x;body.y=target.y;body.vx=body.vy=body.angle=body.tilt=0;body.scale=1;return body;}
+  const elapsed=Math.max(0,Number.isFinite(dt)?dt:0);
+  if(elapsed>.12){body.x=target.x;body.y=target.y;body.vx=body.vy=body.angle=body.tilt=0;body.scale=1;return body;}
+  if(!elapsed)return body;
+  // Advance all elapsed time in stable steps; slow frames must not slow the card's clock.
+  const steps=Math.ceil(elapsed/.017),h=elapsed/steps;
   const stiffness=190,damping=23;
-  body.vx+=(stiffness*(target.x-body.x)-damping*body.vx)*dt;
-  body.vy+=(stiffness*(target.y-body.y)-damping*body.vy)*dt;
-  body.x+=body.vx*dt;body.y+=body.vy*dt;
-  // Keep rapid cross-screen gestures close enough to the hand to feel connected.
-  const dx=target.x-body.x,dy=target.y-body.y,distance=Math.hypot(dx,dy);
-  if(distance>65){body.x=target.x-dx/distance*65;body.y=target.y-dy/distance*65;}
-  const ease=1-Math.exp(-14*dt);
-  body.angle+=(Math.max(-12,Math.min(12,body.vx*.012))-body.angle)*ease;
-  body.tilt+=(Math.max(-7,Math.min(7,-body.vy*.008))-body.tilt)*ease;
-  body.scale+=(1.055+Math.min(.02,Math.hypot(body.vx,body.vy)/40000)-body.scale)*ease;
+  for(let step=0;step<steps;step++){
+    body.vx+=(stiffness*(target.x-body.x)-damping*body.vx)*h;
+    body.vy+=(stiffness*(target.y-body.y)-damping*body.vy)*h;
+    body.x+=body.vx*h;body.y+=body.vy*h;
+    const dx=target.x-body.x,dy=target.y-body.y,distance=Math.hypot(dx,dy);
+    if(distance>65){body.x=target.x-dx/distance*65;body.y=target.y-dy/distance*65;}
+    const ease=1-Math.exp(-14*h);
+    body.angle+=(Math.max(-12,Math.min(12,body.vx*.012))-body.angle)*ease;
+    body.tilt+=(Math.max(-7,Math.min(7,-body.vy*.008))-body.tilt)*ease;
+    body.scale+=(1.055+Math.min(.02,Math.hypot(body.vx,body.vy)/40000)-body.scale)*ease;
+  }
   return body;
 }
 
@@ -14109,7 +14141,7 @@ function onHandCardPointerDown(e,cardId){
   const rect=e.currentTarget.getBoundingClientRect();
   touchHandDrag={id:e.pointerId,cardId,source:e.currentTarget,x:e.clientX,y:e.clientY,
     grabX:e.clientX-rect.left-rect.width/2,grabY:e.clientY-rect.top-rect.height/2,
-    origin:rect,started:false,ghost:null,target:null,frame:null,owner:game};
+    origin:rect,point:{x:e.clientX,y:e.clientY},started:false,ghost:null,target:null,frame:null,owner:game};
 }
 
 function handDragTarget(x,y){
@@ -14123,18 +14155,26 @@ function handDragTarget(x,y){
 function paintHandDrag(drag){
   const body=drag.body;
   drag.ghost.style.transform=handDragTransform(body);
-  const shadowX=Math.max(-12,Math.min(12,-body.vx*.012));
-  drag.ghost.style.boxShadow=`${shadowX}px 22px 34px rgba(0,0,0,.52),0 2px 8px rgba(232,200,116,.22)`;
+  const shadowX=cardPresentationSettings.fixedShadow?0:Math.max(-12,Math.min(12,-body.vx*.012));
+  const shadow=cardPresentationSettings.lightShadow
+    ? `${shadowX}px 16px 18px rgba(0,0,0,.4),0 2px 4px rgba(232,200,116,.12)`
+    : `${shadowX}px 22px 34px rgba(0,0,0,.52),0 2px 8px rgba(232,200,116,.22)`;
+  if(drag.shadow!==shadow){drag.ghost.style.boxShadow=shadow;drag.shadow=shadow;}
 }
 
 function runPhysicalCardDrag(drag,isActive){
   drag.body={x:drag.origin.left+drag.origin.width/2,y:drag.origin.top+drag.origin.height/2,vx:0,vy:0,angle:0,tilt:0,scale:1};
   drag.goal={x:drag.body.x,y:drag.body.y};
   drag.reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  drag.classic=cardPhysicsIsClassic();
   let previous=performance.now();
   const tick=now=>{
     if(!isActive() || !drag.ghost?.isConnected)return;
-    stepHandDragPhysics(drag.body,drag.goal,(now-previous)/1000,drag.reduced);previous=now;
+    if(drag.targetDirty){
+      const target=handDragTarget(drag.point.x,drag.point.y);drag.targetDirty=false;
+      if(drag.target!==target){drag.target?.classList.remove('drag-hover');drag.target=target;target?.classList.add('drag-hover');}
+    }
+    stepHandDragPhysics(drag.body,drag.goal,(now-previous)/1000,drag.reduced||drag.classic);previous=now;
     paintHandDrag(drag);drag.frame=requestAnimationFrame(tick);
   };
   paintHandDrag(drag);drag.frame=requestAnimationFrame(tick);
@@ -14144,13 +14184,12 @@ function startHandDragPhysics(drag){runPhysicalCardDrag(drag,()=>touchHandDrag==
 function moveHandDrag(x,y){
   const drag=touchHandDrag;if(!drag?.started)return;
   drag.goal.x=x-drag.grabX;drag.goal.y=y-drag.grabY;
-  const target=handDragTarget(x,y);
-  if(drag.target!==target){drag.target?.classList.remove('drag-hover');drag.target=target;target?.classList.add('drag-hover');}
+  drag.point.x=x;drag.point.y=y;drag.targetDirty=true;
 }
 
-async function settleHandDrag(drag,tile,{keepSize=false}={}){
+async function settleHandDrag(drag,tile,{keepSize=false,targetRect=null}={}){
   if(!drag.ghost)return false;
-  const rect=tile?.getBoundingClientRect() || (drag.source.isConnected?drag.source.getBoundingClientRect():drag.origin);
+  const rect=targetRect || tile?.getBoundingClientRect() || (drag.source.isConnected?drag.source.getBoundingClientRect():drag.origin);
   const end={x:rect.left+rect.width/2,y:rect.top+rect.height/2,angle:0,tilt:0,scale:1};
   const width=keepSize?drag.origin.width:tile?rect.width-2:rect.width,height=keepSize?drag.origin.height:tile?rect.height-2:rect.height;
   const entry={ghost:drag.ghost,animation:null};handDragSettlers.add(entry);
@@ -14175,6 +14214,16 @@ async function settleHandDrag(drag,tile,{keepSize=false}={}){
 
 async function finishHandDrag(cancelled=false,x=0,y=0){
   const drag=touchHandDrag;if(!drag)return;
+  // Read the release target before changing classes or cancelling the selection.
+  const choice=pendingCellChoice,tile=drag.started&&!cancelled?handDragTarget(x,y):null;
+  let targetRect=null;
+  if(drag.started){
+    if(tile)targetRect=tile.getBoundingClientRect();
+    else if(drag.source.isConnected){
+      const rect=drag.source.getBoundingClientRect(),{width,height}=drag.origin;
+      targetRect={left:rect.left+rect.width/2-width/2,top:rect.top+rect.height/2-height/2,width,height};
+    }else targetRect=drag.origin;
+  }
   touchHandDrag=null;
   cancelAnimationFrame(drag.frame);drag.target?.classList.remove('drag-hover');drag.source.classList.remove('dragging');
   try{if(drag.source.hasPointerCapture(drag.id))drag.source.releasePointerCapture(drag.id);}catch(_error){}
@@ -14182,10 +14231,9 @@ async function finishHandDrag(cancelled=false,x=0,y=0){
   draggingCardId=null;handDragSettling=true;
   // Suppress the click synthesized after any completed drag, including an invalid release.
   suppressTouchDropClick={x,y,until:Date.now()+500};
-  const choice=pendingCellChoice,tile=cancelled?null:handDragTarget(x,y);
   const drop=tile?{shop:!!tile.closest('#kourindou'),slot:Number(tile.dataset.slot),r:Number(tile.dataset.r),c:Number(tile.dataset.c)}:null;
   if(!tile && pendingCellChoice?.dragOnly)cancelHandSelection();
-  const settled=await settleHandDrag(drag,tile);
+  const settled=await settleHandDrag(drag,tile,{targetRect});
   handDragSettling=false;
   if(settled && drop && game===drag.owner && !game.cancelled && pendingCellChoice===choice && game.players[localSeat()].hand.includes(drag.cardId)){
     pendingDragLanding=drag;
@@ -14282,6 +14330,90 @@ el('draw-btn').addEventListener('click', async () => {
 
 /* ---------- Setup screen wiring ---------- */
 let titleCardDrag=null,lastTitleCardTap=null,lastTitleCardIds=[];
+const CARD_PRESENTATION_KEY='boundary-card-presentation-v1';
+function loadCardPresentationSettings(){
+  try{
+    const saved=JSON.parse(window.localStorage?.getItem(CARD_PRESENTATION_KEY)||'{}')||{};
+    return {physics:saved.physics==='classic'?'classic':'physical',fixedShadow:saved.fixedShadow===true,lightShadow:saved.lightShadow===true};
+  }catch(_error){return {physics:'physical',fixedShadow:false,lightShadow:false};}
+}
+let cardPresentationSettings=loadCardPresentationSettings();
+let cardDragGeometryVersion=0,settingsReturnFocus=null;
+const tableCardGeometries=new WeakMap();
+function invalidateCardDragGeometry(){cardDragGeometryVersion++;}
+function cardPhysicsIsClassic(){return cardPresentationSettings.physics==='classic';}
+function applyCardPresentationSettings(){
+  document.body.classList.toggle('fixed-card-shadow',cardPresentationSettings.fixedShadow);
+  document.body.classList.toggle('light-card-shadows',cardPresentationSettings.lightShadow);
+  el('settings-physics').value=cardPresentationSettings.physics;
+  el('settings-fixed-shadow').checked=cardPresentationSettings.fixedShadow;
+  el('settings-light-shadow').checked=cardPresentationSettings.lightShadow;
+}
+function setCardPresentationSetting(key,value){
+  if(key==='physics')cardPresentationSettings.physics=value==='classic'?'classic':'physical';
+  else if(key==='fixedShadow'||key==='lightShadow')cardPresentationSettings[key]=value===true;
+  else return;
+  try{window.localStorage?.setItem(CARD_PRESENTATION_KEY,JSON.stringify(cardPresentationSettings));}catch(_error){}
+  applyCardPresentationSettings();
+}
+function closeGameSettings(){
+  const dialog=el('settings-dialog');dialog.classList.remove('show');
+  if(dialog.open && typeof dialog.close==='function')dialog.close();
+  for(const id of ['menu-settings-btn','game-settings-btn'])el(id).setAttribute('aria-expanded','false');
+  const focus=settingsReturnFocus;settingsReturnFocus=null;
+  if(focus?.isConnected)focus.focus({preventScroll:true});
+}
+function openGameSettings(raise=false){
+  const dialog=el('settings-dialog');
+  const focusBefore=document.activeElement;
+  if(!dialog.classList.contains('show')){
+    settingsReturnFocus=document.activeElement;
+    if(typeof clearHandDragPhysics==='function')clearHandDragPhysics();
+    if(typeof pendingCellChoice!=='undefined' && pendingCellChoice?.dragOnly)cancelHandSelection();
+    finishTitleCardDrag(true);clearTableCardSlides();
+  }
+  applyCardPresentationSettings();dialog.classList.add('show');
+  if(typeof dialog.showModal==='function'){
+    try{if(raise && dialog.open)dialog.close();if(!dialog.open)dialog.showModal();}catch(_error){ /* The styled, focus-trapped fallback remains usable. */ }
+  }
+  for(const id of ['menu-settings-btn','game-settings-btn'])el(id).setAttribute('aria-expanded','true');
+  const focus=raise && dialog.contains?.(focusBefore)?focusBefore:el('settings-language');
+  focus.focus({preventScroll:true});
+}
+function initializeCardSettings(){
+  applyCardPresentationSettings();
+  for(const id of ['menu-settings-btn','game-settings-btn'])el(id).addEventListener('click',()=>openGameSettings());
+  el('settings-close').addEventListener('click',closeGameSettings);
+  el('settings-physics').addEventListener('change',event=>setCardPresentationSetting('physics',event.target.value));
+  el('settings-fixed-shadow').addEventListener('change',event=>setCardPresentationSetting('fixedShadow',event.target.checked));
+  el('settings-light-shadow').addEventListener('change',event=>setCardPresentationSetting('lightShadow',event.target.checked));
+  const dialog=el('settings-dialog');
+  dialog.addEventListener('cancel',event=>{event.preventDefault();closeGameSettings();});
+  dialog.addEventListener('close',()=>{if(!dialog.open && dialog.classList.contains('show'))closeGameSettings();});
+  dialog.addEventListener('click',event=>{
+    if(event.target!==dialog)return;
+    const rect=dialog.getBoundingClientRect();
+    if(event.clientX<rect.left || event.clientX>rect.right || event.clientY<rect.top || event.clientY>rect.bottom)closeGameSettings();
+  });
+  dialog.addEventListener('keydown',event=>{
+    if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeGameSettings();return;}
+    if(event.key!=='Tab')return;
+    const controls=[...dialog.querySelectorAll('button,select,input')].filter(node=>!node.disabled);
+    const first=controls[0],last=controls.at(-1);
+    if(event.shiftKey && (document.activeElement===first || document.activeElement===dialog)){event.preventDefault();last?.focus();}
+    else if(!event.shiftKey && document.activeElement===last){event.preventDefault();first?.focus();}
+  });
+  window.addEventListener('resize',invalidateCardDragGeometry);
+  window.addEventListener('scroll',invalidateCardDragGeometry,true);
+  window.visualViewport?.addEventListener('resize',invalidateCardDragGeometry);
+  window.visualViewport?.addEventListener('scroll',invalidateCardDragGeometry);
+  for(const name of ['fullscreenchange','webkitfullscreenchange'])document.addEventListener(name,invalidateCardDragGeometry);
+  if(typeof ResizeObserver==='function'){
+    const observer=new ResizeObserver(invalidateCardDragGeometry);
+    for(const id of ['hand','board','kourindou','story-card-grid']){const node=el(id);if(node)observer.observe(node);}
+  }
+  document.fonts?.ready?.then(invalidateCardDragGeometry);
+}
 let titleMemoryGame=null,titleMemoryUnlockTimer=null;
 let peekCardSession=null,cancelByakurenPeek=null;
 let peekCardLayer=1;
@@ -14290,6 +14422,16 @@ function tableCardEventTime(event){return Number.isFinite(event?.timeStamp) ? ev
 const TABLE_CARD_FRICTION=1800,TABLE_CARD_SPIN_DRAG=5.5;
 function tableCardSize(node){
   const rect=node.getBoundingClientRect();return {width:node.offsetWidth||rect.width,height:node.offsetHeight||rect.height};
+}
+function tableCardGeometry(node){
+  let geometry=tableCardGeometries.get(node);
+  if(!geometry || geometry.version!==cardDragGeometryVersion){
+    const size=tableCardSize(node);
+    const rect=node?.dataset.storyCard==='true'?el('story-card-grid').getBoundingClientRect():{left:0,top:0,width:window.innerWidth,height:window.innerHeight};
+    geometry={version:cardDragGeometryVersion,size,area:{left:rect.left,top:rect.top,width:rect.width,height:rect.height}};
+    tableCardGeometries.set(node,geometry);
+  }
+  return geometry;
 }
 function tableCardGrip(x,y,angle){
   const radians=angle*Math.PI/180,cos=Math.cos(radians),sin=Math.sin(radians);
@@ -14312,6 +14454,10 @@ function stepTableCardSlide(body,dt,bounds){
   body.x=x;body.y=y;return body;
 }
 function stepTableCardDrag(drag,pointer,dt){
+  if(cardPhysicsIsClassic()){
+    drag.spin=0;
+    return moveTitleCard(drag.node,pointer.x-drag.offsetX,pointer.y-drag.offsetY,drag.rotation);
+  }
   const dx=pointer.x-drag.pointer.x,dy=pointer.y-drag.pointer.y;
   if(dt>0 && !window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches){
     const elapsed=Math.min(.1,dt),steps=Math.max(1,Math.ceil(elapsed/.008)),h=elapsed/steps;
@@ -14335,13 +14481,13 @@ function stopTableCardSlide(node,notify=true){
 }
 function clearTableCardSlides(notify=true){for(const node of [...tableCardSlides.keys()])stopTableCardSlide(node,notify);}
 function startTableCardSlide(drag,releasedAt){
-  if(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches || drag.node.classList.contains('peek-taken'))return;
+  if(cardPhysicsIsClassic() || window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches || drag.node.classList.contains('peek-taken'))return;
   const age=Math.max(0,releasedAt-drag.lastMotionAt),decay=Math.exp(-age/65),speed=Math.hypot(drag.vx,drag.vy)*decay;
   const spin=Math.max(-540,Math.min(540,drag.spin*decay));
   if(age>100 || speed<45&&Math.abs(spin)<12)return;
-  const node=drag.node,rect=node.getBoundingClientRect(),maxTravel=Math.max(64,Math.min(320,tableCardSize(node).width*2.2));
+  const node=drag.node,point=drag.centerPoint||drag.samplePoint,maxTravel=Math.max(64,Math.min(320,tableCardGeometry(node).size.width*2.2));
   const limited=Math.min(speed,Math.sqrt(2*TABLE_CARD_FRICTION*maxTravel)),ratio=speed>0?limited/Math.hypot(drag.vx,drag.vy):0;
-  const body={x:rect.left+rect.width/2,y:rect.top+rect.height/2,vx:drag.vx*ratio,vy:drag.vy*ratio,angle:drag.rotation,spin};
+  const body={x:point.x,y:point.y,vx:drag.vx*ratio,vy:drag.vy*ratio,angle:drag.rotation,spin};
   const slide={body,frame:null,previous:performance.now()};tableCardSlides.set(node,slide);node.classList.add('table-card-sliding');
   node.style.setProperty('--table-angle',`${body.angle}deg`);
   const tick=now=>{
@@ -14379,22 +14525,22 @@ function drawTitlePreviewCards(){
   try{window.localStorage?.setItem('boundary-title-preview',JSON.stringify(lastTitleCardIds));}catch(_error){}
   return drawn;
 }
-function tableCardBounds(node,angle=Number(node?.dataset.angle)||0){
-  const size=tableCardSize(node),radians=angle*Math.PI/180,cos=Math.abs(Math.cos(radians)),sin=Math.abs(Math.sin(radians));
-  const area=node?.dataset.storyCard==='true'?el('story-card-grid').getBoundingClientRect():{left:0,top:0,width:window.innerWidth,height:window.innerHeight};
+function tableCardBounds(node,angle=Number(node?.dataset.angle)||0,geometry=tableCardGeometry(node)){
+  const {size,area}=geometry,radians=angle*Math.PI/180,cos=Math.abs(Math.cos(radians)),sin=Math.abs(Math.sin(radians));
   const halfWidth=Math.min(area.width/2,(size.width*cos+size.height*sin)/2+10),halfHeight=Math.min(area.height/2,(size.width*sin+size.height*cos)/2+10);
   return {left:area.left+halfWidth,right:area.left+area.width-halfWidth,top:area.top+halfHeight,bottom:area.top+area.height-halfHeight};
 }
 function moveTitleCard(node,x,y,angle){
-  const bounds=tableCardBounds(node,angle),cx=Math.max(bounds.left,Math.min(bounds.right,x)),cy=Math.max(bounds.top,Math.min(bounds.bottom,y));
+  const geometry=tableCardGeometry(node),bounds=tableCardBounds(node,angle,geometry),cx=Math.max(bounds.left,Math.min(bounds.right,x)),cy=Math.max(bounds.top,Math.min(bounds.bottom,y));
   node.style.setProperty('--table-x',`${cx}px`);node.style.setProperty('--table-y',`${cy}px`);
   if(node.dataset.storyCard==='true'){
-    const area=el('story-card-grid').getBoundingClientRect();node.dataset.storyX=String((cx-area.left)/Math.max(1,area.width));node.dataset.storyY=String((cy-area.top)/Math.max(1,area.height));
+    const area=geometry.area;node.dataset.storyX=String((cx-area.left)/Math.max(1,area.width));node.dataset.storyY=String((cy-area.top)/Math.max(1,area.height));
   }
   return {x:cx,y:cy};
 }
 function liftTitleCard(node){
   const rect=node.getBoundingClientRect(),center={x:rect.left+rect.width/2,y:rect.top+rect.height/2};
+  tableCardGeometry(node);
   node.classList.add('table-card-moved');
   if(node.dataset.peekCard==='true'||node.dataset.storyCard==='true')node.style.zIndex=String(++peekCardLayer);else document.body.appendChild(node);
   return moveTitleCard(node,center.x,center.y);
@@ -14435,16 +14581,17 @@ function onTitleCardPointerDown(event){
     event.preventDefault();if(!drag.moved){drag.moved=true;liftTitleCard(node);}
     drag.second={id:event.pointerId,x:event.clientX,y:event.clientY};
     drag.twistAngle=Math.atan2(event.clientY-drag.pointer.y,event.clientX-drag.pointer.x);
-    const rect=node.getBoundingClientRect();drag.twistOffset={x:rect.left+rect.width/2-(drag.pointer.x+event.clientX)/2,y:rect.top+rect.height/2-(drag.pointer.y+event.clientY)/2};
+    const center=drag.centerPoint;drag.twistOffset={x:center.x-(drag.pointer.x+event.clientX)/2,y:center.y-(drag.pointer.y+event.clientY)/2};
     node.classList.add('table-card-dragging');lastTitleCardTap=null;
     try{node.setPointerCapture(drag.pointerId);node.setPointerCapture(event.pointerId);}catch(_error){}return;
   }
   if(event.isPrimary===false)return;
   event.preventDefault();finishTitleCardDrag(true);stopTableCardSlide(node);
-  const rect=node.getBoundingClientRect(),center={x:rect.left+rect.width/2,y:rect.top+rect.height/2},time=tableCardEventTime(event),angle=Number(node.dataset.angle)||0,size=tableCardSize(node);
+  tableCardGeometries.delete(node);
+  const rect=node.getBoundingClientRect(),center={x:rect.left+rect.width/2,y:rect.top+rect.height/2},time=tableCardEventTime(event),angle=Number(node.dataset.angle)||0,size=tableCardGeometry(node).size;
   node.focus({preventScroll:true});
   const offsetX=event.clientX-center.x,offsetY=event.clientY-center.y;
-  titleCardDrag={node,center,layer:node.style.zIndex || '',pointerId:event.pointerId,pointerType:event.pointerType || 'mouse',startX:event.clientX,startY:event.clientY,offsetX,offsetY,angle,moved:false,
+  titleCardDrag={node,center,centerPoint:center,layer:node.style.zIndex || '',pointerId:event.pointerId,pointerType:event.pointerType || 'mouse',startX:event.clientX,startY:event.clientY,offsetX,offsetY,angle,moved:false,
     sampleTime:time,lastMotionAt:time,samplePoint:center,pointer:{x:event.clientX,y:event.clientY},grip:tableCardGrip(offsetX,offsetY,-angle),inertia:(size.width*size.width+size.height*size.height)/12,vx:0,vy:0,spin:0,rotation:angle};
   try{node.setPointerCapture(event.pointerId);}catch(_error){}
 }
@@ -14472,6 +14619,7 @@ function onTitleCardPointerMove(event){
     drag.samplePoint=point;drag.sampleTime=time;
   }
   if(motion>.2)drag.lastMotionAt=time;
+  drag.centerPoint=point;
   drag.node.style.setProperty('--table-angle',`${drag.rotation}deg`);
 }
 function onTitleCardPointerUp(event){
@@ -14481,7 +14629,7 @@ function onTitleCardPointerUp(event){
     const remaining=drag.pointerId===event.pointerId?drag.second:{id:drag.pointerId,...drag.pointer};
     drag.pointerId=remaining.id;drag.pointer={x:remaining.x,y:remaining.y};drag.second=null;
     try{drag.node.releasePointerCapture(event.pointerId);}catch(_error){}
-    const rect=drag.node.getBoundingClientRect();drag.grip=tableCardGrip(remaining.x-rect.left-rect.width/2,remaining.y-rect.top-rect.height/2,-drag.rotation);
+    const center=drag.centerPoint;drag.offsetX=remaining.x-center.x;drag.offsetY=remaining.y-center.y;drag.grip=tableCardGrip(drag.offsetX,drag.offsetY,-drag.rotation);
     drag.sampleTime=tableCardEventTime(event);return;
   }
   finishTitleCardDrag(false,tableCardEventTime(event));
@@ -14553,7 +14701,7 @@ function closeTitleMemoryGame(restoreTable=true){
       if(card.matched)card.node.remove();
     }
   }
-  document.body.classList.remove('title-memory-active');document.body.style.removeProperty('--memory-card-width');
+  document.body.classList.remove('title-memory-active');document.body.style.removeProperty('--memory-card-width');invalidateCardDragGeometry();
   el('title-memory-status').hidden=true;el('title-memory-controls').hidden=true;
   if(restoreTable && session && !el('game').classList.contains('active')){renderTitleTableCards();el('start-btn').focus({preventScroll:true});}
 }
@@ -14572,12 +14720,13 @@ function titleMemoryLayout(){
     y:(window.innerHeight-totalHeight)/2+height/2+Math.floor(i/cols)*(height+gap)}))};
 }
 function syncTitlePreviewCardSizes(){
+  invalidateCardDragGeometry();
   const compact=window.innerWidth<=980 || window.innerHeight<=600 && window.innerWidth>window.innerHeight || !!window.matchMedia?.('(any-pointer: coarse)').matches;
   document.body.style.setProperty('--title-preview-card-width',`${titleMemoryLayout().width}px`);
   titlePreviewNodes().forEach(node=>node.classList.toggle('title-preview-compact',compact));
 }
 function spreadTitleMemoryCards(session){
-  const layout=titleMemoryLayout();document.body.style.setProperty('--memory-card-width',`${layout.width}px`);
+  const layout=titleMemoryLayout();document.body.style.setProperty('--memory-card-width',`${layout.width}px`);invalidateCardDragGeometry();
   session.cards.forEach((card,index)=>{
     if(card.matched)return;
     const node=card.node,point=layout.points[index];node.dataset.angle=String((index%3-1)*2);
@@ -14598,9 +14747,9 @@ function openTitleMemoryGame(){
   el('title-memory-close').onclick=()=>closeTitleMemoryGame();el('title-memory-replay').onclick=()=>{
     renderTitleTableCards();for(const node of titlePreviewNodes())setTitleCardFace(node,true);openTitleMemoryGame();
   };
-  const layout=titleMemoryLayout();document.body.style.setProperty('--memory-card-width',`${layout.width}px`);
+  const layout=titleMemoryLayout();document.body.style.setProperty('--memory-card-width',`${layout.width}px`);invalidateCardDragGeometry();
   session.cards.forEach((card,index)=>{
-    const node=card.node;liftTitleCard(node);node.classList.add('title-memory-table-card');
+    const node=card.node;liftTitleCard(node);node.classList.add('title-memory-table-card');tableCardGeometries.delete(node);
     node.setAttribute('aria-label','Face-down card');
     node.getBoundingClientRect();node.classList.add('title-memory-arranging');
     node.dataset.angle=String(index-5);node.style.setProperty('--table-angle',`${index-5}deg`);
@@ -14712,7 +14861,7 @@ window.addEventListener('resize',()=>{
     const rect=node.getBoundingClientRect();moveTitleCard(node,rect.left+rect.width/2,rect.top+rect.height/2);
   });
   if(titleMemoryGame){
-    const layout=titleMemoryLayout();document.body.style.setProperty('--memory-card-width',`${layout.width}px`);
+    const layout=titleMemoryLayout();document.body.style.setProperty('--memory-card-width',`${layout.width}px`);invalidateCardDragGeometry();
     if(titleMemoryGame.phase==='spreading')spreadTitleMemoryCards(titleMemoryGame);
     else if(titleMemoryGame.phase==='collecting')titleMemoryGame.cards.forEach((card,index)=>moveTitleCard(card.node,window.innerWidth/2+(index-4.5)*2,window.innerHeight/2+(index-4.5)));
   }
@@ -14806,7 +14955,7 @@ function openByakurenPeek(ids,opts={}){
       const width=opts.choice
         ? Math.max(36,Math.min(150,(rect.height/(groups.length ? 2 : 1)-44)*.75,rect.width/(groups.length ? 4 : Math.min(ids.length,5)+1)))
         : Math.min(150,rect.width/(ids.length+1));
-      overlay.style.setProperty('--peek-card-width',`${width}px`);
+      overlay.style.setProperty('--peek-card-width',`${width}px`);invalidateCardDragGeometry();
       nodes.forEach((node,index)=>{
         const rank=order.indexOf(node.dataset.cardId),x=rect.left+rect.width*(Math.max(0,rank)+1)/(order.length+1);
         let point={x,y:rect.top+rect.height/2+8};
@@ -16252,7 +16401,7 @@ function layoutStoryIntroCards(){
   session.cards.forEach(node=>stopTableCardSlide(node,false));
   const grid=el('story-card-grid'),area=grid.getBoundingClientRect(),columns=Math.min(session.cards.length,area.width>=480?4:2),rows=Math.ceil(session.cards.length/columns);
   const width=Math.max(60,Math.min(220,(area.width-(columns+1)*16)/columns,(area.height-(rows+1)*14)/rows*.75));
-  grid.style.setProperty('--story-card-width',`${width}px`);
+  grid.style.setProperty('--story-card-width',`${width}px`);invalidateCardDragGeometry();
   session.cards.forEach((card,index)=>{
     const x=Number(card.dataset.storyX??((index%columns+.5)/columns)),y=Number(card.dataset.storyY??((Math.floor(index/columns)+.5)/rows));
     moveTitleCard(card,area.left+area.width*x,area.top+area.height*y);
@@ -16370,6 +16519,7 @@ function syncMobileViewport(){
   }else{
     closeMobileJournal();
   }
+  if(typeof invalidateCardDragGeometry==='function')invalidateCardDragGeometry();
   if(game && !game.cancelled){positionRinnosukeBubble();repositionYuukaBlooms();}
 }
 function queueMobileViewport(){
@@ -16442,6 +16592,7 @@ async function toggleGameFullscreen(){
   finally{onGameFullscreenChange();}
 }
 function onGameFullscreenChange(){
+  if(typeof invalidateCardDragGeometry==='function')invalidateCardDragGeometry();
   const full=!!fullscreenElement();
   for(const id of ['fullscreen-btn','menu-fullscreen-btn']){el(id).textContent=full?'Exit Fullscreen':'Fullscreen';el(id).setAttribute('aria-pressed',String(full));}
   if(!full){try{screen.orientation?.unlock();}catch(_error){}}
@@ -16449,11 +16600,12 @@ function onGameFullscreenChange(){
     showCardDetailsDialog(true);
     requestAnimationFrame(()=>{fitCardDetailHeadings();positionRuleTerm();});
   }
+  if(el('settings-dialog').classList.contains('show'))openGameSettings(true);
   queueMobileViewport();
 }
 function onAutomaticMobileFullscreen(event){
   if(!mobileFullscreenArmed || !mobileFullscreenWanted() || fullscreenElement() || event.isTrusted===false)return;
-  if(event.target?.closest?.('#fullscreen-btn,#menu-fullscreen-btn,input,select,textarea'))return;
+  if(event.target?.closest?.('#fullscreen-btn,#menu-fullscreen-btn,#menu-settings-btn,#game-settings-btn,#settings-dialog,input,select,textarea'))return;
   if(event.type==='keydown' && !['Enter',' '].includes(event.key))return;
   if((typeof titleCardDrag!=='undefined' && titleCardDrag?.moved) || touchHandDrag?.started)return;
   mobileFullscreenArmed=false;void requestGameFullscreen();
@@ -16504,6 +16656,7 @@ el('main-menu-btn').addEventListener('click',returnToMainMenu);
 el('winner-menu-btn').addEventListener('click',returnToMainMenu);
 renderTitleTableCards();
 initializeGameLanguage();
+initializeCardSettings();
 initializeMobileFullscreen();
 initializeOnlineControls();
 

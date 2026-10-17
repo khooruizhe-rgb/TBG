@@ -38,9 +38,9 @@ test('Partial-opening guidance and the active AI hand title are bilingual',()=>{
  const log=A.translateGameText('AI 1 starts with a custom hand: Marisa Kirisame, Sanae Kochiya.');assert(log.includes('自定义起手牌')&&log.includes('雾雨魔理沙')&&log.includes('东风谷早苗'));
  A.setGameLanguage('en');assert.equal(A.translateGameText(hint),hint);assert.equal(A.translateGameText("AI 2's hand"),"AI 2's hand");
 });
-test('Both selectors offer English and Chinese, and preference is saved without restarting',()=>{
- for(const id of ['menu-language','game-language'])assert(html.includes(`id="${id}"`));
- const card=text('Marisa Kirisame'),game={cancelled:false,abilityId:id=>id,players:[{hand:['marisa']}],currentPlayerIdx:0};A.setGame(game);A.initializeGameLanguage();A.setGameLanguage('zh-CN');assert.equal(A.language(),'zh-CN');assert.equal(root.lang,'zh-CN');assert.equal(storage.get('boundary-language'),'zh-CN');assert.equal(el('menu-language').value,'zh-CN');assert.equal(el('game-language').value,'zh-CN');assert.equal(card.nodeValue,'雾雨魔理沙');assert.deepEqual(game.players[0].hand,['marisa']);
+test('Menu and match gears share one language selector, and preference is saved without restarting',()=>{
+ for(const id of ['menu-settings-btn','game-settings-btn','settings-language'])assert(html.includes(`id="${id}"`));
+ const card=text('Marisa Kirisame'),game={cancelled:false,abilityId:id=>id,players:[{hand:['marisa']}],currentPlayerIdx:0};A.setGame(game);A.initializeGameLanguage();A.setGameLanguage('zh-CN');assert.equal(A.language(),'zh-CN');assert.equal(root.lang,'zh-CN');assert.equal(storage.get('boundary-language'),'zh-CN');assert.equal(el('settings-language').value,'zh-CN');assert.equal(card.nodeValue,'雾雨魔理沙');assert.deepEqual(game.players[0].hand,['marisa']);
  A.setGameLanguage('en');assert.equal(card.nodeValue,'Marisa Kirisame');assert.equal(game.currentPlayerIdx,0);
 });
 test('Every real card has a Chinese name, ability title and complete rules without changing engine data',()=>{
@@ -225,7 +225,7 @@ test('Both live story language selectors refresh composed objectives without cha
   run('renderStoryCoach();');
   const match=run('game'),state=run('storyState'),before=snapshot(),stored=JSON.stringify([...storage]);
   const english=el('tutorial-feedback').innerHTML,title=el('tutorial-title').textContent,stars=english.match(/[★☆]+/)[0];
-  for(const selector of ['game-language','menu-language']){
+  for(const selector of ['settings-language']){
    el(selector).events.change({target:{value:'zh-CN'}});
    observer([{type:'childList',addedNodes:[el('tutorial-feedback')],removedNodes:[]}]);
    const chinese=el('tutorial-feedback').innerHTML;
@@ -244,6 +244,6 @@ test('Both live story language selectors refresh composed objectives without cha
    assert.equal(JSON.stringify([...storage].filter(([key])=>key!=='boundary-language')),JSON.stringify(JSON.parse(stored).filter(([key])=>key!=='boundary-language')));
   }
  }
- assert.equal(clicks,48);A.setGame(null);run('storyState=null;');A.setGameLanguage('en');
+ assert.equal(clicks,24);A.setGame(null);run('storyState=null;');A.setGameLanguage('en');
 });
 (async()=>{for(const [name,fn] of tests){await fn();console.log('PASS '+name);}console.log(`${tests.length}/${tests.length} language selection checks passed`);})().catch(error=>{console.error(error);process.exitCode=1;});
