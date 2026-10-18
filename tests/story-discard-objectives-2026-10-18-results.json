@@ -44,7 +44,7 @@
     "The saved perfect menu rating survives, while a replay starts with fresh current-match objectives",
     "The Heaven overview and shared story-menu explanation describe discard-pile objectives through the actual bilingual path"
   ],
-  "rulesVersion": "2026-10-18-story-discard-objectives-v33",
+  "rulesVersion": "2026-10-19-story-temple-v34",
   "perfectRoute": {
     "points": 7,
     "returnedCards": 11,

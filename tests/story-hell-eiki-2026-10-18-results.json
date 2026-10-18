@@ -39,7 +39,7 @@
     "Ordinary Hard AI never calls the story mentor: an isolated Youmu is reserved, while a held Yuyuko pairing can justify an opening Youmu",
     "Chapter three alone enters the mentor and explicitly chooses Youmu without a pairing",
     "Leaving the actual story session and constructing an ordinary match removes both the teaching and scripted-Hecatia state",
-    "The story menu offers twelve replayable chapters",
+    "The story menu offers thirteen replayable chapters",
     "The introduction displays four movable active Hell cards and leaves Kutaka to be discovered in the shop",
     "The introduction starts a real private six-card Hell match with the guaranteed shop card and requested separate hint",
     "Separate winning matches accumulate Hell’s three goals without inventing a one-match perfect clear",
@@ -177,6 +177,6 @@
       }
     }
   ],
-  "rulesVersion": "2026-10-18-story-discard-objectives-v33",
+  "rulesVersion": "2026-10-19-story-temple-v34",
   "scope": "Actual Eiki cost, tied/protected returns, matching draws, empty deck, self-return, hand limit and paid double-copy rules; constrained private Hell openings, actual mandatory AI action and block/forced exceptions, real faction/terrain/Kutaka objectives and negatives, ordinary-vs-mentor dispatch, actual shop-to-seven-point perfect route and persistence, four complete Medium matches. Controlled DOM; no browser pixel verification."
 }

@@ -77,6 +77,6 @@
     "New creation from a restored old copy obeys the original blueprint rule",
     "The restored and newly created cards conserve a valid unique inventory"
   ],
-  "rulesVersion": "2026-10-18-story-discard-objectives-v33",
+  "rulesVersion": "2026-10-19-story-temple-v34",
   "scope": "Actual original blueprints, altered sources, creations, payments, deterministic AI previews and v11 save compatibility"
 }

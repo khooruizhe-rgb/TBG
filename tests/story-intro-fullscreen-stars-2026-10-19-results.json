@@ -1,6 +1,6 @@
 {
   "status": "pass",
-  "count": 115,
+  "count": 124,
   "checks": [
     "Introduction cards use the grid containing block and translate shared screen-space gesture coordinates to grid-local positions",
     "All chapter 2 cards fit without overlap and both edge cards open at 320×568",
@@ -14,6 +14,7 @@
     "All chapter 10 cards fit without overlap and both edge cards open at 320×568",
     "All chapter 11 cards fit without overlap and both edge cards open at 320×568",
     "All chapter 12 cards fit without overlap and both edge cards open at 320×568",
+    "All chapter 13 cards fit without overlap and both edge cards open at 320×568",
     "All chapter 2 cards fit without overlap and both edge cards open at 390×844",
     "All chapter 3 cards fit without overlap and both edge cards open at 390×844",
     "All chapter 4 cards fit without overlap and both edge cards open at 390×844",
@@ -25,6 +26,7 @@
     "All chapter 10 cards fit without overlap and both edge cards open at 390×844",
     "All chapter 11 cards fit without overlap and both edge cards open at 390×844",
     "All chapter 12 cards fit without overlap and both edge cards open at 390×844",
+    "All chapter 13 cards fit without overlap and both edge cards open at 390×844",
     "All chapter 2 cards fit without overlap and both edge cards open at 568×320",
     "All chapter 3 cards fit without overlap and both edge cards open at 568×320",
     "All chapter 4 cards fit without overlap and both edge cards open at 568×320",
@@ -36,6 +38,7 @@
     "All chapter 10 cards fit without overlap and both edge cards open at 568×320",
     "All chapter 11 cards fit without overlap and both edge cards open at 568×320",
     "All chapter 12 cards fit without overlap and both edge cards open at 568×320",
+    "All chapter 13 cards fit without overlap and both edge cards open at 568×320",
     "All chapter 2 cards fit without overlap and both edge cards open at 667×375",
     "All chapter 3 cards fit without overlap and both edge cards open at 667×375",
     "All chapter 4 cards fit without overlap and both edge cards open at 667×375",
@@ -47,6 +50,7 @@
     "All chapter 10 cards fit without overlap and both edge cards open at 667×375",
     "All chapter 11 cards fit without overlap and both edge cards open at 667×375",
     "All chapter 12 cards fit without overlap and both edge cards open at 667×375",
+    "All chapter 13 cards fit without overlap and both edge cards open at 667×375",
     "All chapter 2 cards fit without overlap and both edge cards open at 844×390",
     "All chapter 3 cards fit without overlap and both edge cards open at 844×390",
     "All chapter 4 cards fit without overlap and both edge cards open at 844×390",
@@ -58,6 +62,7 @@
     "All chapter 10 cards fit without overlap and both edge cards open at 844×390",
     "All chapter 11 cards fit without overlap and both edge cards open at 844×390",
     "All chapter 12 cards fit without overlap and both edge cards open at 844×390",
+    "All chapter 13 cards fit without overlap and both edge cards open at 844×390",
     "All chapter 2 cards fit without overlap and both edge cards open at 932×430",
     "All chapter 3 cards fit without overlap and both edge cards open at 932×430",
     "All chapter 4 cards fit without overlap and both edge cards open at 932×430",
@@ -69,6 +74,7 @@
     "All chapter 10 cards fit without overlap and both edge cards open at 932×430",
     "All chapter 11 cards fit without overlap and both edge cards open at 932×430",
     "All chapter 12 cards fit without overlap and both edge cards open at 932×430",
+    "All chapter 13 cards fit without overlap and both edge cards open at 932×430",
     "All chapter 2 cards fit without overlap and both edge cards open at 1024×768",
     "All chapter 3 cards fit without overlap and both edge cards open at 1024×768",
     "All chapter 4 cards fit without overlap and both edge cards open at 1024×768",
@@ -80,6 +86,7 @@
     "All chapter 10 cards fit without overlap and both edge cards open at 1024×768",
     "All chapter 11 cards fit without overlap and both edge cards open at 1024×768",
     "All chapter 12 cards fit without overlap and both edge cards open at 1024×768",
+    "All chapter 13 cards fit without overlap and both edge cards open at 1024×768",
     "All chapter 2 cards fit without overlap and both edge cards open at 1280×800",
     "All chapter 3 cards fit without overlap and both edge cards open at 1280×800",
     "All chapter 4 cards fit without overlap and both edge cards open at 1280×800",
@@ -91,6 +98,7 @@
     "All chapter 10 cards fit without overlap and both edge cards open at 1280×800",
     "All chapter 11 cards fit without overlap and both edge cards open at 1280×800",
     "All chapter 12 cards fit without overlap and both edge cards open at 1280×800",
+    "All chapter 13 cards fit without overlap and both edge cards open at 1280×800",
     "Fullscreen entry without a window resize replaces the old two-row positions with four distinct visible positions",
     "Both outer cards remain directly inspectable after the same fullscreen transition",
     "A refresh with the same row/column count preserves a manually moved card",
@@ -112,6 +120,7 @@
     "Chapter 10 uses the perfect gradient only after one winning match completes all goals; its palette and cumulative saves remain intact",
     "Chapter 11 uses the perfect gradient only after one winning match completes all goals; its palette and cumulative saves remain intact",
     "Chapter 12 uses the perfect gradient only after one winning match completes all goals; its palette and cumulative saves remain intact",
+    "Chapter 13 uses the perfect gradient only after one winning match completes all goals; its palette and cumulative saves remain intact",
     "Gold chapter-six stars and the three independent Sage colors remain the base of their gradients",
     "The match result selects the same gradient treatment with all three individual Sage palettes",
     "Fresh match objectives do not inherit the previous perfect result",
@@ -197,6 +206,13 @@
       "width": 91.69344125658009
     },
     {
+      "w": 320,
+      "h": 568,
+      "chapter": 13,
+      "cards": 4,
+      "width": 85.48727469819482
+    },
+    {
       "w": 390,
       "h": 844,
       "chapter": 2,
@@ -274,6 +290,13 @@
       "width": 123.15687698187718
     },
     {
+      "w": 390,
+      "h": 844,
+      "chapter": 13,
+      "cards": 4,
+      "width": 123.15687698187718
+    },
+    {
       "w": 568,
       "h": 320,
       "chapter": 2,
@@ -351,6 +374,13 @@
       "width": 93.25884512530344
     },
     {
+      "w": 568,
+      "h": 320,
+      "chapter": 13,
+      "cards": 4,
+      "width": 93.25884512530344
+    },
+    {
       "w": 667,
       "h": 375,
       "chapter": 2,
@@ -428,6 +458,13 @@
       "width": 107.38897317459184
     },
     {
+      "w": 667,
+      "h": 375,
+      "chapter": 13,
+      "cards": 4,
+      "width": 107.38897317459184
+    },
+    {
       "w": 844,
       "h": 390,
       "chapter": 2,
@@ -505,6 +542,13 @@
       "width": 112.47581927233566
     },
     {
+      "w": 844,
+      "h": 390,
+      "chapter": 13,
+      "cards": 4,
+      "width": 112.47581927233566
+    },
+    {
       "w": 932,
       "h": 430,
       "chapter": 2,
@@ -579,6 +623,13 @@
       "h": 430,
       "chapter": 12,
       "cards": 2,
+      "width": 126.04074219965253
+    },
+    {
+      "w": 932,
+      "h": 430,
+      "chapter": 13,
+      "cards": 4,
       "width": 126.04074219965253
     },
     {
@@ -659,6 +710,13 @@
       "width": 220
     },
     {
+      "w": 1024,
+      "h": 768,
+      "chapter": 13,
+      "cards": 4,
+      "width": 193.72486853718635
+    },
+    {
       "w": 1280,
       "h": 800,
       "chapter": 2,
@@ -733,6 +791,13 @@
       "h": 800,
       "chapter": 12,
       "cards": 2,
+      "width": 220
+    },
+    {
+      "w": 1280,
+      "h": 800,
+      "chapter": 13,
+      "cards": 4,
       "width": 220
     }
   ],

@@ -103,11 +103,15 @@ vm.runInContext(`(async()=>{
   make(4,1,1);arrange({hands:[[],['mtn_aya','hourai_mokou']],discards:[[],['temple_shou','temple_murasa']]});
   ok((await aiDecideAction(1)).cardId==='hourai_mokou','The immediate Mountain rule is confined to chapter five and does not change chapter four');
 
-  make();arrange({hands:[['sdm_patchouli'],['marisa']]});game.choosePlayer=async()=>1;game.ui.promptText=async()=>CARD.marisa.name;await place('sdm_patchouli');ok(!game.storyMatch.progress.newsGuess,'A correct guess before subscription cannot earn the newspaper goal');
+  make();arrange({hands:[['sdm_patchouli'],['marisa']]});game.choosePlayer=async()=>1;game.ui.promptText=async()=>CARD.marisa.name;await place('sdm_patchouli');ok(!game.storyMatch.progress.newsGuess,'A correct guess before reading a newspaper cannot earn the newspaper goal');
+  game.addNewspaper(0,[{targetIdx:1,player:'AI 1',cardIds:[],names:{}}],'Later');ok(!game.storyMatch.progress.newsGuess,'Reading a report later does not retroactively credit an earlier correct guess');
+  make();arrange({hands:[['sdm_patchouli','reimu'],['marisa']]});const paidReport=game.addNewspaper(1,[{targetIdx:0,player:'You',cardIds:['sdm_patchouli'],names:{}}],'Paid');assert(game.subscribeNews(0,paidReport.paperId,'reimu'));game.choosePlayer=async()=>1;game.ui.promptText=async()=>CARD.marisa.name;await place('sdm_patchouli');
+  ok(game.storyMatch.progress.newsGuess&&game.storyMatch.readPapers.includes(paidReport.paperId),'Reading a paid opponent report before a real correct guess still earns the newspaper objective');
   make();arrange({hands:[['sdm_patchouli','reimu'],['marisa']]});const hiddenPaper=game.addNewspaper(1,[{targetIdx:0,player:'You',cardIds:['sdm_patchouli'],names:{}}],'Test');
   ok(!game.recordStoryNewspaperSubscription(0,hiddenPaper.paperId)&&!game.recordStoryNewspaperSubscription(0,999),'Folded unsubscribed papers and invalid paper IDs cannot count as subscription');
+  game.recordStoryCorrectGuess(0,1,'marisa');ok(!game.storyMatch.progress.newsGuess&&!game.recordStoryNewspaperRead(0,hiddenPaper.paperId),'A folded unread opponent newspaper does not qualify, even with a correct guess');
   const own=game.addNewspaper(0,[{targetIdx:1,player:'AI 1',cardIds:['marisa'],names:{}}],'Test');assert(!game.recordStoryNewspaperSubscription(0,own.paperId));assert(!game.subscribeNews(0,hiddenPaper.paperId,'missing'));
-  ok(game.storyMatch.subscribedPapers.length===0,'Producing one’s own paper and failing payment do not subscribe');
+  ok(game.storyMatch.subscribedPapers.length===0&&game.storyMatch.readPapers.includes(own.paperId),'Producing one’s own readable paper counts as reading without becoming a paid subscription');
   assert(game.subscribeNews(0,hiddenPaper.paperId,'reimu'));assert(game.storyMatch.subscribedPapers.includes(hiddenPaper.paperId));game.choosePlayer=async()=>1;game.ui.promptText=async()=> 'wrong';await place('sdm_patchouli');
   ok(!game.storyMatch.progress.newsGuess,'A paid subscription followed by a wrong guess cannot earn the guess star');
 
@@ -115,9 +119,9 @@ vm.runInContext(`(async()=>{
   make();const board=[[0,0,'mtn_kanako'],[0,1,'mtn_suwako'],[1,0,'mtn_sanae'],[3,0,'sdm_remilia'],[3,1,'sdm_flandre'],[3,2,'sdm_sakuya'],[0,2,'hourai_kaguya'],[0,3,'hourai_eirin'],[1,2,'hourai_reisen'],[1,3,'palace_satori'],[2,0,'palace_rin'],[2,1,'palace_utsuho'],[2,2,'hell_eiki'],[2,3,'hell_komachi'],[3,3,'hell_clownpiece']];
   arrange({hands:[['mtn_aya','sdm_patchouli','haku_yuyuko','reimu','yuuka','medicine'],['marisa','haku_youmu','hourai_mokou','hell_hecatia','palace_koishi','sage_yukari']],board,discards:[[],['temple_shou','temple_murasa','temple_nue']]});
   game.storyMatch.mountainPlaced=['mtn_kanako','mtn_suwako','mtn_sanae'];await place('mtn_aya');
-  ok(game.storyMatch.progress.mountain&&game.winCount(game.players[0])===4&&game.paperReports.length===1&&!game.storyMatch.progress.newsGuess,'Aya’s real placement reads hands and collects Mountain, without pretending that producing the newspaper was viewing it');
-  const rivalPaper=game.addNewspaper(1,[{targetIdx:0,player:'You',cardIds:game.players[0].hand.slice(),names:{}}],'Test');assert(game.subscribeNews(0,rivalPaper.paperId,'medicine'));game.choosePlayer=async()=>1;game.ui.promptText=async()=>CARD.marisa.name;await place('sdm_patchouli',0,0,0);
-  ok(game.storyMatch.progress.newsGuess&&game.players[0].hand.includes('marisa'),'After paying for the actual newspaper, a real correct Patchouli guess records the goal and transfers the card');
+  ok(game.storyMatch.progress.mountain&&game.winCount(game.players[0])===4&&game.paperReports.length===1&&game.storyMatch.readPapers.length===1&&!game.storyMatch.progress.newsGuess,'Aya’s real placement publishes its readable reports and collects Mountain, while still requiring a later correct guess');
+  game.choosePlayer=async()=>1;game.ui.promptText=async()=>CARD.marisa.name;await place('sdm_patchouli',0,0,0);
+  ok(game.storyMatch.progress.newsGuess&&game.players[0].hand.includes('marisa')&&game.storyMatch.subscribedPapers.length===0,'Reading Aya’s own newspaper followed by a real correct Patchouli guess earns the goal without payment');
   await place('haku_yuyuko',0,0,1);await place('reimu',0,1,0);await place('yuuka',0,1,1);assert.equal(game.boardCells().length,16);assert.equal(game.winCount(game.players[0]),4);game.players[0].isAI=true;stuckStreak=0;
   const closedPile=game.drawPile.slice(),closedHands=game.players.map(p=>p.hand.slice());let turns=0;while(!game.winner&&!game.stalemateMessage&&turns++<16)await actualMountainTurn();assert.equal(turns,1);assert.deepEqual(game.drawPile,closedPile);assert.deepEqual(game.players.map(p=>p.hand),closedHands);
   ok(game.winner?.idx===0&&game.storyMatch.progress.stalemate&&game.stalemateMessage&&storyMatchStars(game)===3,'The actual turn loop directly awards a three-star 4–3 story stalemate on the first closed-board check, preserving the remaining deck and both hands');evalConservation(game);

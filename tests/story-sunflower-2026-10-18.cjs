@@ -97,7 +97,7 @@ vm.runInContext(`(async()=>{
  make(1,8);arrange({hands:[['mtn_sanae'],['medicine']]});game.currentPlayerIdx=1;
  ok(aiPlacementCells(game,'medicine',game.emptyOrWastelandForCard(CARD.medicine,1),1).length>0,'The Sunflower opening hold does not leak into earlier chapters');
 
- returnToMainMenu();testStorage.clear();openStoryMenu();ok(el('story-levels').children.length===12,'All twelve chapters are replayable from the real story menu');
+ returnToMainMenu();testStorage.clear();openStoryMenu();ok(el('story-levels').children.length===13,'All thirteen chapters are replayable from the real story menu');
  const create=document.createElement;document.createElement=()=>{const node=create();node.values=new Map();node.style.setProperty=(key,value)=>node.values.set(key,value);return node;};
  showStoryChapterIntro(9);const shrine=new Map(el('story-card-grid').children.map(node=>[node.dataset.cardId,node]));
  ok(shrine.get('marisa').values.get('--story-glow-color')==='#ffeb3b'&&shrine.get('reimu').values.get('--story-glow-color')===FACTIONS.hakurei.color,'The real introduction gives only Marisa a yellow renewal scan and invitation glow while Reimu keeps Hakurei red');

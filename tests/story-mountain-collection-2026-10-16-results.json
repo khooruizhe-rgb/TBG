@@ -1,6 +1,6 @@
 {
   "status": "pass",
-  "count": 72,
+  "count": 75,
   "checks": [
     "Chapter 2 unions distinct objectives over three victories without double-counting repeats or granting a single-run color",
     "Chapter 2 records a real three-objective victory and preserves its faction-colored stars on later replays",
@@ -52,12 +52,15 @@
     "Multiple held Mountain cards still select a legal landing when space is limited",
     "A mandatory Reisen command still resolves before the voluntary Mountain priority",
     "The immediate Mountain rule is confined to chapter five and does not change chapter four",
-    "A correct guess before subscription cannot earn the newspaper goal",
+    "A correct guess before reading a newspaper cannot earn the newspaper goal",
+    "Reading a report later does not retroactively credit an earlier correct guess",
+    "Reading a paid opponent report before a real correct guess still earns the newspaper objective",
     "Folded unsubscribed papers and invalid paper IDs cannot count as subscription",
-    "Producing one’s own paper and failing payment do not subscribe",
+    "A folded unread opponent newspaper does not qualify, even with a correct guess",
+    "Producing one’s own readable paper counts as reading without becoming a paid subscription",
     "A paid subscription followed by a wrong guess cannot earn the guess star",
-    "Aya’s real placement reads hands and collects Mountain, without pretending that producing the newspaper was viewing it",
-    "After paying for the actual newspaper, a real correct Patchouli guess records the goal and transfers the card",
+    "Aya’s real placement publishes its readable reports and collects Mountain, while still requiring a later correct guess",
+    "Reading Aya’s own newspaper followed by a real correct Patchouli guess earns the goal without payment",
     "The actual turn loop directly awards a three-star 4–3 story stalemate on the first closed-board check, preserving the remaining deck and both hands",
     "The same real route saves every objective and its perfect menu rating and colors the three stars earned in this match",
     "Actual tied or opponent-led stalemates record the goal but do not invent a player victory: false {\"actions\":[false,false],\"progress\":{\"mountain\":false,\"stalemate\":true,\"newsGuess\":false},\"score\":[0,0],\"spaces\":[[[\"reimu\",[]]],[[\"marisa\",[]]]],\"draw\":[false,false]}",
@@ -138,6 +141,6 @@
       }
     }
   ],
-  "rulesVersion": "2026-10-18-story-discard-objectives-v33",
+  "rulesVersion": "2026-10-19-story-temple-v34",
   "scope": "Actual goal unions and legacy migration, single-run colors and reset, Suwako original/copy/muting rules, constrained private fifth-chapter deals, real skill and subscription chronology, a complete prepared legal endgame route through the real turn loop, four random matches and controlled chapter lifecycle. Actual newspaper subscription and direct-report rendering, bilingual card details and faction-color menu style are also checked with a controlled DOM; browser pixels are not verified."
 }

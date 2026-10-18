@@ -3743,6 +3743,9 @@ class Game {
   isPlacementBlocked(p=this.currentPlayerIdx){return !!this.placementBlockedForTurn[p] || (p!==this.currentPlayerIdx && this.placementBlockTurns[p]>0);}
   beginPlayerTurn(p,{continuation=false}={}){
     this.triggerDeclines={};
+    if(this.storyMatch?.chapter===13 && p===this.storyMatch.humanSeat){
+      const story=this.storyMatch;story.extraTurnsRemaining=continuation?Math.max(0,story.extraTurnsRemaining-1):0;
+    }
     if([9,10,11,12].includes(this.storyMatch?.chapter) && p===this.storyMatch.aiSeat && !continuation)this.storyMatch.aiTurns++;
     if(this.storyMatch?.chapter===10){
       if(p===this.storyMatch.humanSeat)this.storyMatch.humanTurns++;
@@ -4010,6 +4013,7 @@ class Game {
   takeScheduledExtraTurns(playerIdx){
     const count=this.pendingExtraTurns[playerIdx]||0;
     this.pendingExtraTurns[playerIdx]=0;
+    this.recordStoryExtraTurns(playerIdx,count);
     return count;
   }
   clearWasteland(r,c){
@@ -4275,7 +4279,12 @@ class Game {
   checkWin(){
     if(this.storyMatch?.chapter===3 && this.winCount(this.players[this.storyMatch.aiSeat])>=4)this.storyMatch.opponentReachedFour=true;
     for(const p of this.players){
-      if(this.winCount(p) >= 7){ this.winner = p; return true; }
+      if(this.winCount(p) >= 7){
+        this.winner = p;
+        const story=this.storyMatch;
+        if(story?.chapter===13 && story.extraTurnsAtVictory===null)story.extraTurnsAtVictory=p.idx===story.humanSeat?story.extraTurnsRemaining+(this.pendingExtraTurns[p.idx]||0):0;
+        return true;
+      }
     }
     return false;
   }
@@ -5013,7 +5022,7 @@ class Game {
         if(effect==='turns'){
           self.presentTemple('byakuren-turns',{r,c,playerIdx});
           self.log(`${me} takes three extra turns with Makai Fantastica${cost ? ` (Cost ${romanNumeral(cost)})` : ' for free'}.`);
-          extraTurns+=3;self.render();continue;
+          extraTurns+=3;self.recordStoryExtraTurns(playerIdx,3);self.recordStoryByakurenEffect(playerIdx,'turns');self.render();continue;
         }
         if(effect==='look'){
           const peek=self.drawPile.slice(-3).reverse();
@@ -5036,6 +5045,7 @@ class Game {
           if(peek.some(id=>!self.drawPile.includes(id)))break;
           self.drawPile.splice(-peek.length,peek.length,...remaining.slice().reverse());
           self.addToHand(playerIdx,chosen);
+          self.recordStoryByakurenEffect(playerIdx,'look');
           try{self.ui?.onDrawCard?.({playerIdx,cardId:chosen,effect:'byakuren-look',source:{r,c}});}catch(_error){}
           self.log(`${me} looks at ${peek.length} draw-pile card${peek.length===1?'':'s'}, takes one and orders the rest.`);
           self.render();continue;
@@ -5057,6 +5067,7 @@ class Game {
           }
         }
         self.shuffleDrawPile();self.render();
+        if(hit>0)self.recordStoryByakurenEffect(playerIdx,'return');
         if(strike?.finished)await strike.finished;
         if(self.cancelled)break;
         self.log(`${me} returns ${hit} card${hit===1?'':'s'} to the draw pile and leaves wasteland in their spaces${cost ? ` (Cost ${romanNumeral(cost)})` : ' for free'}.`);
@@ -5266,6 +5277,7 @@ class Game {
         break;
       }
       case 'sdm_sakuya': {
+        self.recordStoryExtraTurns(playerIdx,2);
         self.log(`${meS} Izayoi Sakuya stops time — two extra turns incoming!`);
         if(self.ui && self.ui.onTimeStop){
           try{ self.ui.onTimeStop(true); }catch(_error){}
@@ -5773,7 +5785,7 @@ class Game {
 }
 
 /* 2026-10-12: creation, private newspapers and instance ability changes. */
-const REWORK_RULES_VERSION='2026-10-18-story-discard-objectives-v33';
+const REWORK_RULES_VERSION='2026-10-19-story-temple-v34';
 Game.prototype.canCreateWithMatara=function(){return this.mainBoardCells().length>=4;};
 let nextCreatedCard=0,nextHiddenChoice=0;
 const COPY_PASSIVES=new Set(['sage_yukari','sage_kasen','mtn_nitori','hell_hecatia','palace_koishi']);
@@ -5995,7 +6007,7 @@ Game.prototype.addNewspaper=function(p,reports,edition){
   const paper={kind:'aya-report',paperId:++this.nextPaperId,ownerIdx:p,reporter:this.players[p].name,edition,subscribers:[],reports};
   this.paperReports.push(paper);this.log(paper);
   const inLog=new Set(this.logLines.filter(x=>x?.kind==='aya-report').map(x=>x.paperId));
-  this.paperReports=this.paperReports.filter(x=>inLog.has(x.paperId));return paper;
+  this.paperReports=this.paperReports.filter(x=>inLog.has(x.paperId));this.recordStoryNewspaperRead(p,paper.paperId);return paper;
 };
 Game.prototype.newsForSeat=function(paper,seat){
   const allowed=paper.ownerIdx===seat || paper.subscribers.includes(seat);
@@ -6055,6 +6067,16 @@ Game.prototype.kanakoMultiplier=function(){
 Game.prototype.sanaeDrawCount=function(){return (this.hasActiveAbility('mtn_kanako')?2:1)*this.kanakoMultiplier();};
 
 /* Story matches share the normal rules; chapter state only unlocks printed abilities. */
+Game.prototype.recordStoryExtraTurns=function(p,count){
+  const story=this.storyMatch;
+  if(!this.cancelled && !this.winner && !this.stalemateMessage && story?.chapter===13 && p===story.humanSeat && Number.isInteger(count)&&count>0)story.extraTurnsRemaining+=count;
+};
+Game.prototype.recordStoryByakurenEffect=function(p,effect){
+  const story=this.storyMatch;
+  if(this.cancelled || this.winner || this.stalemateMessage || story?.chapter!==13 || p!==story.humanSeat || !['turns','return','look'].includes(effect))return;
+  if(!story.byakurenEffects.includes(effect))story.byakurenEffects.push(effect);
+  if(story.byakurenEffects.length===3)story.progress.byakurenAll=true;
+};
 Game.prototype.recordStoryDiscardFactions=function(p){
   const story=this.storyMatch;
   if(this.cancelled || this.winner || this.stalemateMessage || !story || story.chapter===1 || p!==story.humanSeat)return;
@@ -6124,34 +6146,41 @@ Game.prototype.recordStoryNewspaperSubscription=function(p,paperId){
   if(this.cancelled || story?.chapter!==5 || p!==story.humanSeat || !paper || paper.ownerIdx===p || !paper.subscribers.includes(p))return false;
   const subscribed=story.subscribedPapers ||= this.paperReports.filter(item=>item.ownerIdx!==p&&item.subscribers.includes(p)).map(item=>item.paperId);
   if(!subscribed.includes(paperId))subscribed.push(paperId);
+  this.recordStoryNewspaperRead(p,paperId);
   return true;
+};
+Game.prototype.recordStoryNewspaperRead=function(p,paperId){
+  const story=this.storyMatch,paper=this.paperReports.find(item=>item.paperId===paperId);
+  if(this.cancelled || this.winner || this.stalemateMessage || story?.chapter!==5 || p!==story.humanSeat || !paper || paper.ownerIdx!==p&&!paper.subscribers.includes(p))return false;
+  const read=story.readPapers ||= [];if(!read.includes(paperId))read.push(paperId);return true;
 };
 Game.prototype.recordStoryCorrectGuess=function(p,target,id){
   const story=this.storyMatch;
-  if(!this.cancelled && story?.chapter===5 && p===story.humanSeat && (story.subscribedPapers?.length || this.paperReports.some(paper=>paper.ownerIdx!==p&&paper.subscribers.includes(p))) && this.players[target]?.hand.includes(id))story.progress.newsGuess=true;
+  if(!this.cancelled && !this.winner && !this.stalemateMessage && story?.chapter===5 && p===story.humanSeat && story.readPapers?.length && this.players[target]?.hand.includes(id))story.progress.newsGuess=true;
 };
 const STORY_CHAPTERS=[
   {id:1,title:'Chapter 1 · The first table',body:'Cards have no abilities in this chapter. Place cards beside their faction and use Draw for Everyone when needed. Win or reach stalemate to clear the chapter. Try the two-card pair before finishing the four-card faction.',skills:[]},
   {id:2,title:'Chapter 2 · Scarlet Devil Mansion',body:'Win to clear this chapter. Three stars: claim Scarlet Devil Mansion, finish Remilia’s ability with three Mansion cards in hand, and use Flandre to discard an opponent’s hand card.',skills:['sdm'],introduced:'sdm',hint:'Try waiting a few turns before playing Remilia.'},
   {id:3,title:'Chapter 3 · Hakugyokurou',body:'Hakugyokurou abilities join Scarlet Devil Mansion. Win to clear this chapter. Three stars: claim Hakugyokurou, gain four points from one Yuyuko placement, and win before the opponent reaches four points.',skills:['sdm','hakugyokurou'],introduced:'hakugyokurou',hint:'Disrupting your opponent’s claims is another way to stop them from winning.'},
   {id:4,title:'Chapter 4 · Eientei',body:'Eientei abilities join Scarlet Devil Mansion and Hakugyokurou. Win to clear this chapter. Three stars: claim Eientei, gain four points from one Kaguya placement, and hold at least ten cards at once.',skills:['sdm','hakugyokurou','hourai'],introduced:'hourai'},
-  {id:5,title:'Chapter 5 · Youkai Mountain',body:'Youkai Mountain abilities are now active too. Win to clear this chapter. Three stars: claim Youkai Mountain, end the game in stalemate, and subscribe to a newspaper before making a correct guess.',skills:['sdm','hakugyokurou','hourai','mountain'],introduced:'mountain',hint:'A correct guess is all you need? Could there be a clever shortcut?'},
+  {id:5,title:'Chapter 5 · Youkai Mountain',body:'Youkai Mountain abilities are now active too. Win to clear this chapter. Three stars: claim Youkai Mountain, end the game in stalemate, and read a newspaper before making a correct guess.',skills:['sdm','hakugyokurou','hourai','mountain'],introduced:'mountain',hint:'A correct guess is all you need? Could there be a clever shortcut?'},
   {id:6,title:'Chapter 6 · Kourindou',body:'Kourindou opens for trading. Meiling, Tewi and Nitori are the fifth cards of unlocked factions available here. The opponent uses Medium AI. Win to clear this chapter. Three stars: claim two factions, claim a faction whose abilities are still locked, and do something that surprises me!',skills:['sdm','hakugyokurou','hourai','mountain'],introduced:'kourindou',hint:'What? An OTK? No way... haha.'},
   {id:7,title:'Chapter 7 · Palace of the Earth Spirits',body:'Palace of the Earth Spirits abilities are now active too. Win to clear this chapter. Three stars: claim Palace of the Earth Spirits, give an ability to a card with none, and keep Miss Mary off the board.',skills:['sdm','hakugyokurou','hourai','mountain','palace'],introduced:'palace',hint:'Miss Mary is quite playful in your hand. Perhaps moving her somewhere else could solve the problem?'},
   {id:8,title:'Chapter 8 · Sages',body:'Sage abilities are now active too. Win to clear this chapter. Three stars: claim the Sages, claim a faction made of only one card type, and place the same card twice.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage'],introduced:'sage',hint:'A claimed faction with only one card type? That description is as cryptic as the Sages themselves.'},
   {id:9,title:'Chapter 9 · Hakurei Shrine',body:'Hakurei Shrine abilities are now active too. Win to clear this chapter. Three stars: claim Hakurei Shrine, use Marisa to discard a Sage, and win before the opponent claims a faction.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei'],introduced:'hakurei',hint:'These two cards should have been the first to gain abilities, yet only now are they complete. How interesting.'},
   {id:10,title:'Chapter 10 · Sunflower Field',body:'Sunflower Field abilities are now active too. Win to clear this chapter. Three stars: claim Sunflower Field, have an opponent with no cards in hand during any turn, and win before your tenth turn.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower'],introduced:'sunflower',hint:'There is more than one way to leave your opponent with no cards. Think carefully!'},
   {id:11,title:'Chapter 11 · Hell',body:'Hell abilities are now active too. Win to clear this chapter. Three stars: claim Hell, clear eight wasteland tiles, and successfully trigger Kutaka’s ability.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower','hell'],introduced:'hell',hint:'Hecatia?! I have only heard rumors of someone so important. I never imagined she would come here!'},
-  {id:12,title:'Chapter 12 · Heaven',body:'Heaven abilities are now active too. Win to clear this chapter. Three stars: claim Heaven, return eight cards to the draw pile, and win without claiming a faction. Faction objectives also count complete groups gathered in your discard pile.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower','hell','heaven'],introduced:'heaven',hint:'I deliberately favored scoring through faction claims when creating this game. Let’s see whether that is still true.'}
+  {id:12,title:'Chapter 12 · Heaven',body:'Heaven abilities are now active too. Win to clear this chapter. Three stars: claim Heaven, return eight cards to the draw pile, and win without claiming a faction. Faction objectives also count complete groups gathered in your discard pile.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower','hell','heaven'],introduced:'heaven',hint:'I deliberately favored scoring through faction claims when creating this game. Let’s see whether that is still true.'},
+  {id:13,title:'Chapter 13 · Myouren Temple',body:'Myouren Temple abilities are now active too. Win to clear this chapter. Three stars: claim Myouren Temple, use all three of Byakuren’s effects, and win with an extra turn still remaining.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower','hell','heaven','temple'],introduced:'temple',hint:'Surely using every one of Byakuren’s effects takes a lot of cards to pay the costs. But with the power of bonds, perhaps it could be easy?'}
 ];
-const STORY_GOAL_KEYS={1:[],2:['sdm','remilia','flandre'],3:['haku','yuyuko','race'],4:['hourai','kaguya','handTen'],5:['mountain','stalemate','newsGuess'],6:['twoFactions','lockedFaction','surprise'],7:['palace','newAbility','noMary'],8:['sage','sameCardFaction','placeTwice'],9:['hakurei','marisaSage','beforeClaim'],10:['sunflower','emptyOpponent','beforeTen'],11:['hell','clearEight','kutaka'],12:['heaven','returnEight','noClaims']};
+const STORY_GOAL_KEYS={1:[],2:['sdm','remilia','flandre'],3:['haku','yuyuko','race'],4:['hourai','kaguya','handTen'],5:['mountain','stalemate','newsGuess'],6:['twoFactions','lockedFaction','surprise'],7:['palace','newAbility','noMary'],8:['sage','sameCardFaction','placeTwice'],9:['hakurei','marisaSage','beforeClaim'],10:['sunflower','emptyOpponent','beforeTen'],11:['hell','clearEight','kutaka'],12:['heaven','returnEight','noClaims'],13:['temple','byakurenAll','extraAtWin']};
 function storyFactionCards(faction){return CARDS.filter(card=>card.faction===faction&&!card.shopExpansion).map(card=>card.id);}
 function storyScarletCards(){return storyFactionCards('sdm');}
 function storyShopCards(chapter){const skills=STORY_CHAPTERS.find(level=>level.id===chapter)?.skills||[];return chapter>=6?CARDS.filter(card=>card.shopExpansion&&skills.includes(card.faction)).map(card=>card.id):[];}
 function storyChapterCards(chapter){if(chapter===6)return storyShopCards(chapter);const faction=STORY_CHAPTERS.find(level=>level.id===chapter)?.introduced;return faction?storyFactionCards(faction):[];}
-function dealLearningOpening(match,{scarletOpening=false,hakugyokurouOpening=false,eienteiOpening=false,mountainOpening=false,sakuyaOpening=false,palaceOpening=false,sageOpening=false,hakureiOpening=false,sunflowerOpening=false,hellOpening=false,heavenOpening=false,shop=false,shopPool=null,requiredShopCard=null}={}){
+function dealLearningOpening(match,{scarletOpening=false,hakugyokurouOpening=false,eienteiOpening=false,mountainOpening=false,sakuyaOpening=false,palaceOpening=false,sageOpening=false,hakureiOpening=false,sunflowerOpening=false,hellOpening=false,heavenOpening=false,templeOpening=false,shop=false,shopPool=null,requiredShopCard=null}={}){
   const deck=shuffle(CARDS.filter(card=>!card.token&&!card.shopkeeper&&!card.shopExpansion).map(card=>card.id));
-  const hand=deck.splice(0,6),protectedId=scarletOpening?'sdm_remilia':hakugyokurouOpening?'haku_yuyuko':eienteiOpening?'hourai_kaguya':mountainOpening?'mtn_kanako':sakuyaOpening?'sdm_sakuya':palaceOpening?'palace_satori':sageOpening?'sage_matara':null;
+  const hand=deck.splice(0,6),protectedId=scarletOpening?'sdm_remilia':hakugyokurouOpening?'haku_yuyuko':eienteiOpening?'hourai_kaguya':mountainOpening?'mtn_kanako':sakuyaOpening?'sdm_sakuya':palaceOpening?'palace_satori':sageOpening?'sage_matara':templeOpening?'temple_byakuren':null;
   const exchange=id=>{
     const source=deck.indexOf(id);if(source<0)return;
     const slots=hand.map((card,index)=>card===protectedId?-1:index).filter(index=>index>=0);
@@ -6215,6 +6244,12 @@ function dealLearningOpening(match,{scarletOpening=false,hakugyokurouOpening=fal
       const options=deck.filter(id=>CARD[id].faction==='hell'&&id!=='hell_hecatia');exchange(options[Math.floor(Math.random()*options.length)]);
     }
   }
+  if(templeOpening){
+    if(!hand.includes('temple_byakuren'))exchange('temple_byakuren');
+    if(!hand.some(id=>id!=='temple_byakuren'&&CARD[id].faction==='temple')){
+      const options=deck.filter(id=>CARD[id].faction==='temple');exchange(options[Math.floor(Math.random()*options.length)]);
+    }
+  }
   const splitFaction=hakureiOpening?'hakurei':sunflowerOpening?'sunflower':heavenOpening?'heaven':null;
   if(splitFaction){
     if(!hand.some(id=>CARD[id].faction===splitFaction)){
@@ -6266,7 +6301,7 @@ function dealLearningOpening(match,{scarletOpening=false,hakugyokurouOpening=fal
       [rival[slot],deck[index]]=[deck[index],rival[slot]];
     }
   }
-  const reservedFaction=scarletOpening?'sdm':hakugyokurouOpening?'hakugyokurou':eienteiOpening?'hourai':mountainOpening?'mountain':palaceOpening?'palace':sageOpening?'sage':hellOpening?'hell':null;
+  const reservedFaction=scarletOpening?'sdm':hakugyokurouOpening?'hakugyokurou':eienteiOpening?'hourai':mountainOpening?'mountain':palaceOpening?'palace':sageOpening?'sage':hellOpening?'hell':templeOpening?'temple':null;
   if(reservedFaction){
     // takeFromDrawPile pops the end: reserve undealt lesson cards among the next five draws.
     const core=new Set(storyFactionCards(reservedFaction)),reserved=deck.filter(id=>core.has(id)),rest=deck.filter(id=>!core.has(id));
@@ -6287,11 +6322,11 @@ function configureStoryMatch(match,chapter){
   match.kourindouEnabled=chapter>=6;match.shopCards=[];
   match.shopTiles=match.kourindouEnabled?[[0,1],[1,0],[1,1],[1,2]].map(([r,c],slot)=>({r:SIZE+2+r,c,slot,wasteland:false})):[];match.board=Array.from({length:SIZE},()=>Array(SIZE).fill(null));
   match.wasteland=Array.from({length:SIZE},()=>Array(SIZE).fill(false));
-  dealLearningOpening(match,{scarletOpening:chapter===2,hakugyokurouOpening:chapter===3,eienteiOpening:chapter===4,mountainOpening:chapter===5,sakuyaOpening:chapter===6,palaceOpening:chapter===7,sageOpening:chapter===8,hakureiOpening:chapter===9,sunflowerOpening:chapter===10,hellOpening:chapter===11,heavenOpening:chapter===12,shop:match.kourindouEnabled,shopPool:storyShopCards(chapter),requiredShopCard:chapter===7?'palace_yuugi':chapter===8?'sage_mai_satono':chapter===11?'hell_kutaka':null});
+  dealLearningOpening(match,{scarletOpening:chapter===2,hakugyokurouOpening:chapter===3,eienteiOpening:chapter===4,mountainOpening:chapter===5,sakuyaOpening:chapter===6,palaceOpening:chapter===7,sageOpening:chapter===8,hakureiOpening:chapter===9,sunflowerOpening:chapter===10,hellOpening:chapter===11,heavenOpening:chapter===12,templeOpening:chapter===13,shop:match.kourindouEnabled,shopPool:storyShopCards(chapter),requiredShopCard:chapter===7?'palace_yuugi':chapter===8?'sage_mai_satono':chapter===11?'hell_kutaka':chapter===13?'temple_ichirin':null});
   match.storyMatch={chapter,humanSeat:0,aiSeat:1,stalemateClear:false,skillFactions:definition.skills.slice(),
     sdmCards:storyScarletCards(),sdmPlaced:[],hakuCards:storyFactionCards('hakugyokurou'),hakuPlaced:[],houraiCards:storyFactionCards('hourai'),houraiPlaced:[],opponentReachedFour:false,
-    mountainCards:storyFactionCards('mountain'),mountainPlaced:[],subscribedPapers:[],claimedFactions:[],turnSeat:match.currentPlayerIdx,turnStartScore:0,
-    koishiAppeared:false,placementCounts:{},aiTurns:0,humanTurns:0,opponentClaimedFaction:false,wastelandCleared:0,hecatiaOpeningPlayed:false,returnedCards:0,humanClaimedFaction:false,progress:chapter===12?{heaven:false,returnEight:false}:chapter===11?{hell:false,clearEight:false,kutaka:false}:chapter===10?{sunflower:false,emptyOpponent:false}:chapter===9?{hakurei:false,marisaSage:false}:chapter===8?{sage:false,sameCardFaction:false,placeTwice:false}:chapter===7?{palace:false,newAbility:false}:chapter===6?{twoFactions:false,lockedFaction:false,surprise:false}:chapter===5?{mountain:false,stalemate:false,newsGuess:false}:chapter===4?{hourai:false,kaguya:false,handTen:false}:chapter===3?{haku:false,yuyuko:false}:{sdm:false,remilia:false,flandre:false}};
+    mountainCards:storyFactionCards('mountain'),mountainPlaced:[],subscribedPapers:[],readPapers:[],claimedFactions:[],turnSeat:match.currentPlayerIdx,turnStartScore:0,
+    koishiAppeared:false,placementCounts:{},aiTurns:0,humanTurns:0,opponentClaimedFaction:false,wastelandCleared:0,hecatiaOpeningPlayed:false,returnedCards:0,humanClaimedFaction:false,byakurenEffects:[],extraTurnsRemaining:0,extraTurnsAtVictory:null,progress:chapter===13?{temple:false,byakurenAll:false}:chapter===12?{heaven:false,returnEight:false}:chapter===11?{hell:false,clearEight:false,kutaka:false}:chapter===10?{sunflower:false,emptyOpponent:false}:chapter===9?{hakurei:false,marisaSage:false}:chapter===8?{sage:false,sameCardFaction:false,placeTwice:false}:chapter===7?{palace:false,newAbility:false}:chapter===6?{twoFactions:false,lockedFaction:false,surprise:false}:chapter===5?{mountain:false,stalemate:false,newsGuess:false}:chapter===4?{hourai:false,kaguya:false,handTen:false}:chapter===3?{haku:false,yuyuko:false}:{sdm:false,remilia:false,flandre:false}};
   if(chapter===1)match.revealHand(match.storyMatch.humanSeat,match.players[match.storyMatch.humanSeat].hand,[match.storyMatch.aiSeat]);
   match.winner=null;match.stalemateMessage='';match.logLines=[];
   match.log('The match begins. Reach 7 discard points to win.');
@@ -6319,7 +6354,7 @@ function storyStarGoals(match){
   if(story.chapter===5)return [
     {key:'mountain',label:'Claim Youkai Mountain',done:progress.mountain},
     {key:'stalemate',label:'End the game in stalemate',done:progress.stalemate},
-    {key:'newsGuess',label:'Subscribe to a newspaper, then make a correct guess',done:progress.newsGuess}
+    {key:'newsGuess',label:'Read a newspaper, then make a correct guess',done:progress.newsGuess}
   ];
   if(story.chapter===6)return [
     {key:'twoFactions',label:'Claim two factions',done:progress.twoFactions},
@@ -6355,6 +6390,11 @@ function storyStarGoals(match){
     {key:'heaven',label:'Claim Heaven',done:progress.heaven},
     {key:'returnEight',label:'Return eight cards to the draw pile',done:progress.returnEight},
     {key:'noClaims',label:'Win without claiming a faction',done:storyMatchComplete(match)&&!story.humanClaimedFaction,failed:story.humanClaimedFaction}
+  ];
+  if(story.chapter===13)return [
+    {key:'temple',label:'Claim Myouren Temple',done:progress.temple},
+    {key:'byakurenAll',label:'Use all three of Byakuren’s effects',done:progress.byakurenAll},
+    {key:'extraAtWin',label:'Win with an extra turn still remaining',done:storyMatchComplete(match)&&(story.extraTurnsAtVictory??(story.extraTurnsRemaining+(match.pendingExtraTurns[story.humanSeat]||0)))>0}
   ];
   return [];
 }
@@ -8956,10 +8996,11 @@ Object.assign(ZH_TEXT,{
   'Use trades and card abilities to claim two different factions.':'利用交易与卡牌技能，收取两个不同阵营。',
   'Claim a faction whose core cards still have no abilities.':'收取一个基础卡牌仍未解锁技能的阵营。',
   'Stars carry across victories. Complete all objectives in one match for faction-colored stars. Faction objectives also count complete groups in your discard pile.':'星星可以跨获胜对局累计。在一局中完成全部目标，星星即可获得本关阵营颜色。阵营目标也认可在你的弃牌堆中集齐完整阵营。',
-  'Youkai Mountain abilities are now active too. Win to clear this chapter. Three stars: claim Youkai Mountain, end the game in stalemate, and subscribe to a newspaper before making a correct guess.':'妖怪之山的技能也已开放，获胜即可通关。三星目标：收取妖怪之山、使游戏陷入僵局，以及订阅报纸后正确猜中一次卡牌。',
+  'Youkai Mountain abilities are now active too. Win to clear this chapter. Three stars: claim Youkai Mountain, end the game in stalemate, and read a newspaper before making a correct guess.':'妖怪之山的技能也已开放，获胜即可通关。三星目标：收取妖怪之山、使游戏陷入僵局，以及观看报纸后正确猜中一次卡牌。',
   'Claim Youkai Mountain':'收取妖怪之山阵营',
   'End the game in stalemate':'使游戏陷入僵局',
   'Subscribe to a newspaper, then make a correct guess':'订阅报纸后正确猜中一次卡牌',
+  'Read a newspaper, then make a correct guess':'观看报纸后正确猜中一次卡牌',
   'Stars collected':'已收集星星',
   'Match objectives':'本局目标',
   'The opponent reached four points. This objective is unavailable this match; you can still win and clear the chapter.':'电脑已经达到四分，本局无法完成此目标，仍可获胜通关。',
@@ -8997,6 +9038,12 @@ Object.assign(ZH_TEXT,{
   'Chapter 10 · Sunflower Field':'第十关 · 太阳花田',
   'Chapter 11 · Hell':'第十一关 · 地狱',
   'Chapter 12 · Heaven':'第十二关 · 天界',
+  'Chapter 13 · Myouren Temple':'第十三关 · 命莲寺',
+  'Myouren Temple abilities are now active too. Win to clear this chapter. Three stars: claim Myouren Temple, use all three of Byakuren’s effects, and win with an extra turn still remaining.':'命莲寺的技能也已开放，获胜即可通关。三星目标：收取命莲寺阵营、使用圣白莲的所有技能，以及胜利时自己仍有额外回合。',
+  'Surely using every one of Byakuren’s effects takes a lot of cards to pay the costs. But with the power of bonds, perhaps it could be easy?':'无论如何，使用圣白莲的所有功能必须要有很多卡牌来支付代价吧。但是，如果有羁绊的力量，轻松的完成也不是不可能的？',
+  'Claim Myouren Temple':'收取命莲寺阵营',
+  'Use all three of Byakuren’s effects':'使用圣白莲的所有技能',
+  'Win with an extra turn still remaining':'胜利时自己仍然有额外回合',
   'Heaven abilities are now active too. Win to clear this chapter. Three stars: claim Heaven, return eight cards to the draw pile, and win without claiming a faction. Faction objectives also count complete groups gathered in your discard pile.':'天界的技能也已开放，获胜即可通关。三星目标：收取天界阵营，累计将八张卡放入抽牌堆，以及在不收取阵营的情况下获胜。阵营目标也认可通过技能集齐于你弃牌堆中的完整阵营。',
   'I deliberately favored scoring through faction claims when creating this game. Let’s see whether that is still true.':'我在创造这个游戏的时候就刻意的偏向收取阵营拿分，看看现在还是否如此吧。',
   'Claim Heaven':'收取天界阵营',
@@ -15606,7 +15653,7 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='7b82a174f37aba5759bfd1a3b1492ec265b2617cad1803e48d87cd427bbbd0ac';
+const AI_EVALUATION_RULES_DIGEST='121a40dc0b8afb2cba22383896dfb8f7fdd43eeb66d787d78f6bcffbd4fe039d';
 const AI_EVALUATION_POLICY_DIGEST='8c4a5243bd74a5f73ad2e8f67c5f0d1a5ccea2d1925c63048f3b82320114f3cf';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;

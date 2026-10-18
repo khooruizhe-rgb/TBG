@@ -1,0 +1,177 @@
+{
+  "status": "pass",
+  "count": 37,
+  "checks": [
+    "1024 unique conserved private six-card deals guarantee Byakuren and an ally, reserve undealt Temple cards in the next five draws, and vary first actor, card slots and all 90 Ichirin shop arrangements",
+    "The new introduction has the four Temple originals and lets the fifth card be discovered in Kourindou",
+    "Temple abilities and Ichirin remain locked before chapter thirteen",
+    "Actual Byakuren turns → return → look uses all three discounted effects, pays one card, collects Temple and wins with three bonus turns left",
+    "Actual Byakuren turns → look → return uses all three discounted effects, pays one card, collects Temple and wins with three bonus turns left",
+    "Actual Byakuren return → turns → look uses all three discounted effects, pays one card, collects Temple and wins with three bonus turns left",
+    "Actual Byakuren return → look → turns uses all three discounted effects, pays one card, collects Temple and wins with three bonus turns left",
+    "Actual Byakuren look → return → turns uses all three discounted effects, pays one card, collects Temple and wins with three bonus turns left",
+    "Actual Byakuren look → turns → return uses all three discounted effects, pays one card, collects Temple and wins with three bonus turns left",
+    "A real single-placement three-star win saves the three new goal keys and uses Temple-colored perfect stars",
+    "Finishing the final Temple chapter returns to all thirteen replayable chapters",
+    "The real introduction starts chapter thirteen without a prelude and retains its opening guarantees",
+    "Replay clears live objectives while preserving the saved perfect rating",
+    "An unaffordable selected effect does not count as using Byakuren or granting turns",
+    "Declining the actual payment records neither an effect nor a bonus turn",
+    "An invalid peek-and-take arrangement cannot count as a successful look effect",
+    "Cancelling every return target does not count as a successful return effect",
+    "One successful free look records exactly that effect and does not complete all three",
+    "Production Sakuya chain direct claim distinguishes a remaining bonus turn from winning on the last one; Youmu does not consume another bonus turn",
+    "Production Sakuya chain hourai_mokou distinguishes a remaining bonus turn from winning on the last one; Youmu does not consume another bonus turn",
+    "Production Sakuya chain haku_youmu distinguishes a remaining bonus turn from winning on the last one; Youmu does not consume another bonus turn",
+    "A free Youmu placement on its own is not an unspent bonus turn",
+    "Mai and Satono granting a future bonus action on the winning claim also counts",
+    "Scheduled dancer turns are transferred once and still available during the preceding regular action",
+    "Scheduled dancer turns are transferred once and consumed before their action",
+    "An opponent’s time stop never grants progress or spare turns to the player",
+    "Completing both time-stop turns exhausts the count and advances to the opponent normally",
+    "Bonus bookkeeping leaves ordinary matches and earlier chapters unaffected",
+    "Eight AI evaluation seeds cannot leak hypothetical Byakuren activations or bonus turns into live objectives",
+    "The Temple faction objective honors the existing complete-discard-pile rule as well as board collection",
+    "Cancelled, won and stalemated matches cannot gain additional Temple effect or bonus-turn progress",
+    "The opponent cannot complete the human Byakuren objective",
+    "Separate victories can accumulate the three Temple stars without becoming a perfect single-match clear",
+    "Four complete private Medium-AI Temple matches use the real unrestricted planners, ability choosers and bonus-turn controller without a runtime error or turn-limit abort",
+    "Chapter thirteen title, overview, exact flavor hint and goals plus the revised newspaper objective follow the actual en localization path",
+    "Chapter thirteen title, overview, exact flavor hint and goals plus the revised newspaper objective follow the actual zh-CN localization path",
+    "Chapter thirteen title, overview, exact flavor hint and goals plus the revised newspaper objective follow the actual en localization path"
+  ],
+  "routes": [
+    {
+      "order": [
+        "turns",
+        "return",
+        "look"
+      ],
+      "paid": 1,
+      "points": 7,
+      "extraRemaining": 3,
+      "stars": 3
+    },
+    {
+      "order": [
+        "turns",
+        "look",
+        "return"
+      ],
+      "paid": 1,
+      "points": 7,
+      "extraRemaining": 3,
+      "stars": 3
+    },
+    {
+      "order": [
+        "return",
+        "turns",
+        "look"
+      ],
+      "paid": 1,
+      "points": 7,
+      "extraRemaining": 3,
+      "stars": 3
+    },
+    {
+      "order": [
+        "return",
+        "look",
+        "turns"
+      ],
+      "paid": 1,
+      "points": 7,
+      "extraRemaining": 3,
+      "stars": 3
+    },
+    {
+      "order": [
+        "look",
+        "return",
+        "turns"
+      ],
+      "paid": 1,
+      "points": 7,
+      "extraRemaining": 3,
+      "stars": 3
+    },
+    {
+      "order": [
+        "look",
+        "turns",
+        "return"
+      ],
+      "paid": 1,
+      "points": 7,
+      "extraRemaining": 3,
+      "stars": 3
+    }
+  ],
+  "randomMatches": [
+    {
+      "seed": 1,
+      "actions": 26,
+      "turns": 26,
+      "winner": 1,
+      "points": [
+        4,
+        7
+      ],
+      "effects": [
+        "look"
+      ],
+      "extraAtWin": 0
+    },
+    {
+      "seed": 2,
+      "actions": 14,
+      "turns": 14,
+      "winner": 0,
+      "points": [
+        7,
+        1
+      ],
+      "effects": [],
+      "extraAtWin": 0
+    },
+    {
+      "seed": 3,
+      "actions": 33,
+      "turns": 40,
+      "winner": 0,
+      "points": [
+        8,
+        2
+      ],
+      "effects": [
+        "return",
+        "look",
+        "turns"
+      ],
+      "extraAtWin": 0
+    },
+    {
+      "seed": 4,
+      "actions": 9,
+      "turns": 9,
+      "winner": 1,
+      "points": [
+        0,
+        9
+      ],
+      "effects": [
+        "look"
+      ],
+      "extraAtWin": 0
+    }
+  ],
+  "openings": {
+    "samples": 1024,
+    "hands": 1018,
+    "rivals": 1024,
+    "stocks": 90
+  },
+  "rulesVersion": "2026-10-19-story-temple-v34",
+  "scope": "Real conserved deals and ability payments, all six Byakuren effect orders, actual faction wins, production Sakuya/Youmu/dancer action chains, four full production AI matches, snapshot-safe AI evaluation, story UI and persistence. Controlled DOM, not browser pixel QA."
+}

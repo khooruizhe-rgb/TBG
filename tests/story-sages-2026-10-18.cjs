@@ -84,7 +84,7 @@ vm.runInContext(`(async()=>{
  ok(true,'A card in either player discard pile makes Rin available to the chapter-seven opponent');
  make(15,7);arrange({hands:[[],['palace_rin','palace_koishi','hourai_mokou']]});game.currentPlayerIdx=1;await doPlayerAction(1);evalConservation(game);
  ok(!game.isOnBoard('palace_rin')&&!game.isOnBoard('palace_koishi'),'The actual AI turn executor respects both chapter-seven filters');
- returnToMainMenu();testStorage.clear();openStoryMenu();ok(el('story-levels').children.length===12,'The menu exposes eleven replayable story chapters');showStoryChapterIntro(8);
+ returnToMainMenu();testStorage.clear();openStoryMenu();ok(el('story-levels').children.length===13,'The menu exposes thirteen replayable story chapters');showStoryChapterIntro(8);
  ok(el('story-card-grid').children.length===4&&el('story-card-grid').children.every(node=>CARD[node.dataset.cardId].faction==='sage'&&!CARD[node.dataset.cardId].shopExpansion),'The real chapter-eight introduction shows four movable Sage cards without the fifth card');
  el('story-begin').events.click();ok(isStoryMatch()&&game.storyMatch.chapter===8&&!tutorialState&&game.players[0].hand.includes('sage_matara'),'The eighth chapter starts directly with its guaranteed opening and no extra prelude');
  game.storyMatch.progress.sage=true;game.winner=game.players[0];updateStoryProgress();assert.equal(storyBestStars(8),1);returnToMainMenu();openStoryChapter(8);game.storyMatch.progress.sameCardFaction=true;game.winner=game.players[0];updateStoryProgress();returnToMainMenu();openStoryChapter(8);game.storyMatch.progress.placeTwice=true;game.winner=game.players[0];updateStoryProgress();

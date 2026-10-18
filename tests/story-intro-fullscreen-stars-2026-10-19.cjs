@@ -37,7 +37,7 @@ function separate(){const rects=bounds();for(let i=0;i<rects.length;i++)for(let 
 function tap(node){const r=node.getBoundingClientRect(),point={clientX:(r.left+r.right)/2,clientY:(r.top+r.bottom)/2};dispatch(node,'pointerdown',point);dispatch(node,'pointerup',point);assert(el('card-detail-overlay').open&&run('detailCardId')===node.dataset.cardId);A.closeCardDetails();flushClose();}
 (async()=>{
  const viewports=[[320,568],[390,844],[568,320],[667,375],[844,390],[932,430],[1024,768],[1280,800]],layouts=[];
- for(const [w,h]of viewports)for(let chapter=2;chapter<=12;chapter++){
+ for(const [w,h]of viewports)for(let chapter=2;chapter<=13;chapter++){
   size(w,h);introCard(chapter);flush();separate();
   const ordered=cards().slice().sort((a,b)=>a.getBoundingClientRect().left-b.getBoundingClientRect().left);tap(ordered[0]);tap(ordered.at(-1));
   layouts.push({w,h,chapter,cards:cards().length,width:width()});
@@ -71,7 +71,7 @@ function tap(node){const r=node.getBoundingClientRect(),point={clientX:(r.left+r
  ok([...viewportListeners.values()].every(list=>list.length===0)&&run('storyIntroSession===null'),'Closing the introduction removes observers, visual viewport listeners and pending frames');
  activeObserver.callback([]);flush();ok(cards().length===0,'A late observer notification cannot recreate a closed introduction');
  // Ordinary cumulative stars stay ordinary; a single-match perfect clear opts in.
- for(let chapter=2;chapter<=12;chapter++){
+ for(let chapter=2;chapter<=13;chapter++){
   storage.clear();const keys=run('STORY_GOAL_KEYS['+chapter+']');assert.equal(keys.length,3);
   for(const key of keys){ctx.goalKey=key;run('saveStoryStars('+chapter+',[goalKey]);');}run('openStoryMenu();');
   let rating=el('story-levels').children[chapter-1].children[2].children[1];assert(!rating.classList.contains('story-stars-perfect'));assert.equal(run('storyBestStars('+chapter+')'),3);
