@@ -2,7 +2,7 @@
   "status": "pass",
   "count": 230,
   "checks": [
-    "The prototype contains six chapters and the four core Mansion cards",
+    "The prototype contains seven chapters and the four core Mansion cards",
     "The chapter keeps a randomized first actor, two six-card hands and a basic table: 1/0",
     "A chapter uses unique real cards with conserved inventory: 1/0",
     "Only the first story chapter receives the learner opening hand, without a stored opening list: 1/0",
@@ -218,7 +218,7 @@
     "All extra goals without victory are insufficient",
     "Chapter one requires victory without impossible ability objectives",
     "Story chapters do not mutate global printed card definitions",
-    "The menu offers six replayable prototype chapters",
+    "The menu offers seven replayable prototype chapters",
     "Chapter two shows all four active core cards before a match begins",
     "Start chapter launches one real match after the card introduction",
     "Story matches retain normal placement and shared drawing with the shop omitted",
@@ -1067,6 +1067,6 @@
       }
     }
   ],
-  "rulesVersion": "2026-10-17-story-first-stalemate-v25",
+  "rulesVersion": "2026-10-18-story-palace-legacy-v26",
   "scope": "Shipped story rules and AI, complete real-rule walkthroughs and controlled chapter UI lifecycle; no browser pixel verification"
 }

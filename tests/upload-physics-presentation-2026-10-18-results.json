@@ -1,0 +1,96 @@
+{
+  "status": "pass",
+  "count": 14,
+  "checks": [
+    "The previous tabletop solver is exactly the one in the user-supplied HTML snapshot",
+    "The previous hand spring also matches the uploaded version byte-for-byte",
+    "Uploaded friction, small angular decay and stopping at the edge agree at fourteen time/edge cases",
+    "The actual previous-mode pointer trajectory matches the upload and releases with its small-angle spin limit",
+    "The previous throw uses the uploaded 0.9-card-width travel limit and 2400 friction",
+    "The same real pointer gesture now produces visibly different old and new rotation/trajectory equations",
+    "Moved cards sit above the menu paper so a modern throw cannot hide its pointer target underneath",
+    "The persistent settings gear remains above moved menu cards",
+    "A thrown modern card can be grabbed again with the actual handler",
+    "A locked story card shows the exact requested None title and placeholder in both languages",
+    "Giving the card Overwrite replaces the placeholder with its active skill while preserving its retrieved-card wear",
+    "Aya has exactly two short sentences preserving four-card information and the subscription payment in both languages",
+    "Eirin’s real portrait markup receives the larger detail and compact-card crop",
+    "The new chapter title, objectives and hint translate both ways"
+  ],
+  "uploadedSha256": "c6e954ad94d47b6f6fb0695c06e4ad232c931c704bec35567b29b5bc7d336ab4",
+  "oldTrajectory": [
+    {
+      "x": 108.58106433164488,
+      "y": 95.72431819934732,
+      "rotation": 7,
+      "vx": 366.91010781081866,
+      "vy": 0
+    },
+    {
+      "x": 124.58106433164488,
+      "y": 95.72431819934732,
+      "rotation": 7,
+      "vx": 599.1971884078907,
+      "vy": 0
+    },
+    {
+      "x": 140.58106433164488,
+      "y": 95.72431819934732,
+      "rotation": 7,
+      "vx": 746.2557912200308,
+      "vy": 0
+    },
+    {
+      "x": 156.58106433164488,
+      "y": 95.72431819934732,
+      "rotation": 7,
+      "vx": 839.3571062198602,
+      "vy": 0
+    },
+    {
+      "x": 172.58106433164488,
+      "y": 95.72431819934732,
+      "rotation": 7,
+      "vx": 898.2986076957732,
+      "vy": 0
+    }
+  ],
+  "newTrajectory": [
+    {
+      "x": 104.17105597160366,
+      "y": 101.77065292348263,
+      "rotation": -0.18633469761200072,
+      "vx": 351.271807073145,
+      "vy": 21.141987536937208
+    },
+    {
+      "x": 118.36164116879178,
+      "y": 104.24769140211708,
+      "rotation": -0.684775801198957,
+      "vx": 547.8034520064674,
+      "vy": 70.18793206338171
+    },
+    {
+      "x": 131.73690455581016,
+      "y": 107.92322399822726,
+      "rotation": -1.4186635598642168,
+      "vx": 653.5287865796988,
+      "vy": 128.72214916179803
+    },
+    {
+      "x": 144.5534180088643,
+      "y": 112.51907146522998,
+      "rotation": -2.327108448509031,
+      "vx": 707.6492398394495,
+      "vy": 186.88412213520547
+    },
+    {
+      "x": 157.01680363634534,
+      "y": 117.8143302172187,
+      "rotation": -3.3618026054430574,
+      "vx": 733.8144662243931,
+      "vy": 239.7446962080945
+    }
+  ],
+  "scope": "Uploaded physical kernels and exact live pointer replay, old/new trajectory distinction and travel limits, menu CSS stacking and re-grabbing, actual bilingual card detail and ability rendering, compact/detail Eirin scaling. Browser pixels are not measured."
+}

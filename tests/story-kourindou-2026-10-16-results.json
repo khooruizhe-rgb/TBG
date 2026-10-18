@@ -21,13 +21,13 @@
     "Seven off-turn points do not count as the player’s own single turn",
     "Chapter six banks distinct objectives over wins while each replay displays only its own stars",
     "A one-match full clear uses the requested gold stars",
-    "Finishing the sixth and final available chapter returns to the six-chapter menu",
+    "Finishing chapter six opens the four-card Palace introduction",
     "The actual introduction gives the three unlocked-faction fifth cards valid angles and both renewed and worn faces",
     "Four real random chapter-six matches complete with ordinary Medium decisions, live shop trades and conserved cards, without strategic passes",
     "The actual en sixth-chapter introduction shows the three faction-colored renewed cards and keeps the surprise threshold hidden",
     "The actual zh-CN sixth-chapter introduction shows the three faction-colored renewed cards and keeps the surprise threshold hidden"
   ],
-  "rulesVersion": "2026-10-17-story-first-stalemate-v25",
+  "rulesVersion": "2026-10-18-story-palace-legacy-v26",
   "randomOpenings": 512,
   "burstRoutes": 16,
   "productionMatches": [

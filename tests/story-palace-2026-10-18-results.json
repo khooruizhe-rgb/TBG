@@ -1,0 +1,57 @@
+{
+  "status": "pass",
+  "count": 18,
+  "checks": [
+    "768 random deals keep six-card private hands, randomized first actors, Satori plus another Palace card, undealt Palace cards within the next five draws and Yuugi among three distinct shop goods",
+    "The chapter introduces exactly Satori, Rin, Utsuho and Koishi, leaving the fifth card for discovery",
+    "Chapter seven adds Yuugi without changing chapter six’s three-card stock pool",
+    "All eight objective masks award independent stars only on a player victory; keeping Mary away remains pending until victory",
+    "An actual Rin retrieval gives a locked Hakurei card Overwrite and earns the new-ability objective",
+    "The newly assigned ability really draws on placement instead of remaining blocked by the faction lock",
+    "Replacing an already unlocked ability does not count as giving a skillless card an ability",
+    "The opponent’s retrieval changes the card but does not earn the player’s objective",
+    "Cancelling a retrieval leaves the skillless card and objective unchanged",
+    "Either player manually placing Koishi permanently fails the Mary objective even if she later leaves the board",
+    "Automatic Koishi entries from either hand are recorded before their claim settlement",
+    "Rejected placements and read-only placement previews never count as a Mary appearance",
+    "An opponent’s Palace claim does not satisfy the player’s claim goal",
+    "A real Yuugi trade, Rin overwrite, Palace claim and two later pair claims produce a legal eight-point three-star victory without Koishi",
+    "Chapter-seven stars accumulate across wins and gain Palace color only after a single-match perfect clear",
+    "Clearing the final available chapter returns to the seven-chapter selection",
+    "The real chapter-seven introduction displays four movable renewed cards without a fifth-card explanation",
+    "Four complete chapter-seven Medium matches finish with conserved cards and the full Palace rules"
+  ],
+  "openings": 768,
+  "productionMatches": [
+    {
+      "seed": 1,
+      "actions": 31,
+      "winner": 0,
+      "stalemate": false,
+      "koishiAppeared": true
+    },
+    {
+      "seed": 2,
+      "actions": 29,
+      "winner": 1,
+      "stalemate": true,
+      "koishiAppeared": false
+    },
+    {
+      "seed": 3,
+      "actions": 18,
+      "winner": 1,
+      "stalemate": false,
+      "koishiAppeared": true
+    },
+    {
+      "seed": 4,
+      "actions": 18,
+      "winner": 1,
+      "stalemate": false,
+      "koishiAppeared": false
+    }
+  ],
+  "rulesVersion": "2026-10-18-story-palace-legacy-v26",
+  "scope": "Actual randomized opening deals, private information, mandatory Yuugi stock, active overwrites and draws, human/opponent and automatic Mary entries, legal placement previews, full three-star scoring route, persistence/menu/intro lifecycle and four complete normal-AI matches. Browser pixels are not measured."
+}

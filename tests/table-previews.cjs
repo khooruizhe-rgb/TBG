@@ -62,10 +62,10 @@ test('The full-screen menu grid passes pointer input through, while its setup pa
  assert.equal(styleValue('.table-scatter-card','pointer-events'),'auto');
  assert.notEqual(styleValue('#app','pointer-events'),'none','the match container must stay interactive');
 });
-test('Dragged decorative cards stay below the menu without covering buttons or blocking the memory game',()=>{
+test('Moved decorative cards remain reachable above the menu while the memory game keeps its input rules',()=>{
  const selector='body:not(:has(#game.active)):not(.title-memory-active) #app';
  assert.equal(styleValue(selector,'z-index'),'10');assert.equal(styleValue(selector,'isolation'),'isolate');
- assert(Number(styleValue(selector,'z-index'))>Number(styleValue('.table-scatter-card.table-card-moved','z-index')));
+ assert(Number(styleValue(selector,'z-index'))<Number(styleValue('.table-scatter-card.table-card-moved','z-index')));
  assert.equal(styleValue('body.title-memory-active:not(:has(#game.active)) #setup','pointer-events'),'none');
 });
 test('Each spread has ten distinct cards from five factions, two per faction, and avoids the previous spread',()=>{

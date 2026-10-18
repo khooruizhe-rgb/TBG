@@ -127,7 +127,7 @@ vm.runInContext(html.slice(html.indexOf('const TUTORIALS='),html.indexOf('let tu
   A.setGame(match);
   for(const id of ['sdm_remilia','hourai_mokou']){
     const face=A.cardBoardHtml(id);ok(face.includes('card-rin-worn')&&face.includes('card-wear-overlay')&&!face.includes('Overwrite'),'A story card without skills has Rin wear without an Overwrite label: '+id);
-    A.openCardDetails(id);ok(el('card-detail').classList.contains('card-rin-worn')&&!el('card-detail-description').innerHTML&&el('card-detail-ability').hidden,'Worn story details retain their empty skill text: '+id);A.closeCardDetails();
+    A.openCardDetails(id);ok(el('card-detail').classList.contains('card-rin-worn')&&!!el('card-detail-description').innerHTML&&!el('card-detail-ability').hidden&&['None','无'].includes(el('card-detail-ability').textContent),'Worn story details show the localized None placeholder: '+id);A.closeCardDetails();
   }
   match.storyMatch.skillFactions=['sdm'];
   ok(!A.cardBoardHtml('sdm_remilia').includes('card-rin-worn')&&A.cardBoardHtml('hourai_mokou').includes('card-rin-worn'),'Only still-locked factions remain worn in chapter two');

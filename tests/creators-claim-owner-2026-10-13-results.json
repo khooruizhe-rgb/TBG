@@ -70,6 +70,6 @@
   "details": {
     "randomOfferFloor": 0
   },
-  "rulesVersion": "2026-10-17-story-first-stalemate-v25",
+  "rulesVersion": "2026-10-18-story-palace-legacy-v26",
   "scope": "Actual placements, costs, ownership, deterministic previews and three-card offer bounds"
 }

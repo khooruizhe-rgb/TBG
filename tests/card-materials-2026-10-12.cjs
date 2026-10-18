@@ -194,16 +194,16 @@ test('Create has a concise two-sentence original-version explanation in both lan
   A.setLanguage('zh-CN');const zh=A.translateGameText(en);assert.match(zh,/原版/);assert.match(zh,/代价加 I/);assert.equal((zh.match(/。/g)||[]).length,2);
   A.setLanguage('en');assert.equal(A.translateGameText(en),en);
 });
-test('Story chapters leave locked card descriptions and skill titles empty without changing printed definitions',()=>{
+test('Story chapters show localized None placeholders for locked skills without changing printed definitions',()=>{
   const definition=A.CARD.sdm_remilia.desc;match.cardAbilityEnabled=A.Game.prototype.cardAbilityEnabled;
   try{
     match.storyMatch={skillFactions:[]};
     for(const language of ['en','zh-CN'])for(const id of ['sdm_remilia','sdm_sakuya','hourai_mokou','sage_kasen']){
-      A.setLanguage(language);A.openCardDetails(id);assert.equal(el('card-detail-description').innerHTML,'');assert.equal(el('card-detail-ability').textContent,'');assert(el('card-detail-ability').hidden);
-      assert.equal(A.dynamicCardDescription(id,true),'');
+      A.setLanguage(language);A.openCardDetails(id);assert.equal(el('card-detail-description').innerHTML,A.translateGameText(A.CARD.__story_no_ability.desc));assert.equal(el('card-detail-ability').textContent,language==='en'?'None':'无');assert(!el('card-detail-ability').hidden);
+      assert.equal(A.dynamicCardDescription(id,true),A.CARD.__story_no_ability.desc);
     }
     match.storyMatch.skillFactions=['sdm'];A.openCardDetails('sdm_remilia');assert(!el('card-detail-ability').hidden);assert(el('card-detail-description').innerHTML);
-    A.openCardDetails('hourai_mokou');assert.equal(el('card-detail-description').innerHTML,'');assert(el('card-detail-ability').hidden);
+    A.openCardDetails('hourai_mokou');assert.equal(el('card-detail-description').innerHTML,A.translateGameText(A.CARD.__story_no_ability.desc));assert(!el('card-detail-ability').hidden);
     match.storyMatch.skillFactions=['sdm','hakugyokurou'];
     for(const language of ['en','zh-CN'])for(const id of ['haku_yuyuko','haku_youmu']){
       A.setLanguage(language);A.openCardDetails(id);assert(el('card-detail-description').innerHTML);assert(!el('card-detail-ability').hidden);assert(!A.cardBoardHtml(id).includes('card-rin-worn'));

@@ -40,7 +40,7 @@ vm.runInContext('const TABLE_CARD_FRICTION=1800,TABLE_CARD_SPIN_DRAG=5.5;'+Objec
  const bodyOf=s=>s.slice(s.indexOf('{'));const start=js.indexOf('function stepPreviousHandDragPhysics('),legacySource=js.slice(start,js.indexOf('\n}',start)+2);
  ok(historical.commit==='8acee0a787376d35a31558c24173ebdcf50016a1'&&bodyOf(legacySource)===bodyOf(historical.functions.stepHandDragPhysics),'The previous hand solver is the exact body from the version before settings were added');
  for(const name of ['tableCardGrip','stepTableCardSlide','stepTableCardDrag']){const start=js.indexOf('function '+name+'('),actual=js.slice(start,js.indexOf('\n}',start)+2);assert.equal(actual,historical.functions[name],name);}
- ok(true,'Table grip, torque, angular drag, friction and edge collisions retain the exact previous-version equations');
+ ok(true,'The new-mode table grip, torque, angular drag, friction and edge collisions retain their pre-settings equations');
  for(const dt of [0,1/120,1/60,1/30,.05,.1]){
   const initial={x:15,y:20,vx:240,vy:-90,angle:2,tilt:-1,scale:1.02};ctx.priorBody={...initial};ctx.priorTarget={x:160,y:80};ctx.priorDt=dt;
   reference.body={...initial};reference.target={x:160,y:80};reference.dt=dt;

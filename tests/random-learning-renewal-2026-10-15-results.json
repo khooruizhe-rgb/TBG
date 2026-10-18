@@ -34,9 +34,9 @@
     "An actual production 2 match ends without a runtime error or turn-limit abort",
     "An actual production tutorial match ends without a runtime error or turn-limit abort",
     "A story card without skills has Rin wear without an Overwrite label: sdm_remilia",
-    "Worn story details retain their empty skill text: sdm_remilia",
+    "Worn story details show the localized None placeholder: sdm_remilia",
     "A story card without skills has Rin wear without an Overwrite label: hourai_mokou",
-    "Worn story details retain their empty skill text: hourai_mokou",
+    "Worn story details show the localized None placeholder: hourai_mokou",
     "Only still-locked factions remain worn in chapter two",
     "The actual hand renderer uses the same story material state",
     "Leaving the story restores the original card appearance and ability",
@@ -223,6 +223,6 @@
       }
     }
   ],
-  "rulesVersion": "2026-10-17-story-first-stalemate-v25",
+  "rulesVersion": "2026-10-18-story-palace-legacy-v26",
   "scope": "512 seeded random story openings with chapter-two next-five-draw guarantees, 256 restored fixed-hand tutorial openings, 384 fixed exercise configurations with actual completions, complete production matches, bilingual Sakuya titles, real renderers and shared pointer physics in a controlled DOM; no browser pixel verification"
 }

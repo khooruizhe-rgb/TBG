@@ -17,7 +17,7 @@
     "Turning mirror off restores the default layout preference",
     "Mirror settings, the historical physics option and every first-chapter stalemate ending translate both ways",
     "The previous hand solver is the exact body from the version before settings were added",
-    "Table grip, torque, angular drag, friction and edge collisions retain the exact previous-version equations",
+    "The new-mode table grip, torque, angular drag, friction and edge collisions retain their pre-settings equations",
     "Historical spring, speed, tilt and scaling match the pinned solver at six frame intervals",
     "Selecting previous physics routes the actual gesture through the original spring rather than direct following",
     "Previous tabletop physics retains the original automatic rotation and release momentum",

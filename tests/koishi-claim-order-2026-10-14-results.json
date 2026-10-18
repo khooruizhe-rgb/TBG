@@ -117,6 +117,6 @@
       ]
     }
   },
-  "rulesVersion": "2026-10-16-story-kourindou-physics-v21",
+  "rulesVersion": "2026-10-18-story-palace-legacy-v26",
   "scope": "Actual actor/entrant placement and claims, shared Kasen, costs, ordering, AI information boundary and v7 restore"
 }
