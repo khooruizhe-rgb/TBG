@@ -2016,6 +2016,9 @@
   #tutorial-coach.paper-compact #tutorial-progress{font-size:10px;}
   #tutorial-coach.paper-compact #tutorial-title{font-size:12px;}
   #tutorial-coach.paper-compact .tutorial-navigation button{min-height:40px;min-width:54px;font-size:12px;}
+  #tutorial-coach:not(.paper-compact):not(.paper-folded){width:min(410px,calc(100vw - 24px));}
+  #tutorial-coach:not(.paper-compact):not(.paper-folded) #tutorial-title{font-size:1.05rem;}
+  #tutorial-coach:not(.paper-compact) #tutorial-copy,#tutorial-coach:not(.paper-compact) #tutorial-feedback{font-size:.9rem;line-height:1.55;}
   #tutorial-coach.paper-dragging{box-shadow:6px 12px 24px #24140c66;}
   .paper-dragging #tutorial-paper-handle{cursor:grabbing;}
   @keyframes objectivePaperUnfold{from{opacity:.4;transform:perspective(600px) rotateX(-12deg)}to{opacity:1;transform:none}}
@@ -2038,7 +2041,9 @@
   #story-panel [hidden]{display:none!important;}
   @media(max-width:600px){#story-panel{padding:15px;}#story-levels{grid-template-columns:1fr;}#story-card-grid{height:50dvh;min-height:240px;}}
   @media(orientation:landscape) and (max-height:600px){#story-card-grid{height:48dvh;min-height:160px;}}
-  .tutorial-focus{outline:2px solid #f7d381 !important;outline-offset:2px;box-shadow:0 0 13px #efc97688 !important;}
+  .tutorial-focus{outline-width:3px!important;outline-style:solid!important;outline-color:#4fe6ff;outline-offset:3px;box-shadow:0 0 16px #4fe6ff99;animation:tutorialGuidePulse 1.1s ease-in-out infinite!important;}
+  @keyframes tutorialGuidePulse{0%,100%{outline-color:#36bfdc;box-shadow:0 0 0 2px #216e9588,0 0 12px #4fe6ff77;}50%{outline-color:#fff3a0;box-shadow:0 0 0 4px #4fe6ffbb,0 0 24px 7px #6fe9ffbb;}}
+  @media(prefers-reduced-motion:reduce){.tutorial-focus{animation:none!important;outline-color:#4fe6ff!important;box-shadow:0 0 0 2px #216e9599,0 0 18px #4fe6ffaa!important;}}
   body.tutorial-practice #game.active{display:flex;flex-direction:column;min-height:0;}
   body.tutorial-practice .layout{flex:1;min-height:0;height:auto;}
   body.tutorial-practice #playtest-toggle-wrap{display:none;}
@@ -2555,7 +2560,6 @@ body.crown-scene-active #hand-area{background:linear-gradient(115deg,rgba(var(--
 #tutorial-title{color:#68432a}
 #tutorial-copy{color:#58402e}
 #tutorial-coach .tutorial-navigation button{background:#ead5b2;border-color:#b39162;color:#523721}
-.tutorial-focus{outline-color:#ab602f!important}
 #rinnosuke-bubble{background:#f5e6c8;color:#58402c;border-color:#b39162}
 #rinnosuke-bubble::after{background:#f5e6c8;border-color:#b39162}
 .chimera-option{background:#ead7b8;color:#503724;border-color:#bb9d77}
@@ -3731,6 +3735,7 @@ class Game {
   isPlacementBlocked(p=this.currentPlayerIdx){return !!this.placementBlockedForTurn[p] || (p!==this.currentPlayerIdx && this.placementBlockTurns[p]>0);}
   beginPlayerTurn(p,{continuation=false}={}){
     this.triggerDeclines={};
+    if(this.storyMatch?.chapter===9 && p===this.storyMatch.aiSeat && !continuation)this.storyMatch.aiTurns++;
     // Bonus turns refresh normal turn rules while sharing this round's story scoring window.
     if(this.storyMatch?.chapter===6 && (!continuation || this.storyMatch.turnSeat!==p)){
       this.storyMatch.turnSeat=p;this.storyMatch.turnStartScore=this.winCount(this.players[p]);
@@ -4407,6 +4412,9 @@ class Game {
     const story=this.storyMatch;
     if(story?.chapter===6 && p===story.humanSeat && p===this.currentPlayerIdx && story.turnSeat===p
       && this.winCount(this.players[p])-story.turnStartScore>=7)story.progress.surprise=true;
+    if(story?.chapter===9 && p===story.humanSeat && this.ruleContext?.playerIdx===p
+      && this.ruleContext?.ability==='marisa' && source?.effect==='marisa'
+      && (CARD[cardId].faction==='sage' || cardBaseId(cardId)==='hourai_eirin'))story.progress.marisaSage=true;
     if(this.storyMatch?.chapter===2 && this.ruleContext?.playerIdx===this.storyMatch.humanSeat
       && this.ruleContext?.ability==='sdm_flandre' && source?.effect==='flandre'
       && source.handOwner===p && p!==this.storyMatch.humanSeat)this.storyMatch.progress.flandre=true;
@@ -4785,6 +4793,7 @@ class Game {
           if(this.testMetrics)this.testCardActions(id).claimMembers++;
         }
         this.log(`${this.players[placerIdx].name} claims the ${fac.name} faction! (${collected} cards)`);
+        if(this.storyMatch?.chapter===9 && placerIdx===this.storyMatch.aiSeat && collected>0)this.storyMatch.opponentClaimedFaction=true;
         if(this.tutorialLesson?.humanSeat===placerIdx && collected===fac.size && [2,4].includes(fac.size))
           this.tutorialLesson.progress[fac.size===4?'four':'two']=true;
         if(this.storyMatch?.humanSeat===placerIdx && collected===fac.size){
@@ -4793,6 +4802,7 @@ class Game {
           if(this.storyMatch.chapter===4 && fk==='hourai')this.storyMatch.progress.hourai=true;
           if(this.storyMatch.chapter===5 && fk==='mountain')this.storyMatch.progress.mountain=true;
           if(this.storyMatch.chapter===7 && fk==='palace')this.storyMatch.progress.palace=true;
+          if(this.storyMatch.chapter===9 && fk==='hakurei')this.storyMatch.progress.hakurei=true;
           if(this.storyMatch.chapter===8){
             if(fk==='sage')this.storyMatch.progress.sage=true;
             if(claimIds.length===fac.size && new Set(claimIds.map(cardBaseId)).size===1)
@@ -5730,7 +5740,7 @@ class Game {
 }
 
 /* 2026-10-12: creation, private newspapers and instance ability changes. */
-const REWORK_RULES_VERSION='2026-10-18-story-sages-colors-v28';
+const REWORK_RULES_VERSION='2026-10-18-story-hakurei-v29';
 Game.prototype.canCreateWithMatara=function(){return this.mainBoardCells().length>=4;};
 let nextCreatedCard=0,nextHiddenChoice=0;
 const COPY_PASSIVES=new Set(['sage_yukari','sage_kasen','mtn_nitori','hell_hecatia','palace_koishi']);
@@ -6055,14 +6065,15 @@ const STORY_CHAPTERS=[
   {id:5,title:'Chapter 5 · Youkai Mountain',body:'Youkai Mountain abilities are now active too. Win to clear this chapter. Three stars: claim Youkai Mountain, end the game in stalemate, and subscribe to a newspaper before making a correct guess.',skills:['sdm','hakugyokurou','hourai','mountain'],introduced:'mountain',hint:'A correct guess is all you need? Could there be a clever shortcut?'},
   {id:6,title:'Chapter 6 · Kourindou',body:'Kourindou opens for trading. Meiling, Tewi and Nitori are the fifth cards of unlocked factions available here. The opponent uses Medium AI. Win to clear this chapter. Three stars: claim two factions, claim a faction whose abilities are still locked, and do something that surprises me!',skills:['sdm','hakugyokurou','hourai','mountain'],introduced:'kourindou',hint:'What? An OTK? No way... haha.'},
   {id:7,title:'Chapter 7 · Palace of the Earth Spirits',body:'Palace of the Earth Spirits abilities are now active too. Win to clear this chapter. Three stars: claim Palace of the Earth Spirits, give an ability to a card with none, and keep Miss Mary off the board.',skills:['sdm','hakugyokurou','hourai','mountain','palace'],introduced:'palace',hint:'Miss Mary is quite playful in your hand. Perhaps moving her somewhere else could solve the problem?'},
-  {id:8,title:'Chapter 8 · Sages',body:'Sage abilities are now active too. Win to clear this chapter. Three stars: claim the Sages, claim a faction made of only one card type, and place the same card twice.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage'],introduced:'sage'}
+  {id:8,title:'Chapter 8 · Sages',body:'A claimed faction with only one card type? That description is as cryptic as the Sages themselves.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage'],introduced:'sage'},
+  {id:9,title:'Chapter 9 · Hakurei Shrine',body:'These two cards should have been the first to gain abilities, yet only now are they complete. How interesting.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei'],introduced:'hakurei'}
 ];
-const STORY_GOAL_KEYS={1:[],2:['sdm','remilia','flandre'],3:['haku','yuyuko','race'],4:['hourai','kaguya','handTen'],5:['mountain','stalemate','newsGuess'],6:['twoFactions','lockedFaction','surprise'],7:['palace','newAbility','noMary'],8:['sage','sameCardFaction','placeTwice']};
+const STORY_GOAL_KEYS={1:[],2:['sdm','remilia','flandre'],3:['haku','yuyuko','race'],4:['hourai','kaguya','handTen'],5:['mountain','stalemate','newsGuess'],6:['twoFactions','lockedFaction','surprise'],7:['palace','newAbility','noMary'],8:['sage','sameCardFaction','placeTwice'],9:['hakurei','marisaSage','beforeClaim']};
 function storyFactionCards(faction){return CARDS.filter(card=>card.faction===faction&&!card.shopExpansion).map(card=>card.id);}
 function storyScarletCards(){return storyFactionCards('sdm');}
 function storyShopCards(chapter){const skills=STORY_CHAPTERS.find(level=>level.id===chapter)?.skills||[];return chapter>=6?CARDS.filter(card=>card.shopExpansion&&skills.includes(card.faction)).map(card=>card.id):[];}
 function storyChapterCards(chapter){if(chapter===6)return storyShopCards(chapter);const faction=STORY_CHAPTERS.find(level=>level.id===chapter)?.introduced;return faction?storyFactionCards(faction):[];}
-function dealLearningOpening(match,{scarletOpening=false,hakugyokurouOpening=false,eienteiOpening=false,mountainOpening=false,sakuyaOpening=false,palaceOpening=false,sageOpening=false,shop=false,shopPool=null,requiredShopCard=null}={}){
+function dealLearningOpening(match,{scarletOpening=false,hakugyokurouOpening=false,eienteiOpening=false,mountainOpening=false,sakuyaOpening=false,palaceOpening=false,sageOpening=false,hakureiOpening=false,shop=false,shopPool=null,requiredShopCard=null}={}){
   const deck=shuffle(CARDS.filter(card=>!card.token&&!card.shopkeeper&&!card.shopExpansion).map(card=>card.id));
   const hand=deck.splice(0,6),protectedId=scarletOpening?'sdm_remilia':hakugyokurouOpening?'haku_yuyuko':eienteiOpening?'hourai_kaguya':mountainOpening?'mtn_kanako':sakuyaOpening?'sdm_sakuya':palaceOpening?'palace_satori':sageOpening?'sage_matara':null;
   const exchange=id=>{
@@ -6119,7 +6130,21 @@ function dealLearningOpening(match,{scarletOpening=false,hakugyokurouOpening=fal
       const options=deck.filter(id=>CARD[id].faction==='sage');exchange(options[Math.floor(Math.random()*options.length)]);
     }
   }
+  if(hakureiOpening){
+    if(!hand.some(id=>CARD[id].faction==='hakurei')){
+      const options=deck.filter(id=>CARD[id].faction==='hakurei');exchange(options[Math.floor(Math.random()*options.length)]);
+    }
+    // Give each side one of the two originals without adding a seventh card.
+    while(hand.filter(id=>CARD[id].faction==='hakurei').length>1){
+      const slot=hand.findIndex(id=>CARD[id].faction==='hakurei'),index=deck.findIndex(id=>CARD[id].faction!=='hakurei');
+      [hand[slot],deck[index]]=[deck[index],hand[slot]];
+    }
+  }
   const hands=[shuffle(hand),...match.players.slice(1).map(()=>deck.splice(0,6))];
+  if(hakureiOpening && !hands[1].some(id=>CARD[id].faction==='hakurei')){
+    const rival=hands[1],index=deck.findIndex(id=>CARD[id].faction==='hakurei'),slot=Math.floor(Math.random()*rival.length);
+    [rival[slot],deck[index]]=[deck[index],rival[slot]];
+  }
   if(hakugyokurouOpening){
     const rival=hands[1];
     while(rival.filter(id=>CARD[id].faction==='sdm').length!==2){
@@ -6172,11 +6197,11 @@ function configureStoryMatch(match,chapter){
   match.kourindouEnabled=chapter>=6;match.shopCards=[];
   match.shopTiles=match.kourindouEnabled?[[0,1],[1,0],[1,1],[1,2]].map(([r,c],slot)=>({r:SIZE+2+r,c,slot,wasteland:false})):[];match.board=Array.from({length:SIZE},()=>Array(SIZE).fill(null));
   match.wasteland=Array.from({length:SIZE},()=>Array(SIZE).fill(false));
-  dealLearningOpening(match,{scarletOpening:chapter===2,hakugyokurouOpening:chapter===3,eienteiOpening:chapter===4,mountainOpening:chapter===5,sakuyaOpening:chapter===6,palaceOpening:chapter===7,sageOpening:chapter===8,shop:match.kourindouEnabled,shopPool:storyShopCards(chapter),requiredShopCard:chapter===7?'palace_yuugi':chapter===8?'sage_mai_satono':null});
+  dealLearningOpening(match,{scarletOpening:chapter===2,hakugyokurouOpening:chapter===3,eienteiOpening:chapter===4,mountainOpening:chapter===5,sakuyaOpening:chapter===6,palaceOpening:chapter===7,sageOpening:chapter===8,hakureiOpening:chapter===9,shop:match.kourindouEnabled,shopPool:storyShopCards(chapter),requiredShopCard:chapter===7?'palace_yuugi':chapter===8?'sage_mai_satono':null});
   match.storyMatch={chapter,humanSeat:0,aiSeat:1,stalemateClear:false,skillFactions:definition.skills.slice(),
     sdmCards:storyScarletCards(),sdmPlaced:[],hakuCards:storyFactionCards('hakugyokurou'),hakuPlaced:[],houraiCards:storyFactionCards('hourai'),houraiPlaced:[],opponentReachedFour:false,
     mountainCards:storyFactionCards('mountain'),mountainPlaced:[],subscribedPapers:[],claimedFactions:[],turnSeat:match.currentPlayerIdx,turnStartScore:0,
-    koishiAppeared:false,placementCounts:{},progress:chapter===8?{sage:false,sameCardFaction:false,placeTwice:false}:chapter===7?{palace:false,newAbility:false}:chapter===6?{twoFactions:false,lockedFaction:false,surprise:false}:chapter===5?{mountain:false,stalemate:false,newsGuess:false}:chapter===4?{hourai:false,kaguya:false,handTen:false}:chapter===3?{haku:false,yuyuko:false}:{sdm:false,remilia:false,flandre:false}};
+    koishiAppeared:false,placementCounts:{},aiTurns:0,opponentClaimedFaction:false,progress:chapter===9?{hakurei:false,marisaSage:false}:chapter===8?{sage:false,sameCardFaction:false,placeTwice:false}:chapter===7?{palace:false,newAbility:false}:chapter===6?{twoFactions:false,lockedFaction:false,surprise:false}:chapter===5?{mountain:false,stalemate:false,newsGuess:false}:chapter===4?{hourai:false,kaguya:false,handTen:false}:chapter===3?{haku:false,yuyuko:false}:{sdm:false,remilia:false,flandre:false}};
   if(chapter===1)match.revealHand(match.storyMatch.humanSeat,match.players[match.storyMatch.humanSeat].hand,[match.storyMatch.aiSeat]);
   match.winner=null;match.stalemateMessage='';match.logLines=[];
   match.log('The match begins. Reach 7 discard points to win.');
@@ -6220,6 +6245,11 @@ function storyStarGoals(match){
     {key:'sage',label:'Claim the Sages',done:progress.sage},
     {key:'sameCardFaction',label:'Claim a faction made of only one card type',done:progress.sameCardFaction},
     {key:'placeTwice',label:'Place the same card twice',done:progress.placeTwice}
+  ];
+  if(story.chapter===9)return [
+    {key:'hakurei',label:'Claim Hakurei Shrine',done:progress.hakurei},
+    {key:'marisaSage',label:'Marisa: discard a Sage',done:progress.marisaSage},
+    {key:'beforeClaim',label:'Win before the opponent claims a faction',done:storyMatchComplete(match)&&!story.opponentClaimedFaction,failed:story.opponentClaimedFaction}
   ];
   return [];
 }
@@ -8849,6 +8879,12 @@ Object.assign(ZH_TEXT,{
   'Keep Miss Mary off the board':'别让玛丽小姐出现在棋盘上',
   'Miss Mary is quite playful in your hand. Perhaps moving her somewhere else could solve the problem?':'玛丽小姐在手牌里可是很贪玩的呢，也许把她放到另一个地方就可以解决这个问题？',
   'Chapter 8 · Sages':'第八关 · 贤者',
+  'A claimed faction with only one card type? That description is as cryptic as the Sages themselves.':'被收取的阵营只有一种卡牌？这个描述简直就和那些贤者一样谜语人啊。',
+  'Chapter 9 · Hakurei Shrine':'第九关 · 博丽神社',
+  'These two cards should have been the first to gain abilities, yet only now are they complete. How interesting.':'这两张牌应该是最先赋予技能的，但却到这里才得以完善，真是有趣呢。',
+  'Claim Hakurei Shrine':'收取博丽神社阵营',
+  'Marisa: discard a Sage':'魔理沙：将一张贤者送入弃牌堆',
+  'Win before the opponent claims a faction':'在电脑收取阵营前获胜',
   'Sage abilities are now active too. Win to clear this chapter. Three stars: claim the Sages, claim a faction made of only one card type, and place the same card twice.':'贤者的技能也已开放，获胜即可通关。三星目标：收取贤者阵营，使一个被收取的阵营只有一种卡牌，以及放置同一张卡两次。',
   'Claim the Sages':'收取贤者阵营',
   'Claim a faction made of only one card type':'使一个被收取的阵营只有一种卡牌',
@@ -13362,8 +13398,17 @@ function aiCostCanResolve(p,id,r,c){
   if(ability==='hourai_kaguya')return game.emptyCells(p).length>0&&game.players.some(pl=>pl.hand.length>0);
   return true;
 }
+function aiStoryHakureiHeld(match,id,p){
+  const story=match.storyMatch;
+  if(story?.chapter!==9 || p!==story.aiSeat || story.aiTurns>3 || CARD[id]?.faction!=='hakurei')return false;
+  if(match.canDrawNormally(p))return true;
+  // Holding yields only when no alternative placement or shared draw can take the turn.
+  return match.players[p].hand.some(other=>CARD[other]?.faction!=='hakurei'
+    && aiPlacementCells(match,other,match.emptyOrWastelandForCard(CARD[other],p),p).length>0);
+}
 function aiPlacementCells(match,id,spaces,playerIdx=match.currentPlayerIdx){
   const ability=match.abilityId(id);
+  if(aiStoryHakureiHeld(match,id,playerIdx))return [];
   if(match.storyMatch?.chapter===7 && playerIdx===match.storyMatch.aiSeat
     && (cardBaseId(id)==='palace_koishi' || ability==='palace_rin'&&!match.players.some(player=>player.discard.length)))return [];
   spaces=spaces.filter(cell=>inBounds(cell.r,cell.c)&&(!match.cardAt(cell.r,cell.c)||match.canSelectBoardCard(cell.r,cell.c)));
@@ -15415,8 +15460,8 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='6737d8022cbe177ae0365a44f0764dfed362a56cbcdcbba5dfb762ee88ad4194';
-const AI_EVALUATION_POLICY_DIGEST='1d06a8c1878f451886e6a8779a30214b2e82699d9d178e9d1bc9fed05b051df1';
+const AI_EVALUATION_RULES_DIGEST='fdf88794856493c391805c900df21606ca7ec963999d445151431a09f598528e';
+const AI_EVALUATION_POLICY_DIGEST='626e5decc1055938641b717e78211d55587485ae7de83970db4fac8b85b090a8';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
   if(!source)throw new Error('Game source is unavailable.');
@@ -15502,7 +15547,7 @@ function evalForkSummary(report){
   return {groups,invalidPairs,conclusion,completedPairs:report.pairs.length};
 }
 function evalValidateSnapshot(snapshot){
-  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-18-story-sages-v27','2026-10-18-story-palace-legacy-v26','2026-10-17-story-first-stalemate-v25','2026-10-17-story-sakuya-round-v24','2026-10-17-story-unlocked-shop-v23','2026-10-16-story-no-draw-stalemate-v22','2026-10-16-story-kourindou-physics-v21','2026-10-16-story-mountain-collection-v20','2026-10-16-story-private-opening-v19','2026-10-16-story-eientei-opening-v18','2026-10-16-story-stars-placement-v17','2026-10-16-story-hakugyokurou-active-mentor-v16','2026-10-15-guided-opening-scarlet-reserve-v15','2026-10-15-random-learning-renewal-v14','2026-10-15-story-opening-chapters-v13','2026-10-14-original-creation-blueprints-v12','2026-10-14-guided-final-match-v11','2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
+  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-18-story-sages-colors-v28','2026-10-18-story-sages-v27','2026-10-18-story-palace-legacy-v26','2026-10-17-story-first-stalemate-v25','2026-10-17-story-sakuya-round-v24','2026-10-17-story-unlocked-shop-v23','2026-10-16-story-no-draw-stalemate-v22','2026-10-16-story-kourindou-physics-v21','2026-10-16-story-mountain-collection-v20','2026-10-16-story-private-opening-v19','2026-10-16-story-eientei-opening-v18','2026-10-16-story-stars-placement-v17','2026-10-16-story-hakugyokurou-active-mentor-v16','2026-10-15-guided-opening-scarlet-reserve-v15','2026-10-15-random-learning-renewal-v14','2026-10-15-story-opening-chapters-v13','2026-10-14-original-creation-blueprints-v12','2026-10-14-guided-final-match-v11','2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
   const state=snapshot.state,n=state?.players?.length,size=snapshot.size;
   if(![4,5].includes(size) || ![2,3,4].includes(n) || !Number.isInteger(state.currentPlayerIdx) || state.currentPlayerIdx<0 || state.currentPlayerIdx>=n)throw new Error('Invalid position dimensions.');
   if(state.numPlayers!==n || state.players.some((p,i)=>p.idx!==i || !Array.isArray(p.hand) || !Array.isArray(p.discard)))throw new Error('Invalid position dimensions.');
@@ -16216,7 +16261,7 @@ function positionObjectivePaper(x=objectivePaperState.x,y=objectivePaperState.y)
   const state=objectivePaperState,viewport=objectivePaperViewport(),margin=12;
   coach.style.setProperty('--objective-paper-width',`${Math.max(72,viewport.width-margin*2)}px`);
   coach.style.setProperty('--objective-paper-room',`${Math.max(60,viewport.height-margin*2)}px`);
-  const width=Math.min(coach.offsetWidth||(state.folded?(state.compact?190:222):state.compact?300:342),Math.max(1,viewport.width-margin*2));
+  const width=Math.min(coach.offsetWidth||(state.folded?(state.compact?190:222):state.compact?300:410),Math.max(1,viewport.width-margin*2));
   const height=Math.min(coach.offsetHeight||(state.folded?62:280),Math.max(1,viewport.height-margin*2));
   state.x=Math.max(viewport.left+margin,Math.min(viewport.left+viewport.width-width-margin,x??viewport.left+viewport.width-width-margin));
   state.y=Math.max(viewport.top+margin,Math.min(viewport.top+viewport.height-height-margin,y??viewport.top+Math.min(52,viewport.height*.13)));
@@ -16444,10 +16489,11 @@ function updateTutorialProgress(){
 }
 function highlightTutorialTargets(){
   document.querySelectorAll('.tutorial-focus').forEach(node=>node.classList.remove('tutorial-focus'));
-  if(!isTutorialPractice() || tutorialState.complete || tutorialState.finishedAction) return;
-  const t=tutorialState,goal=tutorialPage(t).goal;
+  if(!isTutorialPractice())return;
+  const t=tutorialState,goal=tutorialPage(t).goal,mark=node=>node?.classList.add('tutorial-focus');
+  if(t.complete){mark(el('tutorial-next'));return;}
+  if(t.finishedAction){mark(el('tutorial-retry'));return;}
   if(goal==='match')return;
-  const mark=node=>node?.classList.add('tutorial-focus');
   if(goal==='draw'){mark(el('draw-btn'));return;}
   if(goal==='trade'){
     for(const cell of game.tradeCells()) mark(tileElement(cell.r,cell.c));
@@ -16455,11 +16501,12 @@ function highlightTutorialTargets(){
   }
   if(pendingHandChoice){
     for(const node of el('hand').children) if(pendingHandChoice.allowed.has(node.dataset.cardId)) mark(node);
-    mark(el('hand-choice-confirm'));return;
+    if(!el('hand-choice-confirm').disabled)mark(el('hand-choice-confirm'));return;
   }
-  if(pendingRectChoice){mark(tileElement(0,0));mark(tileElement(0,1));return;}
+  if(pendingRectChoice){for(const r of [0,1])for(const c of [0,1])mark(tileElement(r,c));return;}
   const id=tutorialPage(t).cardId||(goal==='area'?'heaven_iku':goal==='offer'?game.tutorialExercise.tradeCard:'mtn_sanae');
   mark([...el('hand').children].find(node=>node.dataset.cardId===id));
+  if(selectedHandCard && goal==='place')for(const cell of game.emptyOrWastelandForCard(CARD[id],0))mark(tileElement(cell.r,cell.c));
   if(selectedHandCard && goal==='offer') mark(tileElement(SIZE+2,1));
   if(selectedHandCard && goal==='claim'){
     for(const cell of game.emptyOrWastelandForCard(CARD.mtn_sanae))
@@ -16527,7 +16574,7 @@ function storyClearedChapters(){return Object.keys(storyProgressRecords()).map(N
 function storyBestStars(chapter){return storyProgressRecords()[chapter]??null;}
 function storyChapterPerfect(chapter){return storyProgressDetails()[chapter]?.perfect===true;}
 function storyStarColor(chapter,index=null){
-  if(chapter===8 && Number.isInteger(index) && index>=0 && index<3)return crownLightFor(['sage_kasen','sage_matara','sage_yukari'][index]).main;
+  if(chapter===8 && Number.isInteger(index) && index>=0 && index<3)return index===0?'#f39ac7':crownLightFor(['sage_kasen','sage_matara','sage_yukari'][index]).main;
   return chapter===6?'#d4af37':FACTIONS[STORY_CHAPTERS.find(level=>level.id===chapter)?.introduced]?.color||'#c1973e';
 }
 function storyStarMarkup(chapter,earned){

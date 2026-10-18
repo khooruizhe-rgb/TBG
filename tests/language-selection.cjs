@@ -216,7 +216,7 @@ test('Both live story language selectors refresh composed objectives without cha
  const button=el('story-pending-choice'),input=new Node('input');let clicks=0;button.addEventListener('click',()=>clicks++);input.value='射命丸文';body.appendChild(input);
  const run=code=>vm.runInContext(code,ctx),plain=value=>value.replace(/<[^>]*>/g,'').replace(/&(?:amp|quot|apos|#39|lt|gt);/g,'');
  const snapshot=()=>run('JSON.stringify({state:storyState,match:game.testRuleState(),story:game.storyMatch,logs:game.logLines})');
- for(const chapter of [1,2,3,4,5,6,7,8])for(const phase of ['opening','partial','won','lost']){
+ for(const chapter of [1,2,3,4,5,6,7,8,9])for(const phase of ['opening','partial','won','lost']){
   A.setGame(null);A.setGameLanguage('en');
   run('game=new Game(2,{},null,{aiDifficulty:"easy"});configureStoryMatch(game,'+chapter+');storyState={chapter:'+chapter+',practice:game,complete:false,savedStars:null};');
   if(phase==='partial')run('{const keys=STORY_GOAL_KEYS[storyState.chapter];if(keys.length)game.storyMatch.progress[keys[0]]=true;}'+(chapter===3?'game.storyMatch.opponentReachedFour=true;':''));
@@ -244,6 +244,6 @@ test('Both live story language selectors refresh composed objectives without cha
    assert.equal(JSON.stringify([...storage].filter(([key])=>key!=='boundary-language')),JSON.stringify(JSON.parse(stored).filter(([key])=>key!=='boundary-language')));
   }
  }
- assert.equal(clicks,32);A.setGame(null);run('storyState=null;');A.setGameLanguage('en');
+ assert.equal(clicks,36);A.setGame(null);run('storyState=null;');A.setGameLanguage('en');
 });
 (async()=>{for(const [name,fn] of tests){await fn();console.log('PASS '+name);}console.log(`${tests.length}/${tests.length} language selection checks passed`);})().catch(error=>{console.error(error);process.exitCode=1;});

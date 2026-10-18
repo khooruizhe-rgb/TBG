@@ -1,0 +1,68 @@
+{
+  "status": "pass",
+  "count": 29,
+  "checks": [
+    "1024 random private six-card deals split Reimu and Marisa between the two seats, retain random first actors and all 60 unlocked shop orders",
+    "The introduction unlocks exactly two Hakurei originals without inventing a fifth card",
+    "All objective combinations save stars only after a player victory; the no-opponent-claim star remains pending until then",
+    "A real Hakurei claim credits its collector and permanently marks an opponent claim only for the AI seat",
+    "Actual Marisa discarding sage_ran satisfies the Sage goal, including Eirin’s hidden exception",
+    "Actual Marisa discarding sage_mai_satono satisfies the Sage goal, including Eirin’s hidden exception",
+    "Actual Marisa discarding hourai_eirin satisfies the Sage goal, including Eirin’s hidden exception",
+    "An Eirin copy retains the moon-Sage exception through its original identity",
+    "Using the actual paid Marisa ability from a created card also earns the ability goal",
+    "Marisa discarding an unrelated faction card does not earn the Sage goal",
+    "Cancelling a blast never records an unperformed objective",
+    "An opponent’s actual skill discard neither earns the player’s skill goal nor counts as an opponent faction claim",
+    "Eirin reaching the discard through another effect does not earn the Marisa goal",
+    "The objective does not grant Marisa permission to blast an otherwise ineligible Crown Sage",
+    "A winning Eirin blast records the hidden goal before the victory can be saved",
+    "Retrieving all AI-discarded claim cards with a real doubled Rin does not erase the historical race failure",
+    "The real Medium policy excludes either Hakurei card for its first three normal turns and releases it on turn four across eight decision seeds",
+    "Bonus continuations and the human turn do not consume the AI’s three-normal-turn holding period",
+    "Holding yields when shared drawing and other placements are impossible, preserving the rule that a legal action cannot be skipped",
+    "The early-Hakurei holding rule does not affect other chapters",
+    "Real Satori theft, Marisa’s Sage blast, a Hakurei pair and a Mansion claim produce a legal seven-point three-star victory",
+    "The menu includes nine replayable chapters",
+    "The actual new introduction displays two movable Hakurei cards",
+    "The new introduction starts the real private constrained deal without an extra prelude",
+    "The three new objective keys accumulate across wins without inventing a one-match perfect clear",
+    "A one-match perfect clear uses Hakurei’s red faction stars",
+    "Clearing the ninth chapter returns to the expanded chapter list",
+    "Four complete Medium chapter-nine matches finish with conserved cards and the holding policy",
+    "The two exact requested story descriptions, ninth title and objectives translate through the actual bilingual path"
+  ],
+  "openings": 1024,
+  "matches": [
+    {
+      "seed": 1,
+      "actions": 9,
+      "winner": 1,
+      "stalemate": false,
+      "aiTurns": 5
+    },
+    {
+      "seed": 2,
+      "actions": 21,
+      "winner": 1,
+      "stalemate": false,
+      "aiTurns": 11
+    },
+    {
+      "seed": 3,
+      "actions": 21,
+      "winner": 0,
+      "stalemate": false,
+      "aiTurns": 10
+    },
+    {
+      "seed": 4,
+      "actions": 23,
+      "winner": 1,
+      "stalemate": true,
+      "aiTurns": 11
+    }
+  ],
+  "rulesVersion": "2026-10-18-story-hakurei-v29",
+  "scope": "Real constrained private deals, Marisa and Eirin/copy exception, negative ability/collector cases, historical faction-claim latch, three-turn AI hold and mandatory fallback, legal full three-star route, actual menu/save/intro lifecycle and four complete Medium matches. Controlled DOM; no browser pixel verification."
+}

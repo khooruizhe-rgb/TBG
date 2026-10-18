@@ -17,7 +17,7 @@ vm.runInContext(`(async()=>{
     game.startingCardIds=new Set([...used,...game.drawPile]);game.handKnowledge=game.players.map(()=>new Map());game.reserveAges=game.players.map(()=>({}));
     game.ui.pickOwnHandCards=async()=>null;game.ui.pickCell=async(t,cells)=>cells[0];game.pickUI=async(p,method,args)=>game.ui[method]?.(...args);
   }
-  for(const chapter of [1,2,3,4,5,6,7,8]){
+  for(const chapter of [1,2,3,4,5,6,7,8,9]){
     for(let seed=0;seed<32;seed++){
       const g=fresh(chapter,seed);assert(!('openingHand' in g.storyMatch));
       if(chapter===1){
@@ -42,7 +42,7 @@ vm.runInContext(`(async()=>{
   fresh();configureTutorialMatch(game);fresh();ok(game.handKnowledge.every(memory=>memory.size===0),'Leaving the tutorial does not carry its special knowledge into an ordinary match');
 
   const variants=[['sdm_flandre','sdm_patchouli','reimu','marisa','yuuka','medicine'],['mtn_sanae','mtn_aya','reimu','marisa','yuuka','medicine']];
-  for(const mode of ['current','previous','baseline',1,2,3,4,5,6,7,8]){
+  for(const mode of ['current','previous','baseline',1,2,3,4,5,6,7,8,9]){
     const observations=[];
     for(const human of variants){
       fresh(typeof mode==='number'?mode:null,44,2,'hard',typeof mode==='string'?mode:'current');arrange([human,['sdm_remilia','hourai_mokou']]);

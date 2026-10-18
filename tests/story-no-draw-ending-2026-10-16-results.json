@@ -1,6 +1,6 @@
 {
   "status": "pass",
-  "count": 113,
+  "count": 124,
   "checks": [
     "Chapter 1, actor 0: the actual turn entry ends immediately with the existing score, unopened deck and unchanged hands, without starting or requesting a draw turn",
     "Chapter 1, actor 1: the actual turn entry ends immediately with the existing score, unopened deck and unchanged hands, without starting or requesting a draw turn",
@@ -18,6 +18,8 @@
     "Chapter 7, actor 1: the actual turn entry ends immediately with the existing score, unopened deck and unchanged hands, without starting or requesting a draw turn",
     "Chapter 8, actor 0: the actual turn entry ends immediately with the existing score, unopened deck and unchanged hands, without starting or requesting a draw turn",
     "Chapter 8, actor 1: the actual turn entry ends immediately with the existing score, unopened deck and unchanged hands, without starting or requesting a draw turn",
+    "Chapter 9, actor 0: the actual turn entry ends immediately with the existing score, unopened deck and unchanged hands, without starting or requesting a draw turn",
+    "Chapter 9, actor 1: the actual turn entry ends immediately with the existing score, unopened deck and unchanged hands, without starting or requesting a draw turn",
     "A newly closed board cancels free placements, Sakuya follow-ups and scheduled dancer turns before asking for meaningless draws: {\"skipAdvance\":true}",
     "A newly closed board cancels free placements, Sakuya follow-ups and scheduled dancer turns before asking for meaningless draws: {\"extraTurns\":2}",
     "A newly closed board cancels free placements, Sakuya follow-ups and scheduled dancer turns before asking for meaningless draws: {}",
@@ -48,6 +50,7 @@
     "The actual en chapter-list description has no nested card links and retains the no-link option for later language refresh",
     "The actual en chapter-list description has no nested card links and retains the no-link option for later language refresh",
     "The actual en chapter-list description has no nested card links and retains the no-link option for later language refresh",
+    "The actual en chapter-list description has no nested card links and retains the no-link option for later language refresh",
     "The actual en chapter 1 introduction is free of inline card links",
     "The actual en chapter 1 objectives and hints have no inline card links while current-match stars remain visible",
     "The actual en chapter 2 introduction is free of inline card links",
@@ -64,6 +67,9 @@
     "The actual en chapter 7 objectives and hints have no inline card links while current-match stars remain visible",
     "The actual en chapter 8 introduction is free of inline card links",
     "The actual en chapter 8 objectives and hints have no inline card links while current-match stars remain visible",
+    "The actual en chapter 9 introduction is free of inline card links",
+    "The actual en chapter 9 objectives and hints have no inline card links while current-match stars remain visible",
+    "The actual zh-CN chapter-list description has no nested card links and retains the no-link option for later language refresh",
     "The actual zh-CN chapter-list description has no nested card links and retains the no-link option for later language refresh",
     "The actual zh-CN chapter-list description has no nested card links and retains the no-link option for later language refresh",
     "The actual zh-CN chapter-list description has no nested card links and retains the no-link option for later language refresh",
@@ -88,6 +94,9 @@
     "The actual zh-CN chapter 7 objectives and hints have no inline card links while current-match stars remain visible",
     "The actual zh-CN chapter 8 introduction is free of inline card links",
     "The actual zh-CN chapter 8 objectives and hints have no inline card links while current-match stars remain visible",
+    "The actual zh-CN chapter 9 introduction is free of inline card links",
+    "The actual zh-CN chapter 9 objectives and hints have no inline card links while current-match stars remain visible",
+    "The actual en chapter-list description has no nested card links and retains the no-link option for later language refresh",
     "The actual en chapter-list description has no nested card links and retains the no-link option for later language refresh",
     "The actual en chapter-list description has no nested card links and retains the no-link option for later language refresh",
     "The actual en chapter-list description has no nested card links and retains the no-link option for later language refresh",
@@ -112,6 +121,8 @@
     "The actual en chapter 7 objectives and hints have no inline card links while current-match stars remain visible",
     "The actual en chapter 8 introduction is free of inline card links",
     "The actual en chapter 8 objectives and hints have no inline card links while current-match stars remain visible",
+    "The actual en chapter 9 introduction is free of inline card links",
+    "The actual en chapter 9 objectives and hints have no inline card links while current-match stars remain visible",
     "Ordinary rule text retains its existing clickable card references",
     "The en early-ending win and tie messages are translated by the actual localization path",
     "The zh-CN early-ending win and tie messages are translated by the actual localization path"
@@ -260,8 +271,26 @@
         1
       ],
       "preservedDeck": 15
+    },
+    {
+      "chapter": 9,
+      "actor": 0,
+      "points": [
+        2,
+        1
+      ],
+      "preservedDeck": 15
+    },
+    {
+      "chapter": 9,
+      "actor": 1,
+      "points": [
+        2,
+        1
+      ],
+      "preservedDeck": 15
     }
   ],
-  "rulesVersion": "2026-10-18-story-sages-colors-v28",
-  "scope": "Real rule-level placements and production turn and follow-up entry points, all seven chapters and both first actors, conserved real-card positions, immediate scored stalemate without draws, unchanged deck/hands, race and Mountain goals, ties/opponent wins, normal/tutorial isolation, wasteland permissions, temporary blocks, deep-deck and held overrides, actual trade continuation, human versus AI shop scope, and heuristic independence. Actual bilingual chapter selection, introductions and match-coach renderers are checked with preserved card click handlers and language-refresh options; browser pixels are not verified."
+  "rulesVersion": "2026-10-18-story-hakurei-v29",
+  "scope": "Real rule-level placements and production turn and follow-up entry points, all nine chapters and both first actors, conserved real-card positions, immediate scored stalemate without draws, unchanged deck/hands, race and Mountain goals, ties/opponent wins, normal/tutorial isolation, wasteland permissions, temporary blocks, deep-deck and held overrides, actual trade continuation, human versus AI shop scope, and heuristic independence. Actual bilingual chapter selection, introductions and match-coach renderers are checked with preserved card click handlers and language-refresh options; browser pixels are not verified."
 }

@@ -25,7 +25,7 @@
     "Back on the first page exits to the chapter introduction and discards the unused reserved match",
     "Back within a multi-page prelude restarts the earlier exercise while retaining the same formal opening",
     "Leaving for the main menu cancels both the exercise and its unused reserved match",
-    "The other five chapters still start directly from their card introductions",
+    "The other six chapters still start directly from their card introductions",
     "The standalone Learn to Play keeps its original seven-page sequence and three-seat first exercise",
     "Skipping during an actual suspended cost payment cancels the old human turn and prevents stale settlement from touching the formal chapter",
     "A delayed exercise-completion callback cannot re-enable tutorial controls or alter the formal match after skipping",

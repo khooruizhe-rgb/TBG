@@ -24,7 +24,7 @@ handle.tagName='DIV';fold.tagName='BUTTON';coach.hidden=true;handle.append(el('t
 let expandedHeight=285,resizeObserver;
 ctx.ResizeObserver=class{constructor(fn){resizeObserver=fn;}observe(node){assert.equal(node,coach);}};
 Object.defineProperties(coach,{
- offsetWidth:{get(){const width=coach.classList.contains('paper-folded')?(coach.classList.contains('paper-compact')?190:222):coach.classList.contains('paper-compact')?300:342;return Math.min(width,window.innerWidth-24,parseFloat(coach.values.get('--objective-paper-width'))||Infinity);}},
+ offsetWidth:{get(){const width=coach.classList.contains('paper-folded')?(coach.classList.contains('paper-compact')?190:222):coach.classList.contains('paper-compact')?300:410;return Math.min(width,window.innerWidth-24,parseFloat(coach.values.get('--objective-paper-width'))||Infinity);}},
  offsetHeight:{get(){return Math.min(coach.classList.contains('paper-folded')?62:expandedHeight,parseFloat(coach.values.get('--objective-paper-room'))||window.innerHeight-24);}}
 });
 ctx.ui={};ctx.online=null;ctx.pendingHandChoice=null;ctx.pendingCellChoice=null;ctx.pendingRectChoice=null;ctx.selectedHandCard=null;ctx.humanActionResolving=false;ctx.renderAll=()=>{};ctx.ruleTextHtml=value=>String(value);ctx.runNextTurn=()=>{};ctx.closeAITestDashboard=()=>{};ctx.updateAITestControls=()=>{};

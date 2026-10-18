@@ -84,14 +84,14 @@ vm.runInContext(`(async()=>{
  ok(true,'A card in either player discard pile makes Rin available to the chapter-seven opponent');
  make(15,7);arrange({hands:[[],['palace_rin','palace_koishi','hourai_mokou']]});game.currentPlayerIdx=1;await doPlayerAction(1);evalConservation(game);
  ok(!game.isOnBoard('palace_rin')&&!game.isOnBoard('palace_koishi'),'The actual AI turn executor respects both chapter-seven filters');
- returnToMainMenu();testStorage.clear();openStoryMenu();ok(el('story-levels').children.length===8,'The menu exposes eight replayable story chapters');showStoryChapterIntro(8);
+ returnToMainMenu();testStorage.clear();openStoryMenu();ok(el('story-levels').children.length===9,'The menu exposes nine replayable story chapters');showStoryChapterIntro(8);
  ok(el('story-card-grid').children.length===4&&el('story-card-grid').children.every(node=>CARD[node.dataset.cardId].faction==='sage'&&!CARD[node.dataset.cardId].shopExpansion),'The real chapter-eight introduction shows four movable Sage cards without the fifth card');
  el('story-begin').events.click();ok(isStoryMatch()&&game.storyMatch.chapter===8&&!tutorialState&&game.players[0].hand.includes('sage_matara'),'The eighth chapter starts directly with its guaranteed opening and no extra prelude');
  game.storyMatch.progress.sage=true;game.winner=game.players[0];updateStoryProgress();assert.equal(storyBestStars(8),1);returnToMainMenu();openStoryChapter(8);game.storyMatch.progress.sameCardFaction=true;game.winner=game.players[0];updateStoryProgress();returnToMainMenu();openStoryChapter(8);game.storyMatch.progress.placeTwice=true;game.winner=game.players[0];updateStoryProgress();
  ok(storyBestStars(8)===3&&!storyChapterPerfect(8),'Different victories can collect all three stars without marking a single-match perfect clear');
  returnToMainMenu();openStoryChapter(8);game.storyMatch.progress={sage:true,sameCardFaction:true,placeTwice:true};game.winner=game.players[0];updateStoryProgress();
- ok(storyChapterPerfect(8)&&[0,1,2].map(i=>storyStarColor(8,i)).join(',')===[crownLightFor('sage_kasen').main,crownLightFor('sage_matara').main,crownLightFor('sage_yukari').main].join(',')&&el('tutorial-feedback').classList.contains('story-perfect'),'A perfect one-match clear uses the three Sage character colors in the requested order');
- el('restart-btn').events.click();ok(game===null&&storyMenuChapter===null&&el('story-levels').children.length===8,'Clearing chapter eight returns to the expanded chapter selection');
+ ok(storyChapterPerfect(8)&&[0,1,2].map(i=>storyStarColor(8,i)).join(',')===['#f39ac7',crownLightFor('sage_matara').main,crownLightFor('sage_yukari').main].join(',')&&el('tutorial-feedback').classList.contains('story-perfect'),'A perfect one-match clear uses the three Sage character colors in the requested order');
+ el('restart-btn').events.click();ok(game===null&&storyMenuChapter===9&&el('story-card-grid').children.length===2,'Clearing chapter eight opens the Hakurei introduction');
  for(let seed=1;seed<=4;seed++){
   const g=make(seed);g.players.forEach(p=>p.isAI=true);let actions=0;
   while(!g.winner&&!g.stalemateMessage&&actions<220){const p=g.currentPlayerIdx;g.beginPlayerTurn(p);g.tradedThisTurn[p]=false;if(!canAct(p)){g.endPlayerTurn(p);g.currentPlayerIdx=1-p;if(!canAct(1-p)){endStalemate();break;}continue;}const flags=await doPlayerAction(p);evalConservation(g);actions++;await afterAction(p,flags);}

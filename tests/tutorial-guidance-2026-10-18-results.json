@@ -1,0 +1,29 @@
+{
+  "status": "pass",
+  "count": 19,
+  "checks": [
+    "The first instruction marks the actual required hand card before any placement",
+    "Selecting the placement card marks its actual legal board destinations",
+    "A real successful placement removes stale destination marks and guides the enabled Next button",
+    "The shared-draw instruction marks the real draw button",
+    "During payment, only allowed hand cards flash while a disabled confirmation button stays unmarked",
+    "An enabled cost confirmation becomes a guided click target",
+    "The area instruction marks the complete two-by-two target and clears the previous payment guide",
+    "The offer instruction guides the actual Rinnosuke shopkeeper position",
+    "The trade instruction guides all three currently selectable merchandise tiles",
+    "A real exchange moves guidance from merchandise to the next lesson control",
+    "Declining an actual cost points to Retry while retaining the independent formal chapter",
+    "Skipping practice clears every marker before adopting the reserved formal match",
+    "Desktop paper positioning reserves its enlarged 410-pixel sheet inside a 1200-pixel viewport",
+    "The phone retains its original 300-pixel compact sheet and clamps it inside the viewport",
+    "Guidance and paper sizing do not write story progress or presentation preferences",
+    "Only the first Sage star changes to pink while Matara and Yukari keep their requested colors",
+    "The markers assigned by real tutorial transitions use a prominent cyan-to-light pulse without the old brown override",
+    "Reduced-motion users keep a strong static guide instead of a forced pulse",
+    "The desktop-only width and larger readable text coexist with the unchanged mobile compact sizing"
+  ],
+  "desktopWidth": 410,
+  "compactWidth": 300,
+  "kasenStar": "#f39ac7",
+  "scope": "Actual tutorial targets and real placement, declined cost and shop trade completion; Next/Retry/Skip transitions and stale-class cleanup; independent prepared chapter, paper sizing/clamping, pink star, CSS pulse and reduced motion. Controlled DOM; no browser pixel verification."
+}
