@@ -57,7 +57,7 @@ vm.runInContext(`(async()=>{
  make();arrange({board:[[0,0,'reimu'],[0,1,'marisa']]});game.checkClaims(0);
  ok(!game.storyMatch.progress.sameCardFaction,'An ordinary two-card pair with different prototypes does not satisfy the copy objective');
  make();arrange();const copies=[copy('sage_ran'),copy('sage_ran'),copy('sage_ran'),copy('sage_ran')];copies.forEach((id,i)=>game.setCardAt(Math.floor(i/2),i%2,id));game.checkClaims(0);evalConservation(game);
- ok(game.storyMatch.progress.sage&&!game.storyMatch.progress.sameCardFaction,'Four identical Sage copies still require the specified two-card faction for the copy objective');
+ ok(game.storyMatch.progress.sage&&game.storyMatch.progress.sameCardFaction,'Four identical Sage copies also satisfy the literal single-card-type faction objective');
  make();arrange({hands:[['sage_kasen'],[]]});await place('sage_kasen',0,0,0);game.moveBoardToHand(0,0,1);await place('sage_kasen',1,0,1);
  ok(!game.storyMatch.progress.placeTwice,'One placement by each seat is not two player placements');
  make();arrange({hands:[['sage_kasen'],[]],board:[[0,0,'hourai_mokou']]});await game.internalPlace('sage_kasen',0,0,0,0);game.wouldCompleteFaction('sage_kasen',1,1);
@@ -90,7 +90,7 @@ vm.runInContext(`(async()=>{
  game.storyMatch.progress.sage=true;game.winner=game.players[0];updateStoryProgress();assert.equal(storyBestStars(8),1);returnToMainMenu();openStoryChapter(8);game.storyMatch.progress.sameCardFaction=true;game.winner=game.players[0];updateStoryProgress();returnToMainMenu();openStoryChapter(8);game.storyMatch.progress.placeTwice=true;game.winner=game.players[0];updateStoryProgress();
  ok(storyBestStars(8)===3&&!storyChapterPerfect(8),'Different victories can collect all three stars without marking a single-match perfect clear');
  returnToMainMenu();openStoryChapter(8);game.storyMatch.progress={sage:true,sameCardFaction:true,placeTwice:true};game.winner=game.players[0];updateStoryProgress();
- ok(storyChapterPerfect(8)&&storyStarColor(8)===FACTIONS.sage.color&&el('tutorial-feedback').classList.contains('story-perfect'),'A perfect one-match clear uses the Sage faction color');
+ ok(storyChapterPerfect(8)&&[0,1,2].map(i=>storyStarColor(8,i)).join(',')===[crownLightFor('sage_kasen').main,crownLightFor('sage_matara').main,crownLightFor('sage_yukari').main].join(',')&&el('tutorial-feedback').classList.contains('story-perfect'),'A perfect one-match clear uses the three Sage character colors in the requested order');
  el('restart-btn').events.click();ok(game===null&&storyMenuChapter===null&&el('story-levels').children.length===8,'Clearing chapter eight returns to the expanded chapter selection');
  for(let seed=1;seed<=4;seed++){
   const g=make(seed);g.players.forEach(p=>p.isAI=true);let actions=0;

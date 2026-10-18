@@ -1,0 +1,37 @@
+{
+  "status": "pass",
+  "count": 23,
+  "checks": [
+    "An actual 2-card single-prototype hakurei faction claim satisfies the objective",
+    "An actual 2-card single-prototype sunflower faction claim satisfies the objective",
+    "An actual 2-card single-prototype heaven faction claim satisfies the objective",
+    "An actual 4-card single-prototype sage faction claim satisfies the objective",
+    "An actual 4-card single-prototype sdm faction claim satisfies the objective",
+    "An actual 4-card single-prototype palace faction claim satisfies the objective",
+    "Four matching copies claimed by the opponent do not satisfy the player objective",
+    "An incomplete four-card group never counts just because its two visible cards match",
+    "Disconnected matching cards never count as a completed faction",
+    "A normal mixed-prototype Sage claim still only earns the Sage objective",
+    "Hecatia’s real discard admission rule is honored before awarding a matching-four claim",
+    "The unchanged objective key still awards one independent star after a matching pair and a victory",
+    "Sage star positions reuse the actual Kasen, Matara and Yukari effect palettes in order",
+    "All four live star counts retain the three independent color slots, correct glyph count and hidden decorative glyphs",
+    "A real chapter-eight perfect victory renders all three separately colored star elements",
+    "The saved perfect rating preserves all three colors and an accessible count in chapter selection",
+    "Collecting stars across different wins still does not turn on the single-match perfect colors",
+    "A new match shows its own zero completed goals without inheriting saved perfect color",
+    "Other chapters retain their faction colors, gold Kourindou and original compact star glyphs",
+    "The actual Sage introduction supplies each card’s character color to its glow and renewal scan",
+    "Other introduction factions retain their own faction-colored glow and scan",
+    "The renewal wipe and character-colored scan stay synchronized at 1.8 seconds",
+    "Per-star perfect colors cascade on the real glyphs and reduced-motion presentation remains available"
+  ],
+  "rulesVersion": "2026-10-18-story-sages-colors-v28",
+  "starColors": [
+    "#ff8b73",
+    "#e7b83f",
+    "#8f70ff"
+  ],
+  "renewalMs": 1800,
+  "scope": "Real two- and four-card claims with collector, completeness, connectivity and discard-admission negatives; actual perfect/cumulative saved ratings and live coach markup; real introduction card color properties, synchronized CSS and reduced motion. Controlled DOM; no browser pixel verification."
+}

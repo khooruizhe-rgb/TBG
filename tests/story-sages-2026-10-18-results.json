@@ -12,7 +12,7 @@
     "One legal eight-point route creates a same-type pair, re-places Matara, claims the Sages and wins with all three objectives",
     "Same-prototype copy claims are credited to the actual collector only",
     "An ordinary two-card pair with different prototypes does not satisfy the copy objective",
-    "Four identical Sage copies still require the specified two-card faction for the copy objective",
+    "Four identical Sage copies also satisfy the literal single-card-type faction objective",
     "One placement by each seat is not two player placements",
     "Rejected occupied placements and speculative placement checks never increment the counter",
     "Two separately created copies do not count as placing one physical card twice",
@@ -26,7 +26,7 @@
     "The real chapter-eight introduction shows four movable Sage cards without the fifth card",
     "The eighth chapter starts directly with its guaranteed opening and no extra prelude",
     "Different victories can collect all three stars without marking a single-match perfect clear",
-    "A perfect one-match clear uses the Sage faction color",
+    "A perfect one-match clear uses the three Sage character colors in the requested order",
     "Clearing chapter eight returns to the expanded chapter selection",
     "Four complete chapter-eight Medium matches finish with conserved originals and created cards",
     "The chapter-eight title, overview, objectives and exact new Mary hint translate through the actual bilingual path"
@@ -58,6 +58,6 @@
       "stalemate": false
     }
   ],
-  "rulesVersion": "2026-10-18-story-sages-v27",
+  "rulesVersion": "2026-10-18-story-sages-colors-v28",
   "scope": "Real randomized private deals, Sage ability unlocks, Matara creation and same-prototype two-card claims, entity-specific repeated placements, legal perfect-clear route, chapter-seven voluntary AI guards, real menus and cumulative stars, four complete Medium matches. Controlled DOM; no browser pixel verification."
 }

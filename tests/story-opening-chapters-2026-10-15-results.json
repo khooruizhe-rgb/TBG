@@ -1067,6 +1067,6 @@
       }
     }
   ],
-  "rulesVersion": "2026-10-18-story-sages-v27",
+  "rulesVersion": "2026-10-18-story-sages-colors-v28",
   "scope": "Shipped story rules and AI, complete real-rule walkthroughs and controlled chapter UI lifecycle; no browser pixel verification"
 }

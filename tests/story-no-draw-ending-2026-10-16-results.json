@@ -262,6 +262,6 @@
       "preservedDeck": 15
     }
   ],
-  "rulesVersion": "2026-10-18-story-sages-v27",
+  "rulesVersion": "2026-10-18-story-sages-colors-v28",
   "scope": "Real rule-level placements and production turn and follow-up entry points, all seven chapters and both first actors, conserved real-card positions, immediate scored stalemate without draws, unchanged deck/hands, race and Mountain goals, ties/opponent wins, normal/tutorial isolation, wasteland permissions, temporary blocks, deep-deck and held overrides, actual trade continuation, human versus AI shop scope, and heuristic independence. Actual bilingual chapter selection, introductions and match-coach renderers are checked with preserved card click handlers and language-refresh options; browser pixels are not verified."
 }

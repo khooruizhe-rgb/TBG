@@ -2029,7 +2029,7 @@
   #story-panel button{cursor:pointer;border:1px solid #b39162;border-radius:6px;background:#ead5b2;color:#523721;padding:10px 14px;font:inherit;}
   #story-panel button:focus-visible{outline:3px solid #97653f;outline-offset:3px;}
   #story-levels button{text-align:left;display:grid;gap:7px;}#story-levels small{line-height:1.4;font-size:.78rem;}
-  .story-perfect .story-star-rating,.story-stars-perfect{color:var(--story-star-color);text-shadow:0 0 8px color-mix(in srgb,var(--story-star-color) 40%,transparent);}
+  .story-perfect .story-star-rating,.story-stars-perfect,.story-perfect .story-star,.story-stars-perfect .story-star{color:var(--story-star-color);text-shadow:0 0 8px color-mix(in srgb,var(--story-star-color) 40%,transparent);}
   .story-practice #tutorial-copy{display:none;}
   #story-debug-reset{margin-top:14px;font-size:.72rem!important;opacity:.8;}
   #story-card-grid{position:relative;height:clamp(220px,52dvh,430px);margin:10px 0;border:1px dashed #ad8e6b;border-radius:10px;background:radial-gradient(ellipse at center,#fff4d8,#dec9a5);}
@@ -2763,8 +2763,8 @@ body:not(:has(#game.active)):not(.title-memory-active) #app{position:relative;z-
   #story-card-grid .story-ability-card .icon-row{font-size:clamp(12px,calc(var(--story-card-width)*.105),19px);}
   #story-card-grid .story-ability-card .card-faction-badge{--card-faction-icon-size:clamp(13px,calc(var(--story-card-width)*.11),20px);}
 }
-.story-ability-card>.story-old-face{z-index:2;animation:storyCardRenew 1350ms ease-in-out var(--story-refresh-delay,0ms) both;}
-.story-ability-card>.story-refresh-scan{position:absolute;left:0;right:0;top:0;height:3px;z-index:4;background:color-mix(in srgb,var(--story-glow-color) 25%,white);box-shadow:0 0 12px 5px var(--story-glow-color),0 0 28px var(--story-glow-color);pointer-events:none;animation:storyCardScan 1350ms ease-in-out var(--story-refresh-delay,0ms) both;}
+.story-ability-card>.story-old-face{z-index:2;animation:storyCardRenew 1800ms ease-in-out var(--story-refresh-delay,0ms) both;}
+.story-ability-card>.story-refresh-scan{position:absolute;left:0;right:0;top:0;height:3px;z-index:4;background:color-mix(in srgb,var(--story-glow-color) 25%,white);box-shadow:0 0 12px 5px var(--story-glow-color),0 0 28px var(--story-glow-color);pointer-events:none;animation:storyCardScan 1800ms ease-in-out var(--story-refresh-delay,0ms) both;}
 .story-ability-card>.story-card-glow{position:absolute;inset:-5px;z-index:5;border:3px solid var(--story-glow-color);border-radius:16px;box-shadow:0 0 0 1px var(--story-glow-color),0 0 18px 6px color-mix(in srgb,var(--story-glow-color) 75%,transparent),0 0 34px 10px color-mix(in srgb,var(--story-glow-color) 50%,transparent),inset 0 0 12px color-mix(in srgb,var(--story-glow-color) 65%,white);pointer-events:none;animation:storyCardInvite 1800ms ease-in-out infinite;}
 .story-card-seen>.story-card-glow{animation:none;opacity:.2;}
 .story-ability-card.table-card-dragging>.story-card-glow{animation-play-state:paused;}
@@ -4795,7 +4795,7 @@ class Game {
           if(this.storyMatch.chapter===7 && fk==='palace')this.storyMatch.progress.palace=true;
           if(this.storyMatch.chapter===8){
             if(fk==='sage')this.storyMatch.progress.sage=true;
-            if(fac.size===2 && claimIds.length===2 && new Set(claimIds.map(cardBaseId)).size===1)
+            if(claimIds.length===fac.size && new Set(claimIds.map(cardBaseId)).size===1)
               this.storyMatch.progress.sameCardFaction=true;
           }
           if(this.storyMatch.chapter===6){
@@ -5730,7 +5730,7 @@ class Game {
 }
 
 /* 2026-10-12: creation, private newspapers and instance ability changes. */
-const REWORK_RULES_VERSION='2026-10-18-story-sages-v27';
+const REWORK_RULES_VERSION='2026-10-18-story-sages-colors-v28';
 Game.prototype.canCreateWithMatara=function(){return this.mainBoardCells().length>=4;};
 let nextCreatedCard=0,nextHiddenChoice=0;
 const COPY_PASSIVES=new Set(['sage_yukari','sage_kasen','mtn_nitori','hell_hecatia','palace_koishi']);
@@ -15415,7 +15415,7 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='aaf3f45f14bc236038c5b79dea94ebd2856284a09dec42bccb77d4b6b2745ec3';
+const AI_EVALUATION_RULES_DIGEST='6737d8022cbe177ae0365a44f0764dfed362a56cbcdcbba5dfb762ee88ad4194';
 const AI_EVALUATION_POLICY_DIGEST='1d06a8c1878f451886e6a8779a30214b2e82699d9d178e9d1bc9fed05b051df1';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
@@ -15502,7 +15502,7 @@ function evalForkSummary(report){
   return {groups,invalidPairs,conclusion,completedPairs:report.pairs.length};
 }
 function evalValidateSnapshot(snapshot){
-  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-18-story-palace-legacy-v26','2026-10-17-story-first-stalemate-v25','2026-10-17-story-sakuya-round-v24','2026-10-17-story-unlocked-shop-v23','2026-10-16-story-no-draw-stalemate-v22','2026-10-16-story-kourindou-physics-v21','2026-10-16-story-mountain-collection-v20','2026-10-16-story-private-opening-v19','2026-10-16-story-eientei-opening-v18','2026-10-16-story-stars-placement-v17','2026-10-16-story-hakugyokurou-active-mentor-v16','2026-10-15-guided-opening-scarlet-reserve-v15','2026-10-15-random-learning-renewal-v14','2026-10-15-story-opening-chapters-v13','2026-10-14-original-creation-blueprints-v12','2026-10-14-guided-final-match-v11','2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
+  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-18-story-sages-v27','2026-10-18-story-palace-legacy-v26','2026-10-17-story-first-stalemate-v25','2026-10-17-story-sakuya-round-v24','2026-10-17-story-unlocked-shop-v23','2026-10-16-story-no-draw-stalemate-v22','2026-10-16-story-kourindou-physics-v21','2026-10-16-story-mountain-collection-v20','2026-10-16-story-private-opening-v19','2026-10-16-story-eientei-opening-v18','2026-10-16-story-stars-placement-v17','2026-10-16-story-hakugyokurou-active-mentor-v16','2026-10-15-guided-opening-scarlet-reserve-v15','2026-10-15-random-learning-renewal-v14','2026-10-15-story-opening-chapters-v13','2026-10-14-original-creation-blueprints-v12','2026-10-14-guided-final-match-v11','2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
   const state=snapshot.state,n=state?.players?.length,size=snapshot.size;
   if(![4,5].includes(size) || ![2,3,4].includes(n) || !Number.isInteger(state.currentPlayerIdx) || state.currentPlayerIdx<0 || state.currentPlayerIdx>=n)throw new Error('Invalid position dimensions.');
   if(state.numPlayers!==n || state.players.some((p,i)=>p.idx!==i || !Array.isArray(p.hand) || !Array.isArray(p.discard)))throw new Error('Invalid position dimensions.');
@@ -16526,7 +16526,14 @@ function storyProgressRecords(){return Object.fromEntries(Object.entries(storyPr
 function storyClearedChapters(){return Object.keys(storyProgressRecords()).map(Number);}
 function storyBestStars(chapter){return storyProgressRecords()[chapter]??null;}
 function storyChapterPerfect(chapter){return storyProgressDetails()[chapter]?.perfect===true;}
-function storyStarColor(chapter){return chapter===6?'#d4af37':FACTIONS[STORY_CHAPTERS.find(level=>level.id===chapter)?.introduced]?.color||'#c1973e';}
+function storyStarColor(chapter,index=null){
+  if(chapter===8 && Number.isInteger(index) && index>=0 && index<3)return crownLightFor(['sage_kasen','sage_matara','sage_yukari'][index]).main;
+  return chapter===6?'#d4af37':FACTIONS[STORY_CHAPTERS.find(level=>level.id===chapter)?.introduced]?.color||'#c1973e';
+}
+function storyStarMarkup(chapter,earned){
+  if(chapter!==8)return '★'.repeat(earned)+'☆'.repeat(3-earned);
+  return [0,1,2].map(index=>`<span class="story-star" aria-hidden="true" style="--story-star-color:${storyStarColor(chapter,index)}">${index<earned?'★':'☆'}</span>`).join('');
+}
 function saveStoryStars(chapter,earned){
   if(!STORY_CHAPTERS.some(level=>level.id===chapter))return;
   const chapters=storyProgressDetails(),keys=STORY_GOAL_KEYS[chapter]||[],previous=chapters[chapter]||{cleared:true,goals:[],legacyStars:0,perfect:false};
@@ -16572,7 +16579,8 @@ function openStoryMenu(){
     const title=document.createElement('strong');title.textContent=chapter.title;
     const description=document.createElement('small');setRuleText(description,chapter.body,{cards:false});
     const status=document.createElement('small'),label=document.createElement('span'),rating=document.createElement('span'),best=storyBestStars(chapter.id);
-    setRuleText(label,cleared.includes(chapter.id)?'Cleared':'Not cleared');rating.textContent=best===null?'':' '+'★'.repeat(best)+'☆'.repeat(3-best);
+    setRuleText(label,cleared.includes(chapter.id)?'Cleared':'Not cleared');if(chapter.id===8){rating.innerHTML=best===null?'':' '+storyStarMarkup(chapter.id,best);if(best!==null)rating.setAttribute('aria-label',best+' / 3');}
+    else rating.textContent=best===null?'':' '+'★'.repeat(best)+'☆'.repeat(3-best);
     rating.className='story-star-rating'+(storyChapterPerfect(chapter.id)?' story-stars-perfect':'');rating.style.setProperty('--story-star-color',storyStarColor(chapter.id));
     status.append(label,rating);
     button.append(title,description,status);button.addEventListener('click',()=>showStoryChapterIntro(chapter.id));levels.appendChild(button);
@@ -16592,7 +16600,7 @@ function showStoryChapterIntro(chapter){
       const card=document.createElement('div');card.className='table-scatter-card table-card-moved story-ability-card';card.dataset.cardId=id;card.dataset.storyCard='true';card.dataset.angle=String([-5,3,-3,5][index%4]);
       card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',CARD[id].name);card.setAttribute('aria-describedby','story-card-instruction');card.setAttribute('aria-keyshortcuts','Enter Space I Q E ArrowLeft ArrowRight ArrowUp ArrowDown');
       card.style.setProperty('--table-angle',card.dataset.angle+'deg');card.style.setProperty('--story-refresh-delay',index*100+'ms');
-      card.style.setProperty('--story-glow-color',FACTIONS[CARD[id].faction].color);
+      card.style.setProperty('--story-glow-color',CARD[id].faction==='sage'?discardLightFor(id).main:FACTIONS[CARD[id].faction].color);
       card.innerHTML=`<div class="story-new-face">${cardBoardHtml(id)}</div><div class="story-old-face" aria-hidden="true">${cardBoardHtml(id,{wornPreview:true})}</div><span class="story-refresh-scan" aria-hidden="true"></span><span class="story-card-glow" aria-hidden="true"></span>`;
       for(const [event,handler]of [['pointerdown',onTitleCardPointerDown],['pointermove',onTitleCardPointerMove],['pointerup',onTitleCardPointerUp],['pointercancel',onTitleCardPointerCancel],['lostpointercapture',onTitleCardPointerCancel],['click',onTitleCardClick],['keydown',onTitleCardKeyDown]])card.addEventListener(event,handler);
       grid.appendChild(card);session.cards.push(card);
@@ -16672,7 +16680,7 @@ function renderStoryCoach(){
   el('tutorial-title').textContent=definition.title;setRuleText(el('tutorial-copy'),'');
   const goals=storyStarGoals(game),raceLost=state.chapter===3&&storyRaceLost(game);
   const earned=goals.length?goals.filter(goal=>goal.done).length:state.complete?3:0;
-  const heading=(goals.length?ruleTextHtml('Match objectives',{cards:false})+' ':'')+'<span class="story-star-rating" aria-label="'+earned+' / 3">'+'★'.repeat(earned)+'☆'.repeat(3-earned)+'</span>';
+  const heading=(goals.length?ruleTextHtml('Match objectives',{cards:false})+' ':'')+'<span class="story-star-rating" aria-label="'+earned+' / 3">'+storyStarMarkup(state.chapter,earned)+'</span>';
   el('tutorial-feedback').classList.toggle('story-perfect',state.complete&&earned===3);
   el('tutorial-feedback').style.setProperty('--story-star-color',storyStarColor(state.chapter));
   const hint=state.complete?'Chapter cleared.':game.winner||game.stalemateMessage?'Win the match to clear this chapter.':definition.hint|| (state.chapter===4?!progress.kaguya?'Gain four points from Kaguya’s placement, including its resulting faction claims.':!progress.hourai?'Connect four Eientei cards and claim the faction.':!progress.handTen?'Use card-gaining abilities to hold at least ten cards at once.':'Win the match to clear this chapter.':'Win to finish this introductory chapter.');

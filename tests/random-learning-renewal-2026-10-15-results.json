@@ -223,6 +223,6 @@
       }
     }
   ],
-  "rulesVersion": "2026-10-18-story-sages-v27",
+  "rulesVersion": "2026-10-18-story-sages-colors-v28",
   "scope": "512 seeded random story openings with chapter-two next-five-draw guarantees, 256 restored fixed-hand tutorial openings, 384 fixed exercise configurations with actual completions, complete production matches, bilingual Sakuya titles, real renderers and shared pointer physics in a controlled DOM; no browser pixel verification"
 }

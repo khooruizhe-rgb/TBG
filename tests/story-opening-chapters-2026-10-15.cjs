@@ -19,6 +19,7 @@ const ctx=vm.createContext({console,setTimeout,clearTimeout,self:{},assert,el,do
   setRuleText:(node,text)=>node.textContent=text,ruleTextHtml:text=>text,cardBoardHtml:id=>'<div>'+id+'</div>',openCardDetails(){},
   closeAITestDashboard(){},updateAITestControls(){},queueMobileViewport(){},waitForVisualEffects:async()=>true});
 vm.runInContext(vm.runInContext('buildAIEvaluationWorkerSource(html)',builder),ctx);
+vm.runInContext(html.slice(html.indexOf('const DEFAULT_CROWN_LIGHT'),html.indexOf('let previousCrownSoundIndex')),ctx);
 vm.runInContext(html.slice(html.indexOf('let titleCardDrag='),html.indexOf('function drawTitlePreviewCards('))+html.slice(html.indexOf('function tableCardBounds('),html.indexOf('function setTitleCardFace(')),ctx);
 vm.runInContext(html.slice(html.indexOf('/* Guided practice uses'),html.indexOf('/* CSS lays out the phone table'))+`
   let online=null,storyLoopStarts=0,ordinaryRestarts=0;

@@ -59,6 +59,7 @@ vm.runInContext(`(async()=>{
 })()`,ctx).then(result=>{
  const material=fs.readFileSync(__dirname+'/card-materials-2026-10-12.cjs','utf8'),end="const copy='created_card_910'",renderBox={module:{exports:{}},require,__dirname,console};vm.runInNewContext(material.slice(0,material.indexOf(end))+'\nmodule.exports={ctx,A,el,Element};',renderBox);const {ctx:render,A,el,Element}=renderBox.module.exports;
  Element.prototype.prepend=function(node){this.appendChild(node);this.children.unshift(this.children.pop());};
+ vm.runInContext(html.slice(html.indexOf('const DEFAULT_CROWN_LIGHT'),html.indexOf('let previousCrownSoundIndex')),render);
  vm.runInContext(html.slice(html.indexOf('let titleCardDrag='),html.indexOf('function drawTitlePreviewCards('))+html.slice(html.indexOf('function tableCardBounds('),html.indexOf('function setTitleCardFace(')),render);
  render.cancelAnimationFrame=()=>{};render.online=null;render.window.localStorage={getItem:()=>null,setItem(){}};render.ui={};render.runNextTurn=()=>{};render.closeAITestDashboard=()=>{};render.updateAITestControls=()=>{};render.queueMobileViewport=()=>{};render.renderAll=()=>{};render.window.scrollTo=()=>{};
  vm.runInContext(html.slice(html.indexOf('/* Guided practice uses'),html.indexOf('/* CSS lays out the phone table')),render);
@@ -71,7 +72,7 @@ vm.runInContext(`(async()=>{
    render.returnToMainMenu();run('showStoryChapterIntro('+chapter+');');ok(noLinks(el('story-intro').innerHTML),'The actual '+language+' chapter '+chapter+' introduction is free of inline card links');
    const count=chapter===1?0:chapter===6?3:chapter===3?2:4;assert.equal(el('story-card-grid').children.length,count);if(count)assert(el('story-card-grid').children.every(node=>node.events.click?.length===1));
    run('closeStoryMenu();openStoryChapter('+chapter+');');ok(noLinks(el('tutorial-feedback').innerHTML),'The actual '+language+' chapter '+chapter+' objectives and hints have no inline card links while current-match stars remain visible');
-   assert(el('tutorial-feedback').innerHTML.includes('☆☆☆'));if(chapter===2){run('game.storyMatch.progress.remilia=true;renderStoryCoach();');assert(noLinks(el('tutorial-feedback').innerHTML));}
+   assert(el('tutorial-feedback').innerHTML.replace(/<[^>]*>/g,'').includes('☆☆☆'));if(chapter===2){run('game.storyMatch.progress.remilia=true;renderStoryCoach();');assert(noLinks(el('tutorial-feedback').innerHTML));}
   }
  }
  A.setLanguage('en');ok(run('ruleTextHtml(CARD.sdm_remilia.name)').includes('data-inspect-card'),'Ordinary rule text retains its existing clickable card references');
