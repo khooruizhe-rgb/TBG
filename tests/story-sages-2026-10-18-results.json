@@ -1,0 +1,63 @@
+{
+  "status": "pass",
+  "count": 28,
+  "checks": [
+    "1024 private six-card deals preserve inventory, both first actors, Matara plus another Sage, top-five undealt Sages, mandatory dancers and randomized unlocked stock",
+    "The introduction contains exactly four core Sages and leaves the dancers for shop discovery",
+    "All eight objective combinations award independent stars only after a player victory",
+    "An actual four-card Sage claim satisfies the first objective",
+    "An opponent Sage claim does not earn the player a star",
+    "Real Matara creation and immediate placement claim a two-card faction from one original prototype",
+    "Yukari returns the actual Matara card, whose second successful placement earns the re-placement objective",
+    "One legal eight-point route creates a same-type pair, re-places Matara, claims the Sages and wins with all three objectives",
+    "Same-prototype copy claims are credited to the actual collector only",
+    "An ordinary two-card pair with different prototypes does not satisfy the copy objective",
+    "Four identical Sage copies still require the specified two-card faction for the copy objective",
+    "One placement by each seat is not two player placements",
+    "Rejected occupied placements and speculative placement checks never increment the counter",
+    "Two separately created copies do not count as placing one physical card twice",
+    "A genuine return to hand followed by a second player placement counts even with no active Placed skill",
+    "Granting extra turns is still just one card placement",
+    "Only the chapter-seven opponent avoids voluntary Mary and empty-discard Rin placements; human choices, forced decrees and chapter eight retain ordinary rules",
+    "The real Medium action policy chooses a different card or draws across 32 seeds instead of leaking a forbidden placement",
+    "A card in either player discard pile makes Rin available to the chapter-seven opponent",
+    "The actual AI turn executor respects both chapter-seven filters",
+    "The menu exposes eight replayable story chapters",
+    "The real chapter-eight introduction shows four movable Sage cards without the fifth card",
+    "The eighth chapter starts directly with its guaranteed opening and no extra prelude",
+    "Different victories can collect all three stars without marking a single-match perfect clear",
+    "A perfect one-match clear uses the Sage faction color",
+    "Clearing chapter eight returns to the expanded chapter selection",
+    "Four complete chapter-eight Medium matches finish with conserved originals and created cards",
+    "The chapter-eight title, overview, objectives and exact new Mary hint translate through the actual bilingual path"
+  ],
+  "openings": 1024,
+  "matches": [
+    {
+      "seed": 1,
+      "actions": 25,
+      "winner": 1,
+      "stalemate": false
+    },
+    {
+      "seed": 2,
+      "actions": 17,
+      "winner": 1,
+      "stalemate": false
+    },
+    {
+      "seed": 3,
+      "actions": 17,
+      "winner": 0,
+      "stalemate": false
+    },
+    {
+      "seed": 4,
+      "actions": 27,
+      "winner": 0,
+      "stalemate": false
+    }
+  ],
+  "rulesVersion": "2026-10-18-story-sages-v27",
+  "scope": "Real randomized private deals, Sage ability unlocks, Matara creation and same-prototype two-card claims, entity-specific repeated placements, legal perfect-clear route, chapter-seven voluntary AI guards, real menus and cumulative stars, four complete Medium matches. Controlled DOM; no browser pixel verification."
+}

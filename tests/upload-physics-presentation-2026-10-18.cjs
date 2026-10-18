@@ -60,8 +60,8 @@ for(const language of ['en','zh-CN']){
 }
 ok(true,'Aya has exactly two short sentences preserving four-card information and the subscription payment in both languages');
 A.openCardDetails('hourai_eirin');
-ok(el('card-detail-portrait').children[0].className==='detail-art-hourai_eirin'&&style('.card-detail-portrait img.detail-art-hourai_eirin','transform')==='scale(1.2)'&&style('.card-art-eirin','background-size').includes('124%'),'Eirin’s real portrait markup receives the larger detail and compact-card crop');A.closeCardDetails();
-for(const language of ['en','zh-CN'])for(const text of ['Chapter 7 · Palace of the Earth Spirits','Claim Palace of the Earth Spirits','Give an ability to a card with none','Keep Miss Mary off the board','A blank card may still have a future.']){
+ok(el('card-detail-portrait').children[0].className==='detail-art-hourai_eirin'&&style('.card-detail-portrait img.detail-art-hourai_eirin','transform')==='translateY(6%) scale(1.2)'&&style('.card-art-eirin','background-size').includes('124%')&&style('.card-art-eirin','background-position').includes('calc(100% + 6px)'),'Eirin’s real portrait markup keeps its larger scale and shifts lower in detail and compact cards');A.closeCardDetails();
+for(const language of ['en','zh-CN'])for(const text of ['Chapter 7 · Palace of the Earth Spirits','Claim Palace of the Earth Spirits','Give an ability to a card with none','Keep Miss Mary off the board','Miss Mary is quite playful in your hand. Perhaps moving her somewhere else could solve the problem?']){
  A.setLanguage(language);assert.equal(A.translateGameText(text)===text,language==='en');
 }
 ok(true,'The new chapter title, objectives and hint translate both ways');

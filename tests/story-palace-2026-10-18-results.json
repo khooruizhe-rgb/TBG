@@ -17,7 +17,7 @@
     "An opponent’s Palace claim does not satisfy the player’s claim goal",
     "A real Yuugi trade, Rin overwrite, Palace claim and two later pair claims produce a legal eight-point three-star victory without Koishi",
     "Chapter-seven stars accumulate across wins and gain Palace color only after a single-match perfect clear",
-    "Clearing the final available chapter returns to the seven-chapter selection",
+    "Clearing chapter seven now opens the Sage introduction for chapter eight",
     "The real chapter-seven introduction displays four movable renewed cards without a fifth-card explanation",
     "Four complete chapter-seven Medium matches finish with conserved cards and the full Palace rules"
   ],
@@ -39,19 +39,19 @@
     },
     {
       "seed": 3,
-      "actions": 18,
+      "actions": 27,
       "winner": 1,
-      "stalemate": false,
+      "stalemate": true,
       "koishiAppeared": true
     },
     {
       "seed": 4,
-      "actions": 18,
-      "winner": 1,
+      "actions": 27,
+      "winner": 0,
       "stalemate": false,
-      "koishiAppeared": false
+      "koishiAppeared": true
     }
   ],
-  "rulesVersion": "2026-10-18-story-palace-legacy-v26",
+  "rulesVersion": "2026-10-18-story-sages-v27",
   "scope": "Actual randomized opening deals, private information, mandatory Yuugi stock, active overwrites and draws, human/opponent and automatic Mary entries, legal placement previews, full three-star scoring route, persistence/menu/intro lifecycle and four complete normal-AI matches. Browser pixels are not measured."
 }

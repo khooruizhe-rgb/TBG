@@ -51,7 +51,7 @@ vm.runInContext(`(async()=>{
   }
   function inventory(match){return [...match.drawPile,...match.shopCards.filter(Boolean),...match.mainBoardCells().map(cell=>match.cardAt(cell.r,cell.c)),...match.players.flatMap(player=>[...player.hand,...player.discard])];}
   async function place(id,p=0,r=1,c=1){game.removeFromHand(p,id);return game.internalPlace(id,r,c,p,0);}
-  ok(STORY_CHAPTERS.length===7&&storyScarletCards().length===4,'The prototype contains seven chapters and the four core Mansion cards');
+  ok(STORY_CHAPTERS.length===8&&storyScarletCards().length===4,'The prototype contains eight chapters and the four core Mansion cards');
   for(const chapter of [1,2])for(const actor of [0,1]){
     setup(chapter,actor);const ids=inventory(game);
     ok(game.numPlayers===2&&game.currentPlayerIdx===actor&&!game.kourindouEnabled&&game.players.every(p=>p.hand.length===6),'The chapter keeps a randomized first actor, two six-card hands and a basic table: '+chapter+'/'+actor);
@@ -129,7 +129,7 @@ vm.runInContext(`(async()=>{
   setup(1);game.winner=game.players[0];ok(storyMatchComplete(game),'Chapter one requires victory without impossible ability objectives');
   ok(JSON.stringify(CARDS)===definitions,'Story chapters do not mutate global printed card definitions');
 
-  returnToMainMenu();openStoryMenu();ok(el('story-overlay').classList.contains('show')&&el('story-levels').children.length===7,'The menu offers seven replayable prototype chapters');
+  returnToMainMenu();openStoryMenu();ok(el('story-overlay').classList.contains('show')&&el('story-levels').children.length===8,'The menu offers eight replayable prototype chapters');
   showStoryChapterIntro(2);ok(el('story-card-grid').children.length===4&&!el('story-begin').hidden&&game===null,'Chapter two shows all four active core cards before a match begins');
   const starts=storyLoopStarts;el('story-begin').events.click();const old=game;
   ok(isStoryMatch()&&game.storyMatch.chapter===2&&storyLoopStarts===starts+1&&!el('story-overlay').classList.contains('show'),'Start chapter launches one real match after the card introduction');

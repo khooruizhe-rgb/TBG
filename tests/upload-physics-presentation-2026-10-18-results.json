@@ -14,82 +14,82 @@
     "A locked story card shows the exact requested None title and placeholder in both languages",
     "Giving the card Overwrite replaces the placeholder with its active skill while preserving its retrieved-card wear",
     "Aya has exactly two short sentences preserving four-card information and the subscription payment in both languages",
-    "Eirin’s real portrait markup receives the larger detail and compact-card crop",
+    "Eirin’s real portrait markup keeps its larger scale and shifts lower in detail and compact cards",
     "The new chapter title, objectives and hint translate both ways"
   ],
   "uploadedSha256": "c6e954ad94d47b6f6fb0695c06e4ad232c931c704bec35567b29b5bc7d336ab4",
   "oldTrajectory": [
     {
-      "x": 101.85143754342249,
-      "y": 83.85501891643273,
+      "x": 126.21824675320511,
+      "y": 87.31511132989573,
       "rotation": 7,
-      "vx": 366.910107810819,
-      "vy": 0
+      "vx": 366.91010781081803,
+      "vy": 3.258816397274155e-13
     },
     {
-      "x": 117.85143754342249,
-      "y": 83.85501891643273,
+      "x": 142.2182467532051,
+      "y": 87.31511132989573,
       "rotation": 7,
-      "vx": 599.197188407891,
-      "vy": 0
+      "vx": 599.1971884078903,
+      "vy": 2.063123721614631e-13
     },
     {
-      "x": 133.8514375434225,
-      "y": 83.85501891643273,
+      "x": 158.2182467532051,
+      "y": 87.31511132989573,
       "rotation": 7,
-      "vx": 746.2557912200309,
-      "vy": 0
+      "vx": 746.2557912200305,
+      "vy": 1.3061427744899493e-13
     },
     {
-      "x": 149.8514375434225,
-      "y": 83.85501891643273,
+      "x": 174.2182467532051,
+      "y": 87.31511132989573,
       "rotation": 7,
-      "vx": 839.3571062198603,
-      "vy": 0
+      "vx": 839.3571062198599,
+      "vy": 8.269057882855203e-14
     },
     {
-      "x": 165.8514375434225,
-      "y": 83.85501891643273,
+      "x": 190.2182467532051,
+      "y": 87.31511132989573,
       "rotation": 7,
-      "vx": 898.2986076957732,
-      "vy": 0
+      "vx": 898.2986076957731,
+      "vy": 5.2350569635629e-14
     }
   ],
   "newTrajectory": [
     {
-      "x": 125.52579820098583,
-      "y": 94.45387893644363,
-      "rotation": -0.20684391761208376,
-      "vx": 348.94381660740663,
-      "vy": 21.69692863937529
+      "x": 108.45791504040358,
+      "y": 97.37723511978322,
+      "rotation": -0.1910818637828019,
+      "vx": 350.5370467650718,
+      "vy": 21.35153759687765
     },
     {
-      "x": 139.44685515260613,
-      "y": 96.99868526325389,
-      "rotation": -0.7601568717388993,
-      "vx": 540.1488349210365,
-      "vy": 72.09330394611383
+      "x": 122.56327524609662,
+      "y": 99.8795772588019,
+      "rotation": -0.7022337649325734,
+      "vx": 545.3839132561425,
+      "vy": 70.90085663571168
     },
     {
-      "x": 152.43073145535402,
-      "y": 100.78198058162295,
-      "rotation": -1.5748686619581291,
-      "vx": 639.7074835439935,
-      "vy": 132.39962284424183
+      "x": 135.8143298056268,
+      "y": 103.59467751573604,
+      "rotation": -1.454879014468233,
+      "vx": 649.1486589103114,
+      "vy": 130.0808554211048
     },
     {
-      "x": 164.7720179320698,
-      "y": 105.5241841455288,
-      "rotation": -2.583415880023911,
-      "vx": 688.0012637704781,
-      "vy": 192.56851425819607
+      "x": 148.4792213944014,
+      "y": 108.24333596979616,
+      "rotation": -2.386625160089707,
+      "vx": 701.3992506248817,
+      "vy": 188.95536064410334
     },
     {
-      "x": 176.70705220035,
-      "y": 111.00319490181539,
-      "rotation": -3.732186800453047,
-      "vx": 709.2594402877544,
-      "vy": 247.5572066361113
+      "x": 160.77286340379925,
+      "y": 113.6039061971984,
+      "rotation": -3.447982821841631,
+      "vx": 725.9651206506646,
+      "vy": 242.55369140271944
     }
   ],
   "scope": "Uploaded physical kernels and exact live pointer replay, old/new trajectory distinction and travel limits, menu CSS stacking and re-grabbing, actual bilingual card detail and ability rendering, compact/detail Eirin scaling. Browser pixels are not measured."

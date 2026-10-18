@@ -58,8 +58,8 @@ let finished=false;process.once('beforeExit',()=>{if(!finished){console.error('P
  t=begin(1);prepared=t.preludeMatch;await place('mtn_sanae',0,0);click('tutorial-next');const second=state().practice;click('tutorial-back');
  ok(state().step===0&&second.cancelled&&state().preludeMatch===prepared&&!prepared.cancelled,'Back within a multi-page prelude restarts the earlier exercise while retaining the same formal opening');
  run('returnToMainMenu();');ok(prepared.cancelled&&state()===null&&el('tutorial-skip').hidden,'Leaving for the main menu cancels both the exercise and its unused reserved match');
- for(const chapter of [2,4,5,7]){begin(chapter);assert(run('isStoryMatch()'));assert(state()===null);assert(el('tutorial-skip').hidden);}
- ok(true,'The other four chapters still start directly from their card introductions');
+ for(const chapter of [2,4,5,7,8]){begin(chapter);assert(run('isStoryMatch()'));assert(state()===null);assert(el('tutorial-skip').hidden);}
+ ok(true,'The other five chapters still start directly from their card introductions');
  run('returnToMainMenu();openTutorial(0);');
  ok(state().preludeChapter===null&&state().practice.players.length===3&&el('tutorial-back').disabled&&el('tutorial-skip').hidden&&run('TUTORIALS.length')===7,'The standalone Learn to Play keeps its original seven-page sequence and three-seat first exercise');
 

@@ -58,7 +58,7 @@ vm.runInContext(`(async()=>{
  returnToMainMenu();openStoryChapter(7);game.storyMatch.progress.newAbility=true;game.storyMatch.koishiAppeared=true;game.winner=game.players[0];updateStoryProgress();assert.equal(storyBestStars(7),3);assert(!storyChapterPerfect(7));
  returnToMainMenu();openStoryChapter(7);game.storyMatch.progress={palace:true,newAbility:true};game.winner=game.players[0];updateStoryProgress();assert(storyChapterPerfect(7));assert.equal(storyStarColor(7),FACTIONS.palace.color);
  ok(el('tutorial-feedback').classList.contains('story-perfect'),'Chapter-seven stars accumulate across wins and gain Palace color only after a single-match perfect clear');
- el('restart-btn').events.click();ok(game===null&&storyMenuChapter===null&&el('story-levels').children.length===7,'Clearing the final available chapter returns to the seven-chapter selection');
+ el('restart-btn').events.click();ok(game===null&&storyMenuChapter===8&&el('story-card-grid').children.length===4,'Clearing chapter seven now opens the Sage introduction for chapter eight');
  showStoryChapterIntro(7);ok(el('story-card-grid').children.length===4&&el('story-card-grid').children.every(node=>!CARD[node.dataset.cardId].shopExpansion),'The real chapter-seven introduction displays four movable renewed cards without a fifth-card explanation');closeStoryMenu();
  for(let seed=1;seed<=4;seed++){
   const g=make(seed);g.players.forEach(p=>p.isAI=true);let actions=0;
