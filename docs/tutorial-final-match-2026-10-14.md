@@ -53,3 +53,5 @@ node tests/ai-controls-2026-10-12.cjs
 node tests/opening-restored-ai-2026-10-12.cjs
 node tests/reworked-engine-2026-10-12.cjs 6
 ```
+
+当前学习玩法在原有六页练习前加入了四页区域介绍，最终对局仍使用上述固定手牌、目标与协助 AI，共十一页。导航、交易重试与支付抬起的修正见 [教学区域与重试修正](tutorial-regions-retry-2026-10-18.md)。

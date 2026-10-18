@@ -51,7 +51,7 @@ for(const language of ['en','zh-CN']){
 }
 render.returnToMainMenu();A.setLanguage('en');run('openStoryChapter(1);');ok(run('game.aiDifficulty')==='hard'&&feedback().includes('☆☆☆')&&el('tutorial-copy').innerHTML==='','Chapter one retains its mentor base while using the same clean in-match panel');
 render.returnToMainMenu();run('openTutorial(0);');
-ok(el('tutorial-copy').innerHTML.includes('Select')&&el('tutorial-copy').innerHTML.includes('Sanae')&&!documentFixture.body.classList.contains('story-practice'),'Leaving story mode restores the original tutorial instructions and removes the story-only hiding class');
+ok(run('tutorialPage().goal')==='region'&&el('tutorial-copy').innerHTML.includes('These are your cards.')&&!documentFixture.body.classList.contains('story-practice'),'Leaving story mode restarts the new region tour and removes the story-only hiding class');
 render.returnToMainMenu();run('game=new Game(2,{},null,{aiDifficulty:"hard"});');ok(run('game.aiDifficulty')==='hard'&&!run('game.storyMatch'),'Ordinary Hard matches retain their selected difficulty');
 const chapterHints={
   2:['Try waiting a few turns before playing Remilia.','试试看先等几回合再放下蕾米莉亚吧。'],

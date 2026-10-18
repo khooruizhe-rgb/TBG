@@ -9,6 +9,7 @@ const stringify=value=>JSON.stringify(value,(key,item)=>key==='ui'?undefined:Obj
 const click=id=>el(id).events.click();
 function begin(chapter){run('returnToMainMenu();showStoryChapterIntro('+chapter+');');click('story-begin');return state();}
 function normalSnapshot(g){return stringify(g);}
+function beginActions(chapter){begin(chapter);while(run('tutorialPage().goal')==='region')click('tutorial-next');return state();}
 async function place(id,r,c){
  const t=state(),g=t.practice;g.aiTestMode=true;g.fastAITest=true;g.removeFromHand(0,id);await g.internalPlace(id,r,c,0,0);await run('finishTutorialAction(tutorialState)');
 }
@@ -23,12 +24,12 @@ let finished=false;process.once('beforeExit',()=>{if(!finished){console.error('P
   ok(match()===prepared&&normalSnapshot(prepared)===initial&&practice.cancelled&&run('isStoryMatch()')&&el('tutorial-skip').hidden&&run('storyLoopStarts')===starts+1,'Skipping chapter '+chapter+' starts exactly once and preserves the exact reserved hands, deck, score, first actor and objectives');
   assert.equal(JSON.stringify([...storage]),saved);
  }
- let t=begin(1),prepared=t.preludeMatch,initial=normalSnapshot(prepared);
+ let t=beginActions(1),prepared=t.preludeMatch,initial=normalSnapshot(prepared);
  ok(t.practice.players.length===2&&!t.practice.kourindouEnabled&&run('CARDS.every(card=>!game.cardAbilityEnabled(card.id))')&&!run('tutorialAllowsTrade()'),'The first prelude has no card abilities or shop and uses the same two-seat table');
  assert(!run('tutorialAllowsAction("draw")'));assert(!run('tutorialAllowsAction("place","marisa")'));assert(run('tutorialAllowsAction("place","mtn_sanae")'));
  click('tutorial-next');assert.equal(state(),t);await place('mtn_sanae',0,0);
  ok(t.complete&&t.practice.players[0].hand.length===0&&t.practice.drawPile.length===t.initialPileSize,'The first placement completes without silently drawing a skill card, and Next is gated by the real exercise result');
- click('tutorial-next');t=state();assert.equal(t.step,1);assert.equal(t.preludeMatch,prepared);const firstExercise=t.practice;
+ click('tutorial-next');t=state();assert.equal(t.step,5);assert.equal(t.preludeMatch,prepared);const firstExercise=t.practice;
  await place('mtn_sanae',2,2);
  ok(t.complete&&t.practice.players[0].discard.length===4&&el('tutorial-next').textContent==='Start chapter','The second first-chapter page requires an actual four-card faction claim');
  click('tutorial-next');
@@ -44,24 +45,24 @@ let finished=false;process.once('beforeExit',()=>{if(!finished){console.error('P
  ok(failed.cancelled&&state().preludeMatch===prepared&&state().practice.players[0].hand.length===2&&!state().finishedAction&&normalSnapshot(prepared)===initial,'Retry restores only the practice cards while keeping the original reserved formal match');
  click('tutorial-skip');assert.equal(match(),prepared);
  t=begin(6);prepared=t.preludeMatch;initial=normalSnapshot(prepared);
- ok(t.step===4&&run('tutorialAllowsTrade()')&&t.practice.shopCards.join(',')==='shop_rinnosuke,sdm_meiling,hourai_tewi,mtn_nitori','The trade prelude starts at the Rinnosuke offer page using only chapter-six shop cards');
+ ok(t.step===8&&run('tutorialAllowsTrade()')&&t.practice.shopCards.join(',')==='shop_rinnosuke,sdm_meiling,hourai_tewi,mtn_nitori','The trade prelude starts at the Rinnosuke offer page using only chapter-six shop cards');
  ctx.beginShopTrade();run('updateTutorialProgress();');
- ok(state()===t&&t.step===5&&run('tutorialPage().goal')==='trade'&&!el('tutorial-skip').hidden,'Opening merchandise advances to the second trade page without replacing the practice or its reserved match');
+ ok(state()===t&&t.step===9&&run('tutorialPage().goal')==='trade'&&!el('tutorial-skip').hidden,'Opening merchandise advances to the second trade page without replacing the practice or its reserved match');
  t.practice.tradeCard(0,t.practice.tutorialExercise.tradeCard,1);run('pendingCellChoice=null;updateTutorialProgress();');for(let i=0;i<8;i++)await Promise.resolve();
  ok(t.complete&&t.practice.tradedThisTurn[0]&&t.practice.currentPlayerIdx===0,'An actual shop exchange completes the trade lesson without consuming the player’s turn');
  click('tutorial-next');ok(match()===prepared&&normalSnapshot(prepared)===initial&&!prepared.tradedThisTurn.some(Boolean),'Finishing trade practice restores the reserved random stock, Sakuya hand and unused trade allowance');
- t=begin(1);await place('mtn_sanae',0,0);click('tutorial-next');prepared=state().preludeMatch;initial=normalSnapshot(prepared);click('tutorial-skip');assert.equal(match(),prepared);assert.equal(normalSnapshot(prepared),initial);
+ t=beginActions(1);await place('mtn_sanae',0,0);click('tutorial-next');prepared=state().preludeMatch;initial=normalSnapshot(prepared);click('tutorial-skip');assert.equal(match(),prepared);assert.equal(normalSnapshot(prepared),initial);
  t=begin(6);ctx.beginShopTrade();run('updateTutorialProgress();');prepared=t.preludeMatch;initial=normalSnapshot(prepared);click('tutorial-skip');
  ok(match()===prepared&&normalSnapshot(prepared)===initial,'Skipping from either multi-page lesson’s final page also preserves the formal match');
  t=begin(3);prepared=t.preludeMatch;click('tutorial-back');
  ok(match()===null&&prepared.cancelled&&run('storyMenuChapter')===3&&el('story-overlay').classList.contains('show'),'Back on the first page exits to the chapter introduction and discards the unused reserved match');
- t=begin(1);prepared=t.preludeMatch;await place('mtn_sanae',0,0);click('tutorial-next');const second=state().practice;click('tutorial-back');
- ok(state().step===0&&second.cancelled&&state().preludeMatch===prepared&&!prepared.cancelled,'Back within a multi-page prelude restarts the earlier exercise while retaining the same formal opening');
+ t=beginActions(1);prepared=t.preludeMatch;await place('mtn_sanae',0,0);click('tutorial-next');const second=state().practice;click('tutorial-back');
+ ok(state().step===4&&second.cancelled&&state().preludeMatch===prepared&&!prepared.cancelled,'Back within a multi-page prelude restarts the earlier exercise while retaining the same formal opening');
  run('returnToMainMenu();');ok(prepared.cancelled&&state()===null&&el('tutorial-skip').hidden,'Leaving for the main menu cancels both the exercise and its unused reserved match');
  for(const chapter of [2,4,5,7,8,9]){begin(chapter);assert(run('isStoryMatch()'));assert(state()===null);assert(el('tutorial-skip').hidden);}
  ok(true,'The other six chapters still start directly from their card introductions');
  run('returnToMainMenu();openTutorial(0);');
- ok(state().preludeChapter===null&&state().practice.players.length===3&&el('tutorial-back').disabled&&el('tutorial-skip').hidden&&run('TUTORIALS.length')===7,'The standalone Learn to Play keeps its original seven-page sequence and three-seat first exercise');
+ ok(state().preludeChapter===null&&state().practice.players.length===3&&el('tutorial-back').disabled&&el('tutorial-skip').hidden&&run('TUTORIALS.length')===11,'The standalone Learn to Play keeps its four region pages before its original seven-page sequence and three-seat first exercise');
 
  // A stale real cost picker must never act on the newly started formal chapter.
  let entered=false,release;const gate=new Promise(resolve=>release=resolve);ctx.costPicker=async(_title,ids)=>{entered=true;await gate;return [ids[0]];};run('ui.pickOwnHandCards=costPicker;');
@@ -72,7 +73,7 @@ let finished=false;process.once('beforeExit',()=>{if(!finished){console.error('P
  click('tutorial-skip');assert.equal(match(),prepared);release();await pending;ctx.originalAction=originalAction;run('doPlayerAction=originalAction;');
  ok(retired.cancelled&&match()===prepared&&normalSnapshot(prepared)===initial&&state()===null,'Skipping during an actual suspended cost payment cancels the old human turn and prevents stale settlement from touching the formal chapter');
  let releaseVisual;const visuals=new Promise(resolve=>releaseVisual=resolve);ctx.waitForVisualEffects=()=>visuals;
- t=begin(1);prepared=t.preludeMatch;initial=normalSnapshot(prepared);const finishing=run('finishTutorialAction(tutorialState)');click('tutorial-skip');releaseVisual(true);await finishing;
+ t=beginActions(1);prepared=t.preludeMatch;initial=normalSnapshot(prepared);const finishing=run('finishTutorialAction(tutorialState)');click('tutorial-skip');releaseVisual(true);await finishing;
  ok(match()===prepared&&normalSnapshot(prepared)===initial&&state()===null,'A delayed exercise-completion callback cannot re-enable tutorial controls or alter the formal match after skipping');ctx.waitForVisualEffects=async()=>true;
  let probes=0;ctx.onProbe=()=>probes++;run('ui.onPreludeProbe=onProbe;');t=begin(3);prepared=t.preludeMatch;click('tutorial-skip');prepared.ui.onPreludeProbe();assert.equal(probes,1);run('returnToMainMenu();');prepared.ui.onPreludeProbe();
  ok(probes===1,'Adopting the reserved formal game retains the normal owner-cancellation guards for UI effects');

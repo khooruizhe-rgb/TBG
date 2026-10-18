@@ -39,7 +39,7 @@
     "The actual zh-CN match renderer shows local objectives with reset stars and no duplicate copy",
     "The zh-CN race-failure hint describes the current objective rather than a stored star",
     "Chapter one retains its mentor base while using the same clean in-match panel",
-    "Leaving story mode restores the original tutorial instructions and removes the story-only hiding class",
+    "Leaving story mode restarts the new region tour and removes the story-only hiding class",
     "Ordinary Hard matches retain their selected difficulty",
     "Chapter 2 displays the exact requested en hint before and after objective updates, without inline links or a stored-star carryover",
     "Chapter 3 displays the exact requested en hint before and after objective updates, without inline links or a stored-star carryover",

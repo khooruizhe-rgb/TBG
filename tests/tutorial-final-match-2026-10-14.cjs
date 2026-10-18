@@ -38,7 +38,7 @@ vm.runInContext(`(async()=>{
   }
   function inventory(g){return [...g.drawPile,...g.shopCards.filter(Boolean),...g.mainBoardCells().map(cell=>g.cardAt(cell.r,cell.c)),...g.players.flatMap(p=>[...p.hand,...p.discard])];}
   const last=TUTORIALS.length-1;
-  ok(TUTORIALS[last].goal==='match'&&TUTORIALS.length===7,'The final match follows the original six tutorial pages, including both shop pages');
+  ok(TUTORIALS[last].goal==='match'&&TUTORIALS.length===11,'The final match follows four region introductions and the original six practice pages, including both shop pages');
   for(const actor of [0,1]){
     const g=setup(actor,actor),ids=inventory(g);
     ok(g.currentPlayerIdx===actor&&g.numPlayers===2&&g.players.every(p=>p.hand.length===6),'The lesson preserves either randomized first actor and deals two full opening hands: '+actor);
@@ -140,7 +140,7 @@ vm.runInContext(`(async()=>{
   ok(!game.tutorialLesson&&game.handKnowledge.every(memory=>memory.size===0),'A later ordinary match has no mentor policy or leaked opening knowledge');
   el('restart-btn').events.click();ok(normalRestarts===1,'The ordinary result-banner action still uses the normal restart');
   game=null;
-  for(const step of [0,1,2,3,4,5]){
+  for(const step of [4,5,6,7,8,9]){
     const g=new Game(3,{},null,{aiDifficulty:'hard'});configureTutorialGame(g,step);
     ok(!g.tutorialLesson&&g.numPlayers===3&&g.currentPlayerIdx===0,'Original guided fixture remains separate from the final match: page '+step);
   }

@@ -2,7 +2,7 @@
   "status": "pass",
   "count": 167,
   "checks": [
-    "The final match follows the original six tutorial pages, including both shop pages",
+    "The final match follows four region introductions and the original six practice pages, including both shop pages",
     "The lesson preserves either randomized first actor and deals two full opening hands: 0",
     "The lesson contains unique real cards and conserves its full stock: 0",
     "Only the lesson opponent knows the learner opening hand: 0",
@@ -163,12 +163,12 @@
     "The result-banner Finish action also completes and retires the lesson",
     "A later ordinary match has no mentor policy or leaked opening knowledge",
     "The ordinary result-banner action still uses the normal restart",
-    "Original guided fixture remains separate from the final match: page 0",
-    "Original guided fixture remains separate from the final match: page 1",
-    "Original guided fixture remains separate from the final match: page 2",
-    "Original guided fixture remains separate from the final match: page 3",
     "Original guided fixture remains separate from the final match: page 4",
-    "Original guided fixture remains separate from the final match: page 5"
+    "Original guided fixture remains separate from the final match: page 5",
+    "Original guided fixture remains separate from the final match: page 6",
+    "Original guided fixture remains separate from the final match: page 7",
+    "Original guided fixture remains separate from the final match: page 8",
+    "Original guided fixture remains separate from the final match: page 9"
   ],
   "walkthroughs": [
     {

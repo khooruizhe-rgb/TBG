@@ -18,7 +18,7 @@
     "The phone retains its original 300-pixel compact sheet and clamps it inside the viewport",
     "Guidance and paper sizing do not write story progress or presentation preferences",
     "Sage stars retain pink and use the requested darker gold and deep purple",
-    "The markers assigned by real tutorial transitions use a prominent cyan-to-light pulse without the old brown override",
+    "The markers assigned by real tutorial transitions use a prominent yellow pulse without the old brown override",
     "Reduced-motion users keep a strong static guide instead of a forced pulse",
     "The desktop-only width and larger readable text coexist with the unchanged mobile compact sizing"
   ],

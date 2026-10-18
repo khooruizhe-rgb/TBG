@@ -15,18 +15,18 @@
     "Only chapter two reserves Remilia and another Mansion card: tutorial",
     "Tutorial hands stay fixed while story openings sample broadly: tutorial",
     "The same seed reproduces hands, deck, shop and first actor: tutorial",
-    "Guided page 0 restores fixed lesson hands and merchandise",
-    "The real rules complete the restored fixed single-step exercise 0",
-    "Guided page 1 restores fixed lesson hands and merchandise",
-    "The real rules complete the restored fixed single-step exercise 1",
-    "Guided page 2 restores fixed lesson hands and merchandise",
-    "The real rules complete the restored fixed single-step exercise 2",
-    "Guided page 3 restores fixed lesson hands and merchandise",
-    "The real rules complete the restored fixed single-step exercise 3",
     "Guided page 4 restores fixed lesson hands and merchandise",
     "The real rules complete the restored fixed single-step exercise 4",
     "Guided page 5 restores fixed lesson hands and merchandise",
     "The real rules complete the restored fixed single-step exercise 5",
+    "Guided page 6 restores fixed lesson hands and merchandise",
+    "The real rules complete the restored fixed single-step exercise 6",
+    "Guided page 7 restores fixed lesson hands and merchandise",
+    "The real rules complete the restored fixed single-step exercise 7",
+    "Guided page 8 restores fixed lesson hands and merchandise",
+    "The real rules complete the restored fixed single-step exercise 8",
+    "Guided page 9 restores fixed lesson hands and merchandise",
+    "The real rules complete the restored fixed single-step exercise 9",
     "Conditional dealing terminates even under a constant RNG",
     "The story AI can support a faction after its cards are legitimately revealed",
     "Story mentor planning preserves the board, hands, knowledge and statistics",
@@ -140,30 +140,6 @@
   },
   "exerciseSamples": [
     {
-      "step": 0,
-      "seeds": 64,
-      "uniqueHands": 1,
-      "uniqueShopStocks": 1
-    },
-    {
-      "step": 1,
-      "seeds": 64,
-      "uniqueHands": 1,
-      "uniqueShopStocks": 1
-    },
-    {
-      "step": 2,
-      "seeds": 64,
-      "uniqueHands": 1,
-      "uniqueShopStocks": 1
-    },
-    {
-      "step": 3,
-      "seeds": 64,
-      "uniqueHands": 1,
-      "uniqueShopStocks": 1
-    },
-    {
       "step": 4,
       "seeds": 64,
       "uniqueHands": 1,
@@ -171,6 +147,30 @@
     },
     {
       "step": 5,
+      "seeds": 64,
+      "uniqueHands": 1,
+      "uniqueShopStocks": 1
+    },
+    {
+      "step": 6,
+      "seeds": 64,
+      "uniqueHands": 1,
+      "uniqueShopStocks": 1
+    },
+    {
+      "step": 7,
+      "seeds": 64,
+      "uniqueHands": 1,
+      "uniqueShopStocks": 1
+    },
+    {
+      "step": 8,
+      "seeds": 64,
+      "uniqueHands": 1,
+      "uniqueShopStocks": 1
+    },
+    {
+      "step": 9,
       "seeds": 64,
       "uniqueHands": 1,
       "uniqueShopStocks": 1

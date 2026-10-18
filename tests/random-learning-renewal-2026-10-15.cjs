@@ -53,7 +53,7 @@ vm.runInContext(html.slice(html.indexOf('const TUTORIALS='),html.indexOf('let tu
     for(let step=0;step<6;step++){
       const hands=new Set(),shops=new Set();
       for(let seed=0;seed<64;seed++){
-        evalResetTokens();evalSetSeed('exercise-'+step+'-'+seed);SIZE=4;game=new Game(3,{},null,{aiOnly:true,fastTest:true});configureTutorialGame(game,step);
+        evalResetTokens();evalSetSeed('exercise-'+step+'-'+seed);SIZE=4;game=new Game(3,{},null,{aiOnly:true,fastTest:true});configureTutorialGame(game,step+4);
         const ids=stock(game),hand=game.players[0].hand;assert.equal(ids.length,new Set(ids).size);assert.equal(ids.length,game.startingCardIds.size);
         assert(game.players.every(player=>player.hand.every(id=>!CARD[id].token&&!CARD[id].shopkeeper&&!CARD[id].shopExpansion)));
         if(step<2)assert(hand.includes('mtn_sanae'));
@@ -63,15 +63,15 @@ vm.runInContext(html.slice(html.indexOf('const TUTORIALS='),html.indexOf('let tu
         if(step>=4){assert.equal(hand.length,2);assert(hand.includes(game.tutorialExercise.tradeCard));assert(!CARD[game.tutorialExercise.tradeCard].override);}
         hands.add(hand.slice().sort().join(','));shops.add(game.shopCards.slice(1).sort().join(','));
       }
-      ok(hands.size===1&&shops.size===1,'Guided page '+step+' restores fixed lesson hands and merchandise');
+      ok(hands.size===1&&shops.size===1,'Guided page '+(step+4)+' restores fixed lesson hands and merchandise');
       const match=game,initialPileSize=game.drawPile.length;game.players[0].isAI=false;
       game.ui={pickOwnHandCards:async(t,ids,options)=>ids.slice(0,options.maxCount),pickRectByDrag:async()=>game.rectCells({r:0,c:0},2,{r:1,c:1})};game.pickUI=async(p,method,args)=>game.ui[method](...args);
       if(step<2){game.removeFromHand(0,'mtn_sanae');await game.internalPlace('mtn_sanae',2,2,0,0);}
       else if(step===2)game.drawForEveryone(0);
       else if(step===3){game.removeFromHand(0,'heaven_iku');await game.internalPlace('heaven_iku',3,3,0,0);}
       else{const offered=game.tutorialExercise.tradeCard;assert(game.tradeCard(0,offered,game.tradeCells()[0]));}
-      ok(tutorialObjectiveMet({practice:match,step:step===4?5:step,initialPileSize}),'The real rules complete the restored fixed single-step exercise '+step);
-      evalConservation(match);exerciseSamples.push({step,seeds:64,uniqueHands:hands.size,uniqueShopStocks:shops.size});
+      ok(tutorialObjectiveMet({practice:match,step:step===4?9:step+4,initialPileSize}),'The real rules complete the restored fixed single-step exercise '+(step+4));
+      evalConservation(match);exerciseSamples.push({step:step+4,seeds:64,uniqueHands:hands.size,uniqueShopStocks:shops.size});
     }
     const rng=Math.random,constant=opening(2,'constant').match;Math.random=()=>0;
     try{configureStoryMatch(constant,2);ok(constant.players[0].hand.includes('sdm_remilia')&&constant.players[0].hand.some(id=>id!=='sdm_remilia'&&CARD[id].faction==='sdm'),'Conditional dealing terminates even under a constant RNG');}finally{Math.random=rng;}

@@ -568,7 +568,7 @@
   .hand-card{
     width:92px; min-height:118px; background:var(--card-face); color:var(--card-ink); border-radius:8px;
     padding:6px 5px; font-size:0.68rem; line-height:1.15; cursor:grab; border:2px solid transparent;
-    display:flex; flex-direction:column; justify-content:space-between; transition: transform .12s ease, opacity .12s ease;
+    display:flex; flex-direction:column; justify-content:space-between; transition: transform .12s ease, translate .14s ease, opacity .12s ease;
   }
   .hand-card:hover{ transform:translateY(-4px); }
   .hand-card.selected{ border-color:var(--faction-edge,var(--gold)); box-shadow:0 0 0 1px var(--gold),0 0 14px rgba(232,200,116,0.6); }
@@ -576,6 +576,10 @@
   #hand-area.choosing-card .hand-card.hand-choice-eligible{ cursor:pointer; }
   #hand-area.choosing-card .hand-card.hand-choice-eligible:hover{ transform:translateY(-7px); }
   #hand-area.choosing-card .hand-card.hand-choice-ineligible{ opacity:.35; cursor:default; }
+  #hand-area.choosing-card .hand-card.hand-choice-eligible.selected{position:relative;translate:0 -12px;z-index:2;}
+  #hand-area.choosing-card .hand-card.hand-choice-eligible.selected:hover{transform:none;}
+  #hand-area.choosing-card #hand{padding-top:14px;}
+  @media(prefers-reduced-motion:reduce){#hand-area.choosing-card .hand-card{transition:none;}}
   #hand-choice-bar{
     display:none; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;
     margin:8px 0 12px; padding:10px 12px; border:1px solid var(--gold);
@@ -2041,9 +2045,9 @@
   #story-panel [hidden]{display:none!important;}
   @media(max-width:600px){#story-panel{padding:15px;}#story-levels{grid-template-columns:1fr;}#story-card-grid{height:50dvh;min-height:240px;}}
   @media(orientation:landscape) and (max-height:600px){#story-card-grid{height:48dvh;min-height:160px;}}
-  .tutorial-focus{outline-width:3px!important;outline-style:solid!important;outline-color:#4fe6ff;outline-offset:3px;box-shadow:0 0 16px #4fe6ff99;animation:tutorialGuidePulse 1.1s ease-in-out infinite!important;}
-  @keyframes tutorialGuidePulse{0%,100%{outline-color:#36bfdc;box-shadow:0 0 0 2px #216e9588,0 0 12px #4fe6ff77;}50%{outline-color:#fff3a0;box-shadow:0 0 0 4px #4fe6ffbb,0 0 24px 7px #6fe9ffbb;}}
-  @media(prefers-reduced-motion:reduce){.tutorial-focus{animation:none!important;outline-color:#4fe6ff!important;box-shadow:0 0 0 2px #216e9599,0 0 18px #4fe6ffaa!important;}}
+  .tutorial-focus{outline-width:3px!important;outline-style:solid!important;outline-color:#ffdf42;outline-offset:3px;box-shadow:0 0 16px #ffdf42aa;animation:tutorialGuidePulse 1.1s ease-in-out infinite!important;}
+  @keyframes tutorialGuidePulse{0%,100%{outline-color:#e5bf12;box-shadow:0 0 0 2px #b9930088,0 0 12px #ffdf4288;}50%{outline-color:#fff3a0;box-shadow:0 0 0 4px #ffdf42cc,0 0 24px 7px #ffe975cc;}}
+  @media(prefers-reduced-motion:reduce){.tutorial-focus{animation:none!important;outline-color:#ffdf42!important;box-shadow:0 0 0 2px #b9930099,0 0 18px #ffdf42bb!important;}}
   body.tutorial-practice #game.active{display:flex;flex-direction:column;min-height:0;}
   body.tutorial-practice .layout{flex:1;min-height:0;height:auto;}
   body.tutorial-practice #playtest-toggle-wrap{display:none;}
@@ -8400,6 +8404,13 @@ const ZH_TEXT={
   "Step inside": "走进香霖堂",
   "Try a trade": "尝试交易",
   "Back": "退出",
+  'Previous':'上一步',
+  'The board':'棋盘',
+  'These are your cards. In the placement lessons, select or drag one onto the board; double-click or double-tap a card to read its details.':'这里是你的手牌。进入放置教学后，可以选牌或将牌拖到棋盘上；双击或双点卡牌可查看详情。',
+  'New cards come from this face-down pile. Draw for Everyone uses your turn and gives one card to each player whose hand has room.':'新卡牌来自这叠面朝下的抽牌堆。为所有人抽牌会消耗你的回合，并让手牌未满的每位玩家各抽一张。',
+  'Your discard points appear beside your seat. Cards here score points instead of staying playable; reach 7 points to win.':'你的弃牌得分显示在自己的座位旁。进入弃牌堆的卡会计分，不能直接当作手牌使用；达到七分即可获胜。',
+  'Cards are placed on this board. The other seats show whose turn it is and how many cards and points your opponents have.':'卡牌会放置在这张棋盘上。其他座位会显示当前行动者，以及对手的手牌数量和得分。',
+  'Look at the highlighted region, then choose Next.':'认识发光区域后，点击下一步继续。',
   "Retry": "重试",
   "Next": "下一步",
   "Finish": "完成",
@@ -10644,8 +10655,8 @@ const ui = {
       bar.classList.add('show');
       el('hand-area').classList.add('choosing-card');
       document.addEventListener('keydown',onEscape);
-      renderHand();
       updateHandChoiceActions();
+      renderHand();
       el('hand-area').scrollIntoView({block:'nearest',behavior:'smooth'});
     });
   },
@@ -14614,16 +14625,17 @@ function cancelHandSelection(){
   syncHandSelection();
   renderBoard();
   renderStatus();
+  updateTutorialProgress();
 }
 
-/* Clicking anywhere outside the board/hand/cancel-button while a placement is pending cancels it.
+/* Clicking anywhere outside the board/hand/cancel-button or tutorial controls while a placement is pending cancels it.
    The composed path also handles clicks on nested card and target elements. */
 document.addEventListener('click', (e) => {
   if(!pendingCellChoice || !pendingCellChoice.cancellable) return;
   const path = typeof e.composedPath === 'function' ? e.composedPath() : [e.target];
   for(const node of path){
     if(!node || node.nodeType !== 1) continue;
-    if(node.id === 'cancel-placement-btn') return;
+    if(node.id === 'cancel-placement-btn' || node.id==='tutorial-coach') return;
     if(node.id === 'hand' || node.id === 'board' || node.id==='kourindou') return;
     if(node.classList && node.classList.contains('selectable')) return;
   }
@@ -16343,6 +16355,10 @@ window.addEventListener('scroll',positionRinnosukeBubble,{passive:true});
 
 /* Guided practice uses the same Game, table, hand, choices, and effects as a match. */
 const TUTORIALS=[
+  {title:'Your Hand',body:'These are your cards. In the placement lessons, select or drag one onto the board; double-click or double-tap a card to read its details.',goal:'region',region:'hand'},
+  {title:'Draw pile',body:'New cards come from this face-down pile. Draw for Everyone uses your turn and gives one card to each player whose hand has room.',goal:'region',region:'draw'},
+  {title:'Discard pile',body:'Your discard points appear beside your seat. Cards here score points instead of staying playable; reach 7 points to win.',goal:'region',region:'discard'},
+  {title:'The board',body:'Cards are placed on this board. The other seats show whose turn it is and how many cards and points your opponents have.',goal:'region',region:'board'},
   {title:'Place a card',body:'Select Sanae Kochiya in your hand, then click an empty board tile. You can also drag her there. Her Placed ability draws a card.',goal:'place',success:'Sanae is on the board, and her ability added a card to your hand.'},
   {title:'Connect a faction',body:'Place Sanae Kochiya beside the three Youkai Mountain cards. Four connected cards are claimed into your discard pile. Reach 7 discard points to win. Connections use the four orthogonal directions.',goal:'claim',success:'You claimed all four cards and gained 4 discard points.'},
   {title:'Draw for everyone',body:'Press Draw for Everyone instead of placing a card. Players with fewer than 7 cards draw one each. A full hand skips the draw; abilities can still give you more cards.',goal:'draw',success:'You and AI 2 drew a card. AI 1 already had 7 cards, so their hand stayed full.'},
@@ -16352,14 +16368,14 @@ const TUTORIALS=[
   {title:'Win your first match',body:'Beat one AI in a full match. Claim a four-card faction, claim a two-card faction, and gain a point with an ability in the same match. Try the four-card faction first, then the pair, and finish with a scoring ability.',goal:'match',success:'You completed all three goals and won the match. Learn to Play is complete.'}
 ];
 const STORY_PRELUDES={
-  1:{steps:[0,1],pages:{
-    0:{title:'Place a card',body:'Select Sanae Kochiya in your hand, then click an empty tile or drag her onto it. Cards have no abilities in this practice.',goal:'place',success:'You placed a card. Next, try collecting a faction.'},
-    1:{title:'Connect a faction',body:'Place Sanae Kochiya beside the three highlighted Youkai Mountain cards. Four orthogonally connected cards go to your discard pile and score four points.',goal:'claim',success:'You collected the faction and scored four points.'}
+  1:{steps:[0,1,2,3,4,5],pages:{
+    4:{title:'Place a card',body:'Select Sanae Kochiya in your hand, then click an empty tile or drag her onto it. Cards have no abilities in this practice.',goal:'place',success:'You placed a card. Next, try collecting a faction.'},
+    5:{title:'Connect a faction',body:'Place Sanae Kochiya beside the three highlighted Youkai Mountain cards. Four orthogonally connected cards go to your discard pile and score four points.',goal:'claim',success:'You collected the faction and scored four points.'}
   }},
-  3:{steps:[3],pages:{
-    3:{title:'Pay an ability cost',body:'Place Yuyuko Saigyouji beside the highlighted card. Cost N lets you choose how many cards to pay; here, select your other hand card and confirm. Paid cards return to the draw pile.',goal:'cost',cardId:'haku_yuyuko',success:'You paid one card, and Yuyuko sent the adjacent card to your discard pile.'}
+  3:{steps:[7],pages:{
+    7:{title:'Pay an ability cost',body:'Place Yuyuko Saigyouji beside the highlighted card. Cost N lets you choose how many cards to pay; here, select your other hand card and confirm. Paid cards return to the draw pile.',goal:'cost',cardId:'haku_yuyuko',success:'You paid one card, and Yuyuko sent the adjacent card to your discard pile.'}
   }},
-  6:{steps:[4,5],pages:{}}
+  6:{steps:[8,9],pages:{}}
 };
 function tutorialPage(t=tutorialState){return STORY_PRELUDES[t?.preludeChapter]?.pages[t.step]||TUTORIALS[t?.step];}
 let tutorialState=null,tutorialReturnFocus=null;
@@ -16465,7 +16481,12 @@ function configureTutorialGame(practice,step,preludeChapter=null){
   const goal=tutorialPage({step,preludeChapter}).goal;
   if(goal==='match'){configureTutorialMatch(practice);return;}
   if(preludeChapter)configureStoryMatch(practice,preludeChapter);
-  let board=[],hand=['mtn_sanae'],opponents=[[],[]];
+  let board=[],hand=['mtn_sanae'],opponents=[[],[]],discards=[[],[],[]];
+  if(goal==='region'){
+    hand=['mtn_sanae','hourai_mokou','haku_youmu','palace_rin','sage_ran','hell_clownpiece'];
+    board=[[1,1,'mtn_kanako'],[1,2,'mtn_suwako']];
+    opponents=[['sdm_patchouli','sdm_sakuya'],['mtn_aya']];discards[0]=['reimu','marisa'];
+  }
   if(goal==='claim') board=[[1,1,'mtn_kanako'],[1,2,'mtn_suwako'],[2,1,'mtn_aya']];
   if(goal==='draw'){
     hand=['hourai_mokou','hell_clownpiece','haku_youmu','sage_ran','mtn_sanae','palace_rin'];
@@ -16483,9 +16504,9 @@ function configureTutorialGame(practice,step,preludeChapter=null){
   practice.wasteland=Array.from({length:SIZE},()=>Array(SIZE).fill(false));
   for(const [r,c,id] of board) practice.setCardAt(r,c,id);
   practice.players.forEach((p,i)=>{
-    p.hand=(i===0?hand:opponents[i-1]).slice();p.discard=[];
+    p.hand=(i===0?hand:opponents[i-1]).slice();p.discard=discards[i].slice();
   });
-  const used=new Set([...board.map(cell=>cell[2]),...practice.players.flatMap(p=>p.hand),...practice.shopCards]);
+  const used=new Set([...board.map(cell=>cell[2]),...practice.players.flatMap(p=>[...p.hand,...p.discard]),...practice.shopCards]);
   practice.drawPile=CARDS.filter(card=>!card.token && !card.shopkeeper && !card.shopExpansion && !used.has(card.id)).map(card=>card.id);
   practice.startingCardIds=new Set([...used,...practice.drawPile]);
   practice.handKnowledge=practice.players.map(()=>new Map());practice.reserveAges=practice.players.map(()=>({}));
@@ -16512,6 +16533,7 @@ function configureTutorialMatch(practice){
 }
 function tutorialObjectiveMet(t){
   const g=t.practice,goal=tutorialPage(t).goal;
+  if(goal==='region')return true;
   if(goal==='match')return g.winner?.idx===g.tutorialLesson?.humanSeat
     && Object.values(g.tutorialLesson.progress).every(Boolean);
   if(goal==='place') return t.preludeChapter===1?g.isOnBoard('mtn_sanae')&&g.players[0].hand.length===g.tutorialExercise.initialHandSize-1
@@ -16552,6 +16574,7 @@ async function finishTutorialAction(t){
   renderTutorial();
 }
 async function runTutorialTurn(t){
+  if(tutorialPage(t).goal==='region')return;
   if(tutorialPage(t).goal==='match'){runNextTurn();return;}
   await Promise.race([doPlayerAction(0),t.cancelled]);
   if(tutorialState===t && game===t.practice && !t.practice.cancelled) await finishTutorialAction(t);
@@ -16577,13 +16600,14 @@ function openTutorial(step=0,{preludeChapter=null,preludeMatch=null}={}){
   }
   game=t.practice=new Game(tutorialPage(t).goal==='match'||preludeChapter?2:3,practiceUI,null,{aiDifficulty:'hard'});
   configureTutorialGame(game,step,preludeChapter);
-  t.initialPileSize=game.drawPile.length;
+  t.initialPileSize=game.drawPile.length;t.complete=tutorialPage(t).goal==='region';
   el('setup').style.display='none';el('game').classList.add('active');
   document.body.classList.add('tutorial-practice');el('tutorial-coach').hidden=false;
   dockTutorialCoach(document.body.classList.contains('game-mobile'));
   renderTutorial();
-  runTutorialTurn(t); // The real human turn installs all normal click and drag controls.
-  if(tutorialPage(t).goal==='trade') beginShopTrade(game.tutorialExercise.tradeCard);
+  if(tutorialPage(t).goal==='region')renderAll(true);
+  else runTutorialTurn(t); // The real human turn installs all normal click and drag controls.
+  if(tutorialPage(t).goal==='trade'&&!pendingCellChoice) beginShopTrade(game.tutorialExercise.tradeCard);
   window.scrollTo(0,0);queueMobileViewport();
 }
 function tutorialStep(delta){
@@ -16612,6 +16636,10 @@ function updateTutorialProgress(){
     t.step++;t.feedback='';renderTutorial();
   }
   if(tutorialPage(t).goal==='trade' && !t.complete && !t.finishedAction
+    && !t.practice.tradedThisTurn[0] && !pendingCellChoice && !pendingHandChoice && !pendingRectChoice && localTurnReady()){
+    beginShopTrade(t.practice.tutorialExercise.tradeCard);return;
+  }
+  if(tutorialPage(t).goal==='trade' && !t.complete && !t.finishedAction
     && t.practice.tradedThisTurn[0] && !humanActionResolving){
     finishTutorialAction(t);
   }
@@ -16621,6 +16649,14 @@ function highlightTutorialTargets(){
   document.querySelectorAll('.tutorial-focus').forEach(node=>node.classList.remove('tutorial-focus'));
   if(!isTutorialPractice())return;
   const t=tutorialState,goal=tutorialPage(t).goal,mark=node=>node?.classList.add('tutorial-focus');
+  if(goal==='region'){
+    const region=tutorialPage(t).region,seats=[...el('seats').children];
+    if(region==='hand')mark(el('hand-area'));
+    if(region==='draw')mark(el('draw-pile'));
+    if(region==='discard')mark(seats.find(node=>Number(node.dataset.playerIdx)===0));
+    if(region==='board'){mark(el('board'));for(const seat of seats)if(Number(seat.dataset.playerIdx)!==0)mark(seat);}
+    mark(el('tutorial-next'));return;
+  }
   if(t.complete){mark(el('tutorial-next'));return;}
   if(t.finishedAction){mark(el('tutorial-retry'));return;}
   if(goal==='match')return;
@@ -16662,9 +16698,9 @@ function renderTutorial(){
       :'Finish the match by reaching 7 discard points.';
     el('tutorial-feedback').innerHTML=`<span class="tutorial-checklist">${goals.map(([label,done])=>`<span class="tutorial-goal${done?' done':''}">${done?'✓':'○'} ${ruleTextHtml(label)}</span>`).join('')}</span>${ruleTextHtml(hint)}`;
     setRuleText(el('restart-btn'),t.complete?'Finish':'Retry');
-  }else setRuleText(el('tutorial-feedback'),t.feedback || (t.preludeChapter?'This is a separate practice. You can skip it; your chapter cards and objectives stay unchanged.':'Try it on the table. Your match settings stay unchanged.'));
+  }else setRuleText(el('tutorial-feedback'),t.feedback || (page.goal==='region'?'Look at the highlighted region, then choose Next.':t.preludeChapter?'This is a separate practice. You can skip it; your chapter cards and objectives stay unchanged.':'Try it on the table. Your match settings stay unchanged.'));
   el('tutorial-skip').hidden=!t.preludeChapter;
-  el('tutorial-back').disabled=!t.preludeChapter&&t.step===0;
+  el('tutorial-back').disabled=!t.preludeChapter&&t.step===0;setRuleText(el('tutorial-back'),'Previous');
   el('tutorial-next').disabled=!t.complete;
   setRuleText(el('tutorial-next'),steps?(t.step===steps.at(-1)?'Start chapter':'Next'):t.step===TUTORIALS.length-1?'Finish':'Next');
   highlightTutorialTargets();
