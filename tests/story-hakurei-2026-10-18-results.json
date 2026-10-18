@@ -23,7 +23,7 @@
     "Holding yields when shared drawing and other placements are impossible, preserving the rule that a legal action cannot be skipped",
     "The early-Hakurei holding rule does not affect other chapters",
     "Real Satori theft, Marisa’s Sage blast, a Hakurei pair and a Mansion claim produce a legal seven-point three-star victory",
-    "The menu includes eleven replayable chapters",
+    "The menu includes twelve replayable chapters",
     "Chapters eight and nine render rules and three goals in selection and card introductions, then their separate flavor hints on the live objective paper",
     "The actual new introduction displays two movable Hakurei cards",
     "The new introduction starts the real private constrained deal without an extra prelude",
@@ -64,6 +64,6 @@
       "aiTurns": 11
     }
   ],
-  "rulesVersion": "2026-10-18-story-hell-eiki-v31",
+  "rulesVersion": "2026-10-18-story-heaven-v32",
   "scope": "Real constrained private deals, Marisa and Eirin/copy exception, negative ability/collector cases, historical faction-claim latch, three-turn AI hold and mandatory fallback, legal full three-star route, actual menu/save/intro lifecycle and four complete Medium matches. Controlled DOM; no browser pixel verification."
 }

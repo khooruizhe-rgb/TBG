@@ -39,12 +39,12 @@
     "Ordinary Hard AI never calls the story mentor: an isolated Youmu is reserved, while a held Yuyuko pairing can justify an opening Youmu",
     "Chapter three alone enters the mentor and explicitly chooses Youmu without a pairing",
     "Leaving the actual story session and constructing an ordinary match removes both the teaching and scripted-Hecatia state",
-    "The story menu offers eleven replayable chapters",
+    "The story menu offers twelve replayable chapters",
     "The introduction displays four movable active Hell cards and leaves Kutaka to be discovered in the shop",
     "The introduction starts a real private six-card Hell match with the guaranteed shop card and requested separate hint",
     "Separate winning matches accumulate Hell’s three goals without inventing a one-match perfect clear",
     "A legal route clears eight tiles, trades for and triggers Kutaka, claims Hecatia with three Hell cards for six points, then uses Komachi’s free action for a seventh point and a perfect save",
-    "The final Hell clear returns to the complete chapter list",
+    "A Hell clear advances to the two-card Heaven introduction",
     "Retry resets live Hell goals and opening state while preserving the saved perfect clear",
     "Four complete Medium Hell matches finish with conserved cards; every available unconstrained first AI action places Hecatia",
     "Actual bilingual rendering covers the Hell overview, exact hint, three goals, complete Eiki skill and new draw log"
@@ -177,6 +177,6 @@
       }
     }
   ],
-  "rulesVersion": "2026-10-18-story-hell-eiki-v31",
+  "rulesVersion": "2026-10-18-story-heaven-v32",
   "scope": "Actual Eiki cost, tied/protected returns, matching draws, empty deck, self-return, hand limit and paid double-copy rules; constrained private Hell openings, actual mandatory AI action and block/forced exceptions, real faction/terrain/Kutaka objectives and negatives, ordinary-vs-mentor dispatch, actual shop-to-seven-point perfect route and persistence, four complete Medium matches. Controlled DOM; no browser pixel verification."
 }

@@ -1,6 +1,6 @@
 {
   "status": "pass",
-  "count": 62,
+  "count": 64,
   "checks": [
     "Chapter 1 shares only the first chapter’s six opening cards; later chapters keep private starts and no hidden opening list across 32 actual deals",
     "Chapter 2 shares only the first chapter’s six opening cards; later chapters keep private starts and no hidden opening list across 32 actual deals",
@@ -13,6 +13,7 @@
     "Chapter 9 shares only the first chapter’s six opening cards; later chapters keep private starts and no hidden opening list across 32 actual deals",
     "Chapter 10 shares only the first chapter’s six opening cards; later chapters keep private starts and no hidden opening list across 32 actual deals",
     "Chapter 11 shares only the first chapter’s six opening cards; later chapters keep private starts and no hidden opening list across 32 actual deals",
+    "Chapter 12 shares only the first chapter’s six opening cards; later chapters keep private starts and no hidden opening list across 32 actual deals",
     "Ordinary 2-player easy/current openings expose only each AI’s own hand across eight deals",
     "Ordinary 2-player easy/previous openings expose only each AI’s own hand across eight deals",
     "Ordinary 2-player easy/baseline openings expose only each AI’s own hand across eight deals",
@@ -56,6 +57,7 @@
     "Policy 9 makes the same decision and Remilia estimate when two unrevealed Mansion cards are exchanged with hidden deck cards",
     "Policy 10 makes the same decision and Remilia estimate when two unrevealed Mansion cards are exchanged with hidden deck cards",
     "Policy 11 makes the same decision and Remilia estimate when two unrevealed Mansion cards are exchanged with hidden deck cards",
+    "Policy 12 makes the same decision and Remilia estimate when two unrevealed Mansion cards are exchanged with hidden deck cards",
     "Easy story AI does not enable hard clue planning; ordinary hard AI still values a legitimately revealed hand exactly",
     "Shared drawing reveals no opponent starting cards or the opponent’s new draw",
     "The real Aya skill still records exactly four revealed opponent cards and creates a newspaper",
@@ -65,7 +67,7 @@
     "A revealed card leaving the hand clears its remembered location",
     "A complete ordinary match ends without runtime errors, conservation failures or a turn-limit abort under the private-hand estimate"
   ],
-  "storyOpenings": 352,
+  "storyOpenings": 384,
   "ordinaryOpenings": 216,
   "tutorialOpenings": 16,
   "comparisons": [
@@ -202,6 +204,16 @@
         "c": 0
       },
       "gain": 0.5294117647058824
+    },
+    {
+      "mode": 12,
+      "action": {
+        "type": "place",
+        "cardId": "sdm_remilia",
+        "r": 0,
+        "c": 0
+      },
+      "gain": 0.5294117647058824
     }
   ],
   "ordinaryMatch": {
@@ -213,6 +225,6 @@
     ],
     "turns": 24
   },
-  "rulesVersion": "2026-10-18-story-hell-eiki-v31",
+  "rulesVersion": "2026-10-18-story-heaven-v32",
   "scope": "Actual ordinary/story/tutorial deals, hidden-hand counterfactual decisions across all story chapters and ordinary policies, ignored legacy opening lists, actual Aya/Reisen skills and Satori chooser, public acquisitions, memory expiry and an ordinary full match. Introduction language-switch coverage is in the renewal suite; no browser pixel verification."
 }
