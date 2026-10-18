@@ -14,7 +14,7 @@ vm.runInContext(`(async()=>{
  }
  function swapBoardForDeck(id,replacement){const at=game.boardCells(c=>c.id===id)[0],index=game.drawPile.indexOf(replacement);assert(at&&index>=0);game.drawPile.splice(index,1,id);game.setCardAt(at.r,at.c,replacement);return at;}
  function emptySpace(wasteland=false){const id=game.cardAt(0,0);game.setCardAt(0,0,null);game.wasteland[0][0]=wasteland;game.drawPile.push(id);}
- for(const chapter of [1,2,3,4,5,6,7,8,9])for(const actor of [0,1]){
+ for(const chapter of [1,2,3,4,5,6,7,8,9,10])for(const actor of [0,1]){
   const g=make(chapter,actor),before=JSON.stringify(captureAIEvaluationSnapshot(g)),pile=g.drawPile.slice(),hands=g.players.map(p=>p.hand.slice()),scores=g.players.map(p=>g.winCount(p));
   assert(g.drawPile.length>0&&g.players.every(p=>g.canDrawNormally(p.idx)));assert(g.storyDrawOnlyStalemate());assert.equal(JSON.stringify(captureAIEvaluationSnapshot(g)),before);
   let actions=0,draws=0,begins=0;const action=doPlayerAction,draw=g.drawForEveryone,begin=g.beginPlayerTurn;doPlayerAction=async()=>{actions++;throw Error('A dead story table asked for another action');};g.drawForEveryone=()=>{draws++;throw Error('A dead story table drew another card');};g.beginPlayerTurn=()=>{begins++;};
@@ -55,7 +55,7 @@ vm.runInContext(`(async()=>{
  make();const match=game;delete match.storyMatch;match.players[0].isAI=true;const beforeNormal=match.drawPile.length;let normalDraws=0;const normalDraw=match.drawForEveryone;match.drawForEveryone=function(...args){normalDraws++;return normalDraw.apply(this,args);};await actualStoryTurn();
  ok(normalDraws===1&&match.drawPile.length===beforeNormal-2&&!match.stalemateMessage,'The same full position in ordinary mode still executes its original shared draw rather than adopting the story rule');evalConservation(match);
  match.tutorialLesson={humanSeat:0,aiSeat:1,openingHand:[],progress:{four:false,two:false,ability:false}};ok(!match.storyDrawOnlyStalemate(),'The original tutorial does not acquire the story-only ending rule');
- return {status:'pass',count:checks.length,checks,routes,rulesVersion:REWORK_RULES_VERSION,scope:'Real rule-level placements and production turn and follow-up entry points, all nine chapters and both first actors, conserved real-card positions, immediate scored stalemate without draws, unchanged deck/hands, race and Mountain goals, ties/opponent wins, normal/tutorial isolation, wasteland permissions, temporary blocks, deep-deck and held overrides, actual trade continuation, human versus AI shop scope, and heuristic independence.'};
+ return {status:'pass',count:checks.length,checks,routes,rulesVersion:REWORK_RULES_VERSION,scope:'Real rule-level placements and production turn and follow-up entry points, all ten chapters and both first actors, conserved real-card positions, immediate scored stalemate without draws, unchanged deck/hands, race and Mountain goals, ties/opponent wins, normal/tutorial isolation, wasteland permissions, temporary blocks, deep-deck and held overrides, actual trade continuation, human versus AI shop scope, and heuristic independence.'};
 })()`,ctx).then(result=>{
  const material=fs.readFileSync(__dirname+'/card-materials-2026-10-12.cjs','utf8'),end="const copy='created_card_910'",renderBox={module:{exports:{}},require,__dirname,console};vm.runInNewContext(material.slice(0,material.indexOf(end))+'\nmodule.exports={ctx,A,el,Element};',renderBox);const {ctx:render,A,el,Element}=renderBox.module.exports;
  Element.prototype.prepend=function(node){this.appendChild(node);this.children.unshift(this.children.pop());};
@@ -68,9 +68,9 @@ vm.runInContext(`(async()=>{
  for(const language of ['en','zh-CN','en']){
   A.setLanguage(language);render.returnToMainMenu();run('openStoryMenu();');
   for(const button of el('story-levels').children){const description=button.children[1];render.description=description;ok(noLinks(description.innerHTML)&&run('ruleTextSources.get(description).options.cards===false'),'The actual '+language+' chapter-list description has no nested card links and retains the no-link option for later language refresh');}
-  for(const chapter of [1,2,3,4,5,6,7,8,9]){
+  for(const chapter of [1,2,3,4,5,6,7,8,9,10]){
    render.returnToMainMenu();run('showStoryChapterIntro('+chapter+');');ok(noLinks(el('story-intro').innerHTML),'The actual '+language+' chapter '+chapter+' introduction is free of inline card links');
-   const count=chapter===1?0:chapter===6?3:[3,9].includes(chapter)?2:4;assert.equal(el('story-card-grid').children.length,count);if(count)assert(el('story-card-grid').children.every(node=>node.events.click?.length===1));
+   const count=chapter===1?0:chapter===6?3:[3,9,10].includes(chapter)?2:4;assert.equal(el('story-card-grid').children.length,count);if(count)assert(el('story-card-grid').children.every(node=>node.events.click?.length===1));
    run('closeStoryMenu();openStoryChapter('+chapter+');');ok(noLinks(el('tutorial-feedback').innerHTML),'The actual '+language+' chapter '+chapter+' objectives and hints have no inline card links while current-match stars remain visible');
    assert(el('tutorial-feedback').innerHTML.replace(/<[^>]*>/g,'').includes('☆☆☆'));if(chapter===2){run('game.storyMatch.progress.remilia=true;renderStoryCoach();');assert(noLinks(el('tutorial-feedback').innerHTML));}
   }

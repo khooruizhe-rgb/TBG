@@ -1,0 +1,81 @@
+{
+  "status": "pass",
+  "count": 38,
+  "checks": [
+    "1024 conserved private six-card deals split Yuuka and Medicine between both seats, keep random first actors and retain all 60 unlocked shop orders",
+    "Exactly the two Sunflower originals gain skills, with no invented fifth card or extra shop restriction",
+    "All eight goal combinations award independent stars only after a human victory; the deadline star stays pending beforehand",
+    "An actual complete Sunflower claim credits only the player who collects it",
+    "A legal same-prototype Sunflower pair also satisfies the faction objective",
+    "Medicine returning the last two cards earns a lasting objective even if the opponent later draws",
+    "Remilia taking the opponent’s last Mansion cards is a second real route to emptying their hand",
+    "A correct actual Patchouli guess taking the last card earns the objective",
+    "Satori’s actual paid theft can empty the opponent without confusing the player’s cost with the goal",
+    "Flandre sending the opponent’s last hand card to their own discard also earns the objective",
+    "Kaguya taking and placing the opponent’s last guessed card records the empty hand",
+    "The opponent’s own actual last-card placement counts during their turn",
+    "An actual committed cost that spends the opponent’s last card is recorded",
+    "Sakuya’s real delayed bulk return is recorded after time resumes",
+    "Yuuka’s real bulk return records an empty hand before she refills it in the same turn",
+    "A paid double Medicine copy can empty four opponent cards through real repeated resolutions",
+    "An unreturnable Trap still in the opponent’s hand prevents the zero-card objective",
+    "Only the opponent’s real empty hand counts; an empty player hand or an invalid removal does not",
+    "An atomic one-card-for-one-card shop trade never invents an empty-hand event",
+    "Eight real AI evaluation seeds cannot leak speculative payments or hand previews into story progress",
+    "A retired match cannot earn new empty-hand progress",
+    "Empty-hand tracking does not add objectives to earlier chapters",
+    "Winning during the ninth player turn qualifies for either first actor; starting the tenth only fails that star and still permits a later chapter victory",
+    "The production Sakuya follow-up loop counts both actual extra turns toward the ten-turn deadline",
+    "Youmu’s turn-free follow-up stays within the current turn rather than consuming a second turn",
+    "The actual Medium policy holds either Sunflower card for three normal AI turns across eight seeds, then releases it for evaluation on turn four",
+    "AI holding counts normal AI turns while the player deadline includes actual extra turns",
+    "The hold yields when no other placement or shared draw exists; forced placement remains legal and the AI cannot skip a playable turn",
+    "The Sunflower opening hold does not leak into earlier chapters",
+    "All ten chapters are replayable from the real story menu",
+    "The real introduction gives only Marisa a yellow renewal scan and invitation glow while Reimu keeps Hakurei red",
+    "The new pre-match introduction renders two movable active Sunflower cards with faction-colored renewal and the rules overview",
+    "Beginning the chapter starts one real private six-card deal and displays the exact separate hint",
+    "Three independent winning runs can accumulate all goals without claiming a single-match perfect clear",
+    "A real Medicine empty-hand and Sunflower claim, Marisa blast, and Mansion claim win seven points in three player turns and save a gold perfect clear",
+    "Clearing the final chapter returns to the complete ten-chapter list",
+    "Four complete Medium Sunflower matches finish with conserved cards, the three-turn hold and active deadline tracking",
+    "The real bilingual path translates the tenth title, rules, exact hint and all three objective labels"
+  ],
+  "openings": 1024,
+  "matches": [
+    {
+      "seed": 1,
+      "actions": 9,
+      "winner": 1,
+      "stalemate": false,
+      "aiTurns": 5,
+      "humanTurns": 6
+    },
+    {
+      "seed": 2,
+      "actions": 29,
+      "winner": 1,
+      "stalemate": false,
+      "aiTurns": 15,
+      "humanTurns": 16
+    },
+    {
+      "seed": 3,
+      "actions": 24,
+      "winner": 1,
+      "stalemate": true,
+      "aiTurns": 13,
+      "humanTurns": 13
+    },
+    {
+      "seed": 4,
+      "actions": 18,
+      "winner": 1,
+      "stalemate": false,
+      "aiTurns": 9,
+      "humanTurns": 9
+    }
+  ],
+  "rulesVersion": "2026-10-18-story-sunflower-v30",
+  "scope": "Real private openings, ten distinct empty-hand routes and speculative/trade/Trap/cancellation negatives, ninth/tenth boundary, real Sakuya and Youmu follow-ups, AI holding and mandatory fallback, movable introduction renewal colors, cumulative and perfect saves, legal seven-point three-star route, and four complete Medium matches. Controlled DOM; no browser pixel verification."
+}

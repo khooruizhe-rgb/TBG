@@ -23,13 +23,13 @@
     "Holding yields when shared drawing and other placements are impossible, preserving the rule that a legal action cannot be skipped",
     "The early-Hakurei holding rule does not affect other chapters",
     "Real Satori theft, Marisa’s Sage blast, a Hakurei pair and a Mansion claim produce a legal seven-point three-star victory",
-    "The menu includes nine replayable chapters",
+    "The menu includes ten replayable chapters",
     "Chapters eight and nine render rules and three goals in selection and card introductions, then their separate flavor hints on the live objective paper",
     "The actual new introduction displays two movable Hakurei cards",
     "The new introduction starts the real private constrained deal without an extra prelude",
     "The three new objective keys accumulate across wins without inventing a one-match perfect clear",
     "A one-match perfect clear uses Hakurei’s red faction stars",
-    "Clearing the ninth chapter returns to the expanded chapter list",
+    "Clearing the ninth chapter opens the two-card Sunflower introduction",
     "Four complete Medium chapter-nine matches finish with conserved cards and the holding policy",
     "The restored rules overviews, exact separate hints, ninth title and objectives translate through the actual bilingual path"
   ],
@@ -64,6 +64,6 @@
       "aiTurns": 11
     }
   ],
-  "rulesVersion": "2026-10-18-story-hakurei-v29",
+  "rulesVersion": "2026-10-18-story-sunflower-v30",
   "scope": "Real constrained private deals, Marisa and Eirin/copy exception, negative ability/collector cases, historical faction-claim latch, three-turn AI hold and mandatory fallback, legal full three-star route, actual menu/save/intro lifecycle and four complete Medium matches. Controlled DOM; no browser pixel verification."
 }

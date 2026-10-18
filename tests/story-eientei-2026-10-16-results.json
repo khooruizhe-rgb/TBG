@@ -326,6 +326,6 @@
       }
     }
   ],
-  "rulesVersion": "2026-10-18-story-hakurei-v29",
+  "rulesVersion": "2026-10-18-story-sunflower-v30",
   "scope": "Real constrained deals, actual skills, nested placement/claim ownership, independent stars, six random full matches, mandatory legal actions, pure planning, real turn cancellation and controlled UI restart/debug lifecycle. No browser pixel verification."
 }
