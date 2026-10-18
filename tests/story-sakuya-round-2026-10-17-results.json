@@ -517,7 +517,7 @@
       "stars": 3
     }
   ],
-  "rulesVersion": "2026-10-18-story-heaven-v32",
+  "rulesVersion": "2026-10-18-story-discard-objectives-v33",
   "randomOpenings": 1024,
   "scope": "Actual engine, opening dealer, production action/follow-up flow, real faction claims, threshold boundary, nested free placement, hand sweep, time-stop cancellation and per-turn controls; no browser-pixel claims."
 }

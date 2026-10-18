@@ -70,6 +70,6 @@
   "details": {
     "randomOfferFloor": 0
   },
-  "rulesVersion": "2026-10-18-story-heaven-v32",
+  "rulesVersion": "2026-10-18-story-discard-objectives-v33",
   "scope": "Actual placements, costs, ownership, deterministic previews and three-card offer bounds"
 }

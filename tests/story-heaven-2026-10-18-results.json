@@ -34,10 +34,10 @@
     "The introduction starts the private six-card match with the requested separate hint",
     "Actual Eiki, Yuyuko, Iku, Marisa and self-targeted Flandre yield ten returns and seven ability points without a faction claim",
     "Actual Yuyuko and Iku followed by paid Tenshi yield twelve returns, claim Heaven and win with the opposite two-star combination",
-    "The two actual wins accumulate three goals without inventing an impossible one-match perfect clear",
+    "The two actual wins accumulate three goals without labeling separate wins as a one-match perfect clear",
     "The final Heaven clear returns to all twelve chapters",
     "Retry clears live returns and claim history while preserving saved cumulative goals",
-    "Four complete Medium Heaven matches finish with conserved cards and consistent exclusive-goal histories",
+    "Four complete Medium Heaven matches finish with conserved cards and consistent actual-claim histories",
     "The exact Heaven hint, title, replay-aware overview and all three goals use the actual bilingual path"
   ],
   "openings": 1024,
@@ -93,6 +93,6 @@
       "stars": 1
     }
   ],
-  "rulesVersion": "2026-10-18-story-heaven-v32",
+  "rulesVersion": "2026-10-18-story-discard-objectives-v33",
   "scope": "Real constrained private deals, successful owned board/hand/cost/repeated/delayed returns and negative attribution, actual faction and Koishi claim history, three-turn AI hold and mandatory exceptions, two conserved seven-point paid-skill routes, real menu/intro/retry/save lifecycle and four full Medium matches. Controlled DOM; no browser pixel verification."
 }

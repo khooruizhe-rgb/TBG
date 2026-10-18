@@ -64,6 +64,6 @@
       "aiTurns": 11
     }
   ],
-  "rulesVersion": "2026-10-18-story-heaven-v32",
+  "rulesVersion": "2026-10-18-story-discard-objectives-v33",
   "scope": "Real constrained private deals, Marisa and Eirin/copy exception, negative ability/collector cases, historical faction-claim latch, three-turn AI hold and mandatory fallback, legal full three-star route, actual menu/save/intro lifecycle and four complete Medium matches. Controlled DOM; no browser pixel verification."
 }

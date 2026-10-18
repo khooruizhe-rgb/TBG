@@ -4424,6 +4424,7 @@ class Game {
       catch(_error){ /* A cosmetic effect must never stop the game or its win check. */ }
     }
     this.players[p].discard.push(cardId);
+    this.recordStoryDiscardFactions(p);
     const story=this.storyMatch;
     if(story?.chapter===6 && p===story.humanSeat && p===this.currentPlayerIdx && story.turnSeat===p
       && this.winCount(this.players[p])-story.turnStartScore>=7)story.progress.surprise=true;
@@ -5764,7 +5765,7 @@ class Game {
 }
 
 /* 2026-10-12: creation, private newspapers and instance ability changes. */
-const REWORK_RULES_VERSION='2026-10-18-story-heaven-v32';
+const REWORK_RULES_VERSION='2026-10-18-story-discard-objectives-v33';
 Game.prototype.canCreateWithMatara=function(){return this.mainBoardCells().length>=4;};
 let nextCreatedCard=0,nextHiddenChoice=0;
 const COPY_PASSIVES=new Set(['sage_yukari','sage_kasen','mtn_nitori','hell_hecatia','palace_koishi']);
@@ -6046,6 +6047,26 @@ Game.prototype.kanakoMultiplier=function(){
 Game.prototype.sanaeDrawCount=function(){return (this.hasActiveAbility('mtn_kanako')?2:1)*this.kanakoMultiplier();};
 
 /* Story matches share the normal rules; chapter state only unlocks printed abilities. */
+Game.prototype.recordStoryDiscardFactions=function(p){
+  const story=this.storyMatch;
+  if(this.cancelled || this.winner || this.stalemateMessage || !story || story.chapter===1 || p!==story.humanSeat)return;
+  const pile=this.players[p].discard;
+  const groups=Object.entries(FACTIONS).filter(([,faction])=>[2,4].includes(faction.size)).map(([faction,{size}])=>({
+    faction,size,cards:pile.filter(id=>this.cardMatchesFaction(id,faction))
+  })).filter(group=>group.cards.length>=group.size);
+  const introduced=STORY_CHAPTERS[story.chapter-1]?.introduced;
+  if(groups.some(group=>group.faction===introduced))story.progress[STORY_GOAL_KEYS[story.chapter][0]]=true;
+  if(story.chapter===6){
+    for(const group of groups)if(!story.claimedFactions.includes(group.faction))story.claimedFactions.push(group.faction);
+    if(story.claimedFactions.length>=2)story.progress.twoFactions=true;
+    if(groups.some(group=>!story.skillFactions.includes(group.faction)))story.progress.lockedFaction=true;
+  }
+  if(story.chapter===8 && groups.some(group=>{
+    const types=new Map();
+    for(const id of group.cards){const base=cardBaseId(id);types.set(base,(types.get(base)||0)+1);}
+    return [...types.values()].some(count=>count>=group.size);
+  }))story.progress.sameCardFaction=true;
+};
 Game.prototype.recordStoryDrawPileReturn=function(p){
   const story=this.storyMatch;
   if(this.cancelled || this.winner || this.stalemateMessage || story?.chapter!==12 || p!==story.humanSeat)return;
@@ -6113,7 +6134,7 @@ const STORY_CHAPTERS=[
   {id:9,title:'Chapter 9 · Hakurei Shrine',body:'Hakurei Shrine abilities are now active too. Win to clear this chapter. Three stars: claim Hakurei Shrine, use Marisa to discard a Sage, and win before the opponent claims a faction.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei'],introduced:'hakurei',hint:'These two cards should have been the first to gain abilities, yet only now are they complete. How interesting.'},
   {id:10,title:'Chapter 10 · Sunflower Field',body:'Sunflower Field abilities are now active too. Win to clear this chapter. Three stars: claim Sunflower Field, have an opponent with no cards in hand during any turn, and win before your tenth turn.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower'],introduced:'sunflower',hint:'There is more than one way to leave your opponent with no cards. Think carefully!'},
   {id:11,title:'Chapter 11 · Hell',body:'Hell abilities are now active too. Win to clear this chapter. Three stars: claim Hell, clear eight wasteland tiles, and successfully trigger Kutaka’s ability.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower','hell'],introduced:'hell',hint:'Hecatia?! I have only heard rumors of someone so important. I never imagined she would come here!'},
-  {id:12,title:'Chapter 12 · Heaven',body:'Heaven abilities are now active too. Win to clear this chapter. Three stars: claim Heaven, return eight cards to the draw pile, and win without claiming a faction. Goals can be earned across separate wins.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower','hell','heaven'],introduced:'heaven',hint:'I deliberately favored scoring through faction claims when creating this game. Let’s see whether that is still true.'}
+  {id:12,title:'Chapter 12 · Heaven',body:'Heaven abilities are now active too. Win to clear this chapter. Three stars: claim Heaven, return eight cards to the draw pile, and win without claiming a faction. Faction objectives also count complete groups gathered in your discard pile.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower','hell','heaven'],introduced:'heaven',hint:'I deliberately favored scoring through faction claims when creating this game. Let’s see whether that is still true.'}
 ];
 const STORY_GOAL_KEYS={1:[],2:['sdm','remilia','flandre'],3:['haku','yuyuko','race'],4:['hourai','kaguya','handTen'],5:['mountain','stalemate','newsGuess'],6:['twoFactions','lockedFaction','surprise'],7:['palace','newAbility','noMary'],8:['sage','sameCardFaction','placeTwice'],9:['hakurei','marisaSage','beforeClaim'],10:['sunflower','emptyOpponent','beforeTen'],11:['hell','clearEight','kutaka'],12:['heaven','returnEight','noClaims']};
 function storyFactionCards(faction){return CARDS.filter(card=>card.faction===faction&&!card.shopExpansion).map(card=>card.id);}
@@ -8919,7 +8940,7 @@ Object.assign(ZH_TEXT,{
   'Do something that surprises me!':'做点让我惊讶的东西吧！',
   'Use trades and card abilities to claim two different factions.':'利用交易与卡牌技能，收取两个不同阵营。',
   'Claim a faction whose core cards still have no abilities.':'收取一个基础卡牌仍未解锁技能的阵营。',
-  'Stars carry across victories. Complete all objectives in one match for faction-colored stars.':'星星可以跨获胜对局累计。在一局中完成全部目标，星星即可获得本关阵营颜色。',
+  'Stars carry across victories. Complete all objectives in one match for faction-colored stars. Faction objectives also count complete groups in your discard pile.':'星星可以跨获胜对局累计。在一局中完成全部目标，星星即可获得本关阵营颜色。阵营目标也认可在你的弃牌堆中集齐完整阵营。',
   'Youkai Mountain abilities are now active too. Win to clear this chapter. Three stars: claim Youkai Mountain, end the game in stalemate, and subscribe to a newspaper before making a correct guess.':'妖怪之山的技能也已开放，获胜即可通关。三星目标：收取妖怪之山、使游戏陷入僵局，以及订阅报纸后正确猜中一次卡牌。',
   'Claim Youkai Mountain':'收取妖怪之山阵营',
   'End the game in stalemate':'使游戏陷入僵局',
@@ -8961,7 +8982,7 @@ Object.assign(ZH_TEXT,{
   'Chapter 10 · Sunflower Field':'第十关 · 太阳花田',
   'Chapter 11 · Hell':'第十一关 · 地狱',
   'Chapter 12 · Heaven':'第十二关 · 天界',
-  'Heaven abilities are now active too. Win to clear this chapter. Three stars: claim Heaven, return eight cards to the draw pile, and win without claiming a faction. Goals can be earned across separate wins.':'天界的技能也已开放，获胜即可通关。三星目标：收取天界阵营，累计将八张卡放入抽牌堆，以及在不收取阵营的情况下获胜。目标可以分多局胜利完成。',
+  'Heaven abilities are now active too. Win to clear this chapter. Three stars: claim Heaven, return eight cards to the draw pile, and win without claiming a faction. Faction objectives also count complete groups gathered in your discard pile.':'天界的技能也已开放，获胜即可通关。三星目标：收取天界阵营，累计将八张卡放入抽牌堆，以及在不收取阵营的情况下获胜。阵营目标也认可通过技能集齐于你弃牌堆中的完整阵营。',
   'I deliberately favored scoring through faction claims when creating this game. Let’s see whether that is still true.':'我在创造这个游戏的时候就刻意的偏向收取阵营拿分，看看现在还是否如此吧。',
   'Claim Heaven':'收取天界阵营',
   'Return eight cards to the draw pile':'将八张卡放入抽牌堆',
@@ -15569,7 +15590,7 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='08b4cae6c2b8bc7153f2d3f90adaaa7914d34986f40dfa40a81be721615c1d51';
+const AI_EVALUATION_RULES_DIGEST='7b82a174f37aba5759bfd1a3b1492ec265b2617cad1803e48d87cd427bbbd0ac';
 const AI_EVALUATION_POLICY_DIGEST='8c4a5243bd74a5f73ad2e8f67c5f0d1a5ccea2d1925c63048f3b82320114f3cf';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
@@ -15656,7 +15677,7 @@ function evalForkSummary(report){
   return {groups,invalidPairs,conclusion,completedPairs:report.pairs.length};
 }
 function evalValidateSnapshot(snapshot){
-  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-18-story-hell-eiki-v31','2026-10-18-story-sunflower-v30','2026-10-18-story-hakurei-v29','2026-10-18-story-sages-colors-v28','2026-10-18-story-sages-v27','2026-10-18-story-palace-legacy-v26','2026-10-17-story-first-stalemate-v25','2026-10-17-story-sakuya-round-v24','2026-10-17-story-unlocked-shop-v23','2026-10-16-story-no-draw-stalemate-v22','2026-10-16-story-kourindou-physics-v21','2026-10-16-story-mountain-collection-v20','2026-10-16-story-private-opening-v19','2026-10-16-story-eientei-opening-v18','2026-10-16-story-stars-placement-v17','2026-10-16-story-hakugyokurou-active-mentor-v16','2026-10-15-guided-opening-scarlet-reserve-v15','2026-10-15-random-learning-renewal-v14','2026-10-15-story-opening-chapters-v13','2026-10-14-original-creation-blueprints-v12','2026-10-14-guided-final-match-v11','2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
+  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-18-story-heaven-v32','2026-10-18-story-hell-eiki-v31','2026-10-18-story-sunflower-v30','2026-10-18-story-hakurei-v29','2026-10-18-story-sages-colors-v28','2026-10-18-story-sages-v27','2026-10-18-story-palace-legacy-v26','2026-10-17-story-first-stalemate-v25','2026-10-17-story-sakuya-round-v24','2026-10-17-story-unlocked-shop-v23','2026-10-16-story-no-draw-stalemate-v22','2026-10-16-story-kourindou-physics-v21','2026-10-16-story-mountain-collection-v20','2026-10-16-story-private-opening-v19','2026-10-16-story-eientei-opening-v18','2026-10-16-story-stars-placement-v17','2026-10-16-story-hakugyokurou-active-mentor-v16','2026-10-15-guided-opening-scarlet-reserve-v15','2026-10-15-random-learning-renewal-v14','2026-10-15-story-opening-chapters-v13','2026-10-14-original-creation-blueprints-v12','2026-10-14-guided-final-match-v11','2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
   const state=snapshot.state,n=state?.players?.length,size=snapshot.size;
   if(![4,5].includes(size) || ![2,3,4].includes(n) || !Number.isInteger(state.currentPlayerIdx) || state.currentPlayerIdx<0 || state.currentPlayerIdx>=n)throw new Error('Invalid position dimensions.');
   if(state.numPlayers!==n || state.players.some((p,i)=>p.idx!==i || !Array.isArray(p.hand) || !Array.isArray(p.discard)))throw new Error('Invalid position dimensions.');
@@ -16726,7 +16747,7 @@ function openStoryMenu(){
   storyReturnFocus=document.activeElement;if(isStoryMatch())returnToMainMenu();
   closeStoryIntroCards();
   storyMenuChapter=null;el('story-title').textContent='Story Mode';
-  setRuleText(el('story-intro'),'Learn the table one chapter at a time. Available chapters can be tried and replayed.\nStars carry across victories. Complete all objectives in one match for faction-colored stars.');
+  setRuleText(el('story-intro'),'Learn the table one chapter at a time. Available chapters can be tried and replayed.\nStars carry across victories. Complete all objectives in one match for faction-colored stars. Faction objectives also count complete groups in your discard pile.');
   el('story-card-grid').replaceChildren();el('story-card-grid').hidden=true;el('story-card-instruction').hidden=true;el('story-begin').hidden=true;el('story-levels').hidden=false;
   el('story-debug-reset').hidden=false;setRuleText(el('story-debug-reset'),'DEBUG · Reset stars');
   const levels=el('story-levels');levels.replaceChildren();const cleared=storyClearedChapters();
