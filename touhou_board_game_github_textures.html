@@ -2037,6 +2037,10 @@
   #story-panel button:focus-visible{outline:3px solid #97653f;outline-offset:3px;}
   #story-levels button{text-align:left;display:grid;gap:7px;}#story-levels small{line-height:1.4;font-size:.78rem;}
   .story-perfect .story-star-rating,.story-stars-perfect,.story-perfect .story-star,.story-stars-perfect .story-star{color:var(--story-star-color);text-shadow:0 0 8px color-mix(in srgb,var(--story-star-color) 40%,transparent);}
+  @supports (color:color-mix(in srgb,white,black)) and ((background-clip:text) or (-webkit-background-clip:text)){
+    .story-perfect .story-star-rating,.story-stars-perfect,.story-perfect .story-star,.story-stars-perfect .story-star{display:inline-block;line-height:1.15;background-image:linear-gradient(180deg,color-mix(in srgb,var(--story-star-color) 48%,#fff9e6) 0%,color-mix(in srgb,var(--story-star-color) 78%,white) 28%,var(--story-star-color) 43%,color-mix(in srgb,var(--story-star-color) 68%,#21122b) 64%,var(--story-star-color) 80%,color-mix(in srgb,var(--story-star-color) 55%,white) 100%);background-clip:text;-webkit-background-clip:text;color:transparent;-webkit-text-fill-color:transparent;text-shadow:none;}
+  }
+  @media(forced-colors:active){.story-perfect .story-star-rating,.story-stars-perfect,.story-perfect .story-star,.story-stars-perfect .story-star{background-image:none;color:CanvasText;-webkit-text-fill-color:CanvasText;text-shadow:none;}}
   .story-practice #tutorial-copy{display:none;}
   #story-debug-reset{margin-top:14px;font-size:.72rem!important;opacity:.8;}
   #story-card-grid{position:relative;height:clamp(220px,52dvh,430px);margin:10px 0;border:1px dashed #ad8e6b;border-radius:10px;background:radial-gradient(ellipse at center,#fff4d8,#dec9a5);}
@@ -2760,7 +2764,7 @@ body:not(:has(#game.active)):not(.title-memory-active) #app{position:relative;z-
 #card-detail.card-rin-worn::after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(132deg,#ead6b6bb 0 3%,#58342266 3.8%,transparent 5%),linear-gradient(24deg,transparent 40%,#ead7b64d 40.5%,transparent 41.5%),radial-gradient(ellipse at 2% 84%,#432b2177,transparent 24%)}
 
 /* Story skill introductions reuse the freely movable table, with a top-to-bottom renewal. */
-#story-card-grid .story-ability-card{display:block;position:fixed;width:var(--story-card-width,190px);height:auto;aspect-ratio:3/4;padding:0;border:0;border-radius:12px;background:transparent;animation:none;cursor:grab;touch-action:none;user-select:none;box-shadow:0 8px 20px #49322355;}
+#story-card-grid .story-ability-card{display:block;position:absolute;left:calc(var(--table-x) - var(--story-grid-left,0px));top:calc(var(--table-y) - var(--story-grid-top,0px));width:var(--story-card-width,190px);height:auto;aspect-ratio:3/4;padding:0;border:0;border-radius:12px;background:transparent;animation:none;cursor:grab;touch-action:none;user-select:none;box-shadow:0 8px 20px #49322355;}
 #story-card-grid .story-ability-card:focus-visible{outline:3px solid #b75b37;outline-offset:7px;}
 #story-card-grid .story-ability-card.table-card-dragging{cursor:grabbing;}
 .story-ability-card>.story-new-face,.story-ability-card>.story-old-face{position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none;}
@@ -16808,7 +16812,10 @@ function showStoryChapterIntro(chapter){
   const grid=el('story-card-grid'),introduced=storyChapterCards(chapter);grid.replaceChildren();grid.hidden=!introduced.length;el('story-card-instruction').hidden=!introduced.length;
   if(introduced.length){
     setRuleText(el('story-card-instruction'),'Click a glowing card to read its ability. Drag to move, use two fingers to turn, or press Q / E to rotate.');
-    const session={cards:[],frame:null,layout:()=>layoutStoryIntroCards()};storyIntroSession=session;
+    const session={cards:[],frame:null,layout:()=>layoutStoryIntroCards(),queueLayout:()=>{
+      if(storyIntroSession!==session||session.frame!==null)return;
+      session.frame=requestAnimationFrame(()=>{session.frame=null;if(storyIntroSession===session)session.layout();});
+    }};storyIntroSession=session;
     introduced.forEach((id,index)=>{
       const card=document.createElement('div');card.className='table-scatter-card table-card-moved story-ability-card';card.dataset.cardId=id;card.dataset.storyCard='true';card.dataset.angle=String([-5,3,-3,5][index%4]);
       card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',CARD[id].name);card.setAttribute('aria-describedby','story-card-instruction');card.setAttribute('aria-keyshortcuts','Enter Space I Q E ArrowLeft ArrowRight ArrowUp ArrowDown');
@@ -16819,7 +16826,9 @@ function showStoryChapterIntro(chapter){
       grid.appendChild(card);session.cards.push(card);
     });
     window.addEventListener('resize',session.layout);el('story-panel').addEventListener('scroll',session.layout);
-    session.frame=requestAnimationFrame(()=>{session.frame=null;if(storyIntroSession===session)session.layout();});
+    window.visualViewport?.addEventListener('resize',session.queueLayout);window.visualViewport?.addEventListener('scroll',session.queueLayout);
+    if(typeof ResizeObserver==='function'){session.observer=new ResizeObserver(session.queueLayout);session.observer.observe(grid);}
+    session.queueLayout();
   }
   el('story-overlay').classList.add('show');el('story-panel').focus();
 }
@@ -16828,10 +16837,15 @@ function layoutStoryIntroCards(){
   if(titleCardDrag?.node.dataset.storyCard==='true')finishTitleCardDrag(true);
   session.cards.forEach(node=>stopTableCardSlide(node,false));
   const grid=el('story-card-grid'),area=grid.getBoundingClientRect(),columns=Math.min(session.cards.length,area.width>=480?4:2),rows=Math.ceil(session.cards.length/columns);
-  const width=Math.max(60,Math.min(220,(area.width-(columns+1)*16)/columns,(area.height-(rows+1)*14)/rows*.75));
+  if(area.width<=0||area.height<=0)return;
+  // Viewport-space gestures stay shared with the menu; CSS places these cards inside the scrolling grid.
+  grid.style.setProperty('--story-grid-left',`${area.left+(grid.clientLeft||0)}px`);grid.style.setProperty('--story-grid-top',`${area.top+(grid.clientTop||0)}px`);
+  const rotated=session.cards.map(card=>{const a=(Number(card.dataset.angle)||0)*Math.PI/180,c=Math.abs(Math.cos(a)),s=Math.abs(Math.sin(a));return {x:c+s*4/3,y:s+c*4/3};});
+  const width=Math.max(1,Math.min(220,(area.width-(columns+1)*16)/columns/Math.max(...rotated.map(size=>size.x)),(area.height-(rows+1)*14)/rows/Math.max(...rotated.map(size=>size.y))));
   grid.style.setProperty('--story-card-width',`${width}px`);invalidateCardDragGeometry();
+  const rearrange=session.columns!==columns||session.rows!==rows;session.columns=columns;session.rows=rows;
   session.cards.forEach((card,index)=>{
-    const x=Number(card.dataset.storyX??((index%columns+.5)/columns)),y=Number(card.dataset.storyY??((Math.floor(index/columns)+.5)/rows));
+    const x=Number((rearrange?null:card.dataset.storyX)??((index%columns+.5)/columns)),y=Number((rearrange?null:card.dataset.storyY)??((Math.floor(index/columns)+.5)/rows));
     moveTitleCard(card,area.left+area.width*x,area.top+area.height*y);
   });
 }
@@ -16842,6 +16856,7 @@ function closeStoryIntroCards(){
   const session=storyIntroSession;if(!session)return;
   if(titleCardDrag?.node.dataset.storyCard==='true')finishTitleCardDrag(true);
   storyIntroSession=null;if(session.frame!==null)cancelAnimationFrame(session.frame);
+  session.observer?.disconnect();window.visualViewport?.removeEventListener('resize',session.queueLayout);window.visualViewport?.removeEventListener('scroll',session.queueLayout);
   session.cards.forEach(node=>stopTableCardSlide(node,false));window.removeEventListener('resize',session.layout);el('story-panel').removeEventListener('scroll',session.layout);el('story-card-grid').replaceChildren();
 }
 function beginStoryChapter(chapter){
@@ -17061,6 +17076,7 @@ function onGameFullscreenChange(){
     requestAnimationFrame(()=>{fitCardDetailHeadings();positionRuleTerm();});
   }
   if(el('settings-dialog').classList.contains('show'))openGameSettings(true);
+  storyIntroSession?.queueLayout();
   queueMobileViewport();
 }
 function onAutomaticMobileFullscreen(event){

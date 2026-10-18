@@ -12,8 +12,8 @@ process.once('beforeExit',()=>{if(!completed){console.error('Drag/settings check
 ctx.window.localStorage={getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,value)};
 ctx.window.matchMedia=()=>({matches:reduced});ctx.performance={now:()=>now};ctx.Date={now:()=>now};
 ctx.requestAnimationFrame=fn=>{frames.set(++nextFrame,fn);return nextFrame;};ctx.cancelAnimationFrame=id=>frames.delete(id);
-ctx.window.visualViewport={addEventListener:(name,fn)=>(viewportEvents[name]??=[]).push(fn)};const viewportEvents={};
-let resizeObserver;ctx.ResizeObserver=class{constructor(callback){resizeObserver=callback;this.nodes=[];}observe(node){this.nodes.push(node);}};
+ctx.window.visualViewport={addEventListener:(name,fn)=>(viewportEvents[name]??=[]).push(fn),removeEventListener:(name,fn)=>{viewportEvents[name]=(viewportEvents[name]||[]).filter(item=>item!==fn);}};const viewportEvents={};
+let resizeObserver;ctx.ResizeObserver=class{constructor(callback){this.callback=callback;this.nodes=[];}observe(node){this.nodes.push(node);if(node===el('hand'))resizeObserver=this.callback;}disconnect(){this.nodes=[];}};
 const oldRect=Element.prototype.getBoundingClientRect;
 Element.prototype.getBoundingClientRect=function(){reads[this.dataset.titlePreview||this.dataset.storyCard?'card':this===el('story-card-grid')?'grid':'other']++;return oldRect.call(this);};
 Element.prototype.cloneNode=function(deep){const copy=new Element();copy.className=this.className;copy.dataset={...this.dataset};copy.attributes={...this.attributes};copy.rect=this.rect;if(deep)for(const child of this.children)copy.appendChild(child.cloneNode(true));return copy;};
