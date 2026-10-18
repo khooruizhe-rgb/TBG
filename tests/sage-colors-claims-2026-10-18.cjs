@@ -29,8 +29,8 @@ const result=vm.runInContext(`(()=>{
  ok(!game.storyMatch.progress.sameCardFaction&&game.players[0].discard.length===0,'Hecatia’s real discard admission rule is honored before awarding a matching-four claim');
  make();const pair=copy('medicine');arrange([[0,0,'medicine'],[0,1,pair]]);game.checkClaims(0);assert(game.storyMatch.progress.sameCardFaction);game.winner=game.players[0];
  ok(storyStarGoals(game).find(goal=>goal.key==='sameCardFaction').done&&storyMatchStars(game)===1,'The unchanged objective key still awards one independent star after a matching pair and a victory');
- const palette=['#f39ac7',crownLightFor('sage_matara').main,crownLightFor('sage_yukari').main];
- ok(palette.join(',')==='#f39ac7,#e7b83f,#8f70ff'&&[0,1,2].map(i=>storyStarColor(8,i)).join(',')===palette.join(','),'Sage star positions use pink Kasen and the actual Matara and Yukari effect colors in order');
+ const palette=['#f39ac7','#b8860b','#5b2b85'];
+ ok([0,1,2].map(i=>storyStarColor(8,i)).join(',')===palette.join(','),'Sage stars retain pink Kasen, with darker gold Matara and a deeper purple Yukari than the Palace stars');
  for(let earned=0;earned<=3;earned++){
   const markup=storyStarMarkup(8,earned),colors=[...markup.matchAll(/--story-star-color:([^\"]+)/g)].map(match=>match[1]);assert.equal(colors.join(','),palette.join(','));assert.equal((markup.match(/★/g)||[]).length,earned);assert.equal((markup.match(/☆/g)||[]).length,3-earned);assert.equal((markup.match(/aria-hidden=\"true\"/g)||[]).length,3);
  }

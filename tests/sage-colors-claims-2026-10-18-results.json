@@ -14,7 +14,7 @@
     "A normal mixed-prototype Sage claim still only earns the Sage objective",
     "Hecatia’s real discard admission rule is honored before awarding a matching-four claim",
     "The unchanged objective key still awards one independent star after a matching pair and a victory",
-    "Sage star positions use pink Kasen and the actual Matara and Yukari effect colors in order",
+    "Sage stars retain pink Kasen, with darker gold Matara and a deeper purple Yukari than the Palace stars",
     "All four live star counts retain the three independent color slots, correct glyph count and hidden decorative glyphs",
     "A real chapter-eight perfect victory renders all three separately colored star elements",
     "The saved perfect rating preserves all three colors and an accessible count in chapter selection",
@@ -29,8 +29,8 @@
   "rulesVersion": "2026-10-18-story-hakurei-v29",
   "starColors": [
     "#f39ac7",
-    "#e7b83f",
-    "#8f70ff"
+    "#b8860b",
+    "#5b2b85"
   ],
   "renewalMs": 1800,
   "scope": "Real two- and four-card claims with collector, completeness, connectivity and discard-admission negatives; actual perfect/cumulative saved ratings and live coach markup; real introduction card color properties, synchronized CSS and reduced motion. Controlled DOM; no browser pixel verification."

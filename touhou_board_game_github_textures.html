@@ -1156,42 +1156,42 @@
   }
   .master-spark .spark-glow{
     position:absolute; inset:-60% -5%; border-radius:50%;
-    background:linear-gradient(to bottom,rgba(239,33,188,.65),rgba(88,71,255,.75),rgba(33,231,253,.8),
-      rgba(136,255,60,.7),rgba(255,238,32,.78),rgba(255,68,54,.65));
+    background:linear-gradient(to bottom,rgba(218,151,15,.65),rgba(255,198,36,.75),rgba(255,232,100,.8),
+      rgba(255,247,185,.7),rgba(255,222,63,.78),rgba(218,151,15,.65));
     filter:blur(36px); animation:sparkIlluminate .95s ease-out both;
   }
   .master-spark .spark-beam{
     position:absolute; inset:17% 0; border-radius:40% 6px 6px 40%; transform-origin:0 50%;
-    background:linear-gradient(to bottom,#fb47f3 0%,#8b4cff 14%,#3389ff 29%,#3bfff2 43%,
-      #b8fc42 57%,#fff76e 72%,#ffa342 86%,#ff455c 100%);
-    box-shadow:0 0 18px 4px #fff,0 0 52px 14px #e874ff,0 0 92px 26px #7bfcf1;
+    background:linear-gradient(to bottom,#d99410 0%,#ffd43b 14%,#fff085 29%,#fffde8 43%,
+      #fffde8 57%,#fff085 72%,#ffd43b 86%,#d99410 100%);
+    box-shadow:0 0 18px 4px #fff8c4,0 0 52px 14px #ffd642,0 0 92px 26px #eeb51c;
     animation:sparkFire .95s cubic-bezier(.2,.8,.4,1) both;
   }
   .master-spark .spark-beam::after{
     content:''; position:absolute; inset:29% 0; border-radius:50%;
-    background:#fff; box-shadow:0 0 17px 11px rgba(255,255,255,.95);
+    background:#fffce0; box-shadow:0 0 17px 11px rgba(255,244,166,.95);
   }
   .master-spark .spark-origin{
     position:absolute; left:-42px; top:50%; width:90px; height:90px; border-radius:50%;
     transform:translateY(-50%);
-    background:radial-gradient(circle,#fff 0 25%,#fffac7 29% 39%,#8ff7ff 46%,#df5cff 68%,transparent 75%);
-    box-shadow:0 0 25px #fff,0 0 70px #be69ff; animation:sparkOrigin .95s ease-out both;
+    background:radial-gradient(circle,#fffce0 0 25%,#fffac7 29% 39%,#ffdf57 46%,#dda51b 68%,transparent 75%);
+    box-shadow:0 0 25px #fff6c4,0 0 70px #efb91d; animation:sparkOrigin .95s ease-out both;
   }
   .master-spark .spark-ring{
     position:absolute; top:50%; left:var(--ring-position); width:95px; height:135%;
     transform:translate(-50%,-50%); border-radius:50%;
-    border:5px solid #fff; box-shadow:0 0 18px #fff,0 0 32px #9e72ff,inset 0 0 16px #fce7ff;
+    border:5px solid #fff9d2; box-shadow:0 0 18px #fff1a3,0 0 32px #e9b127,inset 0 0 16px #fff6c4;
     animation:sparkRing .95s var(--ring-delay) both;
   }
   .spark-impact{
     position:fixed; z-index:89; width:200px; height:200px; pointer-events:none; border-radius:50%;
-    background:radial-gradient(circle,#fff 0 9%,rgba(255,255,255,.96) 12%,rgba(255,247,140,.84) 25%,
-      rgba(73,250,241,.65) 41%,rgba(255,82,225,.48) 60%,transparent 74%);
-    filter:drop-shadow(0 0 34px #fff); animation:sparkImpact .94s ease-out both;
+    background:radial-gradient(circle,#fffce0 0 9%,rgba(255,250,214,.96) 12%,rgba(255,232,100,.84) 25%,
+      rgba(255,198,36,.65) 41%,rgba(218,151,15,.48) 60%,transparent 74%);
+    filter:drop-shadow(0 0 34px #ffe27a); animation:sparkImpact .94s ease-out both;
   }
   .spark-impact::after{
-    content:''; position:absolute; inset:13%; border:4px solid #fff; border-radius:50%;
-    box-shadow:0 0 18px #73faff,0 0 27px #fb69ed; animation:sparkShockwave .94s ease-out both;
+    content:''; position:absolute; inset:13%; border:4px solid #fff4b0; border-radius:50%;
+    box-shadow:0 0 18px #ffdc42,0 0 27px #d99713; animation:sparkShockwave .94s ease-out both;
   }
   @keyframes sparkFire{
     0%{opacity:0;transform:scaleX(.02) scaleY(.04)} 17%{opacity:1;transform:scaleX(1) scaleY(.3)}
@@ -6065,8 +6065,8 @@ const STORY_CHAPTERS=[
   {id:5,title:'Chapter 5 · Youkai Mountain',body:'Youkai Mountain abilities are now active too. Win to clear this chapter. Three stars: claim Youkai Mountain, end the game in stalemate, and subscribe to a newspaper before making a correct guess.',skills:['sdm','hakugyokurou','hourai','mountain'],introduced:'mountain',hint:'A correct guess is all you need? Could there be a clever shortcut?'},
   {id:6,title:'Chapter 6 · Kourindou',body:'Kourindou opens for trading. Meiling, Tewi and Nitori are the fifth cards of unlocked factions available here. The opponent uses Medium AI. Win to clear this chapter. Three stars: claim two factions, claim a faction whose abilities are still locked, and do something that surprises me!',skills:['sdm','hakugyokurou','hourai','mountain'],introduced:'kourindou',hint:'What? An OTK? No way... haha.'},
   {id:7,title:'Chapter 7 · Palace of the Earth Spirits',body:'Palace of the Earth Spirits abilities are now active too. Win to clear this chapter. Three stars: claim Palace of the Earth Spirits, give an ability to a card with none, and keep Miss Mary off the board.',skills:['sdm','hakugyokurou','hourai','mountain','palace'],introduced:'palace',hint:'Miss Mary is quite playful in your hand. Perhaps moving her somewhere else could solve the problem?'},
-  {id:8,title:'Chapter 8 · Sages',body:'A claimed faction with only one card type? That description is as cryptic as the Sages themselves.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage'],introduced:'sage'},
-  {id:9,title:'Chapter 9 · Hakurei Shrine',body:'These two cards should have been the first to gain abilities, yet only now are they complete. How interesting.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei'],introduced:'hakurei'}
+  {id:8,title:'Chapter 8 · Sages',body:'Sage abilities are now active too. Win to clear this chapter. Three stars: claim the Sages, claim a faction made of only one card type, and place the same card twice.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage'],introduced:'sage',hint:'A claimed faction with only one card type? That description is as cryptic as the Sages themselves.'},
+  {id:9,title:'Chapter 9 · Hakurei Shrine',body:'Hakurei Shrine abilities are now active too. Win to clear this chapter. Three stars: claim Hakurei Shrine, use Marisa to discard a Sage, and win before the opponent claims a faction.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei'],introduced:'hakurei',hint:'These two cards should have been the first to gain abilities, yet only now are they complete. How interesting.'}
 ];
 const STORY_GOAL_KEYS={1:[],2:['sdm','remilia','flandre'],3:['haku','yuyuko','race'],4:['hourai','kaguya','handTen'],5:['mountain','stalemate','newsGuess'],6:['twoFactions','lockedFaction','surprise'],7:['palace','newAbility','noMary'],8:['sage','sameCardFaction','placeTwice'],9:['hakurei','marisaSage','beforeClaim']};
 function storyFactionCards(faction){return CARDS.filter(card=>card.faction===faction&&!card.shopExpansion).map(card=>card.id);}
@@ -8881,6 +8881,7 @@ Object.assign(ZH_TEXT,{
   'Chapter 8 · Sages':'第八关 · 贤者',
   'A claimed faction with only one card type? That description is as cryptic as the Sages themselves.':'被收取的阵营只有一种卡牌？这个描述简直就和那些贤者一样谜语人啊。',
   'Chapter 9 · Hakurei Shrine':'第九关 · 博丽神社',
+  'Hakurei Shrine abilities are now active too. Win to clear this chapter. Three stars: claim Hakurei Shrine, use Marisa to discard a Sage, and win before the opponent claims a faction.':'博丽神社的技能也已开放，获胜即可通关。三星目标：收取博丽神社阵营，使用魔理沙将一张贤者送入弃牌堆，以及在电脑收取阵营前获胜。',
   'These two cards should have been the first to gain abilities, yet only now are they complete. How interesting.':'这两张牌应该是最先赋予技能的，但却到这里才得以完善，真是有趣呢。',
   'Claim Hakurei Shrine':'收取博丽神社阵营',
   'Marisa: discard a Sage':'魔理沙：将一张贤者送入弃牌堆',
@@ -15460,7 +15461,7 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='fdf88794856493c391805c900df21606ca7ec963999d445151431a09f598528e';
+const AI_EVALUATION_RULES_DIGEST='cf4676193c70a855973170deaadeaf5df7269a7b95d2af78b574dc2e7c2cd4bc';
 const AI_EVALUATION_POLICY_DIGEST='626e5decc1055938641b717e78211d55587485ae7de83970db4fac8b85b090a8';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
@@ -16574,7 +16575,7 @@ function storyClearedChapters(){return Object.keys(storyProgressRecords()).map(N
 function storyBestStars(chapter){return storyProgressRecords()[chapter]??null;}
 function storyChapterPerfect(chapter){return storyProgressDetails()[chapter]?.perfect===true;}
 function storyStarColor(chapter,index=null){
-  if(chapter===8 && Number.isInteger(index) && index>=0 && index<3)return index===0?'#f39ac7':crownLightFor(['sage_kasen','sage_matara','sage_yukari'][index]).main;
+  if(chapter===8 && Number.isInteger(index) && index>=0 && index<3)return ['#f39ac7','#b8860b','#5b2b85'][index];
   return chapter===6?'#d4af37':FACTIONS[STORY_CHAPTERS.find(level=>level.id===chapter)?.introduced]?.color||'#c1973e';
 }
 function storyStarMarkup(chapter,earned){

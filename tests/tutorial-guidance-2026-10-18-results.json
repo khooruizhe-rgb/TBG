@@ -17,7 +17,7 @@
     "Desktop paper positioning reserves its enlarged 410-pixel sheet inside a 1200-pixel viewport",
     "The phone retains its original 300-pixel compact sheet and clamps it inside the viewport",
     "Guidance and paper sizing do not write story progress or presentation preferences",
-    "Only the first Sage star changes to pink while Matara and Yukari keep their requested colors",
+    "Sage stars retain pink and use the requested darker gold and deep purple",
     "The markers assigned by real tutorial transitions use a prominent cyan-to-light pulse without the old brown override",
     "Reduced-motion users keep a strong static guide instead of a forced pulse",
     "The desktop-only width and larger readable text coexist with the unchanged mobile compact sizing"

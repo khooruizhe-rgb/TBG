@@ -90,7 +90,7 @@ vm.runInContext(`(async()=>{
  game.storyMatch.progress.sage=true;game.winner=game.players[0];updateStoryProgress();assert.equal(storyBestStars(8),1);returnToMainMenu();openStoryChapter(8);game.storyMatch.progress.sameCardFaction=true;game.winner=game.players[0];updateStoryProgress();returnToMainMenu();openStoryChapter(8);game.storyMatch.progress.placeTwice=true;game.winner=game.players[0];updateStoryProgress();
  ok(storyBestStars(8)===3&&!storyChapterPerfect(8),'Different victories can collect all three stars without marking a single-match perfect clear');
  returnToMainMenu();openStoryChapter(8);game.storyMatch.progress={sage:true,sameCardFaction:true,placeTwice:true};game.winner=game.players[0];updateStoryProgress();
- ok(storyChapterPerfect(8)&&[0,1,2].map(i=>storyStarColor(8,i)).join(',')===['#f39ac7',crownLightFor('sage_matara').main,crownLightFor('sage_yukari').main].join(',')&&el('tutorial-feedback').classList.contains('story-perfect'),'A perfect one-match clear uses the three Sage character colors in the requested order');
+ ok(storyChapterPerfect(8)&&[0,1,2].map(i=>storyStarColor(8,i)).join(',')===['#f39ac7','#b8860b','#5b2b85'].join(',')&&el('tutorial-feedback').classList.contains('story-perfect'),'A perfect one-match clear uses pink, dark gold and deep purple Sage stars in the requested order');
  el('restart-btn').events.click();ok(game===null&&storyMenuChapter===9&&el('story-card-grid').children.length===2,'Clearing chapter eight opens the Hakurei introduction');
  for(let seed=1;seed<=4;seed++){
   const g=make(seed);g.players.forEach(p=>p.isAI=true);let actions=0;

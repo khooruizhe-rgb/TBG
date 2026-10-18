@@ -1,6 +1,6 @@
 {
   "status": "pass",
-  "count": 29,
+  "count": 30,
   "checks": [
     "1024 random private six-card deals split Reimu and Marisa between the two seats, retain random first actors and all 60 unlocked shop orders",
     "The introduction unlocks exactly two Hakurei originals without inventing a fifth card",
@@ -24,13 +24,14 @@
     "The early-Hakurei holding rule does not affect other chapters",
     "Real Satori theft, Marisa’s Sage blast, a Hakurei pair and a Mansion claim produce a legal seven-point three-star victory",
     "The menu includes nine replayable chapters",
+    "Chapters eight and nine render rules and three goals in selection and card introductions, then their separate flavor hints on the live objective paper",
     "The actual new introduction displays two movable Hakurei cards",
     "The new introduction starts the real private constrained deal without an extra prelude",
     "The three new objective keys accumulate across wins without inventing a one-match perfect clear",
     "A one-match perfect clear uses Hakurei’s red faction stars",
     "Clearing the ninth chapter returns to the expanded chapter list",
     "Four complete Medium chapter-nine matches finish with conserved cards and the holding policy",
-    "The two exact requested story descriptions, ninth title and objectives translate through the actual bilingual path"
+    "The restored rules overviews, exact separate hints, ninth title and objectives translate through the actual bilingual path"
   ],
   "openings": 1024,
   "matches": [
