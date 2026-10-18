@@ -166,7 +166,7 @@ vm.runInContext(`(async()=>{
   returnToMainMenu();openStoryMenu();showStoryChapterIntro(3);
   ok(el('story-card-grid').children.map(card=>card.dataset.cardId).sort().join(',')==='haku_youmu,haku_yuyuko','Chapter three introduces only the two newly unlocked Hakugyokurou cards');
   ok(el('story-card-grid').children.every(card=>movableTableCardEnabled(card)),'Chapter-three introductions enable the same movable-card interaction');
-  el('story-begin').events.click();ok(isStoryMatch()&&game.storyMatch.chapter===3&&el('tutorial-feedback').innerHTML.includes('Yuyuko: gain four points'),'The introduction starts chapter three and displays its actual objectives');
+  el('story-begin').events.click();assert(isTutorialPractice()&&tutorialState.preludeChapter===3&&!el('tutorial-skip').hidden);el('tutorial-skip').events.click();ok(isStoryMatch()&&game.storyMatch.chapter===3&&el('tutorial-feedback').innerHTML.includes('Yuyuko: gain four points'),'Skipping the new cost prelude starts chapter three and displays its actual objectives');
   for(const id of ['mtn_sanae','sage_ran','hourai_mokou','temple_shou'])award(1,id);updateTutorialProgress();
   ok(el('tutorial-feedback').innerHTML.includes('✗')&&el('tutorial-feedback').innerHTML.includes('opponent reached four points'),'The fourth opponent point immediately displays a failed race and a retry explanation');
   const retired=game;el('tutorial-retry').events.click();ok(retired.cancelled&&game.storyMatch.chapter===3&&!game.storyMatch.opponentReachedFour&&!Object.values(game.storyMatch.progress).some(Boolean),'Retry retires chapter three and resets its goals and permanent race history');

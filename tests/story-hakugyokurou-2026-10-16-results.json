@@ -106,7 +106,7 @@
     "An actual random chapter-three match ends without a runtime error, illegal pass or turn-limit abort: 7",
     "Chapter three introduces only the two newly unlocked Hakugyokurou cards",
     "Chapter-three introductions enable the same movable-card interaction",
-    "The introduction starts chapter three and displays its actual objectives",
+    "Skipping the new cost prelude starts chapter three and displays its actual objectives",
     "The fourth opponent point immediately displays a failed race and a retry explanation",
     "Retry retires chapter three and resets its goals and permanent race history",
     "A true chapter-three clear saves its own progress",

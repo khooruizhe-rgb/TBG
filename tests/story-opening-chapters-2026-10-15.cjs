@@ -27,6 +27,8 @@ vm.runInContext(html.slice(html.indexOf('/* Guided practice uses'),html.indexOf(
   function returnToMainMenu(){resetGameView();}
   function startNewGame(){ordinaryRestarts++;}
 `,ctx);
+ctx.pendingHandChoice=null;ctx.pendingRectChoice=null;ctx.selectedHandCard=null;
+ctx.actualPreludeRun=vm.runInContext('runTutorialTurn',ctx);ctx.runTutorialTurn=()=>{};
 const restart=html.indexOf("el('restart-btn').addEventListener('click'");vm.runInContext(html.slice(restart,html.indexOf('\n});',restart)+4),ctx);
 const hotkeys=html.indexOf("document.addEventListener('keydown',event=>{\n  if(event.repeat");vm.runInContext(html.slice(hotkeys,html.indexOf('\n});',hotkeys)+4),ctx);
 ctx.pressStoryKey=key=>{let stopped=false;const event={key,target:{closest:()=>null},preventDefault(){},stopImmediatePropagation(){stopped=true;}};for(const handler of listeners.keydown){handler(event);if(stopped)break;}};
@@ -135,7 +137,7 @@ vm.runInContext(`(async()=>{
   game.winner=game.players[0];updateTutorialProgress();ok(storyState.complete&&storyBestStars(2)===0&&!el('tutorial-next').disabled,'Winning with missing goals saves a zero-star clear and permits the next chapter');
   game.storyMatch.progress={sdm:true,remilia:true,flandre:true};updateTutorialProgress();ok(storyState.complete&&storyClearedChapters().includes(2)&&!el('tutorial-next').disabled,'A true clear records progress and enables chapter navigation');
   el('restart-btn').events.click();ok(old.cancelled&&game===null&&storyState===null&&storyMenuChapter===3&&el('story-card-grid').children.length===2,'Finishing chapter two retires its match and opens the Hakugyokurou skill introduction');
-  showStoryChapterIntro(1);el('story-begin').events.click();game.winner=game.players[0];updateTutorialProgress();el('restart-btn').events.click();
+  showStoryChapterIntro(1);el('story-begin').events.click();assert(isTutorialPractice()&&tutorialState.preludeChapter===1);el('tutorial-skip').events.click();game.winner=game.players[0];updateTutorialProgress();el('restart-btn').events.click();
   ok(game===null&&storyMenuChapter===2&&el('story-card-grid').children.length===4,'Clearing chapter one leads to the Mansion skill introduction');
   el('story-begin').events.click();const retired=game;game.storyMatch.progress.remilia=true;let idleResolved=0;window.__resolveHumanTurn=()=>idleResolved++;el('tutorial-retry').events.click();
   ok(retired.cancelled&&game!==retired&&!Object.values(game.storyMatch.progress).some(Boolean),'Retry resets objectives, holding ages and the entire old match');

@@ -2004,6 +2004,7 @@
   .tutorial-checklist{display:flex;flex-direction:column;gap:7px;margin:7px 0 10px;}
   .tutorial-goal.done{color:#477647;font-weight:600;}
   .tutorial-navigation{display:flex;flex-wrap:wrap;gap:7px;justify-content:flex-end;}
+  #tutorial-skip[hidden]{display:none;}
   #tutorial-coach .tutorial-navigation button{cursor:pointer;min-height:36px;border:1px solid #b39162;border-radius:4px;background:#ead5b2;color:#523721;padding:6px 9px;font:inherit;font-size:.76rem;}
   #tutorial-coach button:disabled{opacity:.45;cursor:default;}
   #tutorial-coach button:focus-visible{outline:2px solid #e7bd75;outline-offset:2px;}
@@ -3032,7 +3033,7 @@ body.game-mobile:not(.mobile-landscape) #table-wrap{padding-top:56px}
           </div>
           <div id="tutorial-paper-content">
             <p id="tutorial-copy"></p><p id="tutorial-feedback" role="status" aria-live="polite"></p>
-            <div class="tutorial-navigation"><button id="tutorial-back" type="button">Back</button><button id="tutorial-retry" type="button">Retry</button><button id="tutorial-next" type="button" disabled>Next</button></div>
+            <div class="tutorial-navigation"><button id="tutorial-skip" type="button" hidden>Skip tutorial</button><button id="tutorial-back" type="button">Back</button><button id="tutorial-retry" type="button">Retry</button><button id="tutorial-next" type="button" disabled>Next</button></div>
           </div>
         </section>
         <div id="rinnosuke-bubble" role="status" aria-live="polite" aria-label="Rinnosuke says" hidden>
@@ -8545,6 +8546,7 @@ const ZH_DYNAMIC=[
   [/^\/6 selected$/,()=>`/6 已选`],
   [/^(\d+) revealed$/,(_,n)=>`展示 ${n} 张牌`],
   [/^Learn to Play · (\d+) \/ (\d+)$/,(_,n,total)=>`学习玩法 · ${n} / ${total}`],
+  [/^Chapter tutorial · (\d+) \/ (\d+)$/,(_,n,total)=>`关卡教学 · ${n} / ${total}`],
   [/^Draw pile ·$/,()=>`抽牌堆 ·`],
   [/^Filed by Aya Shameimaru for (.+)$/,(_,p)=>`射命丸文为 ${p} 撰稿`],
   [/^(.+) — (\d+)\/(\d+) selected\. Click cards to toggle; double-click to inspect\.$/,(_,t,n,max)=>`${translateGameText(t)} — 已选 ${n}/${max}。点击选择或取消，双击查看详情。`],
@@ -8808,6 +8810,15 @@ Object.assign(ZH_TEXT,{
 });
 Object.assign(ZH_TEXT,{
   'None':'无',
+  'Skip tutorial':'跳过教学',
+  'Select Sanae Kochiya in your hand, then click an empty tile or drag her onto it. Cards have no abilities in this practice.':'选择手中的东风谷早苗，再点击空格或将她拖到空格上。本次练习的卡牌均没有技能。',
+  'You placed a card. Next, try collecting a faction.':'你已放置一张卡牌。接下来试试收取阵营。',
+  'Place Sanae Kochiya beside the three highlighted Youkai Mountain cards. Four orthogonally connected cards go to your discard pile and score four points.':'将东风谷早苗放在三张高亮的妖怪之山卡牌旁。正交相连的四张阵营卡会进入你的弃牌区，获得四分。',
+  'You collected the faction and scored four points.':'你收取了阵营，获得了四分。',
+  'Pay an ability cost':'支付技能代价',
+  'Place Yuyuko Saigyouji beside the highlighted card. Cost N lets you choose how many cards to pay; here, select your other hand card and confirm. Paid cards return to the draw pile.':'将西行寺幽幽子放在高亮卡牌旁。代价 N 表示可选择支付的张数；本次选择另一张手牌并确认。支付的卡牌会回到抽牌堆。',
+  'You paid one card, and Yuyuko sent the adjacent card to your discard pile.':'你支付了一张牌，幽幽子将相邻卡牌送入了你的弃牌区。',
+  'This is a separate practice. You can skip it; your chapter cards and objectives stay unchanged.':'这是独立练习，可以随时跳过；正式关卡的手牌与目标不会受到影响。',
   'This card has no ability yet. Perhaps we will find some inspiration later?':'这张卡牌还没有技能呢，也许后面我们就有灵感了？',
   'Placed: Record four cards from each opponent’s hand in your newspaper. Others must pay you a hand card to read it.':'放置：查看其他每名玩家的四张手牌，并记入报纸。其他玩家须付你一张手牌才能阅读。',
   'Chapter 7 · Palace of the Earth Spirits':'第七关 · 地灵殿',
@@ -16137,17 +16148,30 @@ const TUTORIALS=[
   {title:'Try a trade',body:'Choose one of the three highlighted cards. You can trade once per turn without using your turn. The rest of Kourindou is yours to discover.',goal:'trade',success:'The merchandise is now in your hand. The trade used no turn.'},
   {title:'Win your first match',body:'Beat one AI in a full match. Claim a four-card faction, claim a two-card faction, and gain a point with an ability in the same match. Try the four-card faction first, then the pair, and finish with a scoring ability.',goal:'match',success:'You completed all three goals and won the match. Learn to Play is complete.'}
 ];
+const STORY_PRELUDES={
+  1:{steps:[0,1],pages:{
+    0:{title:'Place a card',body:'Select Sanae Kochiya in your hand, then click an empty tile or drag her onto it. Cards have no abilities in this practice.',goal:'place',success:'You placed a card. Next, try collecting a faction.'},
+    1:{title:'Connect a faction',body:'Place Sanae Kochiya beside the three highlighted Youkai Mountain cards. Four orthogonally connected cards go to your discard pile and score four points.',goal:'claim',success:'You collected the faction and scored four points.'}
+  }},
+  3:{steps:[3],pages:{
+    3:{title:'Pay an ability cost',body:'Place Yuyuko Saigyouji beside the highlighted card. Cost N lets you choose how many cards to pay; here, select your other hand card and confirm. Paid cards return to the draw pile.',goal:'cost',cardId:'haku_yuyuko',success:'You paid one card, and Yuyuko sent the adjacent card to your discard pile.'}
+  }},
+  6:{steps:[4,5],pages:{}}
+};
+function tutorialPage(t=tutorialState){return STORY_PRELUDES[t?.preludeChapter]?.pages[t.step]||TUTORIALS[t?.step];}
 let tutorialState=null,tutorialReturnFocus=null;
 function isTutorialPractice(){return !!tutorialState && tutorialState.practice===game;}
 function tutorialAllowsTrade(){
   if(isStoryMatch())return game.storyMatch.chapter>=6;
-  return !isTutorialPractice() || ['offer','trade','match'].includes(TUTORIALS[tutorialState.step].goal);
+  return !isTutorialPractice() || ['offer','trade','match'].includes(tutorialPage().goal);
 }
 
 function clearTutorialPractice(){
   const previous=tutorialState;
   tutorialState=null;
   previous?.cancel();
+  if(previous?.preludeMatch&&!previous.keepPreludeMatch)previous.preludeMatch.cancelled=true;
+  el('tutorial-skip').hidden=true;
   resetObjectivePaper();
   el('tutorial-coach').hidden=true;
   document.body.classList.remove('tutorial-practice');
@@ -16234,9 +16258,10 @@ window.addEventListener('resize',()=>{finishObjectivePaperDrag();positionObjecti
 if(typeof ResizeObserver!=='undefined')new ResizeObserver(()=>{if(!objectivePaperState.drag)positionObjectivePaper();}).observe(el('tutorial-coach'));
 
 /* Fixtures use unique real cards; no mock cards, scores, or alternative ability rules. */
-function configureTutorialGame(practice,step){
-  const goal=TUTORIALS[step].goal;
+function configureTutorialGame(practice,step,preludeChapter=null){
+  const goal=tutorialPage({step,preludeChapter}).goal;
   if(goal==='match'){configureTutorialMatch(practice);return;}
+  if(preludeChapter)configureStoryMatch(practice,preludeChapter);
   let board=[],hand=['mtn_sanae'],opponents=[[],[]];
   if(goal==='claim') board=[[1,1,'mtn_kanako'],[1,2,'mtn_suwako'],[2,1,'mtn_aya']];
   if(goal==='draw'){
@@ -16247,8 +16272,10 @@ function configureTutorialGame(practice,step){
     hand=['heaven_iku','hourai_mokou','hell_clownpiece','haku_youmu'];
     board=[[0,0,'mtn_aya'],[0,1,'sage_ran']];
   }
+  if(goal==='cost'){hand=['haku_yuyuko','hell_clownpiece'];board=[[1,2,'mtn_aya']];}
   if(goal==='offer' || goal==='trade') hand=['hourai_mokou','haku_youmu'];
-  practice.shopCards=['shop_rinnosuke','sdm_meiling','hourai_tewi','hell_kutaka'];
+  practice.shopCards=preludeChapter===6?['shop_rinnosuke','sdm_meiling','hourai_tewi','mtn_nitori']
+    :practice.kourindouEnabled?['shop_rinnosuke','sdm_meiling','hourai_tewi','hell_kutaka']:[];
   practice.board=Array.from({length:SIZE},()=>Array(SIZE).fill(null));
   practice.wasteland=Array.from({length:SIZE},()=>Array(SIZE).fill(false));
   for(const [r,c,id] of board) practice.setCardAt(r,c,id);
@@ -16260,7 +16287,7 @@ function configureTutorialGame(practice,step){
   practice.startingCardIds=new Set([...used,...practice.drawPile]);
   practice.handKnowledge=practice.players.map(()=>new Map());practice.reserveAges=practice.players.map(()=>({}));
   practice.players.forEach(player=>practice.revealHand(player.idx,player.hand,[player.idx]));
-  practice.tutorialExercise={initialHandSize:hand.length,areaTargets:board.map(cell=>cell[2]),costCards:goal==='area'?hand.filter(id=>id!=='heaven_iku'):[],tradeCard:goal==='offer'||goal==='trade'?hand[0]:null};
+  practice.tutorialExercise={initialHandSize:hand.length,areaTargets:board.map(cell=>cell[2]),costCards:goal==='area'?hand.filter(id=>id!=='heaven_iku'):goal==='cost'?hand.filter(id=>id!=='haku_yuyuko'):[],tradeCard:goal==='offer'||goal==='trade'?hand[0]:null};
   practice.currentPlayerIdx=0;practice.winner=null;practice.logLines=[];
   practice.log('Guided practice — the other players wait while you try this step.');
 }
@@ -16281,27 +16308,30 @@ function configureTutorialMatch(practice){
   practice.log('The match begins. Reach 7 discard points to win.');
 }
 function tutorialObjectiveMet(t){
-  const g=t.practice,goal=TUTORIALS[t.step].goal;
+  const g=t.practice,goal=tutorialPage(t).goal;
   if(goal==='match')return g.winner?.idx===g.tutorialLesson?.humanSeat
     && Object.values(g.tutorialLesson.progress).every(Boolean);
-  if(goal==='place') return g.isActiveOnBoard('mtn_sanae') && g.players[0].hand.length===g.tutorialExercise.initialHandSize;
+  if(goal==='place') return t.preludeChapter===1?g.isOnBoard('mtn_sanae')&&g.players[0].hand.length===g.tutorialExercise.initialHandSize-1
+    :g.isActiveOnBoard('mtn_sanae') && g.players[0].hand.length===g.tutorialExercise.initialHandSize;
   if(goal==='claim') return ['mtn_kanako','mtn_suwako','mtn_aya','mtn_sanae'].every(id=>g.players[0].discard.includes(id));
   if(goal==='draw') return g.players.every((p,i)=>p.hand.length===[7,7,4][i]) && g.drawPile.length===t.initialPileSize-2;
   if(goal==='area') return g.tutorialExercise.areaTargets.every(id=>g.players[0].discard.includes(id))
     && g.tutorialExercise.costCards.every(id=>g.drawPile.includes(id)) && !g.players[0].hand.length;
+  if(goal==='cost')return g.tutorialExercise.areaTargets.every(id=>g.players[0].discard.includes(id))
+    && g.tutorialExercise.costCards.every(id=>g.drawPile.includes(id)) && g.isOnBoard('haku_yuyuko');
   if(goal==='trade') return g.tradedThisTurn[0] && g.players[0].hand.some(id=>CARD[id].shopExpansion);
   return false;
 }
 function tutorialAllowsAction(type,cardId){
   if(isStoryMatch())return !storyState.complete&&!game.winner&&!game.stalemateMessage&&['place','draw'].includes(type);
   if(!isTutorialPractice()) return true;
-  const t=tutorialState,goal=TUTORIALS[t.step].goal;
+  const t=tutorialState,goal=tutorialPage(t).goal;
   if(goal==='match')return !t.complete && !t.practice.winner && !t.practice.stalemateMessage && ['place','draw'].includes(type);
   if(t.complete || t.finishedAction) return false;
   const allowed=goal==='draw' ? type==='draw'
     : goal==='offer' ? type==='place'
     : goal==='trade' ? false
-    : type==='place' && cardId===(goal==='area'?'heaven_iku':'mtn_sanae');
+    : type==='place' && cardId===(tutorialPage(t).cardId||(goal==='area'?'heaven_iku':'mtn_sanae'));
   if(!allowed){
     t.feedback=goal==='draw'?'Use Draw for Everyone for this step.':goal==='trade'?'Choose a highlighted merchandise card.':'Use the highlighted hand card for this step.';
     renderTutorial();
@@ -16314,19 +16344,21 @@ async function finishTutorialAction(t){
   if(!await waitForVisualEffects(t.practice)) return;
   if(tutorialState!==t || game!==t.practice || t.practice.cancelled) return;
   t.complete=tutorialObjectiveMet(t);
-  t.feedback=t.complete ? TUTORIALS[t.step].success
+  t.feedback=t.complete ? tutorialPage(t).success
     : 'Try again to complete this step. Retry restores the practice cards.';
   renderTutorial();
 }
 async function runTutorialTurn(t){
-  if(TUTORIALS[t.step].goal==='match'){runNextTurn();return;}
+  if(tutorialPage(t).goal==='match'){runNextTurn();return;}
   await Promise.race([doPlayerAction(0),t.cancelled]);
   if(tutorialState===t && game===t.practice && !t.practice.cancelled) await finishTutorialAction(t);
 }
-function openTutorial(step=0){
+function openTutorial(step=0,{preludeChapter=null,preludeMatch=null}={}){
   if(!Number.isInteger(step) || !TUTORIALS[step]) return;
+  if(preludeChapter&&!STORY_PRELUDES[preludeChapter]?.steps.includes(step))return;
   // Tutorials launch from the menu; never replace a live match.
   if(game && !isTutorialPractice()) return;
+  if(tutorialState?.preludeMatch===preludeMatch&&preludeMatch)tutorialState.keepPreludeMatch=true;
   if(!tutorialState) tutorialReturnFocus=document.activeElement;
   resetGameView();
   closeAITestDashboard();
@@ -16334,21 +16366,21 @@ function openTutorial(step=0){
   SIZE=4;
   let cancel;
   const cancelled=new Promise(resolve=>{cancel=resolve;});
-  const t={step,cancel,cancelled,practice:null,complete:false,finishedAction:false,feedback:''};
+  const t={step,cancel,cancelled,practice:null,complete:false,finishedAction:false,feedback:'',preludeChapter,preludeMatch};
   tutorialState=t;
   const practiceUI={...ui};
   for(const name of ['pickPlayer','pickFromList','pickOwnHandCard','pickOwnHandCards','pickHandCard','pickCardPool','arrangeDrawPileCards','pickRectByDrag','pickCell','promptText']){
     practiceUI[name]=(...args)=>Promise.race([ui[name](...args),cancelled.then(()=>name==='pickRectByDrag'?[]:null)]);
   }
-  game=t.practice=new Game(TUTORIALS[step].goal==='match'?2:3,practiceUI,null,{aiDifficulty:'hard'});
-  configureTutorialGame(game,step);
+  game=t.practice=new Game(tutorialPage(t).goal==='match'||preludeChapter?2:3,practiceUI,null,{aiDifficulty:'hard'});
+  configureTutorialGame(game,step,preludeChapter);
   t.initialPileSize=game.drawPile.length;
   el('setup').style.display='none';el('game').classList.add('active');
   document.body.classList.add('tutorial-practice');el('tutorial-coach').hidden=false;
   dockTutorialCoach(document.body.classList.contains('game-mobile'));
   renderTutorial();
   runTutorialTurn(t); // The real human turn installs all normal click and drag controls.
-  if(TUTORIALS[step].goal==='trade') beginShopTrade(game.tutorialExercise.tradeCard);
+  if(tutorialPage(t).goal==='trade') beginShopTrade(game.tutorialExercise.tradeCard);
   window.scrollTo(0,0);queueMobileViewport();
 }
 function tutorialStep(delta){
@@ -16356,6 +16388,12 @@ function tutorialStep(delta){
   if(!tutorialState) return;
   const t=tutorialState,next=t.step+delta;
   if(delta>0 && !t.complete) return;
+  if(t.preludeChapter){
+    const steps=STORY_PRELUDES[t.preludeChapter].steps,index=steps.indexOf(t.step)+delta;
+    if(index>=steps.length){finishStoryPrelude();return;}
+    if(index<0){const chapter=t.preludeChapter;resetGameView();showStoryChapterIntro(chapter);return;}
+    openTutorial(steps[index],{preludeChapter:t.preludeChapter,preludeMatch:t.preludeMatch});return;
+  }
   if(next>=TUTORIALS.length){returnToMainMenu();tutorialReturnFocus?.focus();return;}
   if(next>=0) openTutorial(next);
 }
@@ -16363,14 +16401,14 @@ function updateTutorialProgress(){
   if(isStoryMatch()){updateStoryProgress();return;}
   if(!isTutorialPractice()) return;
   const t=tutorialState;
-  if(TUTORIALS[t.step].goal==='match'){
+  if(tutorialPage(t).goal==='match'){
     t.complete=tutorialObjectiveMet(t);renderTutorial();return;
   }
   // Opening the real merchandise selection moves straight to the second shop page.
-  if(TUTORIALS[t.step].goal==='offer' && pendingCellChoice?.shopTrade){
+  if(tutorialPage(t).goal==='offer' && pendingCellChoice?.shopTrade){
     t.step++;t.feedback='';renderTutorial();
   }
-  if(TUTORIALS[t.step].goal==='trade' && !t.complete && !t.finishedAction
+  if(tutorialPage(t).goal==='trade' && !t.complete && !t.finishedAction
     && t.practice.tradedThisTurn[0] && !humanActionResolving){
     finishTutorialAction(t);
   }
@@ -16379,7 +16417,7 @@ function updateTutorialProgress(){
 function highlightTutorialTargets(){
   document.querySelectorAll('.tutorial-focus').forEach(node=>node.classList.remove('tutorial-focus'));
   if(!isTutorialPractice() || tutorialState.complete || tutorialState.finishedAction) return;
-  const t=tutorialState,goal=TUTORIALS[t.step].goal;
+  const t=tutorialState,goal=tutorialPage(t).goal;
   if(goal==='match')return;
   const mark=node=>node?.classList.add('tutorial-focus');
   if(goal==='draw'){mark(el('draw-btn'));return;}
@@ -16392,19 +16430,21 @@ function highlightTutorialTargets(){
     mark(el('hand-choice-confirm'));return;
   }
   if(pendingRectChoice){mark(tileElement(0,0));mark(tileElement(0,1));return;}
-  const id=goal==='area'?'heaven_iku':goal==='offer'?game.tutorialExercise.tradeCard:'mtn_sanae';
+  const id=tutorialPage(t).cardId||(goal==='area'?'heaven_iku':goal==='offer'?game.tutorialExercise.tradeCard:'mtn_sanae');
   mark([...el('hand').children].find(node=>node.dataset.cardId===id));
   if(selectedHandCard && goal==='offer') mark(tileElement(SIZE+2,1));
   if(selectedHandCard && goal==='claim'){
     for(const cell of game.emptyOrWastelandForCard(CARD.mtn_sanae))
       if(game.wouldCompleteFaction('mtn_sanae',cell.r,cell.c)) mark(tileElement(cell.r,cell.c));
   }
+  if(selectedHandCard && goal==='cost')for(const cell of game.emptyCells(0))
+    if(game.yuyukoTargets(cell.r,cell.c,0).length)mark(tileElement(cell.r,cell.c));
 }
 function renderTutorial(){
   const t=tutorialState;
   if(!t) return;
-  const steps=TUTORIALS,page=steps[t.step];
-  el('tutorial-progress').textContent=`Learn to Play · ${t.step+1} / ${steps.length}`;
+  const steps=STORY_PRELUDES[t.preludeChapter]?.steps,page=tutorialPage(t);
+  el('tutorial-progress').textContent=steps?`Chapter tutorial · ${steps.indexOf(t.step)+1} / ${steps.length}`:`Learn to Play · ${t.step+1} / ${TUTORIALS.length}`;
   el('tutorial-title').textContent=page.title;setRuleText(el('tutorial-copy'),page.body);
   if(page.goal==='match'){
     const progress=t.practice.tutorialLesson.progress,won=t.practice.winner?.idx===0;
@@ -16417,17 +16457,19 @@ function renderTutorial(){
       :'Finish the match by reaching 7 discard points.';
     el('tutorial-feedback').innerHTML=`<span class="tutorial-checklist">${goals.map(([label,done])=>`<span class="tutorial-goal${done?' done':''}">${done?'✓':'○'} ${ruleTextHtml(label)}</span>`).join('')}</span>${ruleTextHtml(hint)}`;
     setRuleText(el('restart-btn'),t.complete?'Finish':'Retry');
-  }else el('tutorial-feedback').textContent=t.feedback || 'Try it on the table. Your match settings stay unchanged.';
-  el('tutorial-back').disabled=t.step===0;
+  }else setRuleText(el('tutorial-feedback'),t.feedback || (t.preludeChapter?'This is a separate practice. You can skip it; your chapter cards and objectives stay unchanged.':'Try it on the table. Your match settings stay unchanged.'));
+  el('tutorial-skip').hidden=!t.preludeChapter;
+  el('tutorial-back').disabled=!t.preludeChapter&&t.step===0;
   el('tutorial-next').disabled=!t.complete;
-  el('tutorial-next').textContent=t.step===steps.length-1?'Finish':'Next';
+  setRuleText(el('tutorial-next'),steps?(t.step===steps.at(-1)?'Start chapter':'Next'):t.step===TUTORIALS.length-1?'Finish':'Next');
   highlightTutorialTargets();
   queueMobileViewport();
 }
 el('tutorial-start').addEventListener('click',()=>openTutorial());
 el('tutorial-back').addEventListener('click',()=>tutorialStep(-1));
-el('tutorial-retry').addEventListener('click',()=>{if(isStoryMatch())openStoryChapter(storyState.chapter);else if(tutorialState)openTutorial(tutorialState.step);});
+el('tutorial-retry').addEventListener('click',()=>{if(isStoryMatch())openStoryChapter(storyState.chapter);else if(tutorialState)openTutorial(tutorialState.step,{preludeChapter:tutorialState.preludeChapter,preludeMatch:tutorialState.preludeMatch});});
 el('tutorial-next').addEventListener('click',()=>tutorialStep(1));
+el('tutorial-skip').addEventListener('click',finishStoryPrelude);
 
 /* Story chapters are individually replayable while this mode is prototyped. */
 let storyState=null,storyMenuChapter=null,storyReturnFocus=null,storyIntroSession=null;
@@ -16553,7 +16595,21 @@ function closeStoryIntroCards(){
   storyIntroSession=null;if(session.frame!==null)cancelAnimationFrame(session.frame);
   session.cards.forEach(node=>stopTableCardSlide(node,false));window.removeEventListener('resize',session.layout);el('story-panel').removeEventListener('scroll',session.layout);el('story-card-grid').replaceChildren();
 }
-function openStoryChapter(chapter){
+function beginStoryChapter(chapter){
+  if(!STORY_PRELUDES[chapter]){openStoryChapter(chapter);return;}
+  if(online||game&&!game.cancelled&&!isStoryMatch())return;
+  if(isStoryMatch())returnToMainMenu();
+  SIZE=4;
+  const preludeMatch=new Game(2,{},null,{aiDifficulty:chapter===1?'hard':chapter>=6?'normal':'easy',kourindouEnabled:chapter>=6});
+  configureStoryMatch(preludeMatch,chapter);
+  openTutorial(STORY_PRELUDES[chapter].steps[0],{preludeChapter:chapter,preludeMatch});
+}
+function finishStoryPrelude(){
+  const t=tutorialState;if(!isTutorialPractice()||!t.preludeChapter||!t.preludeMatch)return;
+  const chapter=t.preludeChapter,prepared=t.preludeMatch;t.keepPreludeMatch=true;
+  resetGameView();openStoryChapter(chapter,{prepared});
+}
+function openStoryChapter(chapter,{prepared=null}={}){
   if(!STORY_CHAPTERS.some(level=>level.id===chapter)||online||game&&!game.cancelled&&!isStoryMatch())return;
   resetGameView();closeAITestDashboard();updateAITestControls();SIZE=4;
   let cancel;const cancelled=new Promise(resolve=>{cancel=resolve;});
@@ -16561,7 +16617,14 @@ function openStoryChapter(chapter){
   const practiceUI={...ui};
   for(const name of ['pickPlayer','pickFromList','pickOwnHandCard','pickOwnHandCards','pickHandCard','pickCardPool','arrangeDrawPileCards','pickRectByDrag','pickCell','promptText'])
     practiceUI[name]=(...args)=>Promise.race([ui[name](...args),cancelled.then(()=>name==='pickRectByDrag'?[]:null)]);
-  game=state.practice=new Game(2,practiceUI,null,{aiDifficulty:chapter===1?'hard':chapter>=6?'normal':'easy',kourindouEnabled:chapter>=6});configureStoryMatch(game,chapter);
+  if(prepared&&(!prepared.cancelled&&prepared.storyMatch?.chapter===chapter)){
+    game=state.practice=prepared;
+    game.ui=Object.fromEntries(Object.entries(practiceUI).map(([name,callback])=>[name,
+      typeof callback==='function'&&(name.startsWith('on')||name==='render')
+        ?(...args)=>{if(!prepared.cancelled&&!(prepared.fastAITest&&name.startsWith('on')&&name!=='onLog'))return callback(...args);}:callback]));
+  }else{
+    game=state.practice=new Game(2,practiceUI,null,{aiDifficulty:chapter===1?'hard':chapter>=6?'normal':'easy',kourindouEnabled:chapter>=6});configureStoryMatch(game,chapter);
+  }
   el('setup').style.display='none';el('game').classList.add('active');document.body.classList.add('tutorial-practice','story-practice');
   el('tutorial-coach').hidden=false;dockTutorialCoach(document.body.classList.contains('game-mobile'));renderStoryCoach();
   // Paint the six-card deal before an AI first turn can draw for everyone.
@@ -16602,7 +16665,7 @@ function storyStep(delta){
 el('story-start').addEventListener('click',openStoryMenu);
 el('story-debug-reset').addEventListener('click',resetStoryStars);
 el('story-close').addEventListener('click',()=>{if(storyMenuChapter!==null)openStoryMenu();else closeStoryMenu();});
-el('story-begin').addEventListener('click',()=>{if(storyMenuChapter!==null)openStoryChapter(storyMenuChapter);});
+el('story-begin').addEventListener('click',()=>{if(storyMenuChapter!==null)beginStoryChapter(storyMenuChapter);});
 el('story-overlay').addEventListener('click',event=>{if(event.target===el('story-overlay'))closeStoryMenu();});
 document.addEventListener('keydown',event=>{
   if(!el('story-overlay').classList.contains('show')||el('card-detail-overlay').classList.contains('show'))return;
@@ -16796,7 +16859,7 @@ el('start-btn').addEventListener('click', () => {
 el('restart-btn').addEventListener('click',()=>{
   if(isStoryMatch()){
     if(storyState.complete)storyStep(1);else openStoryChapter(storyState.chapter);
-  }else if(isTutorialPractice() && TUTORIALS[tutorialState.step].goal==='match'){
+  }else if(isTutorialPractice() && tutorialPage().goal==='match'){
     if(tutorialState.complete)tutorialStep(1);else openTutorial(tutorialState.step);
   }else startNewGame();
 });
