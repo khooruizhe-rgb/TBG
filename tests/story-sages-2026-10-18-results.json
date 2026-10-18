@@ -22,7 +22,7 @@
     "The real Medium action policy chooses a different card or draws across 32 seeds instead of leaking a forbidden placement",
     "A card in either player discard pile makes Rin available to the chapter-seven opponent",
     "The actual AI turn executor respects both chapter-seven filters",
-    "The menu exposes ten replayable story chapters",
+    "The menu exposes eleven replayable story chapters",
     "The real chapter-eight introduction shows four movable Sage cards without the fifth card",
     "The eighth chapter starts directly with its guaranteed opening and no extra prelude",
     "Different victories can collect all three stars without marking a single-match perfect clear",
@@ -58,6 +58,6 @@
       "stalemate": false
     }
   ],
-  "rulesVersion": "2026-10-18-story-sunflower-v30",
+  "rulesVersion": "2026-10-18-story-hell-eiki-v31",
   "scope": "Real randomized private deals, Sage ability unlocks, Matara creation and same-prototype two-card claims, entity-specific repeated placements, legal perfect-clear route, chapter-seven voluntary AI guards, real menus and cumulative stars, four complete Medium matches. Controlled DOM; no browser pixel verification."
 }

@@ -97,7 +97,7 @@ vm.runInContext(`(async()=>{
  make(1,8);arrange({hands:[['mtn_sanae'],['medicine']]});game.currentPlayerIdx=1;
  ok(aiPlacementCells(game,'medicine',game.emptyOrWastelandForCard(CARD.medicine,1),1).length>0,'The Sunflower opening hold does not leak into earlier chapters');
 
- returnToMainMenu();testStorage.clear();openStoryMenu();ok(el('story-levels').children.length===10,'All ten chapters are replayable from the real story menu');
+ returnToMainMenu();testStorage.clear();openStoryMenu();ok(el('story-levels').children.length===11,'All ten chapters are replayable from the real story menu');
  const create=document.createElement;document.createElement=()=>{const node=create();node.values=new Map();node.style.setProperty=(key,value)=>node.values.set(key,value);return node;};
  showStoryChapterIntro(9);const shrine=new Map(el('story-card-grid').children.map(node=>[node.dataset.cardId,node]));
  ok(shrine.get('marisa').values.get('--story-glow-color')==='#ffeb3b'&&shrine.get('reimu').values.get('--story-glow-color')===FACTIONS.hakurei.color,'The real introduction gives only Marisa a yellow renewal scan and invitation glow while Reimu keeps Hakurei red');
@@ -109,7 +109,7 @@ vm.runInContext(`(async()=>{
  returnToMainMenu();testStorage.clear();openStoryChapter(10);choices();arrange({hands:[['medicine','marisa','sdm_patchouli'],['hell_clownpiece','temple_murasa']],board:[[0,0,'yuuka'],[2,0,'sdm_remilia'],[2,1,'sdm_flandre'],[3,0,'sdm_sakuya'],[3,3,'sage_ran']]});
  game.beginPlayerTurn(0);await place('medicine',0,0,1);assert(game.storyMatch.progress.sunflower&&game.storyMatch.progress.emptyOpponent);game.endPlayerTurn(0);game.beginPlayerTurn(0);game.ui.pickCell=async(_title,cells)=>cells.find(cell=>game.cardAt(cell.r,cell.c)==='sage_ran');await place('marisa',0,1,1);game.endPlayerTurn(0);game.beginPlayerTurn(0);game.guessCardName=async()=>null;await place('sdm_patchouli',0,2,2);updateStoryProgress();
  ok(game.winner?.idx===0&&game.winCount(game.players[0])===7&&game.storyMatch.humanTurns===3&&storyMatchStars(game)===3&&storyChapterPerfect(10)&&el('tutorial-feedback').classList.contains('story-perfect')&&storyStarColor(10)===FACTIONS.sunflower.color,'A real Medicine empty-hand and Sunflower claim, Marisa blast, and Mansion claim win seven points in three player turns and save a gold perfect clear');
- el('restart-btn').events.click();ok(game===null&&storyMenuChapter===null&&el('story-levels').children.length===10,'Clearing the final chapter returns to the complete ten-chapter list');
+ el('restart-btn').events.click();ok(game===null&&storyMenuChapter===11&&el('story-card-grid').children.length===4,'Clearing Sunflower opens the four-card Hell introduction');
  for(let seed=1;seed<=4;seed++){
   const g=make(seed);g.players.forEach(p=>p.isAI=true);let actions=0;
   while(!g.winner&&!g.stalemateMessage&&actions<220){const p=g.currentPlayerIdx;g.beginPlayerTurn(p);g.tradedThisTurn[p]=false;if(!canAct(p)){g.endPlayerTurn(p);g.currentPlayerIdx=1-p;if(!canAct(1-p)){endStalemate();break;}continue;}const flags=await doPlayerAction(p);evalConservation(g);actions++;await afterAction(p,flags);}

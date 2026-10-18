@@ -37,7 +37,7 @@
     "Beginning the chapter starts one real private six-card deal and displays the exact separate hint",
     "Three independent winning runs can accumulate all goals without claiming a single-match perfect clear",
     "A real Medicine empty-hand and Sunflower claim, Marisa blast, and Mansion claim win seven points in three player turns and save a gold perfect clear",
-    "Clearing the final chapter returns to the complete ten-chapter list",
+    "Clearing Sunflower opens the four-card Hell introduction",
     "Four complete Medium Sunflower matches finish with conserved cards, the three-turn hold and active deadline tracking",
     "The real bilingual path translates the tenth title, rules, exact hint and all three objective labels"
   ],
@@ -76,6 +76,6 @@
       "humanTurns": 9
     }
   ],
-  "rulesVersion": "2026-10-18-story-sunflower-v30",
+  "rulesVersion": "2026-10-18-story-hell-eiki-v31",
   "scope": "Real private openings, ten distinct empty-hand routes and speculative/trade/Trap/cancellation negatives, ninth/tenth boundary, real Sakuya and Youmu follow-ups, AI holding and mandatory fallback, movable introduction renewal colors, cumulative and perfect saves, legal seven-point three-star route, and four complete Medium matches. Controlled DOM; no browser pixel verification."
 }

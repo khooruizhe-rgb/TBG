@@ -1,0 +1,182 @@
+{
+  "status": "pass",
+  "count": 46,
+  "checks": [
+    "Eiki really pays Cost I, returns three majority-faction cards, shuffles and draws three",
+    "An initially empty deck is funded by the actual paid and returned cards, so Eiki still draws three",
+    "A protected majority member remains on the board and supplies no replacement draw",
+    "Fully protected cards have no effective board faction, so only Eiki herself returns and supplies one draw",
+    "An actual tied-maximum chooser removes exactly the selected faction and draws its actual returned count",
+    "Declining Cost I leaves all targets and gives no free draw",
+    "An Eiki with no payable hand card cannot activate the return-and-draw skill",
+    "Eiki finishes drawing even when the largest faction includes herself and she returns with it",
+    "Eiki’s ability draw can exceed the normal seven-card drawing limit",
+    "A double Eiki copy draws three then two after re-evaluating the board, paying its single Cost I plus one creation surcharge only once",
+    "Current AI values the three actual Eiki replacement draws without mutating the real board, hands or deck",
+    "1024 conserved private random six-card deals reserve Hecatia for the AI, a Hell card for the player, undealt Hell originals in the next five draws, and Kutaka in all 60 shop orders",
+    "The introduction unlocks four Hell originals and leaves the guaranteed fifth card for shop exploration",
+    "For either first actor the real first AI action places Hecatia despite its ordinary setup guard, and returning her later does not repeat the scripted opening",
+    "The chapter opening respects Reisen’s mandatory card instead of overriding game rules",
+    "A blocked Hecatia opening takes a legal shared draw rather than an illegal placement or voluntary pass",
+    "The Hecatia opening override is absent from earlier chapters",
+    "A real four-card Hell collection records the player objective and admits Hecatia after the other three Hell cards for six points",
+    "All eight objective combinations remain independent and require a human victory before awarding stars",
+    "Clownpiece actually clearing all eight surrounding wasteland tiles earns the goal",
+    "Two real four-tile clears, including a paid created Clownpiece, accumulate to eight in the same match",
+    "Yuuka’s actual clear also counts; the objective is not locked to Clownpiece",
+    "An opponent-owned clearing ability never advances the player’s goal",
+    "Setup edits, already-clear tiles and calls outside an owned ability do not manufacture cleared-tile progress",
+    "Current AI return-and-draw previews cannot mutate either Hell objective or the real clearing count",
+    "Kutaka creating actual new orthogonal wasteland successfully triggers her objective",
+    "Kutaka really taking a Hell card from the deck on wasteland is the other successful branch",
+    "Cancelling Kutaka’s retrieval does not award an unperformed effect",
+    "An empty Hell search on wasteland is not a successful trigger",
+    "Turning already-wasteland neighbors into wasteland produces no successful-trigger progress",
+    "Only the player’s actual Kutaka effect counts",
+    "A real paid Kutaka copy can trigger the same skill objective",
+    "A Kutaka rewritten to draw one no longer triggers the original ability goal",
+    "Hell objective hooks do not add skills or progress to previous chapters",
+    "Ordinary Hard AI never calls the story mentor: an isolated Youmu is reserved, while a held Yuyuko pairing can justify an opening Youmu",
+    "Chapter three alone enters the mentor and explicitly chooses Youmu without a pairing",
+    "Leaving the actual story session and constructing an ordinary match removes both the teaching and scripted-Hecatia state",
+    "The story menu offers eleven replayable chapters",
+    "The introduction displays four movable active Hell cards and leaves Kutaka to be discovered in the shop",
+    "The introduction starts a real private six-card Hell match with the guaranteed shop card and requested separate hint",
+    "Separate winning matches accumulate Hell’s three goals without inventing a one-match perfect clear",
+    "A legal route clears eight tiles, trades for and triggers Kutaka, claims Hecatia with three Hell cards for six points, then uses Komachi’s free action for a seventh point and a perfect save",
+    "The final Hell clear returns to the complete chapter list",
+    "Retry resets live Hell goals and opening state while preserving the saved perfect clear",
+    "Four complete Medium Hell matches finish with conserved cards; every available unconstrained first AI action places Hecatia",
+    "Actual bilingual rendering covers the Hell overview, exact hint, three goals, complete Eiki skill and new draw log"
+  ],
+  "openings": 1024,
+  "matches": [
+    {
+      "seed": 1,
+      "actions": 17,
+      "winner": 1,
+      "stalemate": false,
+      "opening": {
+        "hand": [
+          "sdm_patchouli",
+          "hell_hecatia",
+          "hourai_kaguya",
+          "sdm_flandre",
+          "hell_clownpiece",
+          "sdm_sakuya"
+        ],
+        "forced": null,
+        "blocked": false,
+        "expected": true,
+        "played": true
+      },
+      "hecatiaOpeningPlayed": true,
+      "wastelandCleared": 2
+    },
+    {
+      "seed": 2,
+      "actions": 24,
+      "winner": 0,
+      "stalemate": false,
+      "opening": {
+        "hand": [
+          "hourai_reisen",
+          "sage_matara",
+          "heaven_iku",
+          "sdm_flandre",
+          "hell_hecatia",
+          "sage_ran"
+        ],
+        "forced": null,
+        "blocked": false,
+        "expected": true,
+        "played": true
+      },
+      "hecatiaOpeningPlayed": true,
+      "wastelandCleared": 2
+    },
+    {
+      "seed": 3,
+      "actions": 26,
+      "winner": 1,
+      "stalemate": false,
+      "opening": {
+        "hand": [
+          "heaven_iku",
+          "hell_hecatia",
+          "temple_shou",
+          "hell_eiki",
+          "temple_byakuren",
+          "hourai_reisen"
+        ],
+        "forced": null,
+        "blocked": false,
+        "expected": true,
+        "played": true
+      },
+      "hecatiaOpeningPlayed": true,
+      "wastelandCleared": 4
+    },
+    {
+      "seed": 4,
+      "actions": 25,
+      "winner": 0,
+      "stalemate": true,
+      "opening": {
+        "hand": [
+          "hell_eiki",
+          "hell_hecatia",
+          "heaven_iku",
+          "haku_yuyuko",
+          "palace_rin",
+          "reimu"
+        ],
+        "forced": "heaven_iku",
+        "blocked": false,
+        "expected": false,
+        "played": false
+      },
+      "hecatiaOpeningPlayed": false,
+      "wastelandCleared": 1
+    }
+  ],
+  "youmuAudit": [
+    {
+      "chapter": null,
+      "difficulty": "hard",
+      "paired": false,
+      "teaching": false,
+      "action": {
+        "type": "draw"
+      },
+      "lowPriority": true
+    },
+    {
+      "chapter": null,
+      "difficulty": "hard",
+      "paired": true,
+      "teaching": false,
+      "action": {
+        "type": "place",
+        "cardId": "haku_youmu",
+        "r": 1,
+        "c": 1
+      },
+      "lowPriority": false
+    },
+    {
+      "chapter": 3,
+      "difficulty": "easy",
+      "paired": false,
+      "teaching": true,
+      "action": {
+        "type": "place",
+        "cardId": "haku_youmu",
+        "r": 1,
+        "c": 1
+      }
+    }
+  ],
+  "rulesVersion": "2026-10-18-story-hell-eiki-v31",
+  "scope": "Actual Eiki cost, tied/protected returns, matching draws, empty deck, self-return, hand limit and paid double-copy rules; constrained private Hell openings, actual mandatory AI action and block/forced exceptions, real faction/terrain/Kutaka objectives and negatives, ordinary-vs-mentor dispatch, actual shop-to-seven-point perfect route and persistence, four complete Medium matches. Controlled DOM; no browser pixel verification."
+}
