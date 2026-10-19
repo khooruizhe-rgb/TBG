@@ -74,9 +74,10 @@ function tap(node){const r=node.getBoundingClientRect(),point={clientX:(r.left+r
  for(let chapter=2;chapter<=13;chapter++){
   storage.clear();const keys=run('STORY_GOAL_KEYS['+chapter+']');assert.equal(keys.length,3);
   for(const key of keys){ctx.goalKey=key;run('saveStoryStars('+chapter+',[goalKey]);');}run('openStoryMenu();');
-  let rating=el('story-levels').children[chapter-1].children[2].children[1];assert(!rating.classList.contains('story-stars-perfect'));assert.equal(run('storyBestStars('+chapter+')'),3);
+  let rating=el('story-levels').children[chapter-1].children[2].children[1];assert(!rating.classList.contains('story-stars-perfect'));assert(!rating.classList.contains('story-stars-rainbow'));assert.equal(run('storyBestStars('+chapter+')'),3);
   run('saveStoryStars('+chapter+',STORY_GOAL_KEYS['+chapter+']);openStoryMenu();');rating=el('story-levels').children[chapter-1].children[2].children[1];
   assert(rating.classList.contains('story-stars-perfect'));assert.equal(rating.values.get('--story-star-color'),run('storyStarColor('+chapter+')'));
+  assert.equal(rating.classList.contains('story-stars-rainbow'),chapter===13);if(chapter===13){assert.equal((rating.innerHTML.match(/class="story-star"/g)||[]).length,3);assert.equal(rating.attributes['aria-label'],'3 / 3');}
   ok(true,'Chapter '+chapter+' uses the perfect gradient only after one winning match completes all goals; its palette and cumulative saves remain intact');close();
  }
  ok(run('storyStarColor(6)')==='#d4af37'&&run('[0,1,2].map(i=>storyStarColor(8,i)).join(",")')==='#f39ac7,#b8860b,#5b2b85','Gold chapter-six stars and the three independent Sage colors remain the base of their gradients');
@@ -86,9 +87,10 @@ function tap(node){const r=node.getBoundingClientRect(),point={clientX:(r.left+r
  ok(true,'The match result selects the same gradient treatment with all three individual Sage palettes');
  run('game.winner=null;game.storyMatch.progress={};storyState.complete=false;renderStoryCoach();');
  ok(!el('tutorial-feedback').classList.contains('story-perfect')&&(el('tutorial-feedback').innerHTML.match(/★/g)||[]).length===0,'Fresh match objectives do not inherit the previous perfect result');
- const gradientRule=rules.find(rule=>rule[1].includes('.story-perfect .story-star-rating')&&rule[2].includes('linear-gradient(180deg,'));assert(gradientRule);
+ const gradientRule=rules.find(rule=>rule[1].includes('.story-perfect .story-star-rating')&&rule[2].includes('linear-gradient(135deg,'));assert(gradientRule);
  for(const selector of ['.story-perfect .story-star-rating','.story-stars-perfect','.story-perfect .story-star','.story-stars-perfect .story-star'])assert(gradientRule[1].split(',').map(s=>s.trim()).includes(selector));
- ok(gradientRule[2].includes('background-clip:text')&&gradientRule[2].includes('-webkit-background-clip:text')&&gradientRule[2].includes('var(--story-star-color) 43%')&&gradientRule[2].includes('#fff9e6')&&gradientRule[2].includes('#21122b')&&gradientRule[2].includes('text-shadow:none'),'Perfect stars have a static light-to-dark-to-light faction gradient clipped to the glyphs, including WebKit support');
+ const rainbow=rules.find(rule=>rule[1].trim()==='.story-stars-rainbow');assert(rainbow);assert(['#e53935','#ed8b19','#d6c52d','#36a35a','#25b9c9','#477bd7','#a77bd7'].every(color=>rainbow[2].includes(color)));assert(rainbow[2].includes('linear-gradient(135deg,#120c2f66 0%,#ffffff00 50%,#ffffff66 100%)'));
+ ok(gradientRule[2].includes('background-clip:text')&&gradientRule[2].includes('-webkit-background-clip:text')&&gradientRule[2].includes('var(--story-star-gradient,linear-gradient(135deg,color-mix(in srgb,var(--story-star-color) 65%,#18213d) 0%,var(--story-star-color) 48%,color-mix(in srgb,var(--story-star-color) 68%,white) 100%))')&&gradientRule[2].includes('text-shadow:none'),'Perfect stars shade from dark top-left to light bottom-right; each Temple glyph inherits all seven rainbow hues with the same diagonal shading and WebKit clipping');
  ok(css.includes('@supports (color:color-mix(in srgb,white,black)) and ((background-clip:text) or (-webkit-background-clip:text))')&&css.includes('@media(forced-colors:active){.story-perfect .story-star-rating')&&css.includes('-webkit-text-fill-color:CanvasText'),'Unsupported clipping or color mixing keeps the existing solid palette and forced-color mode uses legible system text');
  const result={status:'pass',count:checks.length,checks,layouts,scope:'Real story layout/inspection/fullscreen callbacks, viewport and observer lifecycle, scrolling containing-block arithmetic, rotated bounds, actual saved and in-match star renderers, gradient CSS and accessibility fallbacks. Controlled DOM; physical-phone pixels and performance are not measured.'};
  fs.writeFileSync(__dirname+'/story-intro-fullscreen-stars-2026-10-19-results.json',JSON.stringify(result,null,2)+'\n');console.log(result.count+' story introduction fullscreen and perfect-gradient checks passed');

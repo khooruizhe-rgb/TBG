@@ -2037,8 +2037,9 @@
   #story-panel button:focus-visible{outline:3px solid #97653f;outline-offset:3px;}
   #story-levels button{text-align:left;display:grid;gap:7px;}#story-levels small{line-height:1.4;font-size:.78rem;}
   .story-perfect .story-star-rating,.story-stars-perfect,.story-perfect .story-star,.story-stars-perfect .story-star{color:var(--story-star-color);text-shadow:0 0 8px color-mix(in srgb,var(--story-star-color) 40%,transparent);}
+  .story-stars-rainbow{--story-star-gradient:linear-gradient(135deg,#120c2f66 0%,#ffffff00 50%,#ffffff66 100%),linear-gradient(135deg,#e53935 0%,#ed8b19 16.667%,#d6c52d 33.333%,#36a35a 50%,#25b9c9 66.667%,#477bd7 83.333%,#a77bd7 100%);}
   @supports (color:color-mix(in srgb,white,black)) and ((background-clip:text) or (-webkit-background-clip:text)){
-    .story-perfect .story-star-rating,.story-stars-perfect,.story-perfect .story-star,.story-stars-perfect .story-star{display:inline-block;line-height:1.15;background-image:linear-gradient(180deg,color-mix(in srgb,var(--story-star-color) 48%,#fff9e6) 0%,color-mix(in srgb,var(--story-star-color) 78%,white) 28%,var(--story-star-color) 43%,color-mix(in srgb,var(--story-star-color) 68%,#21122b) 64%,var(--story-star-color) 80%,color-mix(in srgb,var(--story-star-color) 55%,white) 100%);background-clip:text;-webkit-background-clip:text;color:transparent;-webkit-text-fill-color:transparent;text-shadow:none;}
+    .story-perfect .story-star-rating,.story-stars-perfect,.story-perfect .story-star,.story-stars-perfect .story-star{display:inline-block;line-height:1.15;background-image:var(--story-star-gradient,linear-gradient(135deg,color-mix(in srgb,var(--story-star-color) 65%,#18213d) 0%,var(--story-star-color) 48%,color-mix(in srgb,var(--story-star-color) 68%,white) 100%));background-clip:text;-webkit-background-clip:text;color:transparent;-webkit-text-fill-color:transparent;text-shadow:none;}
   }
   @media(forced-colors:active){.story-perfect .story-star-rating,.story-stars-perfect,.story-perfect .story-star,.story-stars-perfect .story-star{background-image:none;color:CanvasText;-webkit-text-fill-color:CanvasText;text-shadow:none;}}
   .story-practice #tutorial-copy{display:none;}
@@ -16792,11 +16793,12 @@ function storyBestStars(chapter){return storyProgressRecords()[chapter]??null;}
 function storyChapterPerfect(chapter){return storyProgressDetails()[chapter]?.perfect===true;}
 function storyStarColor(chapter,index=null){
   if(chapter===8 && Number.isInteger(index) && index>=0 && index<3)return ['#f39ac7','#b8860b','#5b2b85'][index];
+  if(chapter===4)return '#2563eb';
   return chapter===6?'#d4af37':FACTIONS[STORY_CHAPTERS.find(level=>level.id===chapter)?.introduced]?.color||'#c1973e';
 }
 function storyStarMarkup(chapter,earned){
-  if(chapter!==8)return '★'.repeat(earned)+'☆'.repeat(3-earned);
-  return [0,1,2].map(index=>`<span class="story-star" aria-hidden="true" style="--story-star-color:${storyStarColor(chapter,index)}">${index<earned?'★':'☆'}</span>`).join('');
+  if(chapter!==8 && chapter!==13)return '★'.repeat(earned)+'☆'.repeat(3-earned);
+  return [0,1,2].map(index=>`<span class="story-star" aria-hidden="true"${chapter===8?` style="--story-star-color:${storyStarColor(chapter,index)}"`:''}>${index<earned?'★':'☆'}</span>`).join('');
 }
 function saveStoryStars(chapter,earned){
   if(!STORY_CHAPTERS.some(level=>level.id===chapter))return;
@@ -16820,7 +16822,7 @@ function resetStoryStars(){
 function clearStoryMatch(){
   closeStoryIntroCards();
   resetObjectivePaper();
-  el('tutorial-feedback').classList.remove('story-perfect');
+  el('tutorial-feedback').classList.remove('story-perfect','story-stars-rainbow');
   const previous=storyState;storyState=null;previous?.cancel();storyMenuChapter=null;
   el('story-overlay').classList.remove('show');document.body.classList.remove('story-practice');
   if(previous){el('tutorial-coach').hidden=true;document.body.classList.remove('tutorial-practice');setRuleText(el('restart-btn'),'Play Again');setRuleText(el('tutorial-back'),'Back');}
@@ -16843,9 +16845,9 @@ function openStoryMenu(){
     const title=document.createElement('strong');title.textContent=chapter.title;
     const description=document.createElement('small');setRuleText(description,chapter.body,{cards:false});
     const status=document.createElement('small'),label=document.createElement('span'),rating=document.createElement('span'),best=storyBestStars(chapter.id);
-    setRuleText(label,cleared.includes(chapter.id)?'Cleared':'Not cleared');if(chapter.id===8){rating.innerHTML=best===null?'':' '+storyStarMarkup(chapter.id,best);if(best!==null)rating.setAttribute('aria-label',best+' / 3');}
+    setRuleText(label,cleared.includes(chapter.id)?'Cleared':'Not cleared');if(chapter.id===8||chapter.id===13){rating.innerHTML=best===null?'':' '+storyStarMarkup(chapter.id,best);if(best!==null)rating.setAttribute('aria-label',best+' / 3');}
     else rating.textContent=best===null?'':' '+'★'.repeat(best)+'☆'.repeat(3-best);
-    rating.className='story-star-rating'+(storyChapterPerfect(chapter.id)?' story-stars-perfect':'');rating.style.setProperty('--story-star-color',storyStarColor(chapter.id));
+    const perfect=storyChapterPerfect(chapter.id);rating.className='story-star-rating'+(perfect?' story-stars-perfect':'')+(perfect&&chapter.id===13?' story-stars-rainbow':'');rating.style.setProperty('--story-star-color',storyStarColor(chapter.id));
     status.append(label,rating);
     button.append(title,description,status);button.addEventListener('click',()=>showStoryChapterIntro(chapter.id));levels.appendChild(button);
   }
@@ -16957,6 +16959,7 @@ function renderStoryCoach(){
   const earned=goals.length?goals.filter(goal=>goal.done).length:state.complete?3:0;
   const heading=(goals.length?ruleTextHtml('Match objectives',{cards:false})+' ':'')+'<span class="story-star-rating" aria-label="'+earned+' / 3">'+storyStarMarkup(state.chapter,earned)+'</span>';
   el('tutorial-feedback').classList.toggle('story-perfect',state.complete&&earned===3);
+  el('tutorial-feedback').classList.toggle('story-stars-rainbow',state.chapter===13&&state.complete&&earned===3);
   el('tutorial-feedback').style.setProperty('--story-star-color',storyStarColor(state.chapter));
   const hint=state.complete?'Chapter cleared.':game.winner||game.stalemateMessage?'Win the match to clear this chapter.':definition.hint|| (state.chapter===4?!progress.kaguya?'Gain four points from Kaguya’s placement, including its resulting faction claims.':!progress.hourai?'Connect four Eientei cards and claim the faction.':!progress.handTen?'Use card-gaining abilities to hold at least ten cards at once.':'Win the match to clear this chapter.':'Win to finish this introductory chapter.');
   const raceWarning=raceLost&&!state.complete&&!game.winner&&!game.stalemateMessage?'The opponent reached four points. This objective is unavailable this match; you can still win and clear the chapter.':'';

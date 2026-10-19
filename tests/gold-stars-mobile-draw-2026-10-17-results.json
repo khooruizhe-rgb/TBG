@@ -4,7 +4,7 @@
   "checks": [
     "Three stars collected across separate victories retain the ordinary cumulative rating",
     "A saved single-match chapter-six perfect clear renders gold in chapter selection",
-    "The other faction chapters retain their existing perfect-star colors",
+    "Eientei stars use saturated blue while the other faction chapters retain their existing palettes",
     "Meeting all optional objectives before victory does not grant perfect-clear styling",
     "The completed chapter-six match also renders its full stars in gold",
     "At 32 controlled phone/shop/mirror layouts the actual sizing handler uses reclaimed draw-row space, never reduces the board and preserves game state",

@@ -124,7 +124,7 @@
     "Gold chapter-six stars and the three independent Sage colors remain the base of their gradients",
     "The match result selects the same gradient treatment with all three individual Sage palettes",
     "Fresh match objectives do not inherit the previous perfect result",
-    "Perfect stars have a static light-to-dark-to-light faction gradient clipped to the glyphs, including WebKit support",
+    "Perfect stars shade from dark top-left to light bottom-right; each Temple glyph inherits all seven rainbow hues with the same diagonal shading and WebKit clipping",
     "Unsupported clipping or color mixing keeps the existing solid palette and forced-color mode uses legible system text"
   ],
   "layouts": [
