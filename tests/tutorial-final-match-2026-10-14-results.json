@@ -684,6 +684,6 @@
       "opponentPoints": 0
     }
   ],
-  "rulesVersion": "2026-10-19-story-temple-v34",
+  "rulesVersion": "2026-10-19-story-final-challenge-v35",
   "scope": "Real engine and turn-followup walkthroughs plus controlled tutorial DOM lifecycle; browser pixels are not verified."
 }

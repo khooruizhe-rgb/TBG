@@ -154,7 +154,7 @@ vm.runInContext(`(async()=>{
   ok(JSON.stringify(captureAIEvaluationSnapshot(game))===afterRestart,'Restart during a pending action also prevents the old follow-up loop from advancing the new match');
 
   returnToMainMenu();testStorage.clear();saveStoryStars(2,3);saveStoryStars(3,2);saveStoryStars(4,1);testStorage.set('unrelated-setting','keep');openStoryMenu();
-  assert.equal(el('story-levels').children.length,13);assert(!el('story-debug-reset').hidden);el('story-debug-reset').events.click();
+  assert.equal(el('story-levels').children.length,14);assert(!el('story-debug-reset').hidden);el('story-debug-reset').events.click();
   ok([2,3,4].every(chapter=>storyBestStars(chapter)===0)&&storyBestStars(1)===null&&storyClearedChapters().length===3&&testStorage.get('unrelated-setting')==='keep','The DEBUG button resets only earned star ratings, preserves clears and unrelated settings, and does not invent a chapter-one clear');
   saveStoryStars(4,3);ok(storyBestStars(4)===3,'Stars can be acquired again after a DEBUG reset');
   showStoryChapterIntro(4);ok(el('story-card-grid').children.length===4&&el('story-debug-reset').hidden,'Chapter four introduces four Eientei cards and hides the DEBUG control during its introduction');

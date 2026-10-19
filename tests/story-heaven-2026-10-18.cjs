@@ -78,7 +78,7 @@ vm.runInContext(`(async()=>{
  ok(game.isOnBoard('heaven_tenshi'),'When drawing and alternative placements are impossible, AI plays its available Heaven card');
  for(const chapter of [null,11]){make(1,chapter);arrange({hands:[['medicine'],['heaven_tenshi']]});assert(!aiStoryOpeningHeld(game,'heaven_tenshi',1));}
  ok(true,'Heaven’s opening hold does not affect ordinary mode or earlier chapters');
- returnToMainMenu();testStorage.clear();openStoryMenu();ok(el('story-levels').children.length===13,'The menu has thirteen replayable chapters');showStoryChapterIntro(12);
+ returnToMainMenu();testStorage.clear();openStoryMenu();ok(el('story-levels').children.length===14,'The menu has fourteen replayable chapters');showStoryChapterIntro(12);
  ok(el('story-card-grid').children.length===2&&el('story-card-grid').children.every(node=>CARD[node.dataset.cardId].faction==='heaven'&&node.events.click&&node.events.pointerdown)&&el('story-intro').textContent===STORY_CHAPTERS[11].body,'The introduction shows two movable Heaven cards and its chapter overview');el('story-begin').events.click();
  ok(isStoryMatch()&&game.storyMatch.chapter===12&&!tutorialState&&game.players.every(p=>p.hand.length===6)&&el('tutorial-feedback').innerHTML.includes(STORY_CHAPTERS[11].hint),'The introduction starts the private six-card match with the requested separate hint');
  // Actual paid skill routes from conserved mid-game positions, without setting goal flags.

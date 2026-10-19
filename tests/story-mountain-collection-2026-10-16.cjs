@@ -22,7 +22,7 @@ vm.runInContext(`(async()=>{
     assert(!storyChapterPerfect(chapter));assert(!el('tutorial-feedback').classList.contains('story-perfect'));
     ok(storyProgressDetails()[chapter].goals.length===3,'Chapter '+chapter+' unions distinct objectives over three victories without double-counting repeats or granting a single-run color');
     returnToMainMenu();openStoryMenu();const rating=el('story-levels').children[chapter-1].children[2].children[1];assert(!rating.className.includes('story-stars-perfect'));
-    win(chapter,keys);assert(storyChapterPerfect(chapter));assert(el('tutorial-feedback').classList.contains('story-perfect'));assert(el('tutorial-feedback').innerHTML.includes('★★★'));assert.equal(storyStarColor(chapter),FACTIONS[STORY_CHAPTERS[chapter-1].introduced].color);
+    win(chapter,keys);assert(storyChapterPerfect(chapter));assert(el('tutorial-feedback').classList.contains('story-perfect'));assert(el('tutorial-feedback').innerHTML.includes('★★★'));assert.equal(storyStarColor(chapter),chapter===4?'#2563eb':FACTIONS[STORY_CHAPTERS[chapter-1].introduced].color);
     win(chapter,[keys[0]]);assert(storyChapterPerfect(chapter));returnToMainMenu();openStoryMenu();
     ok(el('story-levels').children[chapter-1].children[2].children[1].className.includes('story-stars-perfect'),'Chapter '+chapter+' records a real three-objective victory and preserves its faction-colored stars on later replays');
   }

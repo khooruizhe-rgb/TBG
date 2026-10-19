@@ -69,7 +69,7 @@ vm.runInContext(`(async()=>{
  await place('palace_satori',0,2,2);assert(game.players[0].hand.includes('reimu'));game.ui.pickCell=async(_title,cells)=>cells.find(cell=>game.cardAt(cell.r,cell.c)==='sage_ran');await place('marisa',0,3,2);assert(game.storyMatch.progress.marisaSage);
  game.ui.pickCell=async(_title,cells)=>cells.find(cell=>game.cardAt(cell.r,cell.c)==='palace_satori');await place('reimu',0,3,3);assert(game.storyMatch.progress.hakurei&&game.winCount(game.players[0])===3);await place('sdm_patchouli',0,1,1);
  ok(game.winner?.idx===0&&game.winCount(game.players[0])===7&&storyMatchStars(game)===3&&!game.storyMatch.opponentClaimedFaction,'Real Satori theft, Marisa’s Sage blast, a Hakurei pair and a Mansion claim produce a legal seven-point three-star victory');
- returnToMainMenu();testStorage.clear();openStoryMenu();ok(el('story-levels').children.length===13,'The menu includes thirteen replayable chapters');
+ returnToMainMenu();testStorage.clear();openStoryMenu();ok(el('story-levels').children.length===14,'The menu includes fourteen replayable chapters');
  for(const chapter of [8,9]){
   const definition=STORY_CHAPTERS[chapter-1];assert.equal(el('story-levels').children[chapter-1].children[1].textContent,definition.body);assert(definition.body.includes('Three stars:'));assert(!definition.body.includes(definition.hint));
   showStoryChapterIntro(chapter);assert.equal(el('story-intro').textContent,definition.body);assert.equal(el('story-card-grid').children.length,chapter===8?4:2);el('story-begin').events.click();

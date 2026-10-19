@@ -107,7 +107,7 @@ vm.runInContext(`(async()=>{
   ok(true,'Leaving the actual story session and constructing an ordinary match removes both the teaching and scripted-Hecatia state');
  }finally{aiStoryMentorAction=mentor;}
 
- returnToMainMenu();testStorage.clear();openStoryMenu();ok(el('story-levels').children.length===13,'The story menu offers thirteen replayable chapters');showStoryChapterIntro(11);
+ returnToMainMenu();testStorage.clear();openStoryMenu();ok(el('story-levels').children.length===14,'The story menu offers fourteen replayable chapters');showStoryChapterIntro(11);
  ok(el('story-card-grid').children.length===4&&el('story-card-grid').children.every(node=>CARD[node.dataset.cardId].faction==='hell'&&node.dataset.cardId!=='hell_kutaka'&&node.events.click&&node.events.pointerdown)&&el('story-intro').textContent===STORY_CHAPTERS[10].body,'The introduction displays four movable active Hell cards and leaves Kutaka to be discovered in the shop');
  el('story-begin').events.click();ok(isStoryMatch()&&game.storyMatch.chapter===11&&!tutorialState&&game.players[0].hand.length===6&&game.players[1].hand.includes('hell_hecatia')&&game.shopCards.includes('hell_kutaka')&&el('tutorial-feedback').innerHTML.includes(STORY_CHAPTERS[10].hint),'The introduction starts a real private six-card Hell match with the guaranteed shop card and requested separate hint');
  game.storyMatch.progress.hell=true;game.winner=game.players[0];updateStoryProgress();returnToMainMenu();openStoryChapter(11);game.storyMatch.progress.clearEight=true;game.winner=game.players[0];updateStoryProgress();returnToMainMenu();openStoryChapter(11);game.storyMatch.progress.kutaka=true;game.winner=game.players[0];updateStoryProgress();

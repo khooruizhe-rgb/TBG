@@ -31,7 +31,7 @@
     "AI holding counts normal AI turns while the player deadline includes actual extra turns",
     "The hold yields when no other placement or shared draw exists; forced placement remains legal and the AI cannot skip a playable turn",
     "The Sunflower opening hold does not leak into earlier chapters",
-    "All thirteen chapters are replayable from the real story menu",
+    "All fourteen chapters are replayable from the real story menu",
     "The real introduction gives only Marisa a yellow renewal scan and invitation glow while Reimu keeps Hakurei red",
     "The new pre-match introduction renders two movable active Sunflower cards with faction-colored renewal and the rules overview",
     "Beginning the chapter starts one real private six-card deal and displays the exact separate hint",
@@ -76,6 +76,6 @@
       "humanTurns": 9
     }
   ],
-  "rulesVersion": "2026-10-19-story-temple-v34",
+  "rulesVersion": "2026-10-19-story-final-challenge-v35",
   "scope": "Real private openings, ten distinct empty-hand routes and speculative/trade/Trap/cancellation negatives, ninth/tenth boundary, real Sakuya and Youmu follow-ups, AI holding and mandatory fallback, movable introduction renewal colors, cumulative and perfect saves, legal seven-point three-star route, and four complete Medium matches. Controlled DOM; no browser pixel verification."
 }

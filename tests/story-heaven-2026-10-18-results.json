@@ -29,7 +29,7 @@
     "A mandatory Reisen placement bypasses Heaven’s opening reservation",
     "When drawing and alternative placements are impossible, AI plays its available Heaven card",
     "Heaven’s opening hold does not affect ordinary mode or earlier chapters",
-    "The menu has thirteen replayable chapters",
+    "The menu has fourteen replayable chapters",
     "The introduction shows two movable Heaven cards and its chapter overview",
     "The introduction starts the private six-card match with the requested separate hint",
     "Actual Eiki, Yuyuko, Iku, Marisa and self-targeted Flandre yield ten returns and seven ability points without a faction claim",
@@ -93,6 +93,6 @@
       "stars": 1
     }
   ],
-  "rulesVersion": "2026-10-19-story-temple-v34",
+  "rulesVersion": "2026-10-19-story-final-challenge-v35",
   "scope": "Real constrained private deals, successful owned board/hand/cost/repeated/delayed returns and negative attribution, actual faction and Koishi claim history, three-turn AI hold and mandatory exceptions, two conserved seven-point paid-skill routes, real menu/intro/retry/save lifecycle and four full Medium matches. Controlled DOM; no browser pixel verification."
 }

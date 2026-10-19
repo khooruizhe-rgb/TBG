@@ -225,6 +225,6 @@
     ],
     "turns": 24
   },
-  "rulesVersion": "2026-10-19-story-temple-v34",
+  "rulesVersion": "2026-10-19-story-final-challenge-v35",
   "scope": "Actual ordinary/story/tutorial deals, hidden-hand counterfactual decisions across all story chapters and ordinary policies, ignored legacy opening lists, actual Aya/Reisen skills and Satori chooser, public acquisitions, memory expiry and an ordinary full match. Introduction language-switch coverage is in the renewal suite; no browser pixel verification."
 }

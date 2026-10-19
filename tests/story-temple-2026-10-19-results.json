@@ -12,7 +12,7 @@
     "Actual Byakuren look → return → turns uses all three discounted effects, pays one card, collects Temple and wins with three bonus turns left",
     "Actual Byakuren look → turns → return uses all three discounted effects, pays one card, collects Temple and wins with three bonus turns left",
     "A real single-placement three-star win saves the three new goal keys and gives each Temple star the full rainbow",
-    "Finishing the final Temple chapter returns to all thirteen replayable chapters",
+    "Finishing the Temple chapter opens the final challenge introduction without adding another skill showcase",
     "The real introduction starts chapter thirteen without a prelude and retains its opening guarantees",
     "Replay clears live objectives and rainbow styling while preserving the saved perfect rating",
     "An unaffordable selected effect does not count as using Byakuren or granting turns",
@@ -172,6 +172,6 @@
     "rivals": 1024,
     "stocks": 90
   },
-  "rulesVersion": "2026-10-19-story-temple-v34",
+  "rulesVersion": "2026-10-19-story-final-challenge-v35",
   "scope": "Real conserved deals and ability payments, all six Byakuren effect orders, actual faction wins, production Sakuya/Youmu/dancer action chains, four full production AI matches, snapshot-safe AI evaluation, story UI and persistence. Controlled DOM, not browser pixel QA."
 }

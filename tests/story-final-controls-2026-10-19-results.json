@@ -1,0 +1,17 @@
+{
+  "status": "pass",
+  "count": 10,
+  "checks": [
+    "Clicking a printed Yukari exposes actual merchandise as an override target without showing ordinary trade actions",
+    "The shop resolver places the exact selected second Yukari, keeps the other print, takes merchandise and resolves one placement with conserved inventory",
+    "Dragging a printed Yukari retains the same override selection mode",
+    "A permanently overwritten printed Yukari follows its new ability and can use ordinary trade controls",
+    "Ordinary final prints still select the keeper to open trade choices",
+    "Choosing the keeper opens all seven available fifth-card purchase targets",
+    "A real human purchase removes exactly the paid print, refills stock and preserves the ongoing turn resolver",
+    "Both physical Hecatia prints keep the gravity-center appearance without self-pull or NaN transforms",
+    "Other cards retain finite visible gravity displacement",
+    "Ordinary single-copy games preserve the previous Yukari control classification"
+  ],
+  "scope": "Actual human click, drag, shop and placement resolvers with unique physical prints; ordinary-mode classification and actual board gravity renderer. Controlled DOM, no browser pixel claim."
+}

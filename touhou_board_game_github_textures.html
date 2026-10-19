@@ -2884,6 +2884,26 @@ body.game-mobile #mobile-draw-dock #controls .big-btn{padding:5px 6px;font-size:
 body.game-mobile #mobile-draw-dock #controls .pill-btn{padding:3px 5px;font-size:10px;min-height:22px;white-space:normal;line-height:1.2}
 body.game-mobile:not(.mobile-landscape) #mobile-draw-dock{width:min(100%,260px);justify-self:start}
 body.game-mobile:not(.mobile-landscape) #table-wrap{padding-top:56px}
+
+/* The final table expands physically; objects keep their own bounded push offsets. */
+body.final-challenge #table-wrap{padding:40px 30px 12px;max-width:760px;}
+body.final-challenge #board{width:var(--final-board-width,260px);max-width:none;gap:3px;transform-origin:center;}
+body.final-challenge #board .board-card{font-size:var(--final-board-font,10px);padding:2px 1px;}
+body.final-challenge #board .board-card .icon-row{font-size:1.05em;}
+body.final-challenge #board .cell{border-radius:5px;}
+body.final-challenge .seat,body.final-challenge #draw-pile{translate:var(--final-push-x,0px) var(--final-push-y,0px);}
+body.final-challenge .final-factions{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;max-width:106px;}
+.final-faction{font-size:11px;line-height:1.25;opacity:.28;filter:grayscale(1);border-bottom:2px solid transparent;}
+.final-faction.collected{opacity:1;filter:none;border-color:var(--faction-color);}
+body.final-challenge #kourindou{grid-template-rows:repeat(3,74px);}
+.final-shop-stock{position:absolute;z-index:6;right:2px;bottom:2px;border-radius:4px;padding:1px 4px;color:#fff8dd;background:#302130dc;font-size:12px;font-weight:800;pointer-events:none;}
+.final-victory-condition{display:block;margin-bottom:5px;}
+#story-final-signal{display:block;overflow:hidden;max-width:100%;height:2.6em;line-height:1.3;font-family:monospace;letter-spacing:2px;overflow-wrap:anywhere;color:#bd548c;}
+body.final-challenge.mobile-landscape #table-wrap{padding:26px 0 0;}
+body.final-challenge.mobile-landscape #kourindou{grid-template-rows:repeat(3,clamp(36px,15dvh,62px));}
+body.final-challenge.mobile-landscape .final-factions{gap:1px;max-width:58px;}
+body.final-challenge.mobile-landscape .final-faction{font-size:8px;line-height:1.05;border-width:1px;}
+body.final-challenge.mobile-landscape .final-shop-stock{font-size:9px;padding:0 2px;}
 </style>
 </head>
 <body>
@@ -3268,7 +3288,8 @@ const AI_DIFFICULTIES=Object.freeze({
   normal:Object.freeze({name:'Normal',skills:Object.freeze(['basic','trade','value','defense']),description:'Adds trading, immediate trade-offs and blocking opponents.'}),
   hard:Object.freeze({name:'Hard',skills:Object.freeze(['basic','trade','value','defense','clues','reserve','forecast']),description:'Adds clue tracking, card preservation and follow-up planning.'})
 });
-function aiKnows(p,skill,match=game){return (AI_DIFFICULTIES[match?.aiDifficulty]||AI_DIFFICULTIES.hard).skills.includes(skill);}
+function aiDifficultyFor(p,match=game){return match?.players?.[p]?.aiDifficulty || match?.aiDifficulty || 'hard';}
+function aiKnows(p,skill,match=game){return (AI_DIFFICULTIES[aiDifficultyFor(p,match)]||AI_DIFFICULTIES.hard).skills.includes(skill);}
 
 // Strategy versions share this Game's rules; only decision policies vary.
 const AI_POLICY_PROFILES=Object.freeze({
@@ -3298,7 +3319,7 @@ function captureAIEvaluationSnapshot(match,scheduledExtra=0){
     else if(key==='startingCardIds')state[key]=[...value];
     else state[key]=JSON.parse(JSON.stringify(value));
   }
-  return {format:'tbg-ai-position',version:2,rulesVersion:REWORK_RULES_VERSION,generatedCards:copyDefinitions(match),copyCounter:nextCreatedCard,boundary:'regular-turn-start',size:match.board.length,
+  return {format:'tbg-ai-position',version:2,rulesVersion:REWORK_RULES_VERSION,generatedCards:copyDefinitions(match),copyCounter:nextCreatedCard,finalPrints:finalPrintDefinitions(match),finalPrintCounter:finalPrintSerial,boundary:'regular-turn-start',size:match.board.length,
     scheduledExtra,state,tokenCounter:nextTrapToken,tokens:[...match.startingCardIds].filter(id=>/^trap_token_\d+$/.test(id)).map(id=>CARD[id]).filter(Boolean)};
 }
 
@@ -3699,7 +3720,7 @@ class Game {
     if(frame){for(const card of [this.testCardActions(frame.caster),this.testSeatCardActions(frame.playerIdx,frame.caster)]){if(lost){card[p===frame.playerIdx?'ownPointsLost':'deniedPoints']+=points;}else card[p===frame.playerIdx?'ownPoints':'opponentPoints']+=points;}}
   }
   testEndingSnapshot(){
-    return {rulesVersion:REWORK_RULES_VERSION,generatedCards:copyDefinitions(this),permanentAbilities:{...this.permanentAbilities},createdActivations:{...this.createdActivations},currentSeat:this.currentPlayerIdx+1,drawPile:this.drawPile.slice(),board:this.board.map(row=>row.slice()),wasteland:this.wasteland.map(row=>row.slice()),
+    return {rulesVersion:REWORK_RULES_VERSION,generatedCards:copyDefinitions(this),...(this.finalChallenge?{finalPrints:finalPrintDefinitions(this),finalChallenge:JSON.parse(JSON.stringify(this.finalChallenge))}:{}),permanentAbilities:{...this.permanentAbilities},createdActivations:{...this.createdActivations},currentSeat:this.currentPlayerIdx+1,drawPile:this.drawPile.slice(),board:this.board.map(row=>row.slice()),wasteland:this.wasteland.map(row=>row.slice()),
       shop:this.shopTiles.map(tile=>({...tile,open:this.isShopOpen(tile.slot),cardId:this.cardAt(tile.r,tile.c)})),borrowedAbilities:{...this.borrowedAbilities},
       players:this.players.map(p=>{const forced=this.forcedPlay[p.idx],held=forced && p.hand.includes(forced) ? [forced] : p.hand;
         const legalPlacements=held.reduce((sum,id)=>{const spaces=this.emptyOrWastelandForCard(CARD[id],p.idx);return sum+(forced && held.length===1 && typeof aiForcedPlacementCells==='function'?aiForcedPlacementCells(this,id,spaces):typeof aiPlacementCells==='function'?aiPlacementCells(this,id,spaces,p.idx):spaces).length;},0);
@@ -3900,7 +3921,7 @@ class Game {
     if(inBounds(r,c)) this.wasteland[r][c]=value;
     else {const tile=this.shopTileAt(r,c);if(tile) tile.wasteland=value;}
   }
-  tileBounds(r,c){return this.shopTileAt(r,c)
+  tileBounds(r,c){if(this.finalChallenge&&this.shopTileAt(r,c))return {minR:SIZE+2,maxR:SIZE+4,minC:0,maxC:2};return this.shopTileAt(r,c)
     ? {minR:SIZE+2,maxR:SIZE+3,minC:0,maxC:2} : {minR:0,maxR:SIZE-1,minC:0,maxC:SIZE-1};}
   rectCells(anchor,dim,hover=anchor){return computeRectCells(anchor,dim,hover,(r,c)=>this.hasTile(r,c));}
   rectZones(dim,playerIdx=null){
@@ -3938,20 +3959,21 @@ class Game {
       && this.canSelectBoardCard(cell.r,cell.c,true)
       && Math.abs(cell.r-keeper.r)<=1 && Math.abs(cell.c-keeper.c)<=1);
   }
+  shopOverrideCard(playerIdx){return this.players[playerIdx].hand.find(id=>this.finalChallenge?this.abilityId(id)==='sage_yukari':id==='sage_yukari');}
   canOverrideShop(playerIdx,slot){
-    const forced=this.forcedPlay[playerIdx];
+    const forced=this.forcedPlay[playerIdx],yukari=this.shopOverrideCard(playerIdx);
     return !this.cancelled && !this.winner && !this.isPlacementBlocked(playerIdx) && this.kourindouEnabled && Number.isInteger(slot)
       && this.isShopOpen(slot) && !!this.shopCards[slot] && !this.players[playerIdx].isAI
-      && this.players[playerIdx].hand.includes('sage_yukari')
-      && this.canOverrideTarget('sage_yukari',this.shopCards[slot])
+      && !!yukari
+      && this.canOverrideTarget(yukari,this.shopCards[slot])
       && this.canSelectBoardCard(this.shopTiles[slot].r,this.shopTiles[slot].c,true)
-      && !(forced && forced!=='sage_yukari' && this.players[playerIdx].hand.includes(forced));
+      && !(forced && forced!==yukari && this.players[playerIdx].hand.includes(forced));
   }
   async overrideShop(playerIdx,slot){
     if(!this.canOverrideShop(playerIdx,slot)) return {};
     const {r,c}=this.shopTiles[slot];
-    this.removeFromHand(playerIdx,'sage_yukari');this.forcedPlay[playerIdx]=null;
-    return await this.internalPlace('sage_yukari',r,c,playerIdx,0);
+    const yukari=this.shopOverrideCard(playerIdx);this.removeFromHand(playerIdx,yukari);this.forcedPlay[playerIdx]=null;
+    return await this.internalPlace(yukari,r,c,playerIdx,0);
   }
   isProtected(r,c){
     if(!this.hasTile(r,c)) return false;
@@ -4063,7 +4085,11 @@ class Game {
     if(this.ui?.onShopTrade){try{this.ui.onShopTrade({playerIdx,offeredId,boughtId,r,c});}catch(_error){}}
     this.removeFromHand(playerIdx,offeredId,{partOfTrade:true});
     this.addToHand(playerIdx,boughtId,true);
-    this.setCardAt(r,c,offeredId);
+    if(this.finalChallenge){
+      this.finalChallenge.removed.push(offeredId);
+      const tile=this.shopTileAt(r,c),base=this.finalChallenge.slotTypes[tile?.slot];
+      this.setCardAt(r,c,base?this.finalChallenge.stock[base].pop()||null:null);
+    }else this.setCardAt(r,c,offeredId);
     this.log(`${this.players[playerIdx].name} trades ${CARD[offeredId].name} for ${CARD[boughtId].name} at Kourindou.`);
     return true;
   }
@@ -4160,7 +4186,7 @@ class Game {
         || this.isOnBoard('hourai_kaguya')) return null;
       members.push({...placement,id:'hourai_kaguya'});
     }
-    const kaguya=members.find(cell=>cell.id==='hourai_kaguya');
+    const kaguya=members.find(cell=>cell.id==='hourai_kaguya'||this.finalChallenge&&this.abilityId(cell.id)==='hourai_kaguya');
     const needed=FACTIONS.hourai.size-members.length;
     if(!kaguya || needed<=0) return null;
     const known=this.knownHandCards(observerIdx,'hourai').filter(card=>!members.some(cell=>cell.id===card.id));
@@ -4278,6 +4304,12 @@ class Game {
   }
 
   checkWin(){
+    if(this.finalChallenge){
+      if(this.winner)return true;
+      const required=this.finalChallenge.factions;
+      const winner=this.players.find(p=>required.every(faction=>this.finalChallenge.collected[p.idx].includes(faction)));
+      if(winner){this.winner=winner;return true;}return false;
+    }
     if(this.storyMatch?.chapter===3 && this.winCount(this.players[this.storyMatch.aiSeat])>=4)this.storyMatch.opponentReachedFour=true;
     for(const p of this.players){
       if(this.winCount(p) >= 7){
@@ -4290,7 +4322,7 @@ class Game {
     return false;
   }
 
-  isOnBoard(cardId){return this.boardCells(cell=>cell.id===cardId).length>0;}
+  isOnBoard(cardId){return this.boardCells(cell=>cell.id===cardId || !!this.finalChallenge&&!CARD[cardId]?.finalPrint&&CARD[cell.id]?.finalPrint&&cardBaseId(cell.id)===cardId).length>0;}
 
   adjacentOccupiedCount(r,c){
     return DIRS4.filter(([dr,dc])=>this.hasTile(r+dr,c+dc) && this.cardAt(r+dr,c+dc)).length;
@@ -4299,7 +4331,7 @@ class Game {
     const candidates=includeProtected ? this.boardCells.bind(this) : this.movableBoardCells.bind(this);
     return candidates(cell=>(includeProtected || inBounds(cell.r,cell.c)) && this.canSelectBoardCard(cell.r,cell.c) && this.canEnterDiscard(this.currentPlayerIdx,cell.id)
       && !CARD[cell.id].crown && !(cell.r===r && cell.c===c)
-      && !(avoidAdjacentReimu && cell.id==='reimu' && Math.abs(cell.r-r)+Math.abs(cell.c-c)===1));
+      && !(avoidAdjacentReimu && (cell.id==='reimu'||this.finalChallenge&&this.abilityId(cell.id)==='reimu') && Math.abs(cell.r-r)+Math.abs(cell.c-c)===1));
   }
   safeMarisaPlacement(r,c){
     // If blasting a neighboring Reimu is the only possible use of her ability,
@@ -4356,6 +4388,7 @@ class Game {
     // Candidate identities come from public starting stock and public locations, never hidden hands.
     const visible=new Set([...this.boardCells().map(t=>this.cardAt(t.r,t.c)),
       ...this.players.flatMap(p=>p.discard),...this.knownHandCards(observerIdx).map(card=>card.id)]);
+    if(this.finalChallenge)for(const id of [...Object.values(this.finalChallenge.stock).flat(),...this.finalChallenge.removed])visible.add(id);
     const candidates=[...this.startingCardIds].filter(id=>CARD[id] && !visible.has(id)
       && (!faction || (CARD[id].faction===faction && !CARD[id].shopExpansion)));
     const targets=this.players.filter(p=>p.idx!==observerIdx && (targetIdx===null || p.idx===targetIdx)).map(p=>({playerIdx:p.idx,
@@ -4807,6 +4840,7 @@ class Game {
 
   checkClaims(placerIdx){
     for(const fk of this.claimFactionOrder()){
+      if(this.finalChallenge&&this.winner)break;
       const fac = FACTIONS[fk];
       const cells = this.findFactionClaim(fk);
       if(cells.length){
@@ -4853,6 +4887,7 @@ class Game {
             if(!story.skillFactions.includes(fk))story.progress.lockedFaction=true;
           }
         }
+        if(this.finalChallenge && collected===fac.size)this.recordFinalClaim(placerIdx,fk,true);
         if(this.ui?.onFactionClaim){try{this.ui.onFactionClaim({faction:fk,count:collected,playerIdx:placerIdx});}catch(_error){}}
         this.checkWin();
       }
@@ -5786,7 +5821,7 @@ class Game {
 }
 
 /* 2026-10-12: creation, private newspapers and instance ability changes. */
-const REWORK_RULES_VERSION='2026-10-19-story-temple-v34';
+const REWORK_RULES_VERSION='2026-10-19-story-final-challenge-v35';
 Game.prototype.canCreateWithMatara=function(){return this.mainBoardCells().length>=4;};
 let nextCreatedCard=0,nextHiddenChoice=0;
 const COPY_PASSIVES=new Set(['sage_yukari','sage_kasen','mtn_nitori','hell_hecatia','palace_koishi']);
@@ -5805,7 +5840,8 @@ function cardLooksWorn(id,{createdPreview=false,wornPreview=false}={}){
   return !createdPreview && (wornPreview||cardHasOverwrite(id)||!!game?.storyMatch&&game.cardAbilityEnabled(id)===false);
 }
 function cardMaterialClasses(id,options={}){return [CARD[id]?.createdCopy||options.createdPreview?'card-copy-low-ink':'',cardLooksWorn(id,options)?'card-rin-worn':''].filter(Boolean).join(' ');}
-function generatedCard(id){return /^created_card_\d+$/.test(id) || /^trap_token_\d+$/.test(id);}
+function generatedCard(id){return /^created_card_\d+$/.test(id) || /^trap_token_\d+$/.test(id) || /^final_card_\d+$/.test(id);}
+function finalPrintDefinitions(match){return [...match.startingCardIds].filter(id=>CARD[id]?.finalPrint).map(id=>({id,baseId:cardBaseId(id)}));}
 function copyDefinitions(match){return [...match.startingCardIds].filter(id=>CARD[id]?.createdCopy).map(id=>({...CARD[id]}));}
 function mergeAbilityFlags(a={},b={}){
   const callbacks=(x,y)=>x&&y?()=>{x();y();}:x||y;
@@ -5846,8 +5882,8 @@ Game.prototype.playCreatedCard=async function(p,copy,depth,title){
     if(COPY_PASSIVES.has(this.abilityId(copy)) && this.payableCards(p).filter(id=>id!==copy).length<CARD[copy].costBonus)
       spaces=spaces.filter(cell=>!this.cardAt(cell.r,cell.c));
   }
-  const proven=player.isAI && aiUsesBoardCorrections(this,p)?aiCreatedPlacementInfo(p,copy,{alreadyCopy:true}):null;
-  const planned=proven?.points>0 && spaces.some(cell=>cell.r===proven.cell?.r&&cell.c===proven.cell?.c)?proven.cell
+  const proven=player.isAI && !this.finalChallenge && aiUsesBoardCorrections(this,p)?aiCreatedPlacementInfo(p,copy,{alreadyCopy:true}):null;
+  const planned=player.isAI&&this.finalChallenge?aiFinalBestPlacement(p,[copy],spaces)?.cell:proven?.points>0 && spaces.some(cell=>cell.r===proven.cell?.r&&cell.c===proven.cell?.c)?proven.cell
     :player.isAI && aiUsesBoardCorrections(this,p)?aiBestForcedPlacement(p,copy,spaces)?.cell:null;
   const cell=planned || (spaces.length?await this.chooseCell(p,spaces,title):null);
   if(this.cancelled)return {};
@@ -5875,7 +5911,10 @@ Game.prototype.withClaimMute=function(callback){
   try{return callback();}finally{if(prior===undefined)delete this.claimEirinMute;else this.claimEirinMute=prior;}
 };
 const originalCheckClaimBatch=Game.prototype.checkClaims;
-Game.prototype.checkClaims=function(p){return this.withClaimMute(()=>originalCheckClaimBatch.call(this,p));};
+Game.prototype.checkClaims=function(p){return this.withClaimMute(()=>{
+  if(!this.finalChallenge)return originalCheckClaimBatch.call(this,p);
+  let before;do{before=this.mainBoardCells().length;originalCheckClaimBatch.call(this,p);}while(!this.winner&&this.mainBoardCells().length<before);
+});};
 Game.prototype.cardAbilityEnabled=function(id){
   const story=this.storyMatch;if(!story)return true;
   if(this.permanentAbilities?.[id]==='__draw_one')return true;
@@ -6080,6 +6119,7 @@ Game.prototype.recordStoryByakurenEffect=function(p,effect){
 };
 Game.prototype.recordStoryDiscardFactions=function(p){
   const story=this.storyMatch;
+  if(story?.chapter===14){this.recordFinalCollection(p);return;}
   if(this.cancelled || this.winner || this.stalemateMessage || !story || story.chapter===1 || p!==story.humanSeat)return;
   const pile=this.players[p].discard;
   const groups=Object.entries(FACTIONS).filter(([,faction])=>[2,4].includes(faction.size)).map(([faction,{size}])=>({
@@ -6159,6 +6199,58 @@ Game.prototype.recordStoryCorrectGuess=function(p,target,id){
   const story=this.storyMatch;
   if(!this.cancelled && !this.winner && !this.stalemateMessage && story?.chapter===5 && p===story.humanSeat && story.readPapers?.length && this.players[target]?.hand.includes(id))story.progress.newsGuess=true;
 };
+/* The finale uses ordinary printed instances: no creation surcharge or print material. */
+let finalPrintSerial=0;
+function finalFactionKeys(){return Object.keys(FACTIONS).filter(key=>FACTIONS[key].size>0);}
+function makeFinalPrint(baseId){
+  const source=originalCardBlueprint(baseId),id=`final_card_${++finalPrintSerial}`;
+  CARD[id]={...source,id,baseId:source.id,finalPrint:true};return id;
+}
+function configureFinalChallenge(match){
+  for(const id of Object.keys(CARD))if(CARD[id]?.finalPrint)delete CARD[id];
+  SIZE=4;match.numPlayers=4;
+  match.players=Array.from({length:4},(_,idx)=>({idx,name:match.aiTestMode?`AI ${idx+1}`:idx===0?'You':`AI ${idx}`,isAI:match.aiTestMode||idx!==0,aiPolicy:'current',hand:[],discard:[]}));
+  configureStoryMatch(match,13);
+  match.aiDifficulty='hard';match.forcedPlay={};match.pendingExtraTurns={};match.tradedThisTurn=Array(4).fill(false);match.placementBlockTurns=Array(4).fill(0);match.placementBlockedForTurn=Array(4).fill(false);
+  match.borrowedAbilities={};match.permanentAbilities={};match.createdActivations={};match.paperReports=[];match.nextPaperId=0;
+  const originals=CARDS.filter(card=>!card.token&&!card.shopkeeper&&!card.shopExpansion);
+  const printed=originals.flatMap(card=>Array.from({length:10},()=>makeFinalPrint(card.id)));
+  match.drawPile=shuffle(printed.slice());
+  match.players.forEach((player,p)=>{player.aiDifficulty=p===1?'hard':p===2?'normal':'easy';player.hand=match.drawPile.splice(-6);player.discard=[];});
+  const types=CARDS.filter(card=>card.shopExpansion).map(card=>card.id),stock=Object.fromEntries(types.map(base=>[base,Array.from({length:10},()=>makeFinalPrint(base))]));
+  match.finalChallenge={version:1,factions:finalFactionKeys(),collected:match.players.map(()=>[]),claims:match.players.map(()=>0),stock,slotTypes:[null,...types],removed:[],growths:0};
+  const positions=[[1,1],[0,0],[0,1],[0,2],[1,0],[1,2],[2,0],[2,1]];
+  match.shopTiles=positions.map(([r,c],slot)=>({r:SIZE+2+r,c,slot,wasteland:false}));
+  match.shopCards=['shop_rinnosuke',...types.map(base=>stock[base].pop())];
+  match.startingCardIds=new Set([...printed,...Object.values(stock).flat(),...match.shopCards]);
+  match.handKnowledge=match.players.map(()=>new Map());match.reserveAges=match.players.map(()=>({}));match.currentPlayerIdx=Math.floor(Math.random()*4);
+  match.storyMatch={...match.storyMatch,chapter:14,skillFactions:finalFactionKeys(),progress:{}};
+  match.winner=null;match.stalemateMessage='';match.logLines=[];
+  if(match.testMetrics){match.testMetrics=createAITestMetrics();match.players.forEach(p=>p.hand.forEach(id=>match.recordTestSeen(id,p.idx)));}
+  match.log('Final Challenge begins. Collect every faction first to win.');
+}
+Game.prototype.recordFinalCollection=function(p){
+  const final=this.finalChallenge;if(!final||this.cancelled||this.winner||this.stalemateMessage||!this.players[p])return;
+  for(const faction of final.factions)if(!final.collected[p].includes(faction)&&this.players[p].discard.filter(id=>this.cardMatchesFaction(id,faction)).length>=FACTIONS[faction].size)final.collected[p].push(faction);
+  if(final.factions.every(faction=>final.collected[p].includes(faction)))this.winner=this.players[p];
+};
+Game.prototype.recordFinalClaim=function(p,faction,settling=false){
+  const final=this.finalChallenge;if(!final||this.cancelled||this.winner&&(!settling||this.winner.idx!==p))return;
+  if(!final.collected[p].includes(faction))final.collected[p].push(faction);final.claims[p]++;
+  if(final.factions.every(key=>final.collected[p].includes(key)))this.winner=this.players[p];
+  if(SIZE>=8)return;
+  const from=SIZE,to=from+1;
+  try{this.ui?.onFinalBoardGrowth?.({from,to,playerIdx:p,faction});}catch(_error){}
+  for(const row of this.board)row.push(null);this.board.push(Array(to).fill(null));
+  for(const row of this.wasteland)row.push(false);this.wasteland.push(Array(to).fill(false));
+  for(const tile of this.shopTiles)tile.r++;
+  SIZE=to;final.growths++;
+  this.log(`The board grows to ${to}×${to}.`);
+};
+Game.prototype.finalStockRemaining=function(slot){
+  const base=this.finalChallenge?.slotTypes[slot];return base?(this.finalChallenge.stock[base].length+(cardBaseId(this.shopCards[slot])===base?1:0)):0;
+};
+function finalInventoryIds(match){return [...match.drawPile,...match.board.flat(),...match.shopCards,...match.players.flatMap(p=>[...p.hand,...p.discard]),...Object.values(match.finalChallenge?.stock||{}).flat(),...(match.finalChallenge?.removed||[])].filter(Boolean);}
 const STORY_CHAPTERS=[
   {id:1,title:'Chapter 1 · The first table',body:'Cards have no abilities in this chapter. Place cards beside their faction and use Draw for Everyone when needed. Win or reach stalemate to clear the chapter. Try the two-card pair before finishing the four-card faction.',skills:[]},
   {id:2,title:'Chapter 2 · Scarlet Devil Mansion',body:'Win to clear this chapter. Three stars: claim Scarlet Devil Mansion, finish Remilia’s ability with three Mansion cards in hand, and use Flandre to discard an opponent’s hand card.',skills:['sdm'],introduced:'sdm',hint:'Try waiting a few turns before playing Remilia.'},
@@ -6172,9 +6264,10 @@ const STORY_CHAPTERS=[
   {id:10,title:'Chapter 10 · Sunflower Field',body:'Sunflower Field abilities are now active too. Win to clear this chapter. Three stars: claim Sunflower Field, have an opponent with no cards in hand during any turn, and win before your tenth turn.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower'],introduced:'sunflower',hint:'There is more than one way to leave your opponent with no cards. Think carefully!'},
   {id:11,title:'Chapter 11 · Hell',body:'Hell abilities are now active too. Win to clear this chapter. Three stars: claim Hell, clear eight wasteland tiles, and successfully trigger Kutaka’s ability.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower','hell'],introduced:'hell',hint:'Hecatia?! I have only heard rumors of someone so important. I never imagined she would come here!'},
   {id:12,title:'Chapter 12 · Heaven',body:'Heaven abilities are now active too. Win to clear this chapter. Three stars: claim Heaven, return eight cards to the draw pile, and win without claiming a faction. Faction objectives also count complete groups gathered in your discard pile.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower','hell','heaven'],introduced:'heaven',hint:'I deliberately favored scoring through faction claims when creating this game. Let’s see whether that is still true.'},
-  {id:13,title:'Chapter 13 · Myouren Temple',body:'Myouren Temple abilities are now active too. Win to clear this chapter. Three stars: claim Myouren Temple, use all three of Byakuren’s effects, and win with an extra turn still remaining.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower','hell','heaven','temple'],introduced:'temple',hint:'Surely using every one of Byakuren’s effects takes a lot of cards to pay the costs. But with the power of bonds, perhaps it could be easy?'}
+  {id:13,title:'Chapter 13 · Myouren Temple',body:'Myouren Temple abilities are now active too. Win to clear this chapter. Three stars: claim Myouren Temple, use all three of Byakuren’s effects, and win with an extra turn still remaining.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower','hell','heaven','temple'],introduced:'temple',hint:'Surely using every one of Byakuren’s effects takes a lot of cards to pay the costs. But with the power of bonds, perhaps it could be easy?'},
+  {id:14,title:'Chapter 14 · Final Challenge',body:'A 360-card deck: ten of each original. Face Easy, Normal and Hard opponents. Collect every faction first to win. Each board claim adds a row and column, up to 8×8. Kourindou stocks ten of every fifth card; traded payments disappear. Victory is the only objective.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower','hell','heaven','temple'],hint:'▒╳▧ ﾊｸ#%▓ ﾟ･:∴ ░Ω▤ /?? ◇▒'}
 ];
-const STORY_GOAL_KEYS={1:[],2:['sdm','remilia','flandre'],3:['haku','yuyuko','race'],4:['hourai','kaguya','handTen'],5:['mountain','stalemate','newsGuess'],6:['twoFactions','lockedFaction','surprise'],7:['palace','newAbility','noMary'],8:['sage','sameCardFaction','placeTwice'],9:['hakurei','marisaSage','beforeClaim'],10:['sunflower','emptyOpponent','beforeTen'],11:['hell','clearEight','kutaka'],12:['heaven','returnEight','noClaims'],13:['temple','byakurenAll','extraAtWin']};
+const STORY_GOAL_KEYS={1:[],2:['sdm','remilia','flandre'],3:['haku','yuyuko','race'],4:['hourai','kaguya','handTen'],5:['mountain','stalemate','newsGuess'],6:['twoFactions','lockedFaction','surprise'],7:['palace','newAbility','noMary'],8:['sage','sameCardFaction','placeTwice'],9:['hakurei','marisaSage','beforeClaim'],10:['sunflower','emptyOpponent','beforeTen'],11:['hell','clearEight','kutaka'],12:['heaven','returnEight','noClaims'],13:['temple','byakurenAll','extraAtWin'],14:[]};
 function storyFactionCards(faction){return CARDS.filter(card=>card.faction===faction&&!card.shopExpansion).map(card=>card.id);}
 function storyScarletCards(){return storyFactionCards('sdm');}
 function storyShopCards(chapter){const skills=STORY_CHAPTERS.find(level=>level.id===chapter)?.skills||[];return chapter>=6?CARDS.filter(card=>card.shopExpansion&&skills.includes(card.faction)).map(card=>card.id):[];}
@@ -6319,6 +6412,7 @@ function dealLearningOpening(match,{scarletOpening=false,hakugyokurouOpening=fal
 }
 function configureStoryMatch(match,chapter){
   const definition=STORY_CHAPTERS.find(level=>level.id===chapter);if(!definition)throw Error('Unknown story chapter.');
+  if(chapter===14){configureFinalChallenge(match);return;}
   match.aiDifficulty=chapter===1?'hard':chapter>=6?'normal':'easy';
   match.kourindouEnabled=chapter>=6;match.shopCards=[];
   match.shopTiles=match.kourindouEnabled?[[0,1],[1,0],[1,1],[1,2]].map(([r,c],slot)=>({r:SIZE+2+r,c,slot,wasteland:false})):[];match.board=Array.from({length:SIZE},()=>Array(SIZE).fill(null));
@@ -6400,6 +6494,7 @@ function storyStarGoals(match){
   return [];
 }
 function storyMatchStars(match){
+  if(match?.storyMatch?.chapter===14)return 0;
   if(!storyMatchComplete(match))return 0;
   const goals=storyStarGoals(match);return goals.length?goals.filter(goal=>goal.done).length:3;
 }
@@ -8733,6 +8828,10 @@ const ZH_DYNAMIC=[
   [/^(.+) wanders onto the board — choose where$/,(_,card)=>`${card} 漫步走上棋盘，请选择位置`],
   [/^(.+) \((.+)[’']s discard\)$/,(_,card,p)=>`${card}（${p} 的弃牌堆）`],
   [/^(.+) is thinking\.\.\.$/,(_,p)=>`${p} 正在思考……`],
+  [/^(.+) · (Collected|Missing)$/,(_,f,status)=>`${translateGameText(f)} · ${status==='Collected'?'已收取':'未收取'}`],
+  [/^(.+) wins by collecting every faction!$/,(_,p)=>`${p} 率先收齐所有阵营，获得胜利！`],
+  [/^The board grows to (\d+)×(\d+)\.$/,(_,r,c)=>`棋盘扩展至 ${r}×${c}。`],
+  [/^Hand: (\d+) · Factions: (\d+)\/11$/,(_,h,f)=>`手牌：${h} · 阵营：${f}/11`],
   [/^(.+) wins with (\d+) discard points!$/,(_,p,n)=>`${p} 以 ${n} 点弃牌分数获胜！`],
   [/^No more cards can be placed\. (.+) wins by stalemate with (\d+) discard points?!$/,(_,p,n)=>`已无卡牌可以继续放置。${p} 以 ${n} 点弃牌分数赢得僵局！`],
   [/^No more cards can be placed\. Stalemate! (.+) tie with (\d+) discard points? each\.$/,(_,p,n)=>`已无卡牌可以继续放置。${p} 各有 ${n} 点弃牌分数，平局！`],
@@ -9039,6 +9138,13 @@ Object.assign(ZH_TEXT,{
   'Chapter 10 · Sunflower Field':'第十关 · 太阳花田',
   'Chapter 11 · Hell':'第十一关 · 地狱',
   'Chapter 12 · Heaven':'第十二关 · 天界',
+  'Chapter 14 · Final Challenge':'第十四关 · 最终挑战',
+  'A 360-card deck: ten of each original. Face Easy, Normal and Hard opponents. Collect every faction first to win. Each board claim adds a row and column, up to 8×8. Kourindou stocks ten of every fifth card; traded payments disappear. Victory is the only objective.':'360 张牌，每种基础牌各十张。与简单、中等和困难的三名电脑对局，率先收齐所有阵营即可获胜。每次从棋盘收取阵营，棋盘便增加一行与一列，最多 8×8。香霖堂出售全部第五张卡，各十张；交易付出的牌会直接消失。唯一的目标就是获胜。',
+  'Final Challenge begins. Collect every faction first to win.':'最终挑战开始。率先收齐所有阵营即可获胜。',
+  'Collect all eleven factions first.':'率先收齐全部十一个阵营。',
+  'Traded payments leave the game.':'交易付出的牌会直接消失。',
+  'No legal actions remain. The final challenge ends without a winner.':'已无合法行动。最终挑战以无人获胜结束。',
+  'Collected':'已收取','Missing':'未收取',
   'Chapter 13 · Myouren Temple':'第十三关 · 命莲寺',
   'Myouren Temple abilities are now active too. Win to clear this chapter. Three stars: claim Myouren Temple, use all three of Byakuren’s effects, and win with an extra turn still remaining.':'命莲寺的技能也已开放，获胜即可通关。三星目标：收取命莲寺阵营、使用圣白莲的所有技能，以及胜利时自己仍有额外回合。',
   'Surely using every one of Byakuren’s effects takes a lot of cards to pay the costs. But with the power of bonds, perhaps it could be easy?':'无论如何，使用圣白莲的所有功能必须要有很多卡牌来支付代价吧。但是，如果有羁绊的力量，轻松的完成也不是不可能的？',
@@ -9703,7 +9809,8 @@ function renderBoard(){
   if(boardEl.children.length!==SIZE*SIZE) boardEl.innerHTML = '';
   let hecatiaCell=null;
   for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++){
-    if(game.cardAt(r,c)==='hell_hecatia' && !game.isProtected(r,c) && !game.isCrownAbilityDisabled('hell_hecatia')) hecatiaCell={r,c};
+    const gravityCard=game.cardAt(r,c);
+    if((gravityCard==='hell_hecatia'||game.finalChallenge&&game.abilityId(gravityCard)==='hell_hecatia') && !game.isProtected(r,c) && !game.isCrownAbilityDisabled(gravityCard)) hecatiaCell={r,c};
   }
   boardEl.classList.toggle('hecatia-active',!!hecatiaCell);
   for(let r=0;r<SIZE;r++){
@@ -9730,6 +9837,7 @@ function renderBoard(){
       const isWasteland=!!game.wastelandAt(r,c);
       cell.classList.toggle('wasteland',isWasteland);
       const cardId = game.cardAt(r,c);
+      const hecatiaCard=cardId==='hell_hecatia'||!!game.finalChallenge&&game.abilityId(cardId)==='hell_hecatia';
       if(cell.dataset.cardId!==(cardId||'')){
         cell.innerHTML=cardId ? cardBoardHtml(cardId) : '';
         cell.dataset.cardId=cardId||'';
@@ -9737,14 +9845,14 @@ function renderBoard(){
       const protectedCell=game.isProtected(r,c);
       syncProtectionIndicator(cell,r,c);
       syncTerrainAnimations(cell,r,c,isWasteland);
-      cell.classList.toggle('koishi-arriving',cardId==='palace_koishi' && koishiArrivalUntil.get(`${r},${c}`)>Date.now());
+      cell.classList.toggle('koishi-arriving',(cardId==='palace_koishi'||game.finalChallenge&&game.abilityId(cardId)==='palace_koishi') && koishiArrivalUntil.get(`${r},${c}`)>Date.now());
       if(cardId){
         const face=cell.querySelector('.board-card');
         syncIllusionFace(face,cardId);
         if(face && CARD[cardId].crown){
           face.classList.toggle('eirin-muted',game.isSageMuted(cardId));
         }
-        if(cardId!=='hell_hecatia' && hecatiaCell){
+        if(!hecatiaCard && hecatiaCell){
           const dy=hecatiaCell.r-r, dx=hecatiaCell.c-c;
           const distance=Math.hypot(dx,dy);
           const pull=Math.max(1.3,5.4-distance*.95);
@@ -9755,8 +9863,8 @@ function renderBoard(){
         }
         cell.title = `${protectedCell ? 'Protected by Rinnosuke; counts as no faction.\n' : ''}${ruleTooltip(CARD[cardId].desc)}\nDouble-click to view card details.`;
       } else cell.title='';
-      cell.classList.toggle('hecatia-cell',cardId==='hell_hecatia');
-      cell.classList.toggle('gravity-warp',!!cardId && cardId!=='hell_hecatia' && !!hecatiaCell);
+      cell.classList.toggle('hecatia-cell',hecatiaCard);
+      cell.classList.toggle('gravity-warp',!!cardId && !hecatiaCard && !!hecatiaCell);
       const isJustPlaced=!!lastPlacedCell && lastPlacedCell.r===r && lastPlacedCell.c===c;
       cell.classList.toggle('just-placed',isJustPlaced);
       cell.classList.toggle('hand-landed',isJustPlaced && !!lastPlacedCell.handArrival);
@@ -9790,6 +9898,7 @@ function renderShop(){
   const panel=el('shop-panel'),grid=el('kourindou');
   panel.hidden=!game.kourindouEnabled;
   if(panel.hidden){grid.replaceChildren();return;}
+  while(grid.children.length>game.shopTiles.length)grid.children[grid.children.length-1].remove();
   for(let slot=0;slot<game.shopTiles.length;slot++){
     let tile=grid.children[slot];
     if(!tile){
@@ -9804,11 +9913,16 @@ function renderShop(){
     }
     const {r,c}=game.shopTiles[slot];
     tile.dataset.r=String(r);tile.dataset.c=String(c);
+    if(game.finalChallenge){tile.style.gridRow=String(r-SIZE-1);tile.style.gridColumn=String(c+1);}
+    else{tile.style.gridRow='';tile.style.gridColumn='';}
     const id=game.cardAt(r,c),faceKey=id||'';
     if(tile.dataset.shopFace!==faceKey){
       tile.innerHTML=id ? cardBoardHtml(id) : '';
       tile.dataset.shopFace=faceKey;tile.dataset.cardId=id||'';
     }
+    let stockLabel=tile.querySelector('.final-shop-stock');
+    if(game.finalChallenge&&slot>0){if(!stockLabel){stockLabel=document.createElement('span');stockLabel.className='final-shop-stock';tile.appendChild(stockLabel);}stockLabel.textContent='×'+game.finalStockRemaining(slot);}
+    else stockLabel?.remove();
     const selectable=isShopSelectable(slot);
     tile.classList.toggle('wasteland',game.wastelandAt(r,c));
     syncProtectionIndicator(tile,r,c);
@@ -9835,7 +9949,7 @@ function renderShop(){
     tile.title=id ? `${CARD[id].name}${game.isProtected(r,c) ? ' · Protected by Rinnosuke; no faction' : ''}. Double-click or press I for details.` : 'Empty tile';
     tile.setAttribute('aria-label',tile.title+(selectable ? ' Click to choose.' : ''));
   }
-  el('shop-status').textContent=pendingCellChoice?.shopTrade ? 'Choose merchandise.' : '';
+  el('shop-status').textContent=pendingCellChoice?.shopTrade ? 'Choose merchandise.' : game.finalChallenge?'Traded payments leave the game.':'';
 }
 function isShopSelectable(slot){
   const cell=game?.shopTiles[slot];
@@ -10220,14 +10334,15 @@ function renderPlayers(){
     for(let i=0;i<7;i++){
       lanternsHtml += `<div class="lantern ${i<wc?'lit':''}"></div>`;
     }
+    if(game.finalChallenge)lanternsHtml=game.finalChallenge.factions.map(faction=>{const active=game.finalChallenge.collected[p.idx].includes(faction);return `<span class="final-faction ${active?'collected':''}" style="--faction-color:${FACTIONS[faction].color}" title="${FACTIONS[faction].name} · ${active?'Collected':'Missing'}">${FACTIONS[faction].icon}</span>`;}).join('');
     const avatar = !p.isAI ? '🧑' : AI_AVATARS[(p.idx-(game.aiTestMode?0:1)) % AI_AVATARS.length];
     const sealed=game.placementBlockTurns[p.idx]+(game.placementBlockedForTurn[p.idx]?1:0);
     seat.innerHTML = `
       ${sealed?`<span class="murasa-seal-badge">⚓ No placement · ${sealed} turn${sealed===1?'':'s'}</span>`:''}
       <div class="avatar">${avatar}</div>
-      <div class="sname">${p.name}<span class="tag">${p.isAI?AI_DIFFICULTIES[game.aiDifficulty].name+' AI':p.idx===localSeat()?'You':'Player'}</span></div>
-      <div class="lanterns">${lanternsHtml}</div>
-      <div class="sinfo">Hand: ${p.hand.length} · Discard: ${wc}/7</div>
+      <div class="sname">${p.name}<span class="tag">${p.isAI?AI_DIFFICULTIES[aiDifficultyFor(p.idx)].name+' AI':p.idx===localSeat()?'You':'Player'}</span></div>
+      <div class="lanterns${game.finalChallenge?' final-factions':''}">${lanternsHtml}</div>
+      <div class="sinfo">${game.finalChallenge?`Hand: ${p.hand.length} · Factions: ${game.finalChallenge.collected[p.idx].length}/11`:`Hand: ${p.hand.length} · Discard: ${wc}/7`}</div>
       ${playtestMode ? `<div class="playtest-reveal">
         <div><b>Hand:</b> ${cardNameListHtml(p.hand)}</div>
         <div><b>Discard:</b> ${cardNameListHtml(p.discard)}</div>
@@ -10236,6 +10351,7 @@ function renderPlayers(){
       const decree=document.createElement('div');decree.className='reisen-decree';
       decree.innerHTML=mindEyeSvg()+'<span>Reisen’s decree · forced play</span>';seat.appendChild(decree);
     }
+    if(game.finalChallenge&&typeof applyFinalObjectOffset==='function')applyFinalObjectOffset(seat,'seat-'+p.idx);
     seatsEl.appendChild(seat);
   });
   syncMurasaVortices();
@@ -10354,11 +10470,13 @@ function renderAll(immediate=false){
   }
   clearTimeout(fastAITestRenderTimer);fastAITestRenderTimer=null;fastAITestLastRender=Date.now();
   publishSnapshot();
+  if(typeof prepareFinalChallengeLayout==='function')prepareFinalChallengeLayout();
   renderBoard();
   renderHand();
   renderPlayers();
   renderLog();
   renderStatus();
+  if(typeof syncFinalChallengePresentation==='function')syncFinalChallengePresentation();
   updateTutorialProgress();
   if(game.aiTestMode){
     el('winner-banner').classList.remove('show');
@@ -10370,6 +10488,7 @@ function renderAll(immediate=false){
     if(announcedGameResult!==game){announcedGameResult=game;playGameCue('victory');}
     el('winner-text').textContent = game.storyMatch?.chapter===1 && game.storyMatch.stalemateClear
       ? 'Chapter 1 cleared by stalemate!'
+      : game.finalChallenge?`${game.winner.name} wins by collecting every faction!`
       : `${game.winner.name} wins with ${game.winCount(game.winner)} discard points!`;
     el('winner-banner').classList.add('show');
   } else if(game.stalemateMessage){
@@ -10511,6 +10630,7 @@ const ui = {
   onDiscard:showDiscardVanish,
   onCostPaid(){playGameCue('cost');},
   onFactionClaim({faction}){playGameCue('claim',{faction});},
+  onFinalBoardGrowth: captureFinalBoardGrowth,
   onSakuraBloom:showYuyukoBloom,
   onMasterSpark:showMasterSpark,
   onTenshiUpdraft:showTenshiUpdraft,
@@ -10979,6 +11099,7 @@ function endStoryIfNoPlacement(){
   endStalemate();return true;
 }
 function endStalemate(){
+  if(game.finalChallenge){game.stalemateMessage='No legal actions remain. The final challenge ends without a winner.';game.log(game.stalemateMessage);return;}
   const drawOnly=game.storyDrawOnlyStalemate();
   let max=-1, winners=[];
   for(const p of game.players){
@@ -11114,6 +11235,7 @@ function aiBestSatoriCard(playerIdx,targetIdx,ids){
 
 function aiRecordDecision(playerIdx,action,allowTrade){
   if(!game.testMetrics)return;
+  if(game.finalChallenge){const d=game.testSeatMetrics(playerIdx).diagnostics;d.actions[action.type]=(d.actions[action.type]||0)+1;game.recordTestDecision(playerIdx,'final-action',{action:{...action,cardId:action.cardId?testCardId(action.cardId):null},factions:game.finalChallenge.collected[playerIdx].slice()});return;}
   const seat=game.testSeatMetrics(playerIdx),d=seat.diagnostics;
   d.actions[action.type]=(d.actions[action.type]||0)+1;
   const forced=action.type==='forced-place',hand=game.players[playerIdx].hand;
@@ -11412,6 +11534,7 @@ function aiPublicThreatValue(playerIdx){
 }
 
 function aiProposedPayment(playerIdx,count){
+  if(game.finalChallenge)return aiFinalMaterialOrder(playerIdx,game.payableCards(playerIdx)).slice(0,count);
   return game.payableCards(playerIdx).slice().sort((a,b)=>aiMaterialValue(playerIdx,a)-aiMaterialValue(playerIdx,b)).slice(0,count);
 }
 
@@ -11882,6 +12005,7 @@ function aiImmediateHandGain(p,id){
   return game.estimateHandGain(p,id);
 }
 function aiImmediateAbilityUtility(p,id,r,c){
+  if(game.finalChallenge)return aiFinalAbilityPlan(p,id,r,c).utility;
   if(id==='temple_byakuren')return Math.max(0,...game.byakurenOptions(p,r,c).filter(o=>!o.disabled).map(o=>
     o.value==='look'?1-o.cost*.65:o.value==='return'?aiPublicThreatScore(p)-o.cost*.65:Math.min(3,Math.max(0,game.players[p].hand.length-o.cost))*.6-o.cost*.65));
   const actor=game.cardAt(r,c)||id;
@@ -13401,18 +13525,20 @@ async function aiTutorialMentorAction(p,allowTrade=true){
   }
   return best?{type:'place',cardId:best.cardId,r:best.cell.r,c:best.cell.c}:aiTeachingFallbackAction(p,allowTrade);
 }
-function aiAbilityPlan(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiAbilityPlan(playerIdx,...args):aiCurrentAbilityPlan(playerIdx,...args);}
+function aiAbilityPlan(playerIdx,...args){if(game.finalChallenge)return aiFinalAbilityPlan(playerIdx,...args);return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiAbilityPlan(playerIdx,...args):aiCurrentAbilityPlan(playerIdx,...args);}
 function aiBestChannel(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiBestChannel(playerIdx,...args):aiCurrentBestChannel(playerIdx,...args);}
-function aiEvaluateCard(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiEvaluateCard(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiEvaluateCard(playerIdx,...args) : aiCurrentEvaluateCard(playerIdx,...args);}
-function aiChooseCostCards(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiChooseCostCards(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiChooseCostCards(playerIdx,...args) : aiCurrentChooseCostCards(playerIdx,...args);}
+function aiEvaluateCard(playerIdx,...args){if(game.finalChallenge)return aiFinalEvaluation(playerIdx,...args);return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiEvaluateCard(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiEvaluateCard(playerIdx,...args) : aiCurrentEvaluateCard(playerIdx,...args);}
+function aiChooseCostCards(playerIdx,...args){if(game.finalChallenge)return aiFinalMaterialOrder(playerIdx,args[0]).slice(0,args[1]);return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiChooseCostCards(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiChooseCostCards(playerIdx,...args) : aiCurrentChooseCostCards(playerIdx,...args);}
 function aiFactionPlacement(playerIdx,...args){
+  if(game.finalChallenge)return aiFinalBestPlacement(playerIdx,[args[0]],args[1])?.cell||args[1]?.[0]||null;
   if(game.storyMatch?.aiSeat===playerIdx && game.storyMatch.chapter<6)return aiStoryPlacement(playerIdx,args[0],args[1])?.cell||null;
   if(game.tutorialLesson?.aiSeat===playerIdx)return aiTutorialPlacement(playerIdx,args[0],args[1])?.cell||null;
   return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiFactionPlacement(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiFactionPlacement(playerIdx,...args) : aiCurrentFactionPlacement(playerIdx,...args);
 }
-function aiKomachiTarget(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiKomachiTarget(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiKomachiTarget(playerIdx,...args) : aiCurrentKomachiTarget(playerIdx,...args);}
+function aiKomachiTarget(playerIdx,...args){if(game.finalChallenge)return aiFinalKomachiTarget(playerIdx,...args);return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiKomachiTarget(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiKomachiTarget(playerIdx,...args) : aiCurrentKomachiTarget(playerIdx,...args);}
 function aiDecideHardAction(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiDecideHardAction(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiDecideHardAction(playerIdx,...args) : aiCurrentDecideHardAction(playerIdx,...args);}
 async function aiDecideAction(playerIdx,...args){
+  if(game.finalChallenge)return aiFinalChallengeAction(playerIdx,args[0]!==false);
   if(aiIsTeachingOpponent(game,playerIdx))return aiTutorialMentorAction(playerIdx,args[0]!==false);
   const opening=aiStoryHellOpeningAction(playerIdx);if(opening)return opening;
   const action=await (game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiDecideAction(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline'?AI_FROZEN_POLICY.aiDecideAction(playerIdx,...args):aiCurrentDecideAction(playerIdx,...args));
@@ -13538,6 +13664,7 @@ function aiKanakoTrade(playerIdx,...args){return game.players[playerIdx]?.aiPoli
 const AI_RESTORED_SOURCE_COMMIT='cef7bb6ccc090336b3b26b1ba9df9372f4ae3470';
 const AI_RESTORED_7fc8de65f2ab17eb1f68cefe3ad280c33b43d91210795a118c29498581ebb1cd='7fc8de65f2ab17eb1f68cefe3ad280c33b43d91210795a118c29498581ebb1cd';
 function aiCreatedValue(p,id,options={}){
+  if(game.finalChallenge)return aiFinalCreatedValue(p,id,options);
   const preview='__ai_created_value',previous=CARD[preview],activation=game.createdActivations[preview];
   CARD[preview]=blueprintCopy(id,preview,null,options.double?2:1);
   try{
@@ -13557,12 +13684,12 @@ Game.prototype.estimateHandGain=function(p,id){
   if(ability==='hourai_eirin')return 1;
   if(ability==='hell_eiki')return Math.max(0,...this.eikiFactionOptions(p).map(group=>group.cells.filter(cell=>this.canReturnBoardToDraw(cell.r,cell.c)).length));
   if(ability==='sage_matara')return this.canCreateWithMatara() && this.selectableBoardCells(p,t=>inBounds(t.r,t.c)&&cardBaseId(t.id)!=='sage_matara').length?1:0;
-  return restoredEstimateHandGain.call(this,p,id);
+  return restoredEstimateHandGain.call(this,p,this.finalChallenge?ability:id);
 };
 const restoredEstimateDirectDiscard=Game.prototype.estimateDirectDiscardPoints;
 Game.prototype.estimateDirectDiscardPoints=function(p,id,r,c){
   if(['__draw_one','sage_matara'].includes(this.abilityId(id)))return 0;
-  return restoredEstimateDirectDiscard.call(this,p,id,r,c);
+  return restoredEstimateDirectDiscard.call(this,p,this.finalChallenge?this.abilityId(id):id,r,c);
 };
 function aiCostCanResolve(p,id,r,c){
   if(!inBounds(r,c)||game.isSageMuted(id)||game.isProtected(r,c))return false;
@@ -13633,6 +13760,7 @@ function aiUsesBoardCorrections(match,p){return !['previous','baseline'].include
 // Mandatory pushes are rated on the resulting board. A voluntary Meiling
 // placement may not destroy an own claim or its remaining connection route.
 function aiMeilingPushPlan(p,r,c,moves=game.meilingPushes(r,c)){
+  if(game.finalChallenge)return aiFinalMeilingPushPlan(p,r,c,moves);
   const actor=game.cardAt(r,c),faction=CARD[actor]?.faction;
   if(!actor || !moves.length)return null;
   const size=FACTIONS[faction]?.size||0,members=game.factionCells(faction).length;
@@ -13949,6 +14077,7 @@ function aiYukariScoresNow(match,p,id,cell){
 }
 function aiBetterForcedCandidate(a,b){
   if(!b)return true;
+  if(game.finalChallenge)return a.value>b.value;
   if(!!a.winsNow!==!!b.winsNow)return !!a.winsNow;
   if(!!a.losesNow!==!!b.losesNow)return !a.losesNow;
   if(a.immediatePoints!==b.immediatePoints)return a.immediatePoints>b.immediatePoints;
@@ -13965,7 +14094,7 @@ function aiBestForcedPlacement(p,id,cells=null,observer=p){
     // The decree waits through Murasa's blockade until placement is permitted.
     game.placementBlockedForTurn[p]=false;
   }
-  try{return aiCurrentEvaluateCard(p,id,{forced:true,acceptCandidate:pick=>!cells || cells.some(c=>c.r===pick.cell.r&&c.c===pick.cell.c)});}
+  try{if(game.finalChallenge)return aiFinalBestPlacement(p,[id],cells||game.emptyOrWastelandForCard(CARD[id],p));return aiCurrentEvaluateCard(p,id,{forced:true,acceptCandidate:pick=>!cells || cells.some(c=>c.r===pick.cell.r&&c.c===pick.cell.c)});}
   finally{game.currentPlayerIdx=actor;game.handKnowledge[p]=knowledge;game.placementBlockedForTurn[p]=blocked;}
 }
 function aiReisenChoice(observer,target,ids){
@@ -13980,8 +14109,183 @@ function aiReisenChoice(observer,target,ids){
   return {...best,choices};
 }
 function aiChooseForcedCell(p,id,cells){
+  if(game.finalChallenge)return aiFinalBestPlacement(p,[id],cells)?.cell||cells[0];
   if(!aiUsesBoardCorrections(game,p))return cells[Math.floor(Math.random()*cells.length)];
   return aiBestForcedPlacement(p,id,cells)?.cell || cells[0];
+}
+
+/* Final-challenge policy reads only its own hand and public table/collection history.
+   Ordinary policies retain their seven-point objective and are never called here. */
+// Cache only the duration of an unchanged hypothetical board. Any virtual cell
+// mutation invalidates it; real turns and every other mode bypass the cache.
+let finalStaticRules=null;
+function withFinalStaticRules(callback){const previous=finalStaticRules;finalStaticRules={owner:game,values:new Map(),protection:previous?.owner===game?previous.protection:new Map()};try{return callback();}finally{finalStaticRules=previous;}}
+for(const method of ['isProtected','eirinActive','hasActiveAbility','isCardAbilityDisabled']){
+  const original=Game.prototype[method];
+  Game.prototype[method]=function(...args){
+    const cache=finalStaticRules;if(!cache||cache.owner!==this)return original.apply(this,args);
+    const values=method==='isProtected'?cache.protection:cache.values,key=method+':'+args.join(',');if(values.has(key))return values.get(key);
+    const value=original.apply(this,args);values.set(key,value);return value;
+  };
+}
+const finalOriginalSetCardAt=Game.prototype.setCardAt;
+Game.prototype.setCardAt=function(r,c,id){
+  const cache=finalStaticRules;if(cache?.owner===this){
+    cache.values.clear();
+    // Removing ordinary claim members cannot change Rinnosuke's protected area.
+    // Moving the keeper must invalidate that geometry before the next query.
+    if(id==='shop_rinnosuke'||this.cardAt(r,c)==='shop_rinnosuke')cache.protection.clear();
+  }
+  return finalOriginalSetCardAt.call(this,r,c,id);
+};
+function aiFinalDiscardValue(p,id){
+  const faction=CARD[id]?.faction;if(!FACTIONS[faction]?.size||game.finalChallenge.collected[p].includes(faction))return .5;
+  const count=game.players[p].discard.filter(other=>game.cardMatchesFaction(other,faction)).length;
+  return count+1>=FACTIONS[faction].size?40:2+count;
+}
+function aiFinalAbilityPlan(p,id,r,c){
+  const abilityId=game.abilityId(id),actor=game.cardAt(r,c)||id,none={abilityId,utility:0,direct:0,handGain:0,bonus:0,payment:[],skip:true,target:null};
+  if(!inBounds(r,c)||game.isProtected(r,c)||game.isCardAbilityDisabled(actor))return none;
+  let cost=game.abilityCost(actor,{r,c}),targets=[],target=null,utility=0,handGain=0,bonus=0,direct=0;
+  const payable=game.payableCards(p).filter(card=>card!==actor),hand=game.players[p].hand;
+  if(abilityId==='haku_yuyuko'){targets=game.yuyukoTargets(r,c,p);cost=Math.min(targets.length,payable.length);}
+  if(payable.length<cost)return none;
+  const payment=aiFinalMaterialOrder(p,payable).slice(0,cost),fee=payment.reduce((sum,card)=>sum+aiFinalMaterial(p,card)/20,0);
+  const claims=withFinalStaticRules(()=>aiCurrentClaims(p)),reserved=new Set(claims.flatMap(claim=>claim.members.map(at=>at.id)));
+  const pick=choices=>choices.filter(at=>!reserved.has(game.cardAt(at.r,at.c))).map(at=>({at,value:aiFinalDiscardValue(p,game.cardAt(at.r,at.c))})).sort((a,b)=>b.value-a.value)[0];
+  switch(abilityId){
+    case 'marisa':case 'palace_yuugi':{const selected=pick(abilityId==='marisa'?game.marisaTargets(r,c,true):game.yuugiTargets(r,c,false,p));if(!selected)return none;target=selected.at;utility=selected.value;direct=game.pointValue(game.cardAt(target.r,target.c));break;}
+    case 'haku_yuyuko':if(!cost||targets.some(at=>reserved.has(at.id)))return none;utility=targets.reduce((sum,at)=>sum+aiFinalDiscardValue(p,at.id),0)*cost/targets.length;direct=cost;break;
+    case 'heaven_iku':for(const zone of game.rectZones(2,p)){const candidates=game.ikuTargetsForZone(zone,p);if(!candidates.length||candidates.some(at=>reserved.has(game.cardAt(at.r,at.c))))continue;const value=candidates.reduce((sum,at)=>sum+aiFinalDiscardValue(p,game.cardAt(at.r,at.c)),0)*Math.min(2,candidates.length)/candidates.length;if(value>utility){utility=value;target=zone;direct=Math.min(2,candidates.length);}}if(!target)return none;break;
+    case 'hell_eiki':for(const group of game.eikiFactionOptions(p)){const candidates=group.cells.filter(at=>game.canReturnBoardToDraw(at.r,at.c));if(!candidates.length||candidates.some(at=>reserved.has(at.id)))continue;const value=candidates.length*.6+(game.emptyCells(p).length<3?2:0);if(value>utility){utility=value;target=group.fk;handGain=candidates.length;}}if(!target)return none;break;
+    case 'heaven_tenshi':if(game.tenshiOccupiedCount()<Math.ceil(SIZE*SIZE/2)||claims.length)return none;targets=game.abilityBoardCells(p,at=>game.boardFaction(at.r,at.c)!=='heaven'&&game.canReturnBoardToDraw(at.r,at.c));utility=targets.length*.08+(game.emptyCells(p).length<4?3:0);break;
+    case 'palace_satori':handGain=game.players.some(player=>player.idx!==p&&player.hand.length)?1:0;utility=handGain*2.4;break;
+    case 'temple_shou':handGain=Math.min(game.drawPile.length+cost,game.templeWasteland(p).length);utility=handGain*(hand.length<8?.75:.25);break;
+    case 'temple_ichirin':if(claims.length)return none;utility=game.ichirinPushes(r,c,p).length*.12+(game.emptyCells(p).length<3?2:0);break;
+    case 'temple_byakuren':{const choices=game.byakurenOptions(p,r,c).filter(option=>!option.disabled);utility=Math.max(0,...choices.map(option=>game.byakurenOptionValue(p,r,c,option)));break;}
+    case 'reimu':{const choices=game.selectableBoardCells(p,at=>CARD[at.id].crown&&!(at.r===r&&at.c===c)&&!reserved.has(at.id));for(const at of choices){const value=aiFinalMaterial(p,at.id)/8;if(value>utility){utility=value;target=at;handGain=1;}}break;}
+    default:return none;
+  }
+  utility-=fee;return {abilityId,utility,direct,handGain,bonus,payment,target,skip:utility<=0};
+}
+function aiFinalCreatedValue(p,source,options){
+  const id='__final_created_preview',previous=CARD[id],player=game.players[p],hand=player.hand,activation=game.createdActivations[id];
+  CARD[id]=blueprintCopy(source,id,null,options.double?2:1);player.hand=hand.concat(id);game.createdActivations[id]=game.payableCards(p).filter(card=>card!==id).length>=CARD[id].costBonus;
+  try{const pick=aiFinalBestPlacement(p,[id]);return (pick?.value??-50)+aiFinalMaterial(p,id);}
+  finally{player.hand=hand;if(previous===undefined)delete CARD[id];else CARD[id]=previous;if(activation===undefined)delete game.createdActivations[id];else game.createdActivations[id]=activation;}
+}
+function aiFinalFactionDistance(faction){
+  const cells=game.factionCells(faction);return cells.reduce((sum,cell,i)=>sum+cells.slice(i+1).reduce((n,other)=>n+Math.abs(cell.r-other.r)+Math.abs(cell.c-other.c),0),0);
+}
+function aiFinalMeilingPushPlan(p,r,c,moves){
+  const actor=game.cardAt(r,c),faction=CARD[actor]?.faction;if(!actor)return null;
+  const before=withFinalStaticRules(()=>aiCurrentClaims(p)),own=before.filter(claim=>claim.faction===faction).reduce((n,claim)=>n+claim.members.length,0),distance=aiFinalFactionDistance(faction);let best=null;
+  for(const move of moves){const moved=game.cardAt(move.r,move.c),to=game.cardAt(move.toR,move.toC);game.setCardAt(move.r,move.c,null);game.setCardAt(move.toR,move.toC,moved);
+    try{const claims=withFinalStaticRules(()=>aiCurrentClaims(p)),ownPoints=claims.filter(claim=>claim.faction===faction).reduce((n,claim)=>n+claim.members.length,0),after=aiFinalFactionDistance(faction),safe=ownPoints>=own&&(!game.cardMatchesFaction(moved,faction)||after<=distance),rank=aiFinalClaimValue(p,claims)-after*3;
+      if(!best||safe&&!best.safe||safe===best.safe&&rank>best.rank)best={move,safe,rank,points:claims.reduce((n,claim)=>n+claim.points,0),ownPoints};
+    }finally{game.setCardAt(move.r,move.c,moved);game.setCardAt(move.toR,move.toC,to);}}
+  return best;
+}
+function aiFinalKomachiTarget(p,r,c,cells){
+  const actor=game.cardAt(r,c);if(!actor)return null;const faction=CARD[actor].faction,before=withFinalStaticRules(()=>aiCurrentClaims(p)),required=before.filter(claim=>claim.members.some(at=>at.id===actor));let best=null;
+  for(const cell of cells){if(!inBounds(cell.r,cell.c)||cell.r===r&&cell.c===c||!game.canMoveBoardCard(cell.r,cell.c))continue;const other=game.cardAt(cell.r,cell.c);game.setCardAt(r,c,other);game.setCardAt(cell.r,cell.c,actor);
+    try{const claims=withFinalStaticRules(()=>aiCurrentClaims(p)),safe=required.every(old=>claims.some(claim=>claim.faction===old.faction&&claim.members.some(at=>at.id===actor))),value=(safe?10000000:0)+aiFinalClaimValue(p,claims)-aiFinalFactionDistance(faction)*3;
+      if(!best||value>best.value)best={cell,value};
+    }finally{game.setCardAt(r,c,actor);game.setCardAt(cell.r,cell.c,other);}}
+  return best?.cell||null;
+}
+function aiFinalEvaluation(p,id,options={}){
+  const pick=aiFinalBestPlacement(p,[id]);if(!pick||options.acceptCandidate&&!options.acceptCandidate(pick))return null;
+  const points=pick.claims.reduce((n,claim)=>n+claim.points,0),claimSize=Math.max(0,...pick.claims.map(claim=>claim.members?.length||0));
+  return {...pick,rate:pick.value/1200,handGain:0,claimSize,immediatePoints:points,claimsNow:claimSize>0,winsNow:pick.value>=1000000,lowPriority:pick.value<0,skipAbility:false,reserveCombo:false};
+}
+function aiFinalMaterial(p,id){
+  const faction=CARD[id]?.faction,size=FACTIONS[faction]?.size||0;
+  if(!size||game.finalChallenge.collected[p].includes(faction))return 2;
+  const held=game.players[p].hand.filter(other=>game.cardMatchesFaction(other,faction)).length;
+  const shown=game.factionCells(faction).length,discarded=game.players[p].discard.filter(other=>game.cardMatchesFaction(other,faction)).length;
+  return 15+Math.min(size,held+shown)*4+Math.min(size-1,discarded)*5+(CARD[id]?.crown?2:0);
+}
+function aiFinalMaterialOrder(p,ids){
+  return withFinalStaticRules(()=>{
+    const weights=new Map();
+    const weight=id=>{const key=[CARD[id]?.faction,!!CARD[id]?.crown].join(':');if(!weights.has(key))weights.set(key,aiFinalMaterial(p,id));return weights.get(key);};
+    return ids.map((id,index)=>({id,index,value:weight(id)})).sort((a,b)=>a.value-b.value||a.index-b.index).map(entry=>entry.id);
+  });
+}
+function aiFinalClaimValue(p,claims){
+  const collected=new Set(game.finalChallenge.collected[p]),before=collected.size;
+  const projected=game.players[p].discard.concat(claims.flatMap(claim=>claim.members?.map(cell=>cell.id)||[]));
+  for(const claim of claims)if(claim.faction&&claim.members?.length===FACTIONS[claim.faction]?.size)collected.add(claim.faction);
+  for(const faction of game.finalChallenge.factions)if(projected.filter(id=>game.cardMatchesFaction(id,faction)).length>=FACTIONS[faction].size)collected.add(faction);
+  return (collected.size===game.finalChallenge.factions.length?1000000:0)+(collected.size-before)*1200+claims.reduce((n,claim)=>n+(claim.members?.length||0)*24,0);
+}
+function aiFinalUniqueCards(ids){
+  const unique=new Map();for(const id of ids){const key=[cardBaseId(id),game.abilityId(id),CARD[id]?.costBonus||0,CARD[id]?.abilityMultiplier||1,game.isCardAbilityDisabled(id)].join(':');if(!unique.has(key))unique.set(key,id);}return [...unique.values()];
+}
+function aiFinalBestPlacement(p,ids=game.players[p].hand,allowed=null){
+  if(game.isPlacementBlocked(p))return null;
+  return withFinalStaticRules(()=>{
+  let best=null;
+  for(const id of aiFinalUniqueCards(ids)){
+    const cells=(allowed||game.emptyOrWastelandForCard(CARD[id],p)).filter(cell=>inBounds(cell.r,cell.c));
+    for(const cell of cells){
+      const covered=game.cardAt(cell.r,cell.c),ability=game.abilityId(id);
+      const next=withFinalStaticRules(()=>aiWithPlacementEffects(id,cell,()=>withFinalStaticRules(()=>{
+        const claims=aiCurrentClaims(p),claimValue=aiFinalClaimValue(p,claims);
+        if(ability==='sage_yukari'&&!covered&&!claimValue)return null;
+        const faction=CARD[id].faction,size=FACTIONS[faction]?.size||0,needed=!game.finalChallenge.collected[p].includes(faction);
+        const members=game.factionCells(faction),adjacent=members.filter(at=>Math.abs(at.r-cell.r)+Math.abs(at.c-cell.c)===1).length;
+        const others=members.filter(at=>at.r!==cell.r||at.c!==cell.c),distance=others.length?Math.min(...others.map(at=>Math.abs(at.r-cell.r)+Math.abs(at.c-cell.c))):0;
+        const held=game.players[p].hand.filter(other=>game.cardMatchesFaction(other,faction)).length;
+        const works=aiCostCanResolve(p,id,cell.r,cell.c),cost=works?game.abilityCost(id,cell):0;
+        let value=claimValue+(needed?18:0)+adjacent*(needed?16:5)-distance*2+Math.min(3,held)*(needed?5:1);
+        if(aiKnows(p,'value')){
+          const gain=works?game.estimateHandGain(p,id):0;value+=Math.min(6,Math.max(0,gain))*7-cost*9;
+          if(works&&ability==='hourai_eirin')value+=held&&needed?22:8;
+          if(works&&ability==='sdm_sakuya')value+=held>1?Math.min(2,held)*9: -18;
+          if(works&&['haku_youmu','mtn_kanako','hell_komachi'].includes(ability))value+=held&&adjacent?12:-12;
+          if(['mtn_nitori','hell_hecatia'].includes(ability)&&!claimValue)value-=size>members.length+held?80:22;
+          if(ability==='sage_kasen'&&!claimValue)value-=55;
+        }
+        if(aiKnows(p,'defense')&&!claimValue&&needed&&size>2&&members.length>=size-1&&held<size-members.length)value-=42;
+        // Hard reserves nearly complete groups; Easy only joins visible neighbors.
+        if(aiKnows(p,'reserve')&&needed&&!claimValue&&size>2&&members.length===1&&held<size-1)value-=8;
+        return {type:'place',cardId:id,r:cell.r,c:cell.c,cell,value,claims};
+      }),p));
+      if(next&&(!best||next.value>best.value))best=next;
+    }
+  }
+  return best;
+  });
+}
+async function aiFinalChallengeAction(p,allowTrade=true){
+  const owner=game,player=owner.players[p];let best=null,trade=null,lastYield=Date.now();
+  const remain=async()=>{
+    if(Date.now()-lastYield>=18){await sleep(0);lastYield=Date.now();}
+    return game===owner&&!owner.cancelled;
+  };
+  // Yield only after a complete preview has restored every live field. This
+  // keeps inspection, resizing and Retry responsive with large Mokou hands.
+  for(const id of aiFinalUniqueCards(player.hand)){
+    const pick=aiFinalBestPlacement(p,[id]);if(pick&&(!best||pick.value>best.value))best=pick;
+    if(!await remain())return {type:'pass'};
+  }
+  if(allowTrade&&aiKnows(p,'trade')&&!owner.tradedThisTurn[p]&&!owner.isPlacementBlocked(p)){
+    const offers=aiFinalMaterialOrder(p,player.hand.filter(id=>owner.canTrade(p,id))).slice(0,2),hand=player.hand;
+    for(const target of owner.tradeCells())for(const offered of offers){
+      const bought=owner.cardAt(target.r,target.c),price=aiFinalMaterial(p,offered);let pick;
+      try{player.hand=hand.filter(id=>id!==offered).concat(bought);pick=aiFinalBestPlacement(p,[bought]);}
+      finally{player.hand=hand;}
+      const value=(pick?.value??-Infinity)-price;
+      if(value>(best?.value??0)+12&&(!trade||value>trade.value))trade={type:'trade',cardId:offered,target:{r:target.r,c:target.c},value};
+      if(!await remain())return {type:'pass'};
+    }
+  }
+  if(trade)return {type:'trade',cardId:trade.cardId,target:trade.target};
+  if(owner.canDrawNormally(p)&&(!best||best.value<0||player.hand.length<3&&best.value<100))return {type:'draw'};
+  if(best)return {type:'place',cardId:best.cardId,r:best.r,c:best.c};
+  return owner.canDrawNormally(p)?{type:'draw'}:{type:'pass'};
 }
 
 async function doPlayerAction(playerIdx){
@@ -14188,7 +14492,7 @@ async function runNextTurn(){
   if(activeGame.aiTestMode){
     if(!await waitAITestReady(activeGame))return;
     if(game!==activeGame || activeGame.cancelled)return;
-    if(activeGame.testMetrics.turns>=600){activeGame.testAbortReason='turn-limit';await finishAITestRound(activeGame);return;}
+    if(activeGame.testMetrics.turns>=(activeGame.finalChallenge?2400:600)){activeGame.testAbortReason='turn-limit';await finishAITestRound(activeGame);return;}
   }
   if(endStoryIfNoPlacement()){
     renderAll();if(activeGame.aiTestMode)await finishAITestRound(activeGame);return;
@@ -14302,19 +14606,20 @@ function clearHandPlacementArrivals(){
   handPlacementArrivals.clear();
 }
 
+function humanUsesYukari(cardId){return cardId==='sage_yukari'||!!game?.finalChallenge&&game.abilityId(cardId)==='sage_yukari';}
 function humanActionCells(cardId){
   const cells=game.emptyOrWastelandForCard(CARD[cardId]);
-  if(cardId!=='sage_yukari' && tutorialAllowsTrade() && game.canTrade(localSeat(),cardId)){
+  if(!humanUsesYukari(cardId) && tutorialAllowsTrade() && game.canTrade(localSeat(),cardId)){
     const keeper=game.boardCells(cell=>cell.id==='shop_rinnosuke')[0];
     if(keeper) cells.push(keeper);
   }
   return cells;
 }
 function humanShopSlots(cardId){
-  if(cardId==='sage_yukari') return []; // Normal tile placement handles the override.
+  if(humanUsesYukari(cardId)) return []; // Normal tile placement handles the override.
   return tutorialAllowsTrade() && game.canTrade(localSeat(),cardId) && game.shopCards[0]==='shop_rinnosuke' ? [0] : [];
 }
-function shopActionHint(cardId){return tutorialAllowsTrade() && game.canTrade(localSeat(),cardId) && cardId!=='sage_yukari' ? ', or Rinnosuke to trade' : '';}
+function shopActionHint(cardId){return tutorialAllowsTrade() && game.canTrade(localSeat(),cardId) && !humanUsesYukari(cardId) ? ', or Rinnosuke to trade' : '';}
 async function commitHumanShopAction(cardId,slot,override=false){
   if(online && online.seat!==0){
     const target=typeof slot==='number'?game.shopTiles[slot]:slot;
@@ -14342,7 +14647,8 @@ async function commitHumanShopAction(cardId,slot,override=false){
   renderAll();
 }
 function makeShopActionResolver(cardId){
-  return slot=>cardId==='sage_yukari' ? commitHumanShopAction(cardId,slot,true) : beginShopTrade(cardId);
+  if(game.finalChallenge&&humanUsesYukari(cardId))return slot=>makePlacementResolver(cardId)(game.shopTiles[slot]);
+  return slot=>humanUsesYukari(cardId) ? commitHumanShopAction(cardId,slot,true) : beginShopTrade(cardId);
 }
 function beginShopTrade(cardId){
   if(!tutorialAllowsTrade()) return;
@@ -14361,7 +14667,7 @@ function beginShopTrade(cardId){
 function makePlacementResolver(cardId){
   const cardObj = CARD[cardId];
   return async (cell) => {
-    if(cardId!=='sage_yukari' && game.cardAt(cell.r,cell.c)==='shop_rinnosuke'){beginShopTrade(cardId);return;}
+    if(!humanUsesYukari(cardId) && game.cardAt(cell.r,cell.c)==='shop_rinnosuke'){beginShopTrade(cardId);return;}
     if(!game.players[localSeat()].hand.includes(cardId) || !game.emptyOrWastelandForCard(cardObj).some(space=>space.r===cell.r && space.c===cell.c)) return;
     if(online && online.seat!==0){
       if(!localTurnReady())return;
@@ -14415,7 +14721,7 @@ function onHandCardClick(cardId){
     syncHandSelection();
     return;
   }
-  pendingCellChoice = {cells,shopSlots,yukariShop:cardId==='sage_yukari',cancellable:true,resolve:makePlacementResolver(cardId),resolveShop:makeShopActionResolver(cardId)};
+  pendingCellChoice = {cells,shopSlots,yukariShop:humanUsesYukari(cardId),cancellable:true,resolve:makePlacementResolver(cardId),resolveShop:makeShopActionResolver(cardId)};
   el('instruction-bar').innerHTML = `<span>${cardObj.name} — choose a highlighted space${shopActionHint(cardId)}.</span><button id="cancel-placement-btn">Cancel</button>`;
   el('instruction-bar').classList.add('show');
   el('cancel-placement-btn').addEventListener('click', cancelHandSelection);
@@ -14442,7 +14748,7 @@ function prepareHandCardDrag(cardId){
     el('status-line').textContent = `No legal space for ${cardObj.name} right now — choose another card or draw.`;
     return false;
   }
-  pendingCellChoice = {cells,shopSlots,yukariShop:cardId==='sage_yukari',cancellable:true,dragOnly:true,resolve:makePlacementResolver(cardId),resolveShop:makeShopActionResolver(cardId)};
+  pendingCellChoice = {cells,shopSlots,yukariShop:humanUsesYukari(cardId),cancellable:true,dragOnly:true,resolve:makePlacementResolver(cardId),resolveShop:makeShopActionResolver(cardId)};
   draggingCardId = cardId;
   el('instruction-bar').innerHTML = `<span>Drop ${cardObj.name} on a highlighted space${shopActionHint(cardId)}.</span>`;
   el('instruction-bar').classList.add('show');
@@ -15654,8 +15960,8 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='121a40dc0b8afb2cba22383896dfb8f7fdd43eeb66d787d78f6bcffbd4fe039d';
-const AI_EVALUATION_POLICY_DIGEST='8c4a5243bd74a5f73ad2e8f67c5f0d1a5ccea2d1925c63048f3b82320114f3cf';
+const AI_EVALUATION_RULES_DIGEST='afb5b3d2246094ab45e5689dd3db7dc656a6165cc1600aab4a8c74a8891030c9';
+const AI_EVALUATION_POLICY_DIGEST='dcb5c8fc193824f183d44f9abf84fbee76c47417f5cee56d688239317794eed6';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
   if(!source)throw new Error('Game source is unavailable.');
@@ -15741,17 +16047,24 @@ function evalForkSummary(report){
   return {groups,invalidPairs,conclusion,completedPairs:report.pairs.length};
 }
 function evalValidateSnapshot(snapshot){
-  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-18-story-heaven-v32','2026-10-18-story-hell-eiki-v31','2026-10-18-story-sunflower-v30','2026-10-18-story-hakurei-v29','2026-10-18-story-sages-colors-v28','2026-10-18-story-sages-v27','2026-10-18-story-palace-legacy-v26','2026-10-17-story-first-stalemate-v25','2026-10-17-story-sakuya-round-v24','2026-10-17-story-unlocked-shop-v23','2026-10-16-story-no-draw-stalemate-v22','2026-10-16-story-kourindou-physics-v21','2026-10-16-story-mountain-collection-v20','2026-10-16-story-private-opening-v19','2026-10-16-story-eientei-opening-v18','2026-10-16-story-stars-placement-v17','2026-10-16-story-hakugyokurou-active-mentor-v16','2026-10-15-guided-opening-scarlet-reserve-v15','2026-10-15-random-learning-renewal-v14','2026-10-15-story-opening-chapters-v13','2026-10-14-original-creation-blueprints-v12','2026-10-14-guided-final-match-v11','2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
+  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-19-story-temple-v34','2026-10-19-story-temple-v33','2026-10-18-story-heaven-v32','2026-10-18-story-hell-eiki-v31','2026-10-18-story-sunflower-v30','2026-10-18-story-hakurei-v29','2026-10-18-story-sages-colors-v28','2026-10-18-story-sages-v27','2026-10-18-story-palace-legacy-v26','2026-10-17-story-first-stalemate-v25','2026-10-17-story-sakuya-round-v24','2026-10-17-story-unlocked-shop-v23','2026-10-16-story-no-draw-stalemate-v22','2026-10-16-story-kourindou-physics-v21','2026-10-16-story-mountain-collection-v20','2026-10-16-story-private-opening-v19','2026-10-16-story-eientei-opening-v18','2026-10-16-story-stars-placement-v17','2026-10-16-story-hakugyokurou-active-mentor-v16','2026-10-15-guided-opening-scarlet-reserve-v15','2026-10-15-random-learning-renewal-v14','2026-10-15-story-opening-chapters-v13','2026-10-14-original-creation-blueprints-v12','2026-10-14-guided-final-match-v11','2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
   const state=snapshot.state,n=state?.players?.length,size=snapshot.size;
-  if(![4,5].includes(size) || ![2,3,4].includes(n) || !Number.isInteger(state.currentPlayerIdx) || state.currentPlayerIdx<0 || state.currentPlayerIdx>=n)throw new Error('Invalid position dimensions.');
+  const final=state?.finalChallenge;
+  if(!(final?[4,5,6,7,8]:[4,5]).includes(size) || ![2,3,4].includes(n) || !Number.isInteger(state.currentPlayerIdx) || state.currentPlayerIdx<0 || state.currentPlayerIdx>=n)throw new Error('Invalid position dimensions.');
   if(state.numPlayers!==n || state.players.some((p,i)=>p.idx!==i || !Array.isArray(p.hand) || !Array.isArray(p.discard)))throw new Error('Invalid position dimensions.');
   if(!Array.isArray(state.board) || state.board.length!==size || state.board.some(row=>!Array.isArray(row)||row.length!==size))throw new Error('Invalid board.');
   const tokens=snapshot.tokens||[];if(tokens.length>1000 || tokens.some(token=>!/^trap_token_\d+$/.test(token.id)))throw new Error('Invalid tokens.');
   const copies=snapshot.generatedCards||[];
   if(copies.length>1000 || copies.some(c=>!/^created_card_\d+$/.test(c.id)||!CARDS.some(base=>base.id===c.baseId)||!Number.isInteger(c.costBonus)||c.costBonus<1||c.costBonus>100||![1,2].includes(c.abilityMultiplier)||!(CARDS.some(base=>base.id===c.copiedAbility)||c.copiedAbility==='__draw_one')))throw new Error('Invalid created cards.');
-  const allowed=new Set([...CARDS.map(c=>c.id),...tokens.map(t=>t.id),...copies.map(c=>c.id)]);
-  const ids=[...state.board.flat(),...(state.shopCards||[]),...(state.drawPile||[]),...state.players.flatMap(p=>[...(p.hand||[]),...(p.discard||[])])].filter(Boolean);
-  if(ids.some(id=>!allowed.has(id)) || new Set(ids).size!==ids.length || ids.length>1100)throw new Error('Unknown or duplicated card in position.');
+  const prints=snapshot.finalPrints||[],printMap=new Map(prints.map(c=>[c.id,c.baseId]));
+  if(final){
+    const factions=finalFactionKeys(),types=CARDS.filter(c=>c.shopExpansion).map(c=>c.id),validList=ids=>Array.isArray(ids)&&new Set(ids).size===ids.length&&ids.every(f=>factions.includes(f));
+    if(n!==4||state.storyMatch?.chapter!==14||final.version!==1||JSON.stringify(final.factions)!==JSON.stringify(factions)||!Array.isArray(final.collected)||final.collected.length!==4||!final.collected.every(validList)||!Array.isArray(final.claims)||final.claims.length!==4||!final.claims.every(x=>Number.isInteger(x)&&x>=0)||final.growths!==size-4||!final.stock||JSON.stringify(final.slotTypes)!==JSON.stringify([null,...types])||!types.every(base=>Array.isArray(final.stock[base])&&final.stock[base].length<=10&&final.stock[base].every(id=>printMap.get(id)===base))||Object.keys(final.stock).length!==7||!Array.isArray(final.removed)||state.shopTiles?.length!==8||state.shopCards?.length!==8)throw new Error('Invalid final challenge.');
+    if(prints.length!==430||printMap.size!==430||prints.some(c=>!/^final_card_\d+$/.test(c.id)||!CARDS.some(base=>base.id===c.baseId&&!base.token&&!base.shopkeeper))||CARDS.filter(c=>!c.token&&!c.shopkeeper).some(base=>prints.filter(c=>c.baseId===base.id).length!==10)||!Number.isInteger(snapshot.finalPrintCounter)||snapshot.finalPrintCounter<Math.max(...prints.map(c=>Number(c.id.slice(11)))))throw new Error('Invalid final printed cards.');
+  }else if(prints.length)throw new Error('Printed stock requires a final challenge.');
+  const allowed=new Set([...CARDS.map(c=>c.id),...tokens.map(t=>t.id),...copies.map(c=>c.id),...prints.map(c=>c.id)]);
+  const ids=[...state.board.flat(),...(state.shopCards||[]),...(state.drawPile||[]),...state.players.flatMap(p=>[...(p.hand||[]),...(p.discard||[])]),...Object.values(final?.stock||{}).flat(),...(final?.removed||[])].filter(Boolean);
+  if(ids.some(id=>!allowed.has(id)) || new Set(ids).size!==ids.length || ids.length>(final?2600:1100))throw new Error('Unknown or duplicated card in position.');
   if(!Array.isArray(state.startingCardIds) || state.startingCardIds.length!==ids.length || new Set(state.startingCardIds).size!==ids.length || ids.some(id=>!state.startingCardIds.includes(id)))throw new Error('Card inventory does not match the position.');
   if(!Array.isArray(state.wasteland) || state.wasteland.length!==size || state.wasteland.some(row=>row.length!==size))throw new Error('Invalid terrain.');
   if(state.winner || state.stalemateMessage || state.cancelled)throw new Error('Choose an unfinished position.');
@@ -15776,6 +16089,8 @@ function evalForcedCell(p,id,cells){
 }
 function evalResetTokens(snapshot){
   for(const id of Object.keys(CARD))if(generatedCard(id)||CARD[id].hiddenChoice)delete CARD[id];
+  finalPrintSerial=snapshot?.finalPrintCounter||0;
+  for(const c of snapshot?.finalPrints||[])CARD[c.id]={...originalCardBlueprint(c.baseId),id:c.id,baseId:c.baseId,finalPrint:true};
   nextCreatedCard=snapshot?.copyCounter||0;
   for(const c of snapshot?.generatedCards||[])CARD[c.id]={...CARD[c.baseId],id:c.id,baseId:c.baseId,name:copyCardName(c.baseId),createdCopy:true,copiedAbility:c.copiedAbility,costBonus:c.costBonus,abilityMultiplier:c.abilityMultiplier,token:false,shopExpansion:false};
   nextTrapToken=snapshot?.tokenCounter||0;
@@ -15784,7 +16099,7 @@ function evalResetTokens(snapshot){
 function evalRestore(snapshot,roster){
   evalValidateSnapshot(snapshot);SIZE=snapshot.size;evalResetTokens(snapshot);
   const match=new Game(snapshot.state.players.length,{},null,{aiOnly:true,fastTest:true,aiDifficulty:snapshot.state.aiDifficulty||'hard'});
-  const allowed=new Set(Object.keys(match));
+  const allowed=new Set(Object.keys(match));if(snapshot.state.finalChallenge){allowed.add('finalChallenge');allowed.add('storyMatch');}
   for(const [key,value] of Object.entries(snapshot.state)){
     if(!allowed.has(key) || ['ui','testMetrics','testAbilityFrames','evaluationSnapshot','cancelled'].includes(key))continue;
     if(key==='handKnowledge')match[key]=value.map(entries=>new Map(entries));
@@ -15834,7 +16149,7 @@ function evalSampleHidden(snapshot,actor,random){
   return sampled;
 }
 function evalConservation(match){
-  const ids=[...match.drawPile,...match.board.flat(),...match.shopCards,...match.players.flatMap(p=>[...p.hand,...p.discard])].filter(Boolean);
+  const ids=match.finalChallenge?finalInventoryIds(match):[...match.drawPile,...match.board.flat(),...match.shopCards,...match.players.flatMap(p=>[...p.hand,...p.discard])].filter(Boolean);
   if(ids.length!==match.startingCardIds.size || new Set(ids).size!==ids.length || ids.some(id=>!match.startingCardIds.has(id)))throw new Error('Card conservation failed.');
 }
 async function evalYield(){
@@ -15848,7 +16163,7 @@ async function evalRunMatch(snapshot,roster,seed,forced=null){
   let initial=true,regularTurns=0;
   try{
     while(!match.winner && !match.stalemateMessage && !match.testAbortReason){
-      if(++regularTurns>600 || match.testMetrics.turns>600){match.testAbortReason='turn-limit';break;}
+      if(++regularTurns>(match.finalChallenge?2400:600) || match.testMetrics.turns>(match.finalChallenge?2400:600)){match.testAbortReason='turn-limit';break;}
       const p=match.currentPlayerIdx;
       let scheduled=0;
       if(initial){scheduled=snapshot.scheduledExtra||0;initial=false;}
@@ -15920,7 +16235,7 @@ function installAIEvaluationWorker(){
   aiChooseCostCards=decisionWrapper(aiChooseCostCards);aiFactionPlacement=decisionWrapper(aiFactionPlacement);aiKomachiTarget=decisionWrapper(aiKomachiTarget);aiBestTrade=decisionWrapper(aiBestTrade);
   const decide=aiDecideAction;
   aiDecideAction=async(p,allowTrade=true)=>{
-    if(game.testMetrics.turns>600){game.testAbortReason='turn-limit';return {type:'pass'};}
+    if(game.testMetrics.turns>(game.finalChallenge?2400:600)){game.testAbortReason='turn-limit';return {type:'pass'};}
     if(evalForcedAction?.seat===p){const action=evalForcedAction.action;evalForcedAction=null;return action;}
     const before=evalRandomPhase;evalRandomPhase='decisions';try{return await decide(p,allowTrade);}finally{evalRandomPhase=before;}
   };
@@ -16764,6 +17079,93 @@ el('tutorial-retry').addEventListener('click',()=>{if(isStoryMatch())openStoryCh
 el('tutorial-next').addEventListener('click',()=>tutorialStep(1));
 el('tutorial-skip').addEventListener('click',finishStoryPrelude);
 
+/* Only the final chapter owns these translations and finite collision animations. */
+let finalPresentation=null;
+function finalPresentationSession(){
+  if(finalPresentation?.owner===game)return finalPresentation;
+  stopFinalChallengePresentation();
+  if(!game?.finalChallenge||game.cancelled)return null;
+  return finalPresentation={owner:game,offsets:new Map(),animations:new Set(),frame:0,pending:null,signalTimer:null,signal:0x62c74b19};
+}
+function finalObjectNodes(){return [...Array.from(el('seats').children).map(node=>({key:'seat-'+node.dataset.playerIdx,node})),{key:'draw',node:el('draw-pile')}];}
+function applyFinalObjectOffset(node,key){
+  const offset=finalPresentation?.owner===game?finalPresentation.offsets.get(key):null;
+  node.style.setProperty('--final-push-x',(offset?.x||0)+'px');node.style.setProperty('--final-push-y',(offset?.y||0)+'px');
+}
+function finalRectsOverlap(a,b,gap=0){return a.left<b.right+gap&&a.right>b.left-gap&&a.top<b.bottom+gap&&a.bottom>b.top-gap;}
+function finalCollisionDisplacement(board,object,bounds,blockers=[]){
+  if(!finalRectsOverlap(board,object,5))return {x:0,y:0};
+  const options=[{x:board.left-object.right-7,y:0},{x:board.right-object.left+7,y:0},{x:0,y:board.top-object.bottom-7},{x:0,y:board.bottom-object.top+7}];
+  const shifted=delta=>({left:object.left+delta.x,right:object.right+delta.x,top:object.top+delta.y,bottom:object.bottom+delta.y});
+  const candidates=options.filter(delta=>{const rect=shifted(delta);return rect.left>=bounds.left&&rect.right<=bounds.right&&rect.top>=bounds.top&&rect.bottom<=bounds.bottom&&!blockers.some(other=>finalRectsOverlap(rect,other,2));});
+  candidates.sort((a,b)=>Math.hypot(a.x,a.y)-Math.hypot(b.x,b.y));
+  return candidates[0]||{x:0,y:0};
+}
+function prepareFinalChallengeLayout(){
+  if(!game?.finalChallenge||game.cancelled){if(finalPresentation)stopFinalChallengePresentation();return;}
+  const session=finalPresentationSession();document.body.classList.add('final-challenge');
+  const table=el('table-wrap').getBoundingClientRect?.();if(!table?.width||!table?.height)return;
+  const mobile=document.body.classList.contains('mobile-landscape');
+  const capacity=Math.max(40,Math.min(mobile?400:600,table.width-(mobile?62:76),(table.height-(mobile?40:58))*.8));
+  const width=Math.floor(capacity*(.72+.28*(SIZE-4)/4)),geometry=[table.left,table.top,table.width,table.height,window.innerWidth,window.innerHeight,SIZE].join(':');
+  if(session.geometry!==geometry&&!session.pending)session.pending={board:el('board').getBoundingClientRect?.(),resize:true};
+  session.geometry=geometry;document.body.style.setProperty('--final-board-width',width+'px');
+  document.body.style.setProperty('--final-board-font',Math.max(7,Math.min(12,width/SIZE*.19))+'px');
+  applyFinalObjectOffset(el('draw-pile'),'draw');
+}
+function captureFinalBoardGrowth(event){
+  const session=finalPresentationSession();if(!session||session.owner.fastAITest)return;
+  if(!session.pending){const board=el('board').getBoundingClientRect?.();session.pending={...event,board,objects:new Map(finalObjectNodes().map(({key,node})=>[key,{rect:node.getBoundingClientRect?.(),offset:session.offsets.get(key)||{x:0,y:0}}]))};}
+}
+function animateFinalObject(session,node,frames,options){
+  if(!node.animate||window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)return;
+  const animation=node.animate(frames,options);session.animations.add(animation);
+  const done=()=>session.animations.delete(animation);animation.finished?.then(done,done);
+}
+function syncFinalChallengePresentation(){
+  if(!game?.finalChallenge||game.cancelled){if(finalPresentation)stopFinalChallengePresentation();return;}
+  const session=finalPresentationSession();if(session.frame||!session.pending)return;
+  session.frame=requestAnimationFrame(()=>{
+    session.frame=0;if(finalPresentation!==session||game!==session.owner||game.cancelled)return;
+    const pending=session.pending;session.pending=null;const board=el('board').getBoundingClientRect?.();if(!board?.width||!board?.height)return;
+    const bounds={left:6,top:8,right:(window.innerWidth||1024)-6,bottom:(window.visualViewport?.height||window.innerHeight||768)-8};
+    const objects=finalObjectNodes(),resolved=[];
+    for(const {key,node}of objects){
+      const mobileDraw=key==='draw'&&document.body.classList.contains('game-mobile');
+      if(mobileDraw){session.offsets.set(key,{x:0,y:0});applyFinalObjectOffset(node,key);}
+      const rect=node.getBoundingClientRect?.();if(!rect?.width||!rect?.height)continue;
+      const clamp={x:Math.max(bounds.left-rect.left,Math.min(0,bounds.right-rect.right)),y:Math.max(bounds.top-rect.top,Math.min(0,bounds.bottom-rect.bottom))};
+      const clamped={left:rect.left+clamp.x,right:rect.right+clamp.x,top:rect.top+clamp.y,bottom:rect.bottom+clamp.y};
+      const collision=mobileDraw?{x:0,y:0}:finalCollisionDisplacement(board,clamped,bounds,resolved),delta={x:clamp.x+collision.x,y:clamp.y+collision.y};
+      const previous=session.offsets.get(key)||{x:0,y:0},next={x:previous.x+delta.x,y:previous.y+delta.y};
+      session.offsets.set(key,next);applyFinalObjectOffset(node,key);
+      resolved.push({left:rect.left+delta.x,right:rect.right+delta.x,top:rect.top+delta.y,bottom:rect.bottom+delta.y});
+      if(delta.x||delta.y)animateFinalObject(session,node,[{translate:previous.x+'px '+previous.y+'px',rotate:'0deg'},{translate:(next.x+delta.x*.09)+'px '+(next.y+delta.y*.09)+'px',rotate:(delta.x>0?4:-4)+'deg',offset:.72},{translate:next.x+'px '+next.y+'px',rotate:'0deg'}],{duration:620,easing:'cubic-bezier(.2,.8,.2,1)'});
+    }
+    if(!pending.resize&&pending.board?.width&&pending.board?.height)animateFinalObject(session,el('board'),[{transform:`scale(${pending.board.width/board.width},${pending.board.height/board.height})`,filter:'brightness(1.35)'},{transform:'scale(1)',filter:'brightness(1)'}],{duration:480,easing:'cubic-bezier(.2,.8,.2,1)'});
+    if(typeof invalidateCardDragGeometry==='function')invalidateCardDragGeometry();
+  });
+}
+function stopFinalChallengePresentation(){
+  const session=finalPresentation;if(session){clearTimeout(session.signalTimer);if(session.frame)cancelAnimationFrame(session.frame);for(const animation of session.animations)animation.cancel();session.animations.clear();}
+  finalPresentation=null;document.body.classList.remove('final-challenge');
+  for(const {node}of finalObjectNodes()){node.style.setProperty('--final-push-x','0px');node.style.setProperty('--final-push-y','0px');}
+  document.body.style.setProperty('--final-board-width','');document.body.style.setProperty('--final-board-font','');
+}
+function renderFinalChallengeCoach(state){
+  const feedback=el('tutorial-feedback'),session=finalPresentationSession();if(!session)return;
+  feedback.classList.remove('story-perfect','story-stars-rainbow');
+  if(feedback.dataset.finalSignal!=='true'){feedback.dataset.finalSignal='true';feedback.innerHTML='<span class="final-victory-condition">'+ruleTextHtml('Collect all eleven factions first.',{cards:false})+'</span><span id="story-final-signal" aria-hidden="true"></span>';}
+  const tick=()=>{
+    if(finalPresentation!==session||!isStoryMatch()||storyState!==state||game.cancelled||state.chapter!==14)return;
+    const glyphs='░▒▓█▧▨╳◇◆Ω#%?!/ﾊｸﾚｲヽ々∴:･',signal=el('story-final-signal');let text='';
+    for(let i=0;i<36;i++){let x=session.signal;x^=x<<13;x^=x>>>17;x^=x<<5;session.signal=x>>>0;text+=glyphs[(x>>>0)%glyphs.length];}signal.textContent=text;
+    session.signalTimer=game.winner||game.stalemateMessage?null:setTimeout(tick,560);
+  };
+  clearTimeout(session.signalTimer);tick();
+  el('tutorial-back').disabled=false;setRuleText(el('tutorial-back'),'Chapters');el('tutorial-next').disabled=!state.complete;setRuleText(el('tutorial-next'),'Chapters');setRuleText(el('restart-btn'),state.complete?'Chapters':'Retry');queueMobileViewport();
+}
+
 /* Story chapters are individually replayable while this mode is prototyped. */
 let storyState=null,storyMenuChapter=null,storyReturnFocus=null,storyIntroSession=null;
 const STORY_PROGRESS_KEY='tbg-story-chapters-v1';
@@ -16802,6 +17204,7 @@ function storyStarMarkup(chapter,earned){
 }
 function saveStoryStars(chapter,earned){
   if(!STORY_CHAPTERS.some(level=>level.id===chapter))return;
+  if(chapter===14){const chapters=storyProgressDetails();chapters[14]={cleared:true,goals:[],legacyStars:0,perfect:false};try{window.localStorage?.setItem(STORY_PROGRESS_KEY,JSON.stringify({version:3,chapters}));}catch(_error){}return;}
   const chapters=storyProgressDetails(),keys=STORY_GOAL_KEYS[chapter]||[],previous=chapters[chapter]||{cleared:true,goals:[],legacyStars:0,perfect:false};
   // Numeric input is retained for old callers; actual matches save the completed objective IDs.
   const numeric=Number.isInteger(earned)&&earned>=0&&earned<=3;
@@ -16820,6 +17223,7 @@ function resetStoryStars(){
   openStoryMenu();setRuleText(el('story-debug-reset'),'DEBUG · Stars reset');
 }
 function clearStoryMatch(){
+  if(typeof stopFinalChallengePresentation==='function')stopFinalChallengePresentation();
   closeStoryIntroCards();
   resetObjectivePaper();
   el('tutorial-feedback').classList.remove('story-perfect','story-stars-rainbow');
@@ -16846,7 +17250,7 @@ function openStoryMenu(){
     const description=document.createElement('small');setRuleText(description,chapter.body,{cards:false});
     const status=document.createElement('small'),label=document.createElement('span'),rating=document.createElement('span'),best=storyBestStars(chapter.id);
     setRuleText(label,cleared.includes(chapter.id)?'Cleared':'Not cleared');if(chapter.id===8||chapter.id===13){rating.innerHTML=best===null?'':' '+storyStarMarkup(chapter.id,best);if(best!==null)rating.setAttribute('aria-label',best+' / 3');}
-    else rating.textContent=best===null?'':' '+'★'.repeat(best)+'☆'.repeat(3-best);
+    else rating.textContent=best===null||chapter.id===14?'':' '+'★'.repeat(best)+'☆'.repeat(3-best);
     const perfect=storyChapterPerfect(chapter.id);rating.className='story-star-rating'+(perfect?' story-stars-perfect':'')+(perfect&&chapter.id===13?' story-stars-rainbow':'');rating.style.setProperty('--story-star-color',storyStarColor(chapter.id));
     status.append(label,rating);
     button.append(title,description,status);button.addEventListener('click',()=>showStoryChapterIntro(chapter.id));levels.appendChild(button);
@@ -16936,7 +17340,7 @@ function openStoryChapter(chapter,{prepared=null}={}){
       typeof callback==='function'&&(name.startsWith('on')||name==='render')
         ?(...args)=>{if(!prepared.cancelled&&!(prepared.fastAITest&&name.startsWith('on')&&name!=='onLog'))return callback(...args);}:callback]));
   }else{
-    game=state.practice=new Game(2,practiceUI,null,{aiDifficulty:chapter===1?'hard':chapter>=6?'normal':'easy',kourindouEnabled:chapter>=6});configureStoryMatch(game,chapter);
+    game=state.practice=new Game(chapter===14?4:2,practiceUI,null,{aiDifficulty:chapter===1?'hard':chapter>=6?'normal':'easy',kourindouEnabled:chapter>=6});configureStoryMatch(game,chapter);
   }
   el('setup').style.display='none';el('game').classList.add('active');document.body.classList.add('tutorial-practice','story-practice');
   el('tutorial-coach').hidden=false;dockTutorialCoach(document.body.classList.contains('game-mobile'));renderStoryCoach();
@@ -16955,6 +17359,8 @@ function renderStoryCoach(){
   if(!isStoryMatch())return;const state=storyState,definition=STORY_CHAPTERS[state.chapter-1],progress=game.storyMatch.progress;
   el('tutorial-progress').innerHTML=ruleTextHtml('Story Mode',{cards:false})+' · '+state.chapter+' / '+STORY_CHAPTERS.length;
   el('tutorial-title').textContent=definition.title;setRuleText(el('tutorial-copy'),'');
+  if(state.chapter===14){renderFinalChallengeCoach(state);return;}
+  delete el('tutorial-feedback').dataset.finalSignal;
   const goals=storyStarGoals(game),raceLost=state.chapter===3&&storyRaceLost(game);
   const earned=goals.length?goals.filter(goal=>goal.done).length:state.complete?3:0;
   const heading=(goals.length?ruleTextHtml('Match objectives',{cards:false})+' ':'')+'<span class="story-star-rating" aria-label="'+earned+' / 3">'+storyStarMarkup(state.chapter,earned)+'</span>';
@@ -17045,7 +17451,7 @@ function syncMobileViewport(){
     closeMobileJournal();
   }
   if(typeof invalidateCardDragGeometry==='function')invalidateCardDragGeometry();
-  if(game && !game.cancelled){positionRinnosukeBubble();repositionYuukaBlooms();}
+  if(game && !game.cancelled){if(game.finalChallenge){prepareFinalChallengeLayout();syncFinalChallengePresentation();}positionRinnosukeBubble();repositionYuukaBlooms();}
 }
 function queueMobileViewport(){
   if(!mobileViewportFrame)mobileViewportFrame=requestAnimationFrame(syncMobileViewport);

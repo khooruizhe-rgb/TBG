@@ -34,6 +34,6 @@
   "selectionLiftPx": 12,
   "tradeRetries": 13,
   "paymentRetries": 2,
-  "rulesVersion": "2026-10-19-story-temple-v34",
+  "rulesVersion": "2026-10-19-story-final-challenge-v35",
   "scope": "Actual tutorial controllers, human turn resolver, hand renderer and mouse/keyboard handlers, raw real payment chooser, placement and merchandise commit functions, bubbling outside-click handler, ability/cost/trade settlement, cancellation and delayed readiness. Four region pages, Previous navigation and translations, actual independent chapter preludes, state/card conservation, CSS lift/mobile-hover/top-space/reduced-motion contracts and yellow guidance. Cosmetic flights and board painting use a controlled DOM; browser pixels are not verified."
 }

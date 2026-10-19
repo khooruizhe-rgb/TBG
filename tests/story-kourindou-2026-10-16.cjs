@@ -23,7 +23,7 @@ vm.runInContext(`(async()=>{
   hands.add(g.players[0].hand.slice().sort().join(','));rivals.add(g.players[1].hand.slice().sort().join(','));stocks.add(g.shopCards.slice(1).join(','));actors.add(g.currentPlayerIdx);
  }
  ok(hands.size>500&&rivals.size>500&&stocks.size===6&&actors.size===2,'512 random chapter-six deals preserve two private six-card hands, all 36 originals and four shop cards, random first actor and all six positions of the three unlocked-faction fifth cards');
- ok(STORY_CHAPTERS.length===13&&storyChapterCards(6).join(',')==='sdm_meiling,hourai_tewi,mtn_nitori','Kourindou introduces only Meiling, Tewi and Nitori');
+ ok(STORY_CHAPTERS.length===14&&storyChapterCards(6).join(',')==='sdm_meiling,hourai_tewi,mtn_nitori','Kourindou introduces only Meiling, Tewi and Nitori');
  const ordinaryGoods=new Set();
  for(let seed=1;seed<=128;seed++){evalResetTokens();evalSetSeed('ordinary-shop-'+seed);game=new Game(2,{},null,{aiOnly:true,fastTest:true});for(const id of game.shopCards.slice(1))ordinaryGoods.add(id);assert(CARDS.filter(card=>card.shopExpansion).every(card=>game.cardAbilityEnabled(card.id)));evalConservation(game);}
  ok(ordinaryGoods.size===7,'Ordinary matches retain all seven fifth cards, independently of chapter six’s restricted stock');

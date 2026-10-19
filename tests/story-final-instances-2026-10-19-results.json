@@ -1,0 +1,29 @@
+{
+  "status": "pass",
+  "count": 21,
+  "checks": [
+    "The actual last discard latches the first finisher immediately; a later lower-numbered seat cannot replace that winner",
+    "The actual winning board claim still settles and grows the table once before the match stops",
+    "Completed matches reject later collection or growth calls",
+    "Revealed equal originals have independent knowledge entries and removing one forgets only that physical copy",
+    "Permanent ability replacement is local to one physical original",
+    "A printed Eirin correctly mutes all Sage copies and releases them after leaving the board",
+    "A printed Hecatia keeps her three-Hell-card admission rule and triple score",
+    "Creating from an overwritten printed original still uses the immutable Eirin blueprint, with the normal copied material and surcharge",
+    "The final AI can still clear a repeated faction and gives it lower priority than a new one without mutating its history",
+    "A final AI does not waste Yukari on an empty tile without a scoring claim",
+    "Final paid-ability planning rejects spending cards for already collected points but values completing a missing faction even above seven points",
+    "Creation source choices value a missing faction above a repeated one and restore the temporary blueprint, activation state and hand",
+    "An eight-by-eight snapshot round-trips all physical definitions, a consumed shop unit, an exiled payment, chapter identity, growth and all four collection ledgers",
+    "Final snapshot validation rejects unknown original types, forged stock, impossible factions or dimensions, and duplicated removed cards",
+    "A closed final table cannot award victory or a clear from discard points",
+    "Large-hand final AI yields between fully restored previews, so UI work cannot observe a hypothetical hand, stock, board or ledger",
+    "A 140-card hand retains exactly the same stable payment order as direct material evaluation, without recomputing it inside sort comparisons",
+    "Retrying or leaving during a yielded final decision cancels it before another placement or trade can run",
+    "Dense eight-by-eight previews with Eirin, Kasen, Hell discards and completed factions choose the identical action with and without the transient cache, preserving every live field",
+    "Moving and restoring Rinnosuke during a cached preview immediately updates both his former and new protected areas",
+    "Retiring a final match removes its physical definitions before another match or replay is built"
+  ],
+  "rulesVersion": "2026-10-19-story-final-challenge-v35",
+  "scope": "Real accepted discards, first-winner ordering, finishing-claim expansion, identity-specific information and overwrites, Eirin/Hecatia passives, immutable creations, final AI choices, eight-by-eight snapshots and invalid inventories, no score-based stalemate win, and generated-definition cleanup."
+}
