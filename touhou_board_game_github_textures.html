@@ -2904,6 +2904,72 @@ body.final-challenge.mobile-landscape #kourindou{grid-template-rows:repeat(3,cla
 body.final-challenge.mobile-landscape .final-factions{gap:1px;max-width:58px;}
 body.final-challenge.mobile-landscape .final-faction{font-size:8px;line-height:1.05;border-width:1px;}
 body.final-challenge.mobile-landscape .final-shop-stock{font-size:9px;padding:0 2px;}
+
+/* A final-deck print has healthy ink; actual created copies retain the stronger wear. */
+:is(.board-card,.hand-card,.custom-card-tile,#card-detail).card-final-print{position:relative;filter:saturate(.88) contrast(.96) brightness(1.035);isolation:isolate;overflow:hidden;}
+.card-final-print>.card-low-ink-lines{display:block;position:absolute;inset:0;z-index:20;pointer-events:none;border-radius:inherit;opacity:.22;background:repeating-linear-gradient(0deg,transparent 0 14px,#fff9 14px 15px,transparent 15px 23px),linear-gradient(112deg,#fff2,transparent 70%);}
+.card-final-print.card-rin-worn{filter:sepia(.24) saturate(.68) contrast(.96)}
+.card-final-print.eirin-muted{filter:saturate(.24) contrast(.96) brightness(1.035)}
+body.final-challenge #board .cell.board-void{display:block;visibility:hidden;pointer-events:none;}
+body.game-mobile :is(.board-card,.hand-card,.custom-card-tile).card-copy-low-ink{filter:saturate(.53) sepia(.15) contrast(.82) brightness(1.12);}
+body.game-mobile .card-copy-low-ink.card-rin-worn{filter:sepia(.34) saturate(.4) contrast(.82) brightness(1.08)}
+body.game-mobile #hand .hand-card{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+.hand-virtual-spacer{pointer-events:none;min-width:0;min-height:0;}
+body.game-mobile #hand{overscroll-behavior:contain;overflow-anchor:none;}
+body.game-mobile:not(.mobile-landscape) #hand{display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:6px;}
+body.game-mobile:not(.mobile-landscape) #hand .hand-card{flex:0 0 104px;width:104px;height:126px;min-height:126px;}
+body.game-mobile .touch-drag-ghost{box-shadow:0 9px 14px #0006;}
+
+/* Claim atmospheres stay behind every control and use only two composited layers. */
+#claim-atmosphere{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;contain:strict;}
+#claim-atmosphere[hidden]{display:none;}
+.claim-scene{position:absolute;inset:0;opacity:0;transition:opacity .65s ease;overflow:hidden;contain:paint;}
+.claim-scene.active{opacity:.78;}
+.atmos-base,.atmos-motion{position:absolute;inset:-12%;pointer-events:none;}
+.atmos-base{background:radial-gradient(ellipse at 30% 30%,var(--claim-glow),transparent 70%),linear-gradient(160deg,var(--claim-dark),transparent 85%);}
+.atmos-motion{background:radial-gradient(ellipse at 20% 70%,var(--claim-glow),transparent 48%),radial-gradient(ellipse at 80% 25%,var(--claim-glow),transparent 45%);}
+.claim-scene.active .atmos-motion{animation:claimAtmosDrift 16s ease-in-out infinite alternate;}
+.claim-scene.scene-sdm{--claim-glow:#bb173b88;--claim-dark:#3e061bd9;}
+.scene-sdm .atmos-motion{background:radial-gradient(ellipse at 25% 75%,#d4305599,transparent 46%),radial-gradient(ellipse at 85% 20%,#9f153eaa,transparent 44%),radial-gradient(ellipse at 45% 35%,#6b0b3277,transparent 65%);}
+.claim-scene.scene-hakugyokurou{--claim-glow:#bedcf47a;--claim-dark:#253f62c2;}
+.scene-hakugyokurou .atmos-motion{background-image:radial-gradient(ellipse,#fffddd 0 1.5px,transparent 2.3px),radial-gradient(ellipse,#e3f3ffc9 0 1px,transparent 2px);background-size:57px 83px,101px 61px;transform:rotate(-18deg);}
+.claim-scene.active.scene-hakugyokurou .atmos-motion{animation:claimSnowStorm 4s linear infinite;}
+.claim-scene.scene-hourai{--claim-glow:#507cf09c;--claim-dark:#070b3ee8;}
+.scene-hourai .atmos-base{background:radial-gradient(circle at 76% 24%,#f8f4c9 0 4%,#c5d5ff55 5%,transparent 18%),linear-gradient(120deg,#090d3bd9,#233d7b77);}
+.claim-scene.scene-mountain{--claim-glow:#1d956e88;--claim-dark:#0b3a39e6;}
+.scene-mountain .atmos-motion{background:repeating-linear-gradient(168deg,transparent 0 90px,#9cdeb52a 92px 94px,transparent 97px 180px),radial-gradient(ellipse at bottom,#b9d7c147,transparent 62%);}
+.claim-scene.scene-palace{--claim-glow:#c047777f;--claim-dark:#280d40ea;}
+.scene-palace .atmos-base{background:radial-gradient(ellipse at 50% 110%,#e15d376b,transparent 65%),linear-gradient(#1b0925e6,#3b1535a6);}
+.claim-scene.scene-sage{--claim-glow:#8b3ac59c;--claim-dark:#18032de5;}
+.scene-sage .atmos-motion{background:repeating-linear-gradient(162deg,transparent 0 140px,#0b0614 143px 146px,#e8b5ef77 148px 150px,transparent 153px 270px);}
+.claim-scene.scene-sunflower{--claim-glow:#e1ac3a8f;--claim-dark:#394024cc;}
+.scene-sunflower .atmos-motion{background:radial-gradient(ellipse at 65% 15%,#ffdf77a6,transparent 50%),radial-gradient(ellipse at 20% 95%,#62954788,transparent 58%);}
+.claim-scene.scene-hell{--claim-glow:#ed4c2e89;--claim-dark:#29091ee8;}
+.scene-hell .atmos-base{background:radial-gradient(ellipse at 50% 115%,#ff6239a8,transparent 65%),linear-gradient(#260b32e6,#571b2aba);}
+.claim-scene.scene-heaven{--claim-glow:#88caf0a1;--claim-dark:#18417da6;}
+.scene-heaven .atmos-motion{background:radial-gradient(ellipse at 20% 40%,#eef9ffa3,transparent 37%),radial-gradient(ellipse at 80% 70%,#ceeafb8a,transparent 40%);}
+.claim-scene.scene-temple{--claim-glow:#a152d67c;--claim-dark:#25103dad;}
+.scene-temple .atmos-base{inset:0;background-image:linear-gradient(140deg,#250b4c22,#290e4855),var(--temple-bg);background-size:cover;background-position:center;}
+.scene-temple .atmos-motion{background:radial-gradient(ellipse at 30% 80%,#bd81f34f,transparent 60%),linear-gradient(165deg,transparent 40%,#f1cb8052 50%,transparent 60%);}
+.atmos-particle{position:absolute;left:var(--claim-x);top:-10%;width:var(--claim-size);height:var(--claim-size);border-radius:50%;background:var(--claim-particle,#f2c9c6);opacity:.65;}
+.claim-scene.active .atmos-particle{animation:claimParticleFall var(--claim-duration) linear var(--claim-delay) infinite;}
+.scene-sdm .atmos-particle{--claim-particle:#d4526c;opacity:.18;width:5vw;height:5vw;}
+.scene-hakugyokurou .atmos-particle{--claim-particle:#fff;}
+.scene-hourai .atmos-particle{--claim-particle:#d0dbff;width:2px;height:12px;}
+.scene-mountain .atmos-particle{--claim-particle:#bad388;border-radius:75% 0 75% 0;}
+.scene-palace .atmos-particle,.scene-hell .atmos-particle{--claim-particle:#f1ac62;box-shadow:0 0 5px #ef7368;}
+.scene-sage .atmos-particle{--claim-particle:#dba8f0;border-radius:0;transform:rotate(45deg);}
+.scene-sunflower .atmos-particle{--claim-particle:#ffda58;border-radius:80% 10% 70% 20%;}
+.scene-heaven .atmos-particle{--claim-particle:#dcf3ff;opacity:.3;}
+.scene-temple .atmos-particle{--claim-particle:#e6baff;}
+@keyframes claimAtmosDrift{from{transform:translate3d(-3%,2%,0) scale(1.03)}to{transform:translate3d(4%,-3%,0) scale(1.1)}}
+@keyframes claimSnowStorm{from{transform:translate3d(2%,-3%,0) rotate(-18deg)}to{transform:translate3d(-5%,9%,0) rotate(-18deg)}}
+@keyframes claimParticleFall{from{transform:translate3d(0,-8vh,0) rotate(0)}to{transform:translate3d(-16vw,118vh,0) rotate(150deg)}}
+body.game-mobile .claim-scene.active{opacity:.65;}
+body.game-mobile .claim-scene.active .atmos-motion{animation-duration:22s;}
+body.game-mobile .claim-scene.active.scene-hakugyokurou .atmos-motion{animation-duration:6s;}
+@media(prefers-reduced-motion:reduce){.claim-scene{transition:none}.claim-scene.active .atmos-motion,.claim-scene.active .atmos-particle{animation:none}.atmos-particle{display:none}}
+@media(any-pointer:coarse){.claim-scene.active .atmos-motion{will-change:transform;}}
 </style>
 </head>
 <body>
@@ -2924,6 +2990,7 @@ body.final-challenge.mobile-landscape .final-shop-stock{font-size:9px;padding:0 
   </defs>
 </svg>
 <div id="title-table" aria-hidden="true"></div>
+<div id="claim-atmosphere" aria-hidden="true" hidden></div>
 <div class="crown-backdrop" id="crown-backdrop-a" aria-hidden="true"></div>
 <div class="crown-backdrop" id="crown-backdrop-b" aria-hidden="true"></div>
 <div class="stars"></div>
@@ -3462,6 +3529,11 @@ function shuffle(arr){
 }
 
 function inBounds(r,c){ return r>=0 && r<SIZE && c>=0 && c<SIZE; }
+// Add one orthogonally connected tile at a time, then complete each outer ring.
+const FINAL_TILE_ORDER=(()=>{const cells=[];for(let r=0;r<4;r++)for(let c=0;c<4;c++)cells.push({r,c});for(let edge=4;edge<8;edge++){for(let r=0;r<edge;r++)cells.push({r,c:edge});for(let c=edge;c>=0;c--)cells.push({r:edge,c});}return cells;})();
+const FINAL_TILE_RANK=(()=>{const ranks=Array.from({length:8},()=>Array(8).fill(64));FINAL_TILE_ORDER.forEach((cell,i)=>ranks[cell.r][cell.c]=i);return ranks;})();
+function finalBoardExtent(count){return Math.max(4,Math.ceil(Math.sqrt(count)));}
+
 
 /* Given an anchor cell, a fixed zone size, and whichever cell the pointer is currently over,
    returns the dim x dim block of cells anchored at `anchor` that extends toward `hover` on each
@@ -3900,25 +3972,27 @@ class Game {
     };
     return ids.slice().sort((a,b)=>(score(b)-score(a))*(mistake ? -1 : 1))[0];
   }
+  boardCapacity(){return this.finalChallenge?.activeCells??SIZE*SIZE;}
+  isMainTile(r,c){return inBounds(r,c)&&(!this.finalChallenge||FINAL_TILE_RANK[r][c]<this.boardCapacity());}
   allTiles(){
     const cells=[];
-    for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++) cells.push({r,c});
+    for(let r=0;r<SIZE;r++) for(let c=0;c<SIZE;c++) if(this.isMainTile(r,c))cells.push({r,c});
     return cells.concat(this.shopTiles.filter(tile=>this.isShopOpen(tile.slot)).map(({r,c})=>({r,c})));
   }
   isShopOpen(slot){return Number.isInteger(slot) && slot>=0 && slot<this.shopTiles.length;}
   shopTileAt(r,c){return this.shopTiles.find(tile=>tile.r===r && tile.c===c && this.isShopOpen(tile.slot));}
-  hasTile(r,c){return inBounds(r,c) || !!this.shopTileAt(r,c);}
+  hasTile(r,c){return this.isMainTile(r,c) || !!this.shopTileAt(r,c);}
   cardAt(r,c){
-    if(inBounds(r,c)) return this.board[r][c];
+    if(this.isMainTile(r,c)) return this.board[r][c];
     const tile=this.shopTileAt(r,c);return tile ? this.shopCards[tile.slot]||null : null;
   }
   setCardAt(r,c,id){
-    if(inBounds(r,c)) this.board[r][c]=id;
+    if(this.isMainTile(r,c)) this.board[r][c]=id;
     else {const tile=this.shopTileAt(r,c);if(tile) this.shopCards[tile.slot]=id;}
   }
-  wastelandAt(r,c){return inBounds(r,c) ? this.wasteland[r][c] : !!this.shopTileAt(r,c)?.wasteland;}
+  wastelandAt(r,c){return this.isMainTile(r,c) ? this.wasteland[r][c] : !!this.shopTileAt(r,c)?.wasteland;}
   setWastelandAt(r,c,value){
-    if(inBounds(r,c)) this.wasteland[r][c]=value;
+    if(this.isMainTile(r,c)) this.wasteland[r][c]=value;
     else {const tile=this.shopTileAt(r,c);if(tile) tile.wasteland=value;}
   }
   tileBounds(r,c){if(this.finalChallenge&&this.shopTileAt(r,c))return {minR:SIZE+2,maxR:SIZE+4,minC:0,maxC:2};return this.shopTileAt(r,c)
@@ -5161,7 +5235,7 @@ class Game {
         for(const move of self.ichirinPushes(r,c,playerIdx)){
           const id=self.cardAt(move.r,move.c);
           if(!id)continue;
-          const inside=inBounds(move.r,move.c) ? inBounds(move.toR,move.toC) : !inBounds(move.toR,move.toC) && self.hasTile(move.toR,move.toC);
+          const inside=inBounds(move.r,move.c) ? self.isMainTile(move.toR,move.toC) : !inBounds(move.toR,move.toC) && self.hasTile(move.toR,move.toC);
           if(!inside){
             if(self.moveBoardToDraw(move.r,move.c,'ichirin',playerIdx))returned++;
           }else if(!self.cardAt(move.toR,move.toC) && (!self.wastelandAt(move.toR,move.toC) || self.canPlaceOnWasteland(CARD[id]))){
@@ -5750,7 +5824,7 @@ class Game {
       case 'heaven_tenshi': {
         const targets = self.abilityBoardCells(playerIdx,cell=>self.boardFaction(cell.r,cell.c)!=='heaven' && self.canReturnBoardToDraw(cell.r,cell.c));
         if(!targets.length){ self.log(`${meS} Tenshi finds no non-Heaven cards on the board.`); break; }
-        if(self.players[playerIdx].isAI && self.tenshiOccupiedCount() < Math.ceil(SIZE*SIZE/2)){
+        if(self.players[playerIdx].isAI && self.tenshiOccupiedCount() < Math.ceil(self.boardCapacity()/2)){
           self.log(`${meS} Tenshi waits until cards or wasteland occupy at least half the board.`);
           break;
         }
@@ -5821,7 +5895,7 @@ class Game {
 }
 
 /* 2026-10-12: creation, private newspapers and instance ability changes. */
-const REWORK_RULES_VERSION='2026-10-19-story-final-challenge-v35';
+const REWORK_RULES_VERSION='2026-10-20-final-single-cell-mobile-v36';
 Game.prototype.canCreateWithMatara=function(){return this.mainBoardCells().length>=4;};
 let nextCreatedCard=0,nextHiddenChoice=0;
 const COPY_PASSIVES=new Set(['sage_yukari','sage_kasen','mtn_nitori','hell_hecatia','palace_koishi']);
@@ -5839,7 +5913,7 @@ function cardHasOverwrite(id){return (game?.permanentAbilities?.[id] || CARD[id]
 function cardLooksWorn(id,{createdPreview=false,wornPreview=false}={}){
   return !createdPreview && (wornPreview||cardHasOverwrite(id)||!!game?.storyMatch&&game.cardAbilityEnabled(id)===false);
 }
-function cardMaterialClasses(id,options={}){return [CARD[id]?.createdCopy||options.createdPreview?'card-copy-low-ink':'',cardLooksWorn(id,options)?'card-rin-worn':''].filter(Boolean).join(' ');}
+function cardMaterialClasses(id,options={}){return [CARD[id]?.createdCopy||options.createdPreview?'card-copy-low-ink':CARD[id]?.finalPrint?'card-final-print':'',cardLooksWorn(id,options)?'card-rin-worn':''].filter(Boolean).join(' ');}
 function generatedCard(id){return /^created_card_\d+$/.test(id) || /^trap_token_\d+$/.test(id) || /^final_card_\d+$/.test(id);}
 function finalPrintDefinitions(match){return [...match.startingCardIds].filter(id=>CARD[id]?.finalPrint).map(id=>({id,baseId:cardBaseId(id)}));}
 function copyDefinitions(match){return [...match.startingCardIds].filter(id=>CARD[id]?.createdCopy).map(id=>({...CARD[id]}));}
@@ -6216,9 +6290,9 @@ function configureFinalChallenge(match){
   const originals=CARDS.filter(card=>!card.token&&!card.shopkeeper&&!card.shopExpansion);
   const printed=originals.flatMap(card=>Array.from({length:10},()=>makeFinalPrint(card.id)));
   match.drawPile=shuffle(printed.slice());
-  match.players.forEach((player,p)=>{player.aiDifficulty=p===1?'hard':p===2?'normal':'easy';player.hand=match.drawPile.splice(-6);player.discard=[];});
+  match.players.forEach((player,p)=>{player.aiDifficulty=p===1||p===2?'hard':p===3?'normal':'easy';player.hand=match.drawPile.splice(-6);player.discard=[];});
   const types=CARDS.filter(card=>card.shopExpansion).map(card=>card.id),stock=Object.fromEntries(types.map(base=>[base,Array.from({length:10},()=>makeFinalPrint(base))]));
-  match.finalChallenge={version:1,factions:finalFactionKeys(),collected:match.players.map(()=>[]),claims:match.players.map(()=>0),stock,slotTypes:[null,...types],removed:[],growths:0};
+  match.finalChallenge={version:2,activeCells:16,factions:finalFactionKeys(),collected:match.players.map(()=>[]),claims:match.players.map(()=>0),stock,slotTypes:[null,...types],removed:[],growths:0};
   const positions=[[1,1],[0,0],[0,1],[0,2],[1,0],[1,2],[2,0],[2,1]];
   match.shopTiles=positions.map(([r,c],slot)=>({r:SIZE+2+r,c,slot,wasteland:false}));
   match.shopCards=['shop_rinnosuke',...types.map(base=>stock[base].pop())];
@@ -6238,14 +6312,16 @@ Game.prototype.recordFinalClaim=function(p,faction,settling=false){
   const final=this.finalChallenge;if(!final||this.cancelled||this.winner&&(!settling||this.winner.idx!==p))return;
   if(!final.collected[p].includes(faction))final.collected[p].push(faction);final.claims[p]++;
   if(final.factions.every(key=>final.collected[p].includes(key)))this.winner=this.players[p];
-  if(SIZE>=8)return;
-  const from=SIZE,to=from+1;
-  try{this.ui?.onFinalBoardGrowth?.({from,to,playerIdx:p,faction});}catch(_error){}
-  for(const row of this.board)row.push(null);this.board.push(Array(to).fill(null));
-  for(const row of this.wasteland)row.push(false);this.wasteland.push(Array(to).fill(false));
-  for(const tile of this.shopTiles)tile.r++;
-  SIZE=to;final.growths++;
-  this.log(`The board grows to ${to}×${to}.`);
+  const fromCells=this.boardCapacity();if(fromCells>=64)return;
+  const toCells=fromCells+1,from=SIZE,to=finalBoardExtent(toCells),cell=FINAL_TILE_ORDER[fromCells];
+  try{this.ui?.onFinalBoardGrowth?.({from,to,fromCells,toCells,cell:{...cell},playerIdx:p,faction});}catch(_error){}
+  if(to>from){
+    for(const row of this.board)row.push(null);this.board.push(Array(to).fill(null));
+    for(const row of this.wasteland)row.push(false);this.wasteland.push(Array(to).fill(false));
+    for(const tile of this.shopTiles)tile.r+=to-from;
+  }
+  SIZE=to;final.activeCells=toCells;final.growths=toCells-16;
+  this.log(`The board gains one space (${toCells}/64).`);
 };
 Game.prototype.finalStockRemaining=function(slot){
   const base=this.finalChallenge?.slotTypes[slot];return base?(this.finalChallenge.stock[base].length+(cardBaseId(this.shopCards[slot])===base?1:0)):0;
@@ -8229,7 +8305,7 @@ function cardBgClass(c,cardId,options){return `${cardArtworkClass(c,cardId)} ${c
 function cardMaterialLayersHtml(id,options={}){
   const {createdPreview=false}=options;
   const card=CARD[id];
-  return (card?.createdCopy||createdPreview?'<div class="card-low-ink-lines" aria-hidden="true"></div>':'')
+  return (card?.createdCopy||createdPreview||card?.finalPrint?'<div class="card-low-ink-lines" aria-hidden="true"></div>':'')
     +(cardLooksWorn(id,options)?'<div class="card-wear-overlay" aria-hidden="true"></div>':'');
 }
 function cardBackHtml(){return '<div class="table-card-back" aria-hidden="true"><span>☯</span></div>';}
@@ -9023,6 +9099,7 @@ Object.assign(ZH_TEXT,{
 });
 function translateGameText(value){
   const original=String(value);if(gameLanguage!=='zh-CN')return original;
+  const growth=original.match(/^The board gains one space \((\d+)\/64\)\.$/);if(growth)return `棋盘增加一格（${growth[1]}/64）。`;
   if(localizedTextCache.has(original))return localizedTextCache.get(original);
   const text=original.trim();let output=ZH_TEXT[text];
   if(output===undefined){
@@ -9834,6 +9911,8 @@ function renderBoard(){
         cell.addEventListener('pointerdown', onRectCellPointerDown);
         boardEl.appendChild(cell);
       }
+      const active=game.isMainTile(r,c);cell.hidden=!active;cell.classList.toggle('board-void',!active);
+      if(!active){cell.innerHTML='';cell.dataset.cardId='';continue;}
       const isWasteland=!!game.wastelandAt(r,c);
       cell.classList.toggle('wasteland',isWasteland);
       const cardId = game.cardAt(r,c);
@@ -10176,16 +10255,48 @@ function handCardFaceHtml(cardId,{createdPreview=false}={}){
 function displayedHandSeat(){
   return game?.aiTestMode && game.players.every(player=>player.isAI) ? game.currentPlayerIdx : localSeat();
 }
-function renderHand(){
+let handVirtualState=null,handViewportFrame=0,handScrollMomentum=null;
+function mobileHandWindow(host,total){
+  const mobile=document.body.classList.contains('game-mobile');
+  if(!mobile||total<=30)return {start:0,end:total,mode:'all',columns:1,before:0,after:0};
+  const vertical=document.body.classList.contains('mobile-landscape'),columns=vertical?(host.clientWidth>=174?3:2):1;
+  const stride=vertical?(parseFloat(document.body.style.getPropertyValue?.('--mobile-card-height'))||76)+4:110;
+  const offset=vertical?host.scrollTop||0:host.scrollLeft||0,visible=Math.ceil((vertical?host.clientHeight||200:host.clientWidth||320)/stride)+4;
+  const rows=Math.ceil(total/columns),first=Math.min(Math.max(0,rows-visible),Math.max(0,Math.floor(offset/stride)-2)),last=Math.min(rows,first+visible);
+  return {start:first*columns,end:Math.min(total,last*columns),mode:vertical?'vertical':'horizontal',columns,stride,before:first,after:rows-last};
+}
+function appendHandSpacer(host,rows,range){
+  if(!rows)return;
+  const node=document.createElement('div');node.className='hand-virtual-spacer';node.setAttribute('aria-hidden','true');
+  if(range.mode==='vertical'){node.style.gridColumn='1 / -1';node.style.gridRow='span '+rows;}
+  else {node.style.flex='0 0 '+Math.max(0,rows*range.stride-6)+'px';node.style.width=Math.max(0,rows*range.stride-6)+'px';}
+  host.appendChild(node);
+}
+function queueHandViewportRender(){
+  if(handViewportFrame||!handVirtualState||handVirtualState.mode==='all')return;
+  handViewportFrame=requestAnimationFrame(()=>{handViewportFrame=0;if(!game||game.cancelled)return;const host=el('hand'),range=mobileHandWindow(host,game.players[displayedHandSeat()].hand.length);if(range.start!==handVirtualState.start||range.end!==handVirtualState.end)renderHand(true);});
+}
+function cancelHandScrollMomentum(){if(handScrollMomentum?.frame)cancelAnimationFrame(handScrollMomentum.frame);handScrollMomentum=null;}
+function startHandScrollMomentum(drag){
+  cancelHandScrollMomentum();if(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches||Math.abs(drag.scrollVelocity||0)<.08)return;
+  const state={host:drag.scrollHost,axis:drag.scrollAxis,velocity:drag.scrollVelocity,last:performance.now(),age:0,frame:0,owner:game};handScrollMomentum=state;
+  const tick=now=>{
+    state.frame=0;if(handScrollMomentum!==state||game!==state.owner||game.cancelled)return;
+    const dt=Math.min(40,Math.max(1,now-state.last));state.last=now;state.age+=dt;state.velocity*=Math.exp(-dt/160);
+    const prop=state.axis==='y'?'scrollTop':'scrollLeft',before=state.host[prop]||0;state.host[prop]=before+state.velocity*dt;queueHandViewportRender();
+    if(state.age<650&&Math.abs(state.velocity)>.025&&Math.abs((state.host[prop]||0)-before)>.2)state.frame=requestAnimationFrame(tick);else handScrollMomentum=null;
+  };state.frame=requestAnimationFrame(tick);
+}
+function renderHand(viewportOnly=false){
   if(!game || game.cancelled) return;
-  const handEl = el('hand');
-  handEl.innerHTML = '';
-  const handSeat=displayedHandSeat(),me=game.players[handSeat];
+  const handEl = el('hand'),scrollTop=handEl.scrollTop||0,scrollLeft=handEl.scrollLeft||0;
+  const handSeat=displayedHandSeat(),me=game.players[handSeat],range=mobileHandWindow(handEl,me.hand.length),sageMuted=game.eirinActive?.();
+  handVirtualState={...range,owner:game,seat:handSeat};handEl.innerHTML='';appendHandSpacer(handEl,range.before,range);
   el('hand-title').textContent=game.aiTestMode ? `${possessive(me.name)} hand` : 'Your Hand';
   const isMyTurn = !me.isAI && handSeat===localSeat() && game.currentPlayerIdx===handSeat && !game.winner;
   const observed=game.aiTestMode && me.isAI;
   const forced = game.isPlacementBlocked(handSeat) ? null : game.forcedPlay[handSeat];
-  me.hand.forEach(cardId => {
+  me.hand.slice(range.start,range.end).forEach(cardId => {
     const c = CARD[cardId];
     const div = document.createElement('div');
     const handChoice = pendingHandChoice;
@@ -10201,7 +10312,7 @@ function renderHand(){
       + (selectedForChoice ? ' selected':'')
       + (forced===cardId ? ' reisen-bound':'')
       + (mindArrivals.get(cardId)>Date.now() ? ' mind-arriving':'')
-      + (game.isSageMuted(cardId) ? ' eirin-muted' : '')
+      + ((sageMuted===undefined?game.isSageMuted(cardId):sageMuted&&c.faction==='sage') ? ' eirin-muted' : '')
       + (sanaeArrivalUntil.get(cardId)>Date.now() ? ' sanae-glow' : '')
       + (mokouArrivalUntil.get(cardId)>Date.now() ? ' mokou-glow' : '')
       + (yukariArrivalUntil.get(cardId)>Date.now() ? ' yukari-arriving' : '')
@@ -10275,13 +10386,17 @@ function renderHand(){
       div.addEventListener('dragend', onHandCardDragEnd);
       div.addEventListener('pointerdown', e=>onHandCardPointerDown(e,cardId));
     }
+    if(!isPlayable)div.addEventListener('pointerdown',e=>onHandCardPointerDown(e,cardId,false));
     handEl.appendChild(div);
   });
+  appendHandSpacer(handEl,range.after,range);
   if(creationChoiceSession?.owner===game && creationChoiceSession.phase==='departing' && creationChoiceSession.placeholder)
     handEl.appendChild(creationChoiceSession.placeholder);
-  updateTutorialProgress();
-  queueMobileViewport();
+  handEl.scrollTop=scrollTop;handEl.scrollLeft=scrollLeft;
+  if(!viewportOnly){updateTutorialProgress();queueMobileViewport();}
 }
+
+el('hand').addEventListener('scroll',queueHandViewportRender,{passive:true});
 
 function cardNameListHtml(ids){
   if(!ids.length) return '<span class="empty-pile">empty</span>';
@@ -10629,7 +10744,7 @@ const ui = {
   onAbilityEffect:showMindAbility,
   onDiscard:showDiscardVanish,
   onCostPaid(){playGameCue('cost');},
-  onFactionClaim({faction}){playGameCue('claim',{faction});},
+  onFactionClaim({faction,count}){playGameCue('claim',{faction});showClaimAtmosphere({faction,count});},
   onFinalBoardGrowth: captureFinalBoardGrowth,
   onSakuraBloom:showYuyukoBloom,
   onMasterSpark:showMasterSpark,
@@ -11534,7 +11649,7 @@ function aiPublicThreatValue(playerIdx){
 }
 
 function aiProposedPayment(playerIdx,count){
-  if(game.finalChallenge)return aiFinalMaterialOrder(playerIdx,game.payableCards(playerIdx)).slice(0,count);
+  if(game.finalChallenge)return count>0?aiFinalMaterialOrder(playerIdx,game.payableCards(playerIdx)).slice(0,count):[];
   return game.payableCards(playerIdx).slice().sort((a,b)=>aiMaterialValue(playerIdx,a)-aiMaterialValue(playerIdx,b)).slice(0,count);
 }
 
@@ -13538,7 +13653,7 @@ function aiFactionPlacement(playerIdx,...args){
 function aiKomachiTarget(playerIdx,...args){if(game.finalChallenge)return aiFinalKomachiTarget(playerIdx,...args);return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiKomachiTarget(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiKomachiTarget(playerIdx,...args) : aiCurrentKomachiTarget(playerIdx,...args);}
 function aiDecideHardAction(playerIdx,...args){return game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiDecideHardAction(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline' ? AI_FROZEN_POLICY.aiDecideHardAction(playerIdx,...args) : aiCurrentDecideHardAction(playerIdx,...args);}
 async function aiDecideAction(playerIdx,...args){
-  if(game.finalChallenge)return aiFinalChallengeAction(playerIdx,args[0]!==false);
+  if(game.finalChallenge)return typeof requestFinalAIWorkerAction==='function'?requestFinalAIWorkerAction(game,playerIdx,args[0]!==false):aiFinalChallengeAction(playerIdx,args[0]!==false);
   if(aiIsTeachingOpponent(game,playerIdx))return aiTutorialMentorAction(playerIdx,args[0]!==false);
   const opening=aiStoryHellOpeningAction(playerIdx);if(opening)return opening;
   const action=await (game.players[playerIdx]?.aiPolicy==='previous'?AI_PREVIOUS_POLICY.aiDecideAction(playerIdx,...args):game.players[playerIdx]?.aiPolicy==='baseline'?AI_FROZEN_POLICY.aiDecideAction(playerIdx,...args):aiCurrentDecideAction(playerIdx,...args));
@@ -13704,7 +13819,7 @@ function aiCostCanResolve(p,id,r,c){
   if(ability==='temple_shou')return game.templeWasteland(p).length>0;
   if(ability==='temple_ichirin')return game.ichirinPushes(r,c,p).length>0;
   if(ability==='temple_byakuren')return game.byakurenOptions(p,r,c).some(o=>!o.disabled);
-  if(ability==='heaven_tenshi')return game.tenshiOccupiedCount({r,c})>=Math.ceil(SIZE*SIZE/2)&&game.abilityBoardCells(p,x=>game.boardFaction(x.r,x.c)!=='heaven').length>0;
+  if(ability==='heaven_tenshi')return game.tenshiOccupiedCount({r,c})>=Math.ceil(game.boardCapacity()/2)&&game.abilityBoardCells(p,x=>game.boardFaction(x.r,x.c)!=='heaven').length>0;
   if(ability==='heaven_iku')return game.estimateDirectDiscardPoints(p,ability,r,c)>=(game.winCount(game.players[p])>=6?1:2);
   if(ability==='hourai_kaguya')return game.emptyCells(p).length>0&&game.players.some(pl=>pl.hand.length>0);
   return true;
@@ -14158,7 +14273,7 @@ function aiFinalAbilityPlan(p,id,r,c){
     case 'haku_yuyuko':if(!cost||targets.some(at=>reserved.has(at.id)))return none;utility=targets.reduce((sum,at)=>sum+aiFinalDiscardValue(p,at.id),0)*cost/targets.length;direct=cost;break;
     case 'heaven_iku':for(const zone of game.rectZones(2,p)){const candidates=game.ikuTargetsForZone(zone,p);if(!candidates.length||candidates.some(at=>reserved.has(game.cardAt(at.r,at.c))))continue;const value=candidates.reduce((sum,at)=>sum+aiFinalDiscardValue(p,game.cardAt(at.r,at.c)),0)*Math.min(2,candidates.length)/candidates.length;if(value>utility){utility=value;target=zone;direct=Math.min(2,candidates.length);}}if(!target)return none;break;
     case 'hell_eiki':for(const group of game.eikiFactionOptions(p)){const candidates=group.cells.filter(at=>game.canReturnBoardToDraw(at.r,at.c));if(!candidates.length||candidates.some(at=>reserved.has(at.id)))continue;const value=candidates.length*.6+(game.emptyCells(p).length<3?2:0);if(value>utility){utility=value;target=group.fk;handGain=candidates.length;}}if(!target)return none;break;
-    case 'heaven_tenshi':if(game.tenshiOccupiedCount()<Math.ceil(SIZE*SIZE/2)||claims.length)return none;targets=game.abilityBoardCells(p,at=>game.boardFaction(at.r,at.c)!=='heaven'&&game.canReturnBoardToDraw(at.r,at.c));utility=targets.length*.08+(game.emptyCells(p).length<4?3:0);break;
+    case 'heaven_tenshi':if(game.tenshiOccupiedCount()<Math.ceil(game.boardCapacity()/2)||claims.length)return none;targets=game.abilityBoardCells(p,at=>game.boardFaction(at.r,at.c)!=='heaven'&&game.canReturnBoardToDraw(at.r,at.c));utility=targets.length*.08+(game.emptyCells(p).length<4?3:0);break;
     case 'palace_satori':handGain=game.players.some(player=>player.idx!==p&&player.hand.length)?1:0;utility=handGain*2.4;break;
     case 'temple_shou':handGain=Math.min(game.drawPile.length+cost,game.templeWasteland(p).length);utility=handGain*(hand.length<8?.75:.25);break;
     case 'temple_ichirin':if(claims.length)return none;utility=game.ichirinPushes(r,c,p).length*.12+(game.emptyCells(p).length<3?2:0);break;
@@ -14228,7 +14343,7 @@ function aiFinalBestPlacement(p,ids=game.players[p].hand,allowed=null){
   return withFinalStaticRules(()=>{
   let best=null;
   for(const id of aiFinalUniqueCards(ids)){
-    const cells=(allowed||game.emptyOrWastelandForCard(CARD[id],p)).filter(cell=>inBounds(cell.r,cell.c));
+    const cells=(allowed||game.emptyOrWastelandForCard(CARD[id],p)).filter(cell=>game.isMainTile(cell.r,cell.c));
     for(const cell of cells){
       const covered=game.cardAt(cell.r,cell.c),ability=game.abilityId(id);
       const next=withFinalStaticRules(()=>aiWithPlacementEffects(id,cell,()=>withFinalStaticRules(()=>{
@@ -14823,12 +14938,29 @@ function handDragTransform(body){
   return `translate3d(${body.x}px,${body.y}px,0) translate(-50%,-50%) perspective(650px) rotateZ(${body.angle}deg) rotateX(${body.tilt}deg) scale(${body.scale})`;
 }
 
-function onHandCardPointerDown(e,cardId){
-  if(e.isPrimary===false || e.button!==0 || touchHandDrag || handDragSettling || !game || game.cancelled) return;
+function onHandCardPointerDown(e,cardId,allowPlacement=true){
+  if(e.isPrimary===false || e.button!==0 || touchHandDrag || handDragSettling || !game || game.cancelled)return;
+  cancelHandScrollMomentum();
+  const host=el('hand'),mobileTouch=e.pointerType!=='mouse'&&document.body.classList.contains('game-mobile'),axis=document.body.classList.contains('mobile-landscape')?'y':'x';
+  const scrollable=mobileTouch&&(axis==='y'?host.scrollHeight>host.clientHeight+2:host.scrollWidth>host.clientWidth+2);
+  if(!allowPlacement&&!scrollable)return;
   const rect=e.currentTarget.getBoundingClientRect();
-  touchHandDrag={id:e.pointerId,cardId,source:e.currentTarget,x:e.clientX,y:e.clientY,
+  const drag=touchHandDrag={id:e.pointerId,cardId,source:e.currentTarget,x:e.clientX,y:e.clientY,
     grabX:e.clientX-rect.left-rect.width/2,grabY:e.clientY-rect.top-rect.height/2,
-    origin:rect,point:{x:e.clientX,y:e.clientY},started:false,ghost:null,target:null,frame:null,owner:game};
+    origin:rect,point:{x:e.clientX,y:e.clientY},started:false,ghost:null,target:null,frame:null,owner:game,allowPlacement,
+    scrollHost:scrollable?host:null,scrollAxis:scrollable?axis:null,scrollOrigin:axis==='y'?host.scrollTop||0:host.scrollLeft||0,scrollTime:performance.now(),scrollVelocity:0};
+  if(scrollable&&allowPlacement)drag.holdTimer=setTimeout(()=>{drag.holdTimer=null;if(touchHandDrag===drag&&!drag.scrolling&&game===drag.owner&&!game.cancelled)beginHandPhysicalDrag(drag);},230);
+}
+function beginHandPhysicalDrag(drag){
+  clearTimeout(drag.holdTimer);drag.holdTimer=null;
+  if(!drag.allowPlacement||!prepareHandCardDrag(drag.cardId)){if(touchHandDrag===drag)touchHandDrag=null;return false;}
+  drag.started=true;drag.source.classList.add('dragging');
+  drag.ghost=drag.source.cloneNode(true);drag.ghost.draggable=false;drag.ghost.tabIndex=-1;
+  drag.ghost.classList.remove('dragging','selected','selectable');drag.ghost.classList.add('touch-drag-ghost');
+  drag.ghost.setAttribute('aria-hidden','true');drag.ghost.removeAttribute('id');
+  drag.ghost.style.width=`${drag.origin.width}px`;drag.ghost.style.height=`${drag.origin.height}px`;document.body.appendChild(drag.ghost);
+  try{drag.source.setPointerCapture(drag.id);}catch(_error){}
+  startHandDragPhysics(drag);return true;
 }
 
 function handDragTarget(x,y){
@@ -14842,6 +14974,8 @@ function handDragTarget(x,y){
 function paintHandDrag(drag){
   const body=drag.body;
   drag.ghost.style.transform=handDragTransform(body);
+  const mobile=document.body.classList.contains('game-mobile');
+  if(mobile){const shadow='0 9px 14px rgba(0,0,0,.4)';if(drag.shadow!==shadow){drag.ghost.style.boxShadow=shadow;drag.shadow=shadow;}return;}
   const shadowX=cardPresentationSettings.fixedShadow?0:Math.max(-12,Math.min(12,-body.vx*.012));
   const shadow=cardPresentationSettings.lightShadow
     ? `${shadowX}px 16px 18px rgba(0,0,0,.4),0 2px 4px rgba(232,200,116,.12)`
@@ -14902,6 +15036,8 @@ async function settleHandDrag(drag,tile,{keepSize=false,targetRect=null}={}){
 
 async function finishHandDrag(cancelled=false,x=0,y=0){
   const drag=touchHandDrag;if(!drag)return;
+  clearTimeout(drag.holdTimer);drag.holdTimer=null;
+  if(drag.scrolling){touchHandDrag=null;suppressTouchDropClick={x,y,until:Date.now()+500};if(!cancelled)startHandScrollMomentum(drag);return;}
   // Read the release target before changing classes or cancelling the selection.
   const choice=pendingCellChoice,tile=drag.started&&!cancelled?handDragTarget(x,y):null;
   let targetRect=null;
@@ -14934,6 +15070,8 @@ async function finishHandDrag(cancelled=false,x=0,y=0){
 }
 
 function clearHandDragPhysics(){
+  cancelHandScrollMomentum();if(handViewportFrame)cancelAnimationFrame(handViewportFrame);handViewportFrame=0;handVirtualState=null;
+  clearTimeout(touchHandDrag?.holdTimer);
   if(touchHandDrag){
     cancelAnimationFrame(touchHandDrag.frame);touchHandDrag.source.classList.remove('dragging');touchHandDrag.ghost?.remove();
     try{touchHandDrag.source.releasePointerCapture(touchHandDrag.id);}catch(_error){}
@@ -14944,19 +15082,24 @@ function clearHandDragPhysics(){
 }
 
 document.addEventListener('pointermove',e=>{
-  const drag=touchHandDrag;if(!drag || drag.id!==e.pointerId)return;
-  if(!drag.started){
-    if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)<(e.pointerType==='mouse'?6:12))return;
-    if(!prepareHandCardDrag(drag.cardId)){touchHandDrag=null;return;}
-    drag.started=true;drag.source.classList.add('dragging');
-    drag.ghost=drag.source.cloneNode(true);drag.ghost.draggable=false;drag.ghost.tabIndex=-1;
-    drag.ghost.classList.remove('dragging','selected','selectable');drag.ghost.classList.add('touch-drag-ghost');
-    drag.ghost.setAttribute('aria-hidden','true');drag.ghost.removeAttribute('id');
-    drag.ghost.style.width=`${drag.origin.width}px`;drag.ghost.style.height=`${drag.origin.height}px`;
-    document.body.appendChild(drag.ghost);
-    try{drag.source.setPointerCapture(drag.id);}catch(_error){}
-    startHandDragPhysics(drag);
+  const drag=touchHandDrag;if(!drag||drag.id!==e.pointerId)return;
+  const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
+  if(!drag.started&&drag.scrollAxis){
+    const along=drag.scrollAxis==='y'?dy:dx,across=drag.scrollAxis==='y'?dx:dy;
+    if(!drag.scrolling){
+      if(Math.hypot(dx,dy)<8)return;
+      clearTimeout(drag.holdTimer);drag.holdTimer=null;
+      if(Math.abs(along)>=Math.abs(across)*.85||!drag.allowPlacement)drag.scrolling=true;
+      else if(!beginHandPhysicalDrag(drag))return;
+    }
+    if(drag.scrolling){
+      const prop=drag.scrollAxis==='y'?'scrollTop':'scrollLeft',before=drag.scrollHost[prop]||0,now=performance.now();
+      drag.scrollHost[prop]=drag.scrollOrigin-along;
+      drag.scrollVelocity=Math.max(-3,Math.min(3,((drag.scrollHost[prop]||0)-before)/Math.max(8,now-drag.scrollTime)));drag.scrollTime=now;
+      if(e.cancelable)e.preventDefault();queueHandViewportRender();return;
+    }
   }
+  if(!drag.started){if(Math.hypot(dx,dy)<(e.pointerType==='mouse'?6:12))return;if(!beginHandPhysicalDrag(drag))return;}
   if(e.cancelable)e.preventDefault();moveHandDrag(e.clientX,e.clientY);
 },{passive:false});
 document.addEventListener('pointerup',e=>{
@@ -15960,8 +16103,8 @@ el('ai-test-export-csv').addEventListener('click',()=>downloadAITestData('csv'))
 el('ai-test-export-json').addEventListener('click',()=>downloadAITestData('json'));
 el('ai-test-reset-data').addEventListener('click',()=>{aiTestStats=createAITestStats();renderAITestStats();});
 /* AI evaluation engine start */
-const AI_EVALUATION_RULES_DIGEST='afb5b3d2246094ab45e5689dd3db7dc656a6165cc1600aab4a8c74a8891030c9';
-const AI_EVALUATION_POLICY_DIGEST='dcb5c8fc193824f183d44f9abf84fbee76c47417f5cee56d688239317794eed6';
+const AI_EVALUATION_RULES_DIGEST='4bb96471948a244072a381b24ceb5428b0d1c2a2a7459c11236804f9a3b35841';
+const AI_EVALUATION_POLICY_DIGEST='46b25ccac207de0fa3df26be3e87968f51d91f6346773acfbecb0c5e38e38f8a';
 function buildAIEvaluationWorkerSource(scriptText){
   const source=scriptText || [...document.scripts].find(node=>node.textContent.includes('class Game {'))?.textContent;
   if(!source)throw new Error('Game source is unavailable.');
@@ -16047,7 +16190,7 @@ function evalForkSummary(report){
   return {groups,invalidPairs,conclusion,completedPairs:report.pairs.length};
 }
 function evalValidateSnapshot(snapshot){
-  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-19-story-temple-v34','2026-10-19-story-temple-v33','2026-10-18-story-heaven-v32','2026-10-18-story-hell-eiki-v31','2026-10-18-story-sunflower-v30','2026-10-18-story-hakurei-v29','2026-10-18-story-sages-colors-v28','2026-10-18-story-sages-v27','2026-10-18-story-palace-legacy-v26','2026-10-17-story-first-stalemate-v25','2026-10-17-story-sakuya-round-v24','2026-10-17-story-unlocked-shop-v23','2026-10-16-story-no-draw-stalemate-v22','2026-10-16-story-kourindou-physics-v21','2026-10-16-story-mountain-collection-v20','2026-10-16-story-private-opening-v19','2026-10-16-story-eientei-opening-v18','2026-10-16-story-stars-placement-v17','2026-10-16-story-hakugyokurou-active-mentor-v16','2026-10-15-guided-opening-scarlet-reserve-v15','2026-10-15-random-learning-renewal-v14','2026-10-15-story-opening-chapters-v13','2026-10-14-original-creation-blueprints-v12','2026-10-14-guided-final-match-v11','2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
+  if(snapshot?.format!=='tbg-ai-position' || snapshot.version!==2 || ![REWORK_RULES_VERSION,'2026-10-19-story-final-challenge-v35','2026-10-19-story-temple-v34','2026-10-19-story-temple-v33','2026-10-18-story-heaven-v32','2026-10-18-story-hell-eiki-v31','2026-10-18-story-sunflower-v30','2026-10-18-story-hakurei-v29','2026-10-18-story-sages-colors-v28','2026-10-18-story-sages-v27','2026-10-18-story-palace-legacy-v26','2026-10-17-story-first-stalemate-v25','2026-10-17-story-sakuya-round-v24','2026-10-17-story-unlocked-shop-v23','2026-10-16-story-no-draw-stalemate-v22','2026-10-16-story-kourindou-physics-v21','2026-10-16-story-mountain-collection-v20','2026-10-16-story-private-opening-v19','2026-10-16-story-eientei-opening-v18','2026-10-16-story-stars-placement-v17','2026-10-16-story-hakugyokurou-active-mentor-v16','2026-10-15-guided-opening-scarlet-reserve-v15','2026-10-15-random-learning-renewal-v14','2026-10-15-story-opening-chapters-v13','2026-10-14-original-creation-blueprints-v12','2026-10-14-guided-final-match-v11','2026-10-14-repeat-control-targets-v10','2026-10-14-komachi-opening-observer-v9','2026-10-14-koishi-staged-claims-v8','2026-10-13-swapped-creators-claim-owner-v7','2026-10-13-matara-threshold-eirin-v6','2026-10-13-single-cost-double-copy-v5','2026-10-12-random-start-restored-ai-v4'].includes(snapshot.rulesVersion) || snapshot.boundary!=='regular-turn-start')throw new Error('Import a regular-turn position exported by this game.');
   const state=snapshot.state,n=state?.players?.length,size=snapshot.size;
   const final=state?.finalChallenge;
   if(!(final?[4,5,6,7,8]:[4,5]).includes(size) || ![2,3,4].includes(n) || !Number.isInteger(state.currentPlayerIdx) || state.currentPlayerIdx<0 || state.currentPlayerIdx>=n)throw new Error('Invalid position dimensions.');
@@ -16059,7 +16202,8 @@ function evalValidateSnapshot(snapshot){
   const prints=snapshot.finalPrints||[],printMap=new Map(prints.map(c=>[c.id,c.baseId]));
   if(final){
     const factions=finalFactionKeys(),types=CARDS.filter(c=>c.shopExpansion).map(c=>c.id),validList=ids=>Array.isArray(ids)&&new Set(ids).size===ids.length&&ids.every(f=>factions.includes(f));
-    if(n!==4||state.storyMatch?.chapter!==14||final.version!==1||JSON.stringify(final.factions)!==JSON.stringify(factions)||!Array.isArray(final.collected)||final.collected.length!==4||!final.collected.every(validList)||!Array.isArray(final.claims)||final.claims.length!==4||!final.claims.every(x=>Number.isInteger(x)&&x>=0)||final.growths!==size-4||!final.stock||JSON.stringify(final.slotTypes)!==JSON.stringify([null,...types])||!types.every(base=>Array.isArray(final.stock[base])&&final.stock[base].length<=10&&final.stock[base].every(id=>printMap.get(id)===base))||Object.keys(final.stock).length!==7||!Array.isArray(final.removed)||state.shopTiles?.length!==8||state.shopCards?.length!==8)throw new Error('Invalid final challenge.');
+    if(n!==4||state.storyMatch?.chapter!==14||![1,2].includes(final.version)||JSON.stringify(final.factions)!==JSON.stringify(factions)||!Array.isArray(final.collected)||final.collected.length!==4||!final.collected.every(validList)||!Array.isArray(final.claims)||final.claims.length!==4||!final.claims.every(x=>Number.isInteger(x)&&x>=0)||(final.version===1?final.growths!==size-4:!Number.isInteger(final.activeCells)||final.activeCells<16||final.activeCells>64||final.growths!==final.activeCells-16||size!==finalBoardExtent(final.activeCells))||!final.stock||JSON.stringify(final.slotTypes)!==JSON.stringify([null,...types])||!types.every(base=>Array.isArray(final.stock[base])&&final.stock[base].length<=10&&final.stock[base].every(id=>printMap.get(id)===base))||Object.keys(final.stock).length!==7||!Array.isArray(final.removed)||state.shopTiles?.length!==8||state.shopCards?.length!==8)throw new Error('Invalid final challenge.');
+    if(final.version===2&&state.board.some((row,r)=>row.some((id,c)=>FINAL_TILE_RANK[r][c]>=final.activeCells&&(id||state.wasteland?.[r]?.[c]))))throw new Error('A card or terrain lies outside the active board.');
     if(prints.length!==430||printMap.size!==430||prints.some(c=>!/^final_card_\d+$/.test(c.id)||!CARDS.some(base=>base.id===c.baseId&&!base.token&&!base.shopkeeper))||CARDS.filter(c=>!c.token&&!c.shopkeeper).some(base=>prints.filter(c=>c.baseId===base.id).length!==10)||!Number.isInteger(snapshot.finalPrintCounter)||snapshot.finalPrintCounter<Math.max(...prints.map(c=>Number(c.id.slice(11)))))throw new Error('Invalid final printed cards.');
   }else if(prints.length)throw new Error('Printed stock requires a final challenge.');
   const allowed=new Set([...CARDS.map(c=>c.id),...tokens.map(t=>t.id),...copies.map(c=>c.id),...prints.map(c=>c.id)]);
@@ -16106,6 +16250,7 @@ function evalRestore(snapshot,roster){
     else if(key==='startingCardIds')match[key]=new Set(value);
     else match[key]=JSON.parse(JSON.stringify(value));
   }
+  if(match.finalChallenge?.version===1){match.finalChallenge.version=2;match.finalChallenge.activeCells=SIZE*SIZE;match.finalChallenge.growths=SIZE*SIZE-16;match.players.forEach((player,p)=>player.aiDifficulty=p===1||p===2?'hard':p===3?'normal':'easy');}
   match.aiTestMode=true;match.fastAITest=true;match.ui={};match.cancelled=false;match.testMetrics=createAITestMetrics();
   match.players.forEach((p,i)=>{p.isAI=true;p.aiPolicy=roster?.[i]||'current';p.name=`AI ${i+1}`;for(const id of p.hand)match.recordTestSeen(id,i);});
   match.testMetrics.turns=1;
@@ -16245,7 +16390,12 @@ function installAIEvaluationWorker(){
     if(busy){self.postMessage({type:'error',message:'An evaluation is already running.'});return;}
     busy=true;evalCancelled=false;evalPaused=false;
     try{
-      if(data.type==='comparison')await evalCompare(data.config,message=>self.postMessage(message));
+      if(data.type==='live-final'){
+        const snapshot=evalValidateSnapshot(data.snapshot),match=evalRestore(snapshot),p=data.actor;
+        if(!match.finalChallenge||!Number.isInteger(p)||p<0||p>=4||p!==match.currentPlayerIdx)throw new Error('Invalid final actor.');
+        const action=await aiDecideAction(p,data.allowTrade!==false);
+        self.postMessage({type:'live-final-result',requestId:data.requestId,action});
+      }else if(data.type==='comparison')await evalCompare(data.config,message=>self.postMessage(message));
       else if(data.type==='fork')await evalFork(data.snapshot,data.config,message=>self.postMessage(message));
       else if(data.type==='inspect'){
         const snapshot=evalValidateSnapshot(data.snapshot),sample=evalPublicActions(evalRestore(snapshot),snapshot.state.currentPlayerIdx),match=evalRestore(sample),p=match.currentPlayerIdx;
@@ -17079,6 +17229,67 @@ el('tutorial-retry').addEventListener('click',()=>{if(isStoryMatch())openStoryCh
 el('tutorial-next').addEventListener('click',()=>tutorialStep(1));
 el('tutorial-skip').addEventListener('click',finishStoryPrelude);
 
+/* Claim scenery uses no game randomness, timers or per-particle animation loops. */
+const CLAIM_ATMOSPHERE_FACTIONS=new Set(['sdm','hakugyokurou','hourai','mountain','palace','sage','sunflower','hell','heaven','temple']);
+let claimAtmosphere=null;
+function stopClaimAtmosphere(){
+  if(claimAtmosphere?.frame)cancelAnimationFrame(claimAtmosphere.frame);claimAtmosphere=null;
+  const host=el('claim-atmosphere');host.replaceChildren();host.hidden=true;
+}
+function showClaimAtmosphere({faction,count}){
+  const owner=game;if(!owner||owner.cancelled||owner.fastAITest||!CLAIM_ATMOSPHERE_FACTIONS.has(faction)||count<FACTIONS[faction].size)return;
+  if(claimAtmosphere?.owner!==owner){stopClaimAtmosphere();claimAtmosphere={owner,slot:0,frame:0};}
+  const session=claimAtmosphere,host=el('claim-atmosphere');if(session.frame)cancelAnimationFrame(session.frame);
+  if(host.children.length!==2){host.replaceChildren();for(let i=0;i<2;i++){const scene=document.createElement('div');scene.className='claim-scene';host.appendChild(scene);}}
+  const scene=host.children[session.slot],old=host.children[1-session.slot];session.slot=1-session.slot;
+  scene.className='claim-scene scene-'+faction;scene.replaceChildren();
+  for(const name of ['atmos-base','atmos-motion']){const node=document.createElement('div');node.className=name;scene.appendChild(node);}
+  const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches,mobile=document.body.classList.contains('game-mobile'),particles=reduced?0:mobile?4:12;
+  for(let i=0;i<particles;i++){const node=document.createElement('i');node.className='atmos-particle';node.style.setProperty('--claim-x',((i*37+13)%100)+'%');node.style.setProperty('--claim-size',(3+i%4*2)+'px');node.style.setProperty('--claim-duration',(7+i%5*2)+'s');node.style.setProperty('--claim-delay',(-i*.87)+'s');scene.appendChild(node);}
+  host.hidden=false;session.frame=requestAnimationFrame(()=>{session.frame=0;if(claimAtmosphere!==session||game!==owner||owner.cancelled)return;old.classList.remove('active');scene.classList.add('active');});
+}
+
+/* A live finale worker only recommends an action; the main controller validates and executes it. */
+let finalAIWorkerSession=null,finalAIRequestSerial=0;
+const finalAIWorkerFailures=new WeakSet();
+function stopFinalAIWorker(){
+  const session=finalAIWorkerSession;finalAIWorkerSession=null;
+  if(!session)return;session.worker.terminate();
+  for(const resolve of session.pending.values())resolve({type:'pass'});session.pending.clear();
+}
+function finalAIWorkerSessionFor(owner){
+  if(finalAIWorkerSession?.owner===owner)return finalAIWorkerSession;
+  stopFinalAIWorker();if(typeof Worker==='undefined'||finalAIWorkerFailures.has(owner))return null;
+  try{
+    const url=URL.createObjectURL(new Blob([buildAIEvaluationWorkerSource()],{type:'text/javascript'}));let worker;
+    try{worker=new Worker(url);}finally{URL.revokeObjectURL(url);}
+    const session={owner,worker,pending:new Map()};finalAIWorkerSession=session;
+    const fail=()=>{if(finalAIWorkerSession!==session)return;finalAIWorkerFailures.add(owner);finalAIWorkerSession=null;worker.terminate();for(const resolve of session.pending.values())resolve(null);session.pending.clear();};
+    worker.onerror=fail;worker.onmessageerror=fail;worker.onmessage=({data})=>{
+      if(finalAIWorkerSession!==session)return;
+      if(data.type==='error'){fail();return;}
+      if(data.type!=='live-final-result')return;
+      const resolve=session.pending.get(data.requestId);if(!resolve)return;session.pending.delete(data.requestId);resolve(data.action);
+    };
+    return session;
+  }catch(_error){finalAIWorkerFailures.add(owner);return null;}
+}
+function validFinalWorkerAction(owner,p,action){
+  if(!action||typeof action.type!=='string')return false;
+  if(action.type==='place')return owner.players[p].hand.includes(action.cardId)&&owner.emptyOrWastelandForCard(CARD[action.cardId],p).some(c=>c.r===action.r&&c.c===action.c&&owner.isMainTile(c.r,c.c));
+  if(action.type==='trade')return !!action.target&&owner.canTrade(p,action.cardId,action.target);
+  if(action.type==='draw')return owner.canDrawNormally(p);
+  return action.type==='pass';
+}
+async function requestFinalAIWorkerAction(owner,p,allowTrade=true){
+  const session=finalAIWorkerSessionFor(owner);
+  if(!session)return aiFinalChallengeAction(p,allowTrade);
+  const id=++finalAIRequestSerial;
+  const action=await new Promise(resolve=>{session.pending.set(id,resolve);try{session.worker.postMessage({type:'live-final',requestId:id,actor:p,allowTrade,snapshot:captureAIEvaluationSnapshot(owner)});}catch(_error){session.pending.delete(id);finalAIWorkerFailures.add(owner);resolve(null);}});
+  if(game!==owner||owner.cancelled||owner.winner||owner.stalemateMessage)return {type:'pass'};
+  return validFinalWorkerAction(owner,p,action)?action:aiFinalChallengeAction(p,allowTrade);
+}
+
 /* Only the final chapter owns these translations and finite collision animations. */
 let finalPresentation=null;
 function finalPresentationSession(){
@@ -17093,13 +17304,18 @@ function applyFinalObjectOffset(node,key){
   node.style.setProperty('--final-push-x',(offset?.x||0)+'px');node.style.setProperty('--final-push-y',(offset?.y||0)+'px');
 }
 function finalRectsOverlap(a,b,gap=0){return a.left<b.right+gap&&a.right>b.left-gap&&a.top<b.bottom+gap&&a.bottom>b.top-gap;}
+function finalActiveBoardRects(board){
+  if(!game?.finalChallenge)return [board];
+  const w=(board.width-3*(SIZE-1))/SIZE,h=(board.height-3*(SIZE-1))/SIZE;
+  return FINAL_TILE_ORDER.slice(0,game.boardCapacity()).map(({r,c})=>({left:board.left+c*(w+3),top:board.top+r*(h+3),right:board.left+c*(w+3)+w,bottom:board.top+r*(h+3)+h}));
+}
 function finalCollisionDisplacement(board,object,bounds,blockers=[]){
-  if(!finalRectsOverlap(board,object,5))return {x:0,y:0};
-  const options=[{x:board.left-object.right-7,y:0},{x:board.right-object.left+7,y:0},{x:0,y:board.top-object.bottom-7},{x:0,y:board.bottom-object.top+7}];
+  const boards=Array.isArray(board)?board:[board];
+  if(!boards.some(rect=>finalRectsOverlap(rect,object,5)))return {x:0,y:0};
+  const options=boards.flatMap(rect=>[{x:rect.left-object.right-7,y:0},{x:rect.right-object.left+7,y:0},{x:0,y:rect.top-object.bottom-7},{x:0,y:rect.bottom-object.top+7}]);
   const shifted=delta=>({left:object.left+delta.x,right:object.right+delta.x,top:object.top+delta.y,bottom:object.bottom+delta.y});
-  const candidates=options.filter(delta=>{const rect=shifted(delta);return rect.left>=bounds.left&&rect.right<=bounds.right&&rect.top>=bounds.top&&rect.bottom<=bounds.bottom&&!blockers.some(other=>finalRectsOverlap(rect,other,2));});
-  candidates.sort((a,b)=>Math.hypot(a.x,a.y)-Math.hypot(b.x,b.y));
-  return candidates[0]||{x:0,y:0};
+  const candidates=options.filter(delta=>{const rect=shifted(delta);return rect.left>=bounds.left&&rect.right<=bounds.right&&rect.top>=bounds.top&&rect.bottom<=bounds.bottom&&!boards.some(b=>finalRectsOverlap(b,rect,5))&&!blockers.some(other=>finalRectsOverlap(rect,other,2));});
+  candidates.sort((a,b)=>Math.hypot(a.x,a.y)-Math.hypot(b.x,b.y));return candidates[0]||{x:0,y:0};
 }
 function prepareFinalChallengeLayout(){
   if(!game?.finalChallenge||game.cancelled){if(finalPresentation)stopFinalChallengePresentation();return;}
@@ -17107,7 +17323,7 @@ function prepareFinalChallengeLayout(){
   const table=el('table-wrap').getBoundingClientRect?.();if(!table?.width||!table?.height)return;
   const mobile=document.body.classList.contains('mobile-landscape');
   const capacity=Math.max(40,Math.min(mobile?400:600,table.width-(mobile?62:76),(table.height-(mobile?40:58))*.8));
-  const width=Math.floor(capacity*(.72+.28*(SIZE-4)/4)),geometry=[table.left,table.top,table.width,table.height,window.innerWidth,window.innerHeight,SIZE].join(':');
+  const width=Math.floor(capacity*(.72+.28*(SIZE-4)/4)),geometry=[table.left,table.top,table.width,table.height,window.innerWidth,window.innerHeight,SIZE,game.boardCapacity()].join(':');
   if(session.geometry!==geometry&&!session.pending)session.pending={board:el('board').getBoundingClientRect?.(),resize:true};
   session.geometry=geometry;document.body.style.setProperty('--final-board-width',width+'px');
   document.body.style.setProperty('--final-board-font',Math.max(7,Math.min(12,width/SIZE*.19))+'px');
@@ -17116,6 +17332,7 @@ function prepareFinalChallengeLayout(){
 function captureFinalBoardGrowth(event){
   const session=finalPresentationSession();if(!session||session.owner.fastAITest)return;
   if(!session.pending){const board=el('board').getBoundingClientRect?.();session.pending={...event,board,objects:new Map(finalObjectNodes().map(({key,node})=>[key,{rect:node.getBoundingClientRect?.(),offset:session.offsets.get(key)||{x:0,y:0}}]))};}
+  if(event.cell){session.pending.resize=false;(session.pending.cells ||= []).push({...event.cell});}
 }
 function animateFinalObject(session,node,frames,options){
   if(!node.animate||window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)return;
@@ -17129,20 +17346,23 @@ function syncFinalChallengePresentation(){
     session.frame=0;if(finalPresentation!==session||game!==session.owner||game.cancelled)return;
     const pending=session.pending;session.pending=null;const board=el('board').getBoundingClientRect?.();if(!board?.width||!board?.height)return;
     const bounds={left:6,top:8,right:(window.innerWidth||1024)-6,bottom:(window.visualViewport?.height||window.innerHeight||768)-8};
-    const objects=finalObjectNodes(),resolved=[];
+    const objects=finalObjectNodes(),resolved=[],boardRects=finalActiveBoardRects(board);
     for(const {key,node}of objects){
       const mobileDraw=key==='draw'&&document.body.classList.contains('game-mobile');
       if(mobileDraw){session.offsets.set(key,{x:0,y:0});applyFinalObjectOffset(node,key);}
       const rect=node.getBoundingClientRect?.();if(!rect?.width||!rect?.height)continue;
       const clamp={x:Math.max(bounds.left-rect.left,Math.min(0,bounds.right-rect.right)),y:Math.max(bounds.top-rect.top,Math.min(0,bounds.bottom-rect.bottom))};
       const clamped={left:rect.left+clamp.x,right:rect.right+clamp.x,top:rect.top+clamp.y,bottom:rect.bottom+clamp.y};
-      const collision=mobileDraw?{x:0,y:0}:finalCollisionDisplacement(board,clamped,bounds,resolved),delta={x:clamp.x+collision.x,y:clamp.y+collision.y};
+      const collision=mobileDraw?{x:0,y:0}:finalCollisionDisplacement(boardRects,clamped,bounds,resolved),delta={x:clamp.x+collision.x,y:clamp.y+collision.y};
       const previous=session.offsets.get(key)||{x:0,y:0},next={x:previous.x+delta.x,y:previous.y+delta.y};
       session.offsets.set(key,next);applyFinalObjectOffset(node,key);
       resolved.push({left:rect.left+delta.x,right:rect.right+delta.x,top:rect.top+delta.y,bottom:rect.bottom+delta.y});
       if(delta.x||delta.y)animateFinalObject(session,node,[{translate:previous.x+'px '+previous.y+'px',rotate:'0deg'},{translate:(next.x+delta.x*.09)+'px '+(next.y+delta.y*.09)+'px',rotate:(delta.x>0?4:-4)+'deg',offset:.72},{translate:next.x+'px '+next.y+'px',rotate:'0deg'}],{duration:620,easing:'cubic-bezier(.2,.8,.2,1)'});
     }
-    if(!pending.resize&&pending.board?.width&&pending.board?.height)animateFinalObject(session,el('board'),[{transform:`scale(${pending.board.width/board.width},${pending.board.height/board.height})`,filter:'brightness(1.35)'},{transform:'scale(1)',filter:'brightness(1)'}],{duration:480,easing:'cubic-bezier(.2,.8,.2,1)'});
+    for(const cell of (pending.cells||[pending.cell]).filter(Boolean)){
+      const tile=el('board').children[cell.r*SIZE+cell.c];
+      if(tile)animateFinalObject(session,tile,[{opacity:0,transform:'scale(.45)'},{opacity:1,transform:'scale(1)'}],{duration:340,easing:'cubic-bezier(.2,.8,.2,1)'});
+    }
     if(typeof invalidateCardDragGeometry==='function')invalidateCardDragGeometry();
   });
 }
@@ -17223,6 +17443,8 @@ function resetStoryStars(){
   openStoryMenu();setRuleText(el('story-debug-reset'),'DEBUG · Stars reset');
 }
 function clearStoryMatch(){
+  if(typeof stopClaimAtmosphere==='function')stopClaimAtmosphere();
+  if(typeof stopFinalAIWorker==='function')stopFinalAIWorker();
   if(typeof stopFinalChallengePresentation==='function')stopFinalChallengePresentation();
   closeStoryIntroCards();
   resetObjectivePaper();

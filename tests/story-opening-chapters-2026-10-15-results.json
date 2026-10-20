@@ -1067,6 +1067,6 @@
       }
     }
   ],
-  "rulesVersion": "2026-10-19-story-final-challenge-v35",
+  "rulesVersion": "2026-10-20-final-single-cell-mobile-v36",
   "scope": "Shipped story rules and AI, complete real-rule walkthroughs and controlled chapter UI lifecycle; no browser pixel verification"
 }

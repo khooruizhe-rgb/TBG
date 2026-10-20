@@ -40,7 +40,7 @@ const left=tile(0,0),right=tile(0,1),shopTile=tile(6,1,true);let hit=left;
 document.elementFromPoint=()=>{hits++;return hit;};
 ctx.commitCellChoice=(r,c)=>{drops.push({r,c});run('pendingCellChoice=null;');};ctx.commitShopChoice=slot=>{drops.push({slot});run('pendingCellChoice=null;');};ctx.isShopSelectable=()=>true;
 ctx.renderBoard=()=>{};ctx.renderStatus=()=>{};
-vm.runInContext(js.slice(js.indexOf('function syncHandSelection(){'),js.indexOf('function updateHandChoiceActions(){'))+'var draggingCardId=null,pendingDragLanding=null;'+js.slice(js.indexOf('function humanActionCells('),js.indexOf('/* Clicking anywhere outside the board/hand/cancel-button')),ctx);
+vm.runInContext(js.slice(js.indexOf('function syncHandSelection(){'),js.indexOf('function updateHandChoiceActions(){'))+'var draggingCardId=null,pendingDragLanding=null;'+js.slice(js.indexOf('function humanUsesYukari('),js.indexOf('/* Clicking anywhere outside the board/hand/cancel-button')),ctx);
 run('cardPresentationSettings=loadCardPresentationSettings();initializeCardSettings();');
 const prefs=()=>JSON.parse(run('JSON.stringify(cardPresentationSettings)'));
 function makeHand(){

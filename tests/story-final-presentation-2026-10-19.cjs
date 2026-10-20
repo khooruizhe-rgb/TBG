@@ -9,6 +9,8 @@ ctx.requestAnimationFrame=fn=>{const id=++frameId;frames.set(id,fn);return id;};
 ctx.window.matchMedia=query=>({matches:query.includes('reduced-motion')&&reduced});ctx.window.innerWidth=1200;ctx.window.innerHeight=900;
 ctx.syncMurasaVortices=()=>{};ctx.pendingPlayerChoice=null;ctx.displaySeatIndex=p=>p;ctx.AI_AVATARS=['1','2','3'];ctx.playtestMode=false;ctx.pendingRectChoice=null;ctx.lastPlacedCell=null;ctx.koishiArrivalUntil=new Map();ctx.onRectCellPointerDown=()=>{};ctx.syncProtectionIndicator=()=>{};ctx.syncTerrainAnimations=()=>{};ctx.syncIllusionFace=()=>{};ctx.isShopSelectable=()=>false;
 run(section('function renderPlayers(){','function escapeLogHtml('));run(section('function renderShop(){','function isShopSelectable('));
+for(const name of ['onCellClick','onCellDragOver','onCellDragLeave','onCellDrop','positionRinnosukeBubble','syncNitoriCamouflage','repositionYuukaBlooms'])ctx[name]=()=>{};
+run(section('function renderBoard(){','function renderShop(){'));
 Element.prototype.animate=function(keyframes,options){const animation={node:this,keyframes,options,cancelled:false,cancel(){this.cancelled=true;},finished:new Promise(()=>{})};animations.push(animation);return animation;};
 let table={left:220,top:130,width:650,height:570},phone=false;
 const originalRect=Element.prototype.getBoundingClientRect;
@@ -25,17 +27,17 @@ Element.prototype.getBoundingClientRect=function(){
  return originalRect.call(this);
 };
 const flush=()=>{for(let turn=0;frames.size&&turn<5;turn++){const batch=[...frames.values()];frames.clear();batch.forEach(fn=>fn());}assert.equal(frames.size,0);};
-function setup(){run("stopFinalChallengePresentation();SIZE=4;game=new Game(4,{},null,{aiDifficulty:'hard'});configureStoryMatch(game,14);game.ui={onFinalBoardGrowth:captureFinalBoardGrowth};storyState={chapter:14,practice:game,complete:false,cancel(){}};prepareFinalChallengeLayout();renderPlayers();renderShop();syncFinalChallengePresentation();renderStoryCoach();");flush();return run('game');}
+function setup(){run("stopFinalChallengePresentation();SIZE=4;game=new Game(4,{},null,{aiDifficulty:'hard'});configureStoryMatch(game,14);game.ui={onFinalBoardGrowth:captureFinalBoardGrowth};storyState={chapter:14,practice:game,complete:false,cancel(){}};prepareFinalChallengeLayout();renderPlayers();renderBoard();syncFinalChallengePresentation();renderStoryCoach();");flush();return run('game');}
 function objects(){return [...el('seats').children,el('draw-pile')];}
 let g=setup();
 assert.equal(el('seats').children.length,4);const seats=el('seats').children;
-ok(seats[1].innerHTML.includes('Hard AI')&&seats[2].innerHTML.includes('Normal AI')&&seats[3].innerHTML.includes('Easy AI')&&seats.every(n=>n.innerHTML.includes('Factions: 0/11')&&(n.innerHTML.match(/class="final-faction /g)||[]).length===11&&!n.innerHTML.includes('Discard:')),'Four actual seat renderers show independent difficulty labels and eleven faction indicators instead of the seven-point lamps');
+ok(seats[1].innerHTML.includes('Hard AI')&&seats[2].innerHTML.includes('Hard AI')&&seats[3].innerHTML.includes('Normal AI')&&seats.every(n=>n.innerHTML.includes('Factions: 0/11')&&(n.innerHTML.match(/class="final-faction /g)||[]).length===11&&!n.innerHTML.includes('Discard:')),'Four actual seat renderers show independent difficulty labels and eleven faction indicators instead of the seven-point lamps');
 ok(el('kourindou').children.length===8&&el('kourindou').children.slice(1).every(n=>n.children.at(-1).textContent==='×10')&&el('kourindou').children[0].style.gridRow==='2'&&el('kourindou').children[0].style.gridColumn==='2','The actual catalogue renders all seven fifth cards with ten-copy counters around the central keeper');
 const widths=[el('board').getBoundingClientRect().width];
-for(let i=0;i<4;i++){run("game.recordFinalClaim(0,'sdm');prepareFinalChallengeLayout();renderPlayers();renderShop();syncFinalChallengePresentation();");flush();widths.push(el('board').getBoundingClientRect().width);}
+for(let i=0;i<48;i++){run("game.recordFinalClaim(0,'sdm');prepareFinalChallengeLayout();renderPlayers();renderBoard();syncFinalChallengePresentation();");flush();widths.push(el('board').getBoundingClientRect().width);}
 const board=el('board').getBoundingClientRect();
 for(const node of objects()){const r=node.getBoundingClientRect();assert(!run('finalRectsOverlap')(board,r,1));assert(r.left>=6&&r.right<=1194&&r.top>=8&&r.bottom<=892);}
-ok(widths.every((w,i)=>!i||w>widths[i-1])&&animations.filter(a=>a.node===el('board')).length===4&&animations.filter(a=>a.node!==el('board')).length>=5,'Four real growth callbacks visibly enlarge the board and finite Meta animations push every colliding avatar and draw pile clear while keeping them inside the viewport');
+ok(widths.every((w,i)=>!i||w>=widths[i-1])&&animations.filter(a=>a.node.classList.contains('cell')).length===48&&animations.filter(a=>a.node!==el('board')).length>=5,'Forty-eight real growth callbacks reveal one active tile each and enlarge only the occupied grid extent and finite Meta animations push every colliding avatar and draw pile clear while keeping them inside the viewport');
 const saved=run("JSON.stringify([...finalPresentation.offsets])");run('renderPlayers();');assert.equal(run("JSON.stringify([...finalPresentation.offsets])"),saved);ok(el('seats').children.some(n=>parseFloat(n.values.get('--final-push-x'))!==0),'Rebuilding the seat DOM preserves previous pushes and keeps player targeting attached to the moved avatar');
 const initial=el('story-final-signal').textContent;assert(initial&&initial.length===36);const originalRandom=ctx.Math?.random;run("this.randomCalls=0;this.savedRandom=Math.random;Math.random=()=>{randomCalls++;return .5;};");
 const session=run('finalPresentation');assert(session.signalTimer);advance(560);assert.notEqual(el('story-final-signal').textContent,initial);assert.equal(run('randomCalls'),0);run('Math.random=savedRandom;');

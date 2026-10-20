@@ -24,6 +24,6 @@
     "Moving and restoring Rinnosuke during a cached preview immediately updates both his former and new protected areas",
     "Retiring a final match removes its physical definitions before another match or replay is built"
   ],
-  "rulesVersion": "2026-10-19-story-final-challenge-v35",
+  "rulesVersion": "2026-10-20-final-single-cell-mobile-v36",
   "scope": "Real accepted discards, first-winner ordering, finishing-claim expansion, identity-specific information and overwrites, Eirin/Hecatia passives, immutable creations, final AI choices, eight-by-eight snapshots and invalid inventories, no score-based stalemate win, and generated-definition cleanup."
 }

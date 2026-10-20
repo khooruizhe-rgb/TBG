@@ -2,20 +2,20 @@
   "status": "pass",
   "count": 19,
   "checks": [
-    "128 private random four-player deals conserve 360 core prints, 70 fifth-card prints and one keeper, with six-card hands, all four starting actors and Hard/Normal/Easy opponents",
+    "128 private random four-player deals conserve 360 core prints, 70 fifth-card prints and one keeper, with six-card hands, all four starting actors and two Hard and one Normal opponents",
     "Equal originals have separate ordinary print IDs and canonical abilities without creation names, material or cost surcharges",
     "Overwriting one physical print cannot change its other nine originals",
     "Seven discard points do not win; complete discard groups contribute their faction once",
     "The first player to gather all eleven factions wins",
     "All four seats share the faction win condition, regardless of discard score",
-    "Every actual claim, including repeated factions, grows both axes to eight while preserving cards, terrain and shifting the separate shop",
-    "Two complete equal-faction groups settle in one batch and each expands the board",
+    "Every actual claim, including repeated factions, adds one connected space until all 64 are active while preserving cards, terrain and shifting the separate shop",
+    "Two complete equal-faction groups settle in one batch and each adds exactly one space",
     "All seven fifth-card catalogues deliver ten distinct prints then become empty; no paid card is resold",
     "A successful final trade removes exactly its offered print and keeps the once-per-turn rule",
     "A physical Yukari can still override protected merchandise without losing either print",
     "The final Hard AI chooses a new faction and its preview changes no cards, stock, terrain, collection history or board size",
     "Changing hidden opponent identities and deck order does not change the final AI decision",
-    "Hard, Normal and Easy each make a legal active choice and trade previews preserve every live field",
+    "All three difficulty seats each make a legal active choice and trade previews preserve every live field",
     "A completed faction stays collected when cards later leave the discard pile",
     "A real unfinished final snapshot restores all physical definitions, stocks, removed payments, faction history and individual difficulty tiers",
     "Chapter fourteen has no optional objectives or star score",
@@ -25,35 +25,39 @@
   "matches": [
     {
       "seed": 1,
-      "actions": 223,
+      "actions": 244,
       "size": 8,
-      "winner": 2,
+      "activeCells": 64,
+      "claims": 56,
+      "winner": 1,
       "reason": "win",
       "collections": [
         5,
-        8,
         11,
-        7
+        8,
+        10
       ],
-      "inventory": 457,
-      "removed": 18
+      "inventory": 447,
+      "removed": 19
     },
     {
       "seed": 2,
-      "actions": 186,
+      "actions": 276,
       "size": 8,
+      "activeCells": 64,
+      "claims": 55,
       "winner": 2,
       "reason": "win",
       "collections": [
-        4,
+        2,
         9,
         11,
-        5
+        6
       ],
-      "inventory": 454,
-      "removed": 17
+      "inventory": 455,
+      "removed": 28
     }
   ],
-  "rulesVersion": "2026-10-19-story-final-challenge-v35",
+  "rulesVersion": "2026-10-20-final-single-cell-mobile-v36",
   "scope": "Real Game engine and turn controller, unique multi-copy instances, all faction victory, repeated claims, growth cap, all 70 shop receipts, removed payments, private tiered AI and full matches. UI geometry is checked separately."
 }

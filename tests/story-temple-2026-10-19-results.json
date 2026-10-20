@@ -172,6 +172,6 @@
     "rivals": 1024,
     "stocks": 90
   },
-  "rulesVersion": "2026-10-19-story-final-challenge-v35",
+  "rulesVersion": "2026-10-20-final-single-cell-mobile-v36",
   "scope": "Real conserved deals and ability payments, all six Byakuren effect orders, actual faction wins, production Sakuya/Youmu/dancer action chains, four full production AI matches, snapshot-safe AI evaluation, story UI and persistence. Controlled DOM, not browser pixel QA."
 }

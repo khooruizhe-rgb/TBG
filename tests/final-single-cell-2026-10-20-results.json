@@ -1,0 +1,19 @@
+{
+  "status": "pass",
+  "count": 11,
+  "checks": [
+    "The finale starts with sixteen active cells and two Hard plus one Normal opponent",
+    "All forty-eight real claim callbacks add exactly one connected usable cell, retain every former cell/card/terrain, and finish at eight by eight",
+    "Further claims still count after the cap but cannot add a sixty-fifth cell",
+    "The first expansion has seventeen legal cells, not twenty-five, and absent squares reject card and terrain writes",
+    "Actual placement and final AI previews reject holes even when a caller supplies their rectangular coordinates",
+    "Area selection zones contain only real board or shop positions",
+    "An irregular nineteen-cell snapshot round-trips its exact playable shape",
+    "Snapshot validation rejects forged extents, growth counts, hidden cards and wasteland outside the active shape",
+    "A previously exported square finale keeps all its old cells and then grows one at a time with the corrected opponents",
+    "Ichirin treats an inactive square as a board edge and returns the pushed card to the pile instead of losing it in a hidden cell",
+    "The winning claim also grants exactly one final space before locking the winner"
+  ],
+  "rulesVersion": "2026-10-20-final-single-cell-mobile-v36",
+  "scope": "Real Game claim/growth/placement APIs, all 48 one-cell growths, connectivity, inactive positions, exact snapshots, legacy migration and winning settlement."
+}
