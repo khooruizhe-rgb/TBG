@@ -12,7 +12,7 @@
     "Payment/choice cards can be scrolled without paying, selecting or trying to place a card",
     "Portrait layout also bounds the mounted cards in its horizontal hand",
     "The horizontal hand can expose its final card as well",
-    "Desktop retains its complete hand layout",
+    "Desktop shows the complete sorted set of final hand piles while preserving every physical copy",
     "Ordinary final prints have their own gentle paper treatment without creation rules, names or surcharges",
     "Real creation choices retain the stronger created-card treatment",
     "The large inspection applies the final print treatment to the whole card too",
@@ -30,7 +30,7 @@
     "Hakurei and incomplete claims do not replace the current background",
     "Reduced motion uses the same scenery with no particles or looping animation",
     "Leaving/retrying clears both scenery layers and pending frame work",
-    "Scenery uses the actual Temple background, snowstorm texture, and a noninteractive layer behind the controls",
+    "Scenery uses the actual Temple background, snowstorm texture, and noninteractive background and foreground layers",
     "The one-cell growth log follows real Chinese/English switching"
   ],
   "scope": "Actual hand render/window, touch pointer routing, click suppression, both scroll orientations, hold/sideways drag, payment scrolling, print/detail renderers and all ten claim-scene lifecycles. Controlled DOM/geometry, no real-device frame-rate claim."
