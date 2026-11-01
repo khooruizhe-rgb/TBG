@@ -30,7 +30,7 @@
     "Hakurei and incomplete claims do not replace the current background",
     "Reduced motion uses the same scenery with no particles or looping animation",
     "Leaving/retrying clears both scenery layers and pending frame work",
-    "Scenery uses the actual Temple background, snowstorm texture, and noninteractive background and foreground layers",
+    "Scenery uses the actual Temple background, seeded snowfall, and noninteractive background and foreground layers",
     "The one-cell growth log follows real Chinese/English switching"
   ],
   "scope": "Actual hand render/window, touch pointer routing, click suppression, both scroll orientations, hold/sideways drag, payment scrolling, print/detail renderers and all ten claim-scene lifecycles. Controlled DOM/geometry, no real-device frame-rate claim."

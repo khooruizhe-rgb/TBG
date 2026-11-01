@@ -4008,6 +4008,10 @@ class Game {
   }
   byakurenOptionValue(p,r,c,option){
     const held=this.players[p].hand.filter(id=>id!==(this.cardAt(r,c)||'temple_byakuren'));
+    if(option.value==='turns'&&this.finalChallenge&&this===game&&typeof aiFinalReadyGroups==='function'){
+      const ready=aiFinalReadyGroups(p,this.cardAt(r,c));
+      return Math.min(3,ready)*2.4+Math.min(1.6,held.length/12)-option.cost*.2;
+    }
     if(option.value==='turns'){
       const templeHeld=held.filter(id=>CARD[id].faction==='temple').length;
       const otherPayable=held.filter(id=>this.canHandEnterPile(id) && CARD[id].faction!=='temple').length;
@@ -14438,6 +14442,52 @@ Game.prototype.setCardAt=function(r,c,id){
   }
   return finalOriginalSetCardAt.call(this,r,c,id);
 };
+/* Finale tempo plans. Chain cards place a whole faction in one turn; Mokou converts a
+   large discard pile into a large hand; Byakuren's three turns cash that hand in. */
+const FINAL_CHAIN_ABILITIES=new Set(['haku_youmu','mtn_kanako','hell_komachi']);
+function aiFinalNeeded(p,faction){return !!FACTIONS[faction]?.size&&!game.finalChallenge.collected[p].includes(faction);}
+function aiFinalChainCopies(p,ability){return game.players[p].hand.filter(id=>game.abilityId(id)===ability).length;}
+// Factions this hand could complete over the next few placements (hand plus visible board members).
+function aiFinalReadyGroups(p,ignore=null){
+  const hand=game.players[p].hand.filter(id=>id!==ignore);let groups=0;
+  for(const faction of game.finalChallenge.factions){
+    if(!aiFinalNeeded(p,faction))continue;const size=FACTIONS[faction].size;
+    const held=hand.filter(id=>game.cardMatchesFaction(id,faction)).length,shown=Math.min(size-1,game.factionCells(faction).length);
+    if(held>=size||held>=2&&held+shown>=size)groups++;
+  }
+  return groups;
+}
+function aiFinalMokouDraw(p){return Math.min(game.drawPile.length,game.players[p].discard.length);}
+function aiFinalTempoValue(p,id,ability,works,members,size,needed){
+  const player=game.players[p],hand=player.hand.filter(other=>other!==id);let value=0;
+  if(ability==='hourai_mokou'&&works){
+    // Mid and late game: a deep discard pile turns Mokou into the strongest refill.
+    const draw=aiFinalMokouDraw(p);value+=draw>=5?Math.min(45,draw)*6:0;
+  }
+  if(ability==='temple_byakuren'&&works){
+    const ready=aiFinalReadyGroups(p,id);value+=Math.min(3,ready)*55+(hand.length>=12?20:0);
+  }
+  if(ability==='sdm_sakuya'&&works){
+    // A big hand is the AI's engine: keep it, and leave Sakuya to opponents who run dry.
+    const ready=aiFinalReadyGroups(p,id),bigHand=Math.max(0,hand.length-6);
+    value-=bigHand*6-Math.min(2,ready)*20;
+    if(game.drawPile.length<=3&&!ready)value+=40;
+  }
+  if(FINAL_CHAIN_ABILITIES.has(ability)&&needed){
+    const copies=aiFinalChainCopies(p,ability)+(player.hand.includes(id)?0:1),onBoard=Math.max(0,members-1);
+    // Start a same-turn chain only when the copies in hand can finish the faction.
+    if(copies+onBoard>=size)value+=onBoard?160:340;
+    else if(copies>=2)value-=10;
+  }
+  return value;
+}
+function aiFinalTempoMaterial(p,id){
+  const ability=game.abilityId(id),faction=CARD[id]?.faction;
+  if(ability==='hourai_mokou')return Math.min(60,game.players[p].discard.length*3);
+  if(ability==='temple_byakuren')return game.players[p].hand.length>=10?30:8;
+  if(FINAL_CHAIN_ABILITIES.has(ability)&&aiFinalNeeded(p,faction))return aiFinalChainCopies(p,ability)*9;
+  return 0;
+}
 function aiFinalDiscardValue(p,id){
   const faction=CARD[id]?.faction;if(!FACTIONS[faction]?.size||game.finalChallenge.collected[p].includes(faction))return .5;
   const count=game.players[p].discard.filter(other=>game.cardMatchesFaction(other,faction)).length;
@@ -14504,12 +14554,12 @@ function aiFinalMaterial(p,id){
   if(!size||game.finalChallenge.collected[p].includes(faction))return 2;
   const held=game.players[p].hand.filter(other=>game.cardMatchesFaction(other,faction)).length;
   const shown=game.factionCells(faction).length,discarded=game.players[p].discard.filter(other=>game.cardMatchesFaction(other,faction)).length;
-  return 15+Math.min(size,held+shown)*4+Math.min(size-1,discarded)*5+(CARD[id]?.crown?2:0);
+  return 15+Math.min(size,held+shown)*4+Math.min(size-1,discarded)*5+(CARD[id]?.crown?2:0)+aiFinalTempoMaterial(p,id);
 }
 function aiFinalMaterialOrder(p,ids){
   return withFinalStaticRules(()=>{
     const weights=new Map();
-    const weight=id=>{const key=[CARD[id]?.faction,!!CARD[id]?.crown].join(':');if(!weights.has(key))weights.set(key,aiFinalMaterial(p,id));return weights.get(key);};
+    const weight=id=>{const ability=game.abilityId(id),key=[CARD[id]?.faction,!!CARD[id]?.crown,ability==='hourai_mokou'||ability==='temple_byakuren'||FINAL_CHAIN_ABILITIES.has(ability)?ability:''].join(':');if(!weights.has(key))weights.set(key,aiFinalMaterial(p,id));return weights.get(key);};
     return ids.map((id,index)=>({id,index,value:weight(id)})).sort((a,b)=>a.value-b.value||a.index-b.index).map(entry=>entry.id);
   });
 }
@@ -14543,8 +14593,9 @@ function aiFinalBestPlacement(p,ids=game.players[p].hand,allowed=null){
         if(aiKnows(p,'value')){
           const gain=works?game.estimateHandGain(p,id):0;value+=Math.min(6,Math.max(0,gain))*7-cost*9;
           if(works&&ability==='hourai_eirin')value+=held&&needed?22:8;
-          if(works&&ability==='sdm_sakuya')value+=held>1?Math.min(2,held)*9: -18;
+          if(works&&ability==='sdm_sakuya')value+=held>1?Math.min(2,held)*4: -6;
           if(works&&['haku_youmu','mtn_kanako','hell_komachi'].includes(ability))value+=held&&adjacent?12:-12;
+          value+=aiFinalTempoValue(p,id,ability,works,members.length,size,needed);
           if(['mtn_nitori','hell_hecatia'].includes(ability)&&!claimValue)value-=size>members.length+held?80:22;
           if(ability==='sage_kasen'&&!claimValue)value-=55;
         }
@@ -17454,8 +17505,9 @@ function claimSceneRandom(seed){
 }
 let claimSceneSeed=1;
 function placeSageEye(eye,random,mobile){
-  const variant=Math.floor(random()*3),width=Math.round((mobile?44:62)+random()*(mobile?58:118));
-  eye.className='realm-eye'+(variant===1?' eye-gap':variant===2?' eye-round':'');
+  // A reopened eye never keeps its previous shape.
+  const variant=eye.claimEyeVariant===undefined?Math.floor(random()*3):(eye.claimEyeVariant+1+Math.floor(random()*2))%3,width=Math.round((mobile?44:62)+random()*(mobile?58:118));
+  eye.claimEyeVariant=variant;  eye.className='realm-eye'+(variant===1?' eye-gap':variant===2?' eye-round':'');
   const shapes=['90% 8% 90% 8%','95% 12% 95% 12% / 100% 30% 100% 30%','50%'];
   const props={'--claim-x':(3+random()*82).toFixed(1)+'%','--claim-y':(4+random()*78).toFixed(1)+'%','--eye-w':width+'px',
     '--eye-ratio':(variant===2?.62+random()*.16:.36+random()*.16).toFixed(2),'--eye-rot':(-28+random()*44).toFixed(1)+'deg','--eye-shape':shapes[variant],
@@ -17467,7 +17519,7 @@ function appendClaimRealmBackdrop(scene,faction,mobile,reduced){
   if(faction!=='sage')return;
   const add=(name,parent=scene)=>{const node=document.createElement('div');node.className=name;parent.appendChild(node);return node;};
   const random=claimSceneRandom(claimSceneSeed++);
-  for(let i=0;i<(mobile?4:7);i++){
+  for(let i=0;i<(mobile?4:6);i++){
     const eye=add('realm-eye');add('realm-eye-pupil',eye);placeSageEye(eye,random,mobile);
     eye.style.setProperty('--claim-delay',(-random()*6).toFixed(2)+'s');
     // Each eye closes, vanishes and reopens elsewhere with a new size, shape and pace.
@@ -17491,7 +17543,7 @@ function appendClaimRealmDetails(scene,faction,mobile,reduced){
         for(const node of [flash,bolt])node.style.setProperty('--bolt-x',next);bolt.style.setProperty('--bolt-flip',random()<.5?'-1':'1');});
     }
   }
-  const motion=CLAIM_REALM_MOTION[faction],particles=reduced?(motion.kind==='snow'?Math.round(motion.count[0]/2):0):motion.count[mobile?0:1];
+  const motion=CLAIM_REALM_MOTION[faction],particles=reduced?0:motion.count[mobile?0:1];
   for(let i=0;i<particles;i++){
     const node=add('atmos-particle realm-'+motion.kind),set=(key,value)=>node.style.setProperty(key,value);
     let duration;

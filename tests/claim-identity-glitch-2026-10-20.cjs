@@ -53,8 +53,8 @@ process.once('beforeExit',()=>{if(!completed&&!process.exitCode){console.error('
  run('game.finalChallenge.activeCells=64;SIZE=8;');const countBefore=signal();ctx.claimHook({faction:'hourai',count:4});pump();
  ok(signal()===countBefore+4&&g.finalChallenge.activeCells===64,'Signal strength keeps increasing after board expansion reaches its maximum');
  const oldPalette=palette();ctx.claimHook({faction:'hell',count:1});pump();ok(signal()===11&&palette()===oldPalette,'A partially resolved collection counts only the one collected card and does not replace the complete-realm colour');
- const colors={sdm:'198,33,72',hakugyokurou:'242,166,193',hourai:'48,91,191',mountain:'105,161,103',palace:'138,107,191',sage:'126,62,157',hakurei:'224,72,63',sunflower:'242,193,78',hell:'235,97,58',heaven:'121,206,255',temple:'215,164,73'};
- const expected={sdm:['fog',2,3],hakugyokurou:[null,0,0],hourai:[null,0,0],mountain:['leaf',4,9],palace:['ember',4,10],sage:[null,0,0],sunflower:[null,0,0],hell:['lantern',3,7],heaven:['cloud',2,3],temple:['seal',3,7]};
+ const colors={sdm:'198,33,72',hakugyokurou:'242,166,193',hourai:'48,91,191',mountain:'134,160,72',palace:'138,107,191',sage:'126,62,157',hakurei:'224,72,63',sunflower:'242,193,78',hell:'235,97,58',heaven:'121,206,255',temple:'215,164,73'};
+ const expected={sdm:['fog',4,6],hakugyokurou:['snow',34,80],hourai:[null,0,0],mountain:['leaf',4,9],palace:['ember',4,10],sage:[null,0,0],sunflower:[null,0,0],hell:['lantern',3,7],heaven:['cloud',2,3],temple:['orb',8,16]};
  for(const mobile of [true,false]){
   ctx.document.body.classList.toggle('game-mobile',mobile);
   for(const [faction,color]of Object.entries(colors)){
@@ -66,11 +66,14 @@ process.once('beforeExit',()=>{if(!completed&&!process.exitCode){console.error('
   }
   ok(true,(mobile?'Phone':'Desktop')+' uses all eleven explicit faction colours and distinct bounded realm elements');
  }
- run('showClaimAtmosphere({faction:"sage",count:4});');pump();let front=active('claim-foreground');
- ok(front.querySelectorAll('.realm-eye').length===6&&front.querySelectorAll('.realm-eye-pupil').length===6&&front.querySelectorAll('.realm-door').length===2&&front.querySelectorAll('.realm-door-leaf').length===4,'Sage has six actual watching eyes and two articulated two-leaf doors on desktop');
- ctx.document.body.classList.add('game-mobile');run('showClaimAtmosphere({faction:"sage",count:4});');pump();ok(active('claim-foreground').querySelectorAll('.realm-eye').length===4,'Phone retains four large eyes and both doors');
+ run('showClaimAtmosphere({faction:"sage",count:4});');pump();let front=active('claim-foreground'),back=active('claim-atmosphere');
+ ok(back.querySelectorAll('.realm-eye').length===6&&back.querySelectorAll('.realm-eye-pupil').length===6&&back.querySelectorAll('.realm-door').length===2&&back.querySelectorAll('.realm-door-leaf').length===4&&!front.querySelector('.realm-eye'),'Sage has six watching eyes and two articulated two-leaf doors behind the table on desktop');
+ const eyeProps=run('(()=>{const random=claimSceneRandom(3),out=[];const eye={className:"",style:{setProperty:(k,v)=>{eye.props[k]=v;}}};for(let i=0;i<12;i++){const props={};eye.props=props;placeSageEye(eye,random,false);props.className=eye.className;out.push(props);}return out;})()');
+ const distinct=key=>new Set(eyeProps.map(props=>props[key])).size;
+ ok(distinct('--eye-w')>=8&&distinct('--claim-duration')>=8&&distinct('--claim-x')>=8&&distinct('className')===3&&eyeProps.every((props,i)=>!i||props.className!==eyeProps[i-1].className),'Each reappearance moves the eye and changes its size, pace and shape variant');
+ ctx.document.body.classList.add('game-mobile');run('showClaimAtmosphere({faction:"sage",count:4});');pump();ok(active('claim-atmosphere').querySelectorAll('.realm-eye').length===4&&active('claim-atmosphere').querySelectorAll('.realm-door').length===2,'Phone retains four eyes and both doors');
  run('showClaimAtmosphere({faction:"hourai",count:4});');pump();front=active('claim-foreground');
- ok(ctx.document.body.classList.contains('claim-weathered')&&front.querySelector('.atmos-weathering')&&front.querySelector('.atmos-patina'),'Eientei adds paper fading and cracks above the whole game and marks weathered panels');
+ ok(ctx.document.body.classList.contains('claim-weathered')&&!front.querySelector('.atmos-weathering')&&!front.querySelector('.atmos-patina')&&css.includes('body.claim-color-active.claim-weathered #game #board-panel{'),'Eientei cracks and ages the wooden table instead of covering the whole screen');
  run('showClaimAtmosphere({faction:"heaven",count:2});');pump();ok(!ctx.document.body.classList.contains('claim-weathered'),'The next realm removes Eientei weathered panel styling');
  run('showClaimAtmosphere({faction:"sunflower",count:2});');pump();ok(active('claim-foreground').querySelector('.atmos-heat')&&!active('claim-foreground').querySelector('.atmos-particle'),'Sunflower uses heat sheets around a sun rather than falling flowers');
  reduced=true;
@@ -88,16 +91,15 @@ process.once('beforeExit',()=>{if(!completed&&!process.exitCode){console.error('
  run('showCrownBackdrop("hourai_kaguya");');g=start();ctx.claimHook({faction:'mountain',count:4});pump();const finalPalette=palette();finishSample();await Promise.resolve();await Promise.resolve();
  ok(palette()===finalPalette&&css.includes('linear-gradient(rgb(var(--claim-table-rgb)),rgb(var(--claim-table-rgb)))'),'A late crown texture callback cannot overwrite the independent finale collection palette');
  const block=prefix=>css.split('\n').find(line=>line.startsWith(prefix));
- ok(block('.scene-sdm .atmos-veil{').includes('-webkit-mask-image:none;mask-image:none;')&&block('#claim-foreground{').includes('z-index:36')&&block('.realm-fog{').includes('inset:-12vmax'),'Scarlet fog has a full-screen foreground wash and unmasked moving banks, including the centre');
+ ok(block('.scene-sdm .atmos-veil{').includes('-webkit-mask-image:none;mask-image:none;')&&block('#claim-foreground{').includes('z-index:36')&&block('.realm-fog{').includes('right:100%')&&block('.realm-fog{').includes('mask-image:url(')&&block('.realm-fog.fog-right{').includes('left:100%'),'Scarlet fog banks roll in from both sides with a noise-textured edge');
  ok(block('.scene-hell .atmos-base{').includes('var(--hell-higan-bg)')&&!block('.scene-hell .atmos-base{').includes('hell-makai')&&css.includes('--shop-bg:var(--hell-higan-bg)'),'Hell uses the Higan asset shared by Eiki and Kutaka');
- ok(!css.split('\n').filter(l=>l.startsWith('.scene-sunflower ')).join().match(/sunflower-bg|yuuka-pixel-flower/)&&block('.scene-sunflower .atmos-landmark{').includes('#fffef2'),'Sunflower scenery contains a blazing white-gold sun and no flower imagery');
- const motionNames=['claimRedFog','claimSnowNear','claimAgeSurface','claimMountainWind','claimPalaceEmber','claimSageGaze','claimSolarHeat','claimHiganRiver','claimHeavenCloud','claimTempleOrbit'];
+ ok(block('.scene-sunflower .atmos-base{').includes('var(--sunflower-bg)')&&block('.scene-sunflower .atmos-landmark{').includes('#fffef2'),'Sunflower scenery shows the Garden of the Sun under a white-gold sun');
+ const motionNames=['claimRedFogLeft','claimRedFogRight','claimSnowFall','claimTableWeather','claimMountainWind','claimPalaceEmber','claimSageGaze','claimSolarHeat','claimHiganRiver','claimHeavenCloud','claimThunderBolt','claimTempleOrb'];
  ok(motionNames.every(name=>css.includes('@keyframes '+name))&&!css.includes('@keyframes claimParticleFall'),'All ten realms have independent motion families instead of universal falling particles');
- ok(block('.scene-hakugyokurou .atmos-motion{').includes('inset:-240px')&&block('.atmos-snow-sheet{').includes('inset:-240px')&&block('.atmos-snow-sheet::after{').includes('inset:-160px')&&!block('@keyframes claimSnowFar').includes('rotate')&&!block('@keyframes claimSnowNear').includes('rotate'),'Snow layers use unrotated overscan and translations instead of rotating finite texture rectangles');
- for(const [w,h]of [[320,568],[390,844],[844,390],[1920,1080],[2560,1080]])for(let i=0;i<=40;i++)for(let j=0;j<=40;j++){
-  const t=i/40,u=j/40;for(const [overscan,x,y]of [[240,-80*t,120*t],[240,-160*t,120*t],[400,-160*t-160*u,120*t+120*u]]){assert(-overscan+x<=0&&-overscan+y<=0);assert(w+overscan+x>=w&&h+overscan+y>=h);}
- }
- ok(true,'Analytical bounds keep every moving snow layer covering narrow phones, landscape phones and wide desktops throughout its cycle');
+ ok(block('.scene-hakugyokurou .atmos-motion{').includes('display:none')&&block('.realm-snow{')&&!block('@keyframes claimSnowFall').includes('rotate'),'Snow is drawn as individual flakes instead of a repeating lattice');
+ ctx.document.body.classList.remove('game-mobile');run('showClaimAtmosphere({faction:"hakugyokurou",count:2});');pump();{const flakes=active('claim-foreground').querySelectorAll('.realm-snow');
+  const noise=run('(()=>{const random=claimSceneRandom(9);return Array.from({length:80},()=>random());})()');
+  ok(flakes.length===80&&new Set(noise.map(v=>v.toFixed(3))).size>=75&&Math.min(...noise)>=0&&Math.max(...noise)<1,'Desktop snowfall uses eighty individually seeded flakes');}
  ok(160%40===0&&160%80===0&&120%60===0&&120%120===0&&block('body.game-mobile .claim-scene.active.scene-hakugyokurou .atmos-motion{').includes('1.1s'),'Snow loops by exact tile periods and phone snowfall retains its storm speed');
  const sceneCode=section('/* Claim scenery owns presentation','/* A live finale worker');
  ok(!/Math\.random|setInterval|setTimeout|canvas|backdropFilter/.test(sceneCode)&&html.includes('id="final-claim-glitch" aria-hidden="true"')&&block('#final-claim-glitch{').includes('pointer-events:none'),'The effect layers consume no game RNG, timers, canvas snapshots or pointer events');
