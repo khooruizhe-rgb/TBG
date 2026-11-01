@@ -10038,12 +10038,12 @@ function renderBoard(){
       const protectedCell=game.isProtected(r,c);
       syncProtectionIndicator(cell,r,c);
       syncTerrainAnimations(cell,r,c,isWasteland);
-      cell.classList.toggle('koishi-arriving',(cardId==='palace_koishi'||game.finalChallenge&&game.abilityId(cardId)==='palace_koishi') && koishiArrivalUntil.get(`${r},${c}`)>Date.now());
+      cell.classList.toggle('koishi-arriving',(cardId==='palace_koishi'||!!game.finalChallenge&&game.abilityId(cardId)==='palace_koishi') && koishiArrivalUntil.get(`${r},${c}`)>Date.now());
       if(cardId){
         const face=cell.querySelector('.board-card');
         syncIllusionFace(face,cardId);
         if(face && CARD[cardId].crown){
-          face.classList.toggle('eirin-muted',game.isSageMuted(cardId));
+          face.classList.toggle('eirin-muted',!!game.isSageMuted(cardId));
         }
         if(!hecatiaCard && hecatiaCell){
           const dy=hecatiaCell.r-r, dx=hecatiaCell.c-c;
@@ -10116,7 +10116,7 @@ function renderShop(){
     let stockLabel=tile.querySelector('.final-shop-stock');
     if(game.finalChallenge&&slot>0){if(!stockLabel){stockLabel=document.createElement('span');stockLabel.className='final-shop-stock';tile.appendChild(stockLabel);}stockLabel.textContent='×'+game.finalStockRemaining(slot);}
     else stockLabel?.remove();
-    const selectable=isShopSelectable(slot);
+    const selectable=!!isShopSelectable(slot);
     tile.classList.toggle('wasteland',game.wastelandAt(r,c));
     syncProtectionIndicator(tile,r,c);
     syncTerrainAnimations(tile,r,c,game.wastelandAt(r,c));
@@ -10138,7 +10138,7 @@ function renderShop(){
     tile.classList.toggle('shopkeeper-tile',id==='shop_rinnosuke');
     const face=tile.querySelector('.board-card');
     syncIllusionFace(face,id);
-    if(face && id && CARD[id]) face.classList.toggle('eirin-muted',game.isSageMuted(id));
+    if(face && id && CARD[id]) face.classList.toggle('eirin-muted',!!game.isSageMuted(id));
     tile.title=id ? `${CARD[id].name}${game.isProtected(r,c) ? ' · Protected by Rinnosuke; no faction' : ''}. Double-click or press I for details.` : 'Empty tile';
     tile.setAttribute('aria-label',tile.title+(selectable ? ' Click to choose.' : ''));
   }
@@ -17815,8 +17815,8 @@ function renderStoryCoach(){
   const goals=storyStarGoals(game),raceLost=state.chapter===3&&storyRaceLost(game);
   const earned=goals.length?goals.filter(goal=>goal.done).length:state.complete?3:0;
   const heading=(goals.length?ruleTextHtml('Match objectives',{cards:false})+' ':'')+'<span class="story-star-rating" aria-label="'+earned+' / 3">'+storyStarMarkup(state.chapter,earned)+'</span>';
-  el('tutorial-feedback').classList.toggle('story-perfect',state.complete&&earned===3);
-  el('tutorial-feedback').classList.toggle('story-stars-rainbow',state.chapter===13&&state.complete&&earned===3);
+  el('tutorial-feedback').classList.toggle('story-perfect',!!state.complete&&earned===3);
+  el('tutorial-feedback').classList.toggle('story-stars-rainbow',state.chapter===13&&!!state.complete&&earned===3);
   el('tutorial-feedback').style.setProperty('--story-star-color',storyStarColor(state.chapter));
   const hint=state.complete?'Chapter cleared.':game.winner||game.stalemateMessage?'Win the match to clear this chapter.':definition.hint|| (state.chapter===4?!progress.kaguya?'Gain four points from Kaguya’s placement, including its resulting faction claims.':!progress.hourai?'Connect four Eientei cards and claim the faction.':!progress.handTen?'Use card-gaining abilities to hold at least ten cards at once.':'Win the match to clear this chapter.':'Win to finish this introductory chapter.');
   const raceWarning=raceLost&&!state.complete&&!game.winner&&!game.stalemateMessage?'The opponent reached four points. This objective is unavailable this match; you can still win and clear the chapter.':'';
