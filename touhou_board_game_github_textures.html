@@ -14402,6 +14402,7 @@ function aiBestForcedPlacement(p,id,cells=null,observer=p){
   finally{game.currentPlayerIdx=actor;game.handKnowledge[p]=knowledge;game.placementBlockedForTurn[p]=blocked;}
 }
 function aiReisenChoice(observer,target,ids){
+  if(game.finalChallenge)return aiFinalReisenChoice(observer,target,ids);
   const choices=ids.map(id=>({id,pick:aiBestForcedPlacement(target,id,null,observer)}));
   let best=choices[0];
   for(const next of choices.slice(1)){
@@ -14467,6 +14468,7 @@ function aiFinalTempoValue(p,id,ability,works,members,size,needed){
   if(ability==='temple_byakuren'&&works){
     const ready=aiFinalReadyGroups(p,id);value+=Math.min(3,ready)*55+(hand.length>=12?20:0);
   }
+  if(ability==='hourai_reisen'&&works)value+=aiFinalReisenValue(p);
   if(ability==='sdm_sakuya'&&works){
     // A big hand is the AI's engine: keep it, and leave Sakuya to opponents who run dry.
     const ready=aiFinalReadyGroups(p,id),bigHand=Math.max(0,hand.length-6);
@@ -14487,6 +14489,42 @@ function aiFinalTempoMaterial(p,id){
   if(ability==='temple_byakuren')return game.players[p].hand.length>=10?30:8;
   if(FINAL_CHAIN_ABILITIES.has(ability)&&aiFinalNeeded(p,faction))return aiFinalChainCopies(p,ability)*9;
   return 0;
+}
+// Reisen in the finale: forcing a big hand to place Sakuya shuffles that whole hand away.
+function aiFinalSakuyaChance(p,target){
+  const hidden=game.players[target].hand.length;if(!hidden)return 0;
+  const seen=id=>game.abilityId(id)==='sdm_sakuya';
+  const visible=game.players[p].hand.filter(seen).length+game.boardCells(cell=>seen(cell.id)).length
+    +game.players.reduce((n,player)=>n+player.discard.filter(seen).length,0);
+  const unknown=Math.max(1,game.drawPile.length+game.players.reduce((n,player)=>n+(player.idx===p?0:player.hand.length),0));
+  const left=Math.max(0,10-visible);
+  return 1-Math.pow(1-Math.min(1,left/unknown),hidden);
+}
+function aiFinalReisenTarget(p){
+  return game.players.filter(player=>player.idx!==p&&player.hand.length)
+    .sort((a,b)=>b.hand.length-a.hand.length||a.idx-b.idx)[0]?.idx??null;
+}
+function aiFinalReisenValue(p){
+  const target=aiFinalReisenTarget(p);if(target==null)return 0;
+  const size=game.players[target].hand.length,chance=aiFinalSakuyaChance(p,target);
+  // Expected cards wiped, less the two extra turns Sakuya hands the target.
+  return size>=6?chance*Math.min(90,size*2.4)-chance*30:4;
+}
+function aiFinalReisenChoice(observer,target,ids){
+  const player=game.players[target],canPlace=id=>game.emptyOrWastelandForCard(CARD[id],target).some(cell=>game.isMainTile(cell.r,cell.c));
+  const sakuya=ids.filter(id=>game.abilityId(id)==='sdm_sakuya'&&canPlace(id));
+  const choices=ids.map(id=>{const pick=canPlace(id)?aiFinalBestPlacement(target,[id]):null;
+    return {id,pick:pick&&{cell:pick.cell,immediatePoints:pick.claims.reduce((n,claim)=>n+claim.points,0),winsNow:pick.value>=1000000,value:pick.value}};});
+  // A large hand loses everything after Sakuya's two turns; small hands are better denied a good placement.
+  if(sakuya.length&&player.hand.length>=6&&!choices.some(choice=>choice.id===sakuya[0]&&choice.pick?.winsNow))return {...choices.find(choice=>choice.id===sakuya[0]),choices};
+  // Never hand a small hand Sakuya's two extra turns.
+  const pool=choices.filter(choice=>game.abilityId(choice.id)!=='sdm_sakuya'||!choice.pick),options=pool.length?pool:choices;
+  let best=options[0];
+  for(const next of options.slice(1)){
+    if(!best.pick)break;
+    if(!next.pick||next.pick.value<best.pick.value)best=next;
+  }
+  return {...best,choices};
 }
 function aiFinalDiscardValue(p,id){
   const faction=CARD[id]?.faction;if(!FACTIONS[faction]?.size||game.finalChallenge.collected[p].includes(faction))return .5;
