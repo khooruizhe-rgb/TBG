@@ -2938,6 +2938,7 @@ body.mobile-landscape .final-hand-less{width:26px;height:24px;bottom:17px;}
 #claim-atmosphere,#claim-foreground{position:fixed;inset:0;pointer-events:none;overflow:hidden;contain:strict;}
 #claim-atmosphere{z-index:0;}
 #claim-foreground{z-index:36;}
+body:not(.final-challenge) #claim-atmosphere,body:not(.final-challenge) #claim-foreground,body:not(.final-challenge) #final-claim-glitch{display:none;}
 #claim-atmosphere[hidden],#claim-foreground[hidden]{display:none;}
 .claim-scene{position:absolute;inset:0;opacity:0;transition:opacity .7s ease;overflow:hidden;contain:paint;--claim-light:#da5d91;--claim-dark:#1a071e;}
 .claim-scene.active{opacity:1;}
@@ -17456,7 +17457,10 @@ function appendClaimRealmDetails(scene,faction,mobile,reduced){
 }
 function showClaimAtmosphere({faction,count}){
   const owner=game;
-  if(!owner||owner.cancelled||owner.fastAITest||!Object.hasOwn(CLAIM_TABLE_COLORS,faction)||!Number.isInteger(count)||count<=0)return;
+  // Claim scenery, table recolouring and the signal glitch belong to the finale (chapter 14) only.
+  // Every other mode keeps the simple crown-placement backdrop from showCrownBackdrop().
+  if(!owner?.finalChallenge){if(claimAtmosphere)stopClaimAtmosphere();return;}
+  if(owner.cancelled||owner.fastAITest||!Object.hasOwn(CLAIM_TABLE_COLORS,faction)||!Number.isInteger(count)||count<=0)return;
   if(claimAtmosphere?.owner!==owner){stopClaimAtmosphere();claimAtmosphere={owner,slot:0,frame:0,cards:0};}
   const session=claimAtmosphere;
   updateFinalClaimSignal(session,faction,count);
