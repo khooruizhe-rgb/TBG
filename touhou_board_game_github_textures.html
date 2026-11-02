@@ -2988,7 +2988,7 @@ body:not(.final-challenge) #claim-atmosphere,body:not(.final-challenge) #claim-f
 .claim-scene.scene-heaven{--claim-light:#effbff;--claim-dark:#3c77b8;}
 .scene-heaven .atmos-base{background-image:linear-gradient(#a7dbff22,#f1e4ab33),var(--heaven-bg);background-size:cover;background-position:center;}
 .scene-heaven .atmos-landmark{top:9%;right:12%;width:36vmin;height:46vmin;border-radius:0;background:linear-gradient(140deg,#bdb4a4,#5c6577 53%,#333a51);clip-path:polygon(28% 0,83% 9%,100% 32%,74% 70%,58% 100%,16% 74%,0 36%);}
-.scene-heaven .atmos-veil{background:radial-gradient(ellipse at -5% 80%,#fffc 0 25%,#d8eeffb5 36%,transparent 65%),radial-gradient(ellipse at 110% 28%,#fff6d3cc 0 23%,transparent 63%),repeating-conic-gradient(from 14deg at 90% 0%,#fff2b477 0 8deg,transparent 9deg 24deg);}
+.scene-heaven .atmos-veil{background:radial-gradient(ellipse at -5% 80%,#ffffff4d 0 20%,#d8eeff2e 34%,transparent 60%),radial-gradient(ellipse at 110% 28%,#fff6d340 0 18%,transparent 58%),repeating-conic-gradient(from 14deg at 90% 0%,#fff2b433 0 8deg,transparent 9deg 24deg);}
 .claim-scene.scene-temple{--claim-light:#e0a5ff;--claim-dark:#290847;}
 .scene-temple .atmos-base{inset:0;background-image:linear-gradient(145deg,#18073011,#5f1b7733),var(--temple-bg);background-size:cover;background-position:center;}
 .scene-temple .atmos-motion{background:repeating-conic-gradient(from -15deg at 50% 40%,transparent 0 16deg,#e8aeff55 17deg 22deg,transparent 23deg 42deg);}
@@ -3036,7 +3036,7 @@ body:not(.final-challenge) #claim-atmosphere,body:not(.final-challenge) #claim-f
 .realm-lantern{width:12px;height:19px;border:2px solid #f5dc9999;border-radius:15% 15% 35% 35%;background:linear-gradient(#ecd09c,#ce7146 65%,#6c282d);box-shadow:0 10px 12px #ffd77e44;}
 .realm-lantern::after{content:"";position:absolute;left:-3px;right:-3px;top:28px;height:12px;background:linear-gradient(#e8ac7866,transparent);transform:skewX(-22deg);}
 .claim-scene.active .realm-lantern{animation-name:claimHiganRiver;}
-.realm-cloud{width:64vw;height:30vh;min-height:110px;border-radius:50%;background:radial-gradient(ellipse 34% 40% at 30% 46%,#fff 0 60%,#ffffffd9 74%,transparent 100%),radial-gradient(ellipse 30% 44% at 54% 38%,#fff 0 58%,#fffdf5d9 74%,transparent 100%),radial-gradient(ellipse 28% 34% at 76% 52%,#fff 0 56%,#f6fbffd0 72%,transparent 100%),radial-gradient(ellipse 46% 26% at 52% 70%,#c9d9ee 0 50%,#a9c0deb3 70%,transparent 100%);filter:drop-shadow(0 10px 14px #3d62914d) drop-shadow(0 0 2px #ffffffb3);opacity:var(--cloud-opacity,.7);}
+.realm-cloud{width:64vw;height:30vh;min-height:110px;border-radius:50%;background:radial-gradient(ellipse 34% 40% at 30% 46%,#fff 0 60%,#ffffffd9 74%,transparent 100%),radial-gradient(ellipse 30% 44% at 54% 38%,#fff 0 58%,#fffdf5d9 74%,transparent 100%),radial-gradient(ellipse 28% 34% at 76% 52%,#fff 0 56%,#f6fbffd0 72%,transparent 100%),radial-gradient(ellipse 46% 26% at 52% 70%,#c9d9ee 0 50%,#a9c0deb3 70%,transparent 100%);filter:drop-shadow(0 10px 14px #3d62914d) drop-shadow(0 0 2px #ffffffb3);opacity:var(--cloud-opacity,.3);}
 .realm-cloud.cloud-back{--cloud-opacity:1;width:80vw;height:38vh;}
 .claim-scene.active .realm-cloud{animation-name:claimHeavenCloud;animation-direction:alternate;}
 .realm-thunder-flash{position:absolute;inset:0;pointer-events:none;opacity:0;background:radial-gradient(ellipse at var(--bolt-x,30%) 0%,#f4fbffcc,#c9e4ff66 38%,#9cc6ff1f 70%,transparent);}
@@ -6342,7 +6342,7 @@ Game.prototype.recordStoryDiscardFactions=function(p){
 Game.prototype.recordStoryDrawPileReturn=function(p){
   const story=this.storyMatch;
   if(this.cancelled || this.winner || this.stalemateMessage || story?.chapter!==12 || p!==story.humanSeat)return;
-  story.returnedCards++;if(story.returnedCards>=8)story.progress.returnEight=true;
+  story.returnedCards++;if(story.returnedCards>=6)story.progress.returnEight=true;
 };
 Game.prototype.recordStoryWastelandClear=function(p){
   const story=this.storyMatch;
@@ -6466,7 +6466,7 @@ const STORY_CHAPTERS=[
   {id:9,title:'Chapter 9 · Hakurei Shrine',body:'Hakurei Shrine abilities are now active too. Win to clear this chapter. Three stars: claim Hakurei Shrine, use Marisa to discard a Sage, and win before the opponent claims a faction.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei'],introduced:'hakurei',hint:'These two cards should have been the first to gain abilities, yet only now are they complete. How interesting.'},
   {id:10,title:'Chapter 10 · Sunflower Field',body:'Sunflower Field abilities are now active too. Win to clear this chapter. Three stars: claim Sunflower Field, have an opponent with no cards in hand during any turn, and win before your tenth turn.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower'],introduced:'sunflower',hint:'There is more than one way to leave your opponent with no cards. Think carefully!'},
   {id:11,title:'Chapter 11 · Hell',body:'Hell abilities are now active too. Win to clear this chapter. Three stars: claim Hell, clear eight wasteland tiles, and successfully trigger Kutaka’s ability.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower','hell'],introduced:'hell',hint:'Hecatia?! I have only heard rumors of someone so important. I never imagined she would come here!'},
-  {id:12,title:'Chapter 12 · Heaven',body:'Heaven abilities are now active too. Win to clear this chapter. Three stars: claim Heaven, return eight cards to the draw pile, and win without claiming a faction. Faction objectives also count complete groups gathered in your discard pile.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower','hell','heaven'],introduced:'heaven',hint:'I deliberately favored scoring through faction claims when creating this game. Let’s see whether that is still true.'},
+  {id:12,title:'Chapter 12 · Heaven',body:'Heaven abilities are now active too. Win to clear this chapter. Three stars: claim Heaven, return six cards to the draw pile, and win without claiming a faction. Faction objectives also count complete groups gathered in your discard pile.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower','hell','heaven'],introduced:'heaven',hint:'I deliberately favored scoring through faction claims when creating this game. Let’s see whether that is still true.'},
   {id:13,title:'Chapter 13 · Myouren Temple',body:'Myouren Temple abilities are now active too. Win to clear this chapter. Three stars: claim Myouren Temple, use all three of Byakuren’s effects, and win with an extra turn still remaining.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower','hell','heaven','temple'],introduced:'temple',hint:'Surely using every one of Byakuren’s effects takes a lot of cards to pay the costs. But with the power of bonds, perhaps it could be easy?'},
   {id:14,title:'Chapter 14 · Final Challenge',body:'A 360-card deck: ten of each original. Face Easy, Normal and Hard opponents. Collect every faction first to win. Each board claim adds a row and column, up to 8×8. Kourindou stocks ten of every fifth card; traded payments disappear. Victory is the only objective.',skills:['sdm','hakugyokurou','hourai','mountain','palace','sage','hakurei','sunflower','hell','heaven','temple'],hint:'▒╳▧ ﾊｸ#%▓ ﾟ･:∴ ░Ω▤ /?? ◇▒'}
 ];
@@ -6686,7 +6686,7 @@ function storyStarGoals(match){
   ];
   if(story.chapter===12)return [
     {key:'heaven',label:'Claim Heaven',done:progress.heaven},
-    {key:'returnEight',label:'Return eight cards to the draw pile',done:progress.returnEight},
+    {key:'returnEight',label:'Return six cards to the draw pile',done:progress.returnEight},
     {key:'noClaims',label:'Win without claiming a faction',done:storyMatchComplete(match)&&!story.humanClaimedFaction,failed:story.humanClaimedFaction}
   ];
   if(story.chapter===13)return [
@@ -9362,10 +9362,10 @@ Object.assign(ZH_TEXT,{
   'Claim Myouren Temple':'收取命莲寺阵营',
   'Use all three of Byakuren’s effects':'使用圣白莲的所有技能',
   'Win with an extra turn still remaining':'胜利时自己仍然有额外回合',
-  'Heaven abilities are now active too. Win to clear this chapter. Three stars: claim Heaven, return eight cards to the draw pile, and win without claiming a faction. Faction objectives also count complete groups gathered in your discard pile.':'天界的技能也已开放，获胜即可通关。三星目标：收取天界阵营，累计将八张卡放入抽牌堆，以及在不收取阵营的情况下获胜。阵营目标也认可通过技能集齐于你弃牌堆中的完整阵营。',
+  'Heaven abilities are now active too. Win to clear this chapter. Three stars: claim Heaven, return six cards to the draw pile, and win without claiming a faction. Faction objectives also count complete groups gathered in your discard pile.':'天界的技能也已开放，获胜即可通关。三星目标：收取天界阵营，累计将六张卡放入抽牌堆，以及在不收取阵营的情况下获胜。阵营目标也认可通过技能集齐于你弃牌堆中的完整阵营。',
   'I deliberately favored scoring through faction claims when creating this game. Let’s see whether that is still true.':'我在创造这个游戏的时候就刻意的偏向收取阵营拿分，看看现在还是否如此吧。',
   'Claim Heaven':'收取天界阵营',
-  'Return eight cards to the draw pile':'将八张卡放入抽牌堆',
+  'Return six cards to the draw pile':'将六张卡放入抽牌堆',
   'Win without claiming a faction':'在不收取阵营的情况下获胜',
   'Hell abilities are now active too. Win to clear this chapter. Three stars: claim Hell, clear eight wasteland tiles, and successfully trigger Kutaka’s ability.':'地狱的技能也已开放，获胜即可通关。三星目标：收取地狱阵营，累计清除八格荒地，以及成功触发庭渡久侘歌的技能。',
   'Hecatia?! I have only heard rumors of someone so important. I never imagined she would come here!':'赫卡提亚？！对于这样的大人物我也只是有所耳闻而已，真没想到她会来到这里啊。',

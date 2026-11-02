@@ -3,7 +3,7 @@ const root=path.resolve(__dirname,'..'),html=fs.readFileSync(root+'/touhou_board
 for(const [,script]of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(script);
 const builder=vm.createContext({});vm.runInContext(html.slice(html.indexOf('function buildAIEvaluationWorkerSource'),html.indexOf('\nfunction evalHashSeed')),builder);builder.html=html;
 class Node{
-  constructor(){this.children=[];this.parentElement=null;this.style={setProperty(){}};this.dataset={};this.events={};this.attributes={};this.names=new Set();this.isConnected=true;this.hidden=false;
+  constructor(){this.children=[];this.parentElement=null;this.style={setProperty(){},removeProperty(){}};this.dataset={};this.events={};this.attributes={};this.names=new Set();this.isConnected=true;this.hidden=false;
     this.classList={add:(...names)=>names.forEach(name=>this.names.add(name)),remove:(...names)=>names.forEach(name=>this.names.delete(name)),contains:name=>this.names.has(name),toggle:(name,on)=>{if(on===undefined)on=!this.names.has(name);on?this.names.add(name):this.names.delete(name);return on;}};}
   appendChild(node){this.children.push(node);node.parentElement=this;return node;}append(...nodes){nodes.forEach(node=>this.appendChild(node));}
   replaceChildren(){this.children=[];}insertBefore(node){return this.appendChild(node);}prepend(node){node.parentElement=this;this.children.unshift(node);}

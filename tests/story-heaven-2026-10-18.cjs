@@ -25,7 +25,7 @@ vm.runInContext(`(async()=>{
  ok(storyChapterCards(12).join(',')==='heaven_tenshi,heaven_iku'&&storyShopCards(12).join(',')===storyShopCards(11).join(','),'Exactly the two Heaven originals unlock, while Temple skills and unintroduced fifth cards stay locked');
  const targets=[[0,0,'sdm_remilia'],[0,1,'sdm_flandre'],[0,2,'sdm_patchouli'],[1,0,'mtn_sanae'],[1,1,'palace_rin'],[1,2,'sage_ran']];
  make();arrange({hands:[['heaven_tenshi','medicine','hourai_mokou'],['haku_youmu']],board:targets});await place('heaven_tenshi',0,3,3);
- ok(game.storyMatch.returnedCards===8&&game.storyMatch.progress.returnEight&&targets.every(([r,c])=>!game.cardAt(r,c)),'Real Tenshi counts her two paid cards and six successful board returns toward eight');
+ ok(game.storyMatch.returnedCards===8&&game.storyMatch.progress.returnEight&&targets.every(([r,c])=>!game.cardAt(r,c)),'Real Tenshi counts her two paid cards and six successful board returns, past the six-card goal');
  make();arrange({hands:[['hell_eiki','medicine'],['haku_youmu']],board:targets.slice(0,3)});await place('hell_eiki',0,3,3);
  ok(game.storyMatch.returnedCards===4&&game.players[0].hand.length===3,'Eiki counts one paid card and three returns; replacement draws do not undo cumulative progress');
  for(const actor of [0,1]){make();arrange({hands:actor===0?[['medicine'],['mtn_sanae','hourai_mokou']]:[['mtn_sanae','hourai_mokou'],['medicine']]});game.choosePlayer=async()=>1-actor;await place('medicine',actor);assert.equal(game.storyMatch.returnedCards,actor===0?2:0);assert.equal(game.players[1-actor].hand.length,0);}
@@ -35,7 +35,7 @@ vm.runInContext(`(async()=>{
  make();arrange({hands:[['yuuka','medicine','hourai_mokou'],['haku_youmu']]});game.chooseRectArea=async()=>game.rectCells({r:0,c:0},3);await place('yuuka');
  ok(game.storyMatch.returnedCards===2&&game.players[0].hand.length===4,'Yuuka’s bulk return counts before replacement draws, independently of net deck size');
  make();const doubled=copy('medicine',2);arrange({hands:[[doubled,'reimu'],['sdm_remilia','sdm_flandre','sdm_patchouli','sdm_sakuya']]});game.choosePlayer=async()=>1;await place(doubled);
- ok(game.storyMatch.returnedCards===5&&game.players[1].hand.length===0,'Double Medicine counts one creation surcharge and four distinct repeated returns');
+ ok(game.storyMatch.returnedCards===5&&!game.storyMatch.progress.returnEight&&game.players[1].hand.length===0,'Double Medicine counts one creation surcharge and four distinct repeated returns');
  make();arrange({hands:[['medicine','hourai_mokou'],['haku_youmu']]});assert.equal(game.commitCostCards(0,['medicine','hourai_mokou'],2,2),2);evalConservation(game);
  ok(game.storyMatch.returnedCards===2,'Actually committed human costs count outside an ability context');
  make();arrange({hands:[['medicine'],['haku_youmu']],board:[[0,0,'shop_rinnosuke'],[0,1,'mtn_sanae']]});assert(!game.moveBoardToDraw(0,1,'tenshi',0));const trap=game.makeTrap();game.startingCardIds.add(trap);game.addToHand(0,trap);assert.equal(game.returnToDrawPile(trap,{handOwner:0}),false);assert.equal(game.commitCostCards(0,[trap],1,1),0);evalConservation(game);
@@ -100,6 +100,6 @@ vm.runInContext(`(async()=>{
  const material=fs.readFileSync(__dirname+'/card-materials-2026-10-12.cjs','utf8'),materialBox={module:{exports:{}},require,__dirname,console};vm.runInNewContext(material.slice(0,material.indexOf("const copy='created_card_910'"))+'\nmodule.exports={A};',materialBox);const A=materialBox.module.exports.A;
  const values=JSON.parse(vm.runInContext('JSON.stringify([STORY_CHAPTERS[11].title,STORY_CHAPTERS[11].body,STORY_CHAPTERS[11].hint,...storyStarGoals({storyMatch:{chapter:12,progress:{}}}).map(goal=>goal.label)])',ctx));
  for(const language of ['en','zh-CN']){A.setLanguage(language);for(const value of values)assert.equal(A.translateGameText(value)===value,language==='en');}
- A.setLanguage('zh-CN');assert.equal(A.translateGameText(values[0]),'第十二关 · 天界');assert.equal(A.translateGameText(values[2]),'我在创造这个游戏的时候就刻意的偏向收取阵营拿分，看看现在还是否如此吧。');assert.deepEqual(values.slice(3).map(value=>A.translateGameText(value)),['收取天界阵营','将八张卡放入抽牌堆','在不收取阵营的情况下获胜']);result.checks.push('The exact Heaven hint, title, replay-aware overview and all three goals use the actual bilingual path');result.count=result.checks.length;
+ A.setLanguage('zh-CN');assert.equal(A.translateGameText(values[0]),'第十二关 · 天界');assert.equal(A.translateGameText(values[2]),'我在创造这个游戏的时候就刻意的偏向收取阵营拿分，看看现在还是否如此吧。');assert.deepEqual(values.slice(3).map(value=>A.translateGameText(value)),['收取天界阵营','将六张卡放入抽牌堆','在不收取阵营的情况下获胜']);result.checks.push('The exact Heaven hint, title, replay-aware overview and all three goals use the actual bilingual path');result.count=result.checks.length;
  fs.writeFileSync(__dirname+'/story-heaven-2026-10-18-results.json',JSON.stringify(result,null,2)+'\n');completed=true;console.log(result.count+' Heaven checks, 1024 private deals, two seven-point routes and four complete Medium matches passed');
 }).catch(error=>{console.error(error.stack);process.exitCode=1;});
