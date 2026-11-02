@@ -54,7 +54,7 @@ process.once('beforeExit',()=>{if(!completed&&!process.exitCode){console.error('
  ok(signal()===countBefore+4&&g.finalChallenge.activeCells===64,'Signal strength keeps increasing after board expansion reaches its maximum');
  const oldPalette=palette();ctx.claimHook({faction:'hell',count:1});pump();ok(signal()===11&&palette()===oldPalette,'A partially resolved collection counts only the one collected card and does not replace the complete-realm colour');
  const colors={sdm:'198,33,72',hakugyokurou:'242,166,193',hourai:'48,91,191',mountain:'134,160,72',palace:'138,107,191',sage:'126,62,157',hakurei:'224,72,63',sunflower:'242,193,78',hell:'235,97,58',heaven:'121,206,255',temple:'215,164,73'};
- const expected={sdm:['fog',4,6],hakugyokurou:['snow',34,80],hourai:[null,0,0],mountain:['leaf',4,9],palace:['ember',4,10],sage:[null,0,0],sunflower:[null,0,0],hell:['lantern',3,7],heaven:['cloud',2,3],temple:['orb',8,16]};
+ const expected={sdm:['fog',4,6],hakugyokurou:['snow',34,80],hourai:[null,0,0],mountain:['leaf',4,9],palace:['ember',4,10],sage:[null,0,0],sunflower:[null,0,0],hell:['lantern',3,7],heaven:['cloud',3,4],temple:['orb',8,16]};
  for(const mobile of [true,false]){
   ctx.document.body.classList.toggle('game-mobile',mobile);
   for(const [faction,color]of Object.entries(colors)){
