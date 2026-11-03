@@ -1,0 +1,14 @@
+{
+  "appId": "io.github.khooruizhe.tbg",
+  "appName": "幻想郷 · Boundary of Fates",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#160b26"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 600,
+      "backgroundColor": "#160b26"
+    }
+  }
+}

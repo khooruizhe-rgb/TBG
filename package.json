@@ -1,0 +1,16 @@
+{
+  "name": "tbg-android",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Android packaging for Touhou Board Game (Boundary of Fates)",
+  "scripts": {
+    "build:web": "node tools/build-android-web.mjs",
+    "android:prepare": "node tools/build-android-web.mjs && npx cap add android && npx capacitor-assets generate --android && node tools/patch-android.mjs && npx cap sync android"
+  },
+  "devDependencies": {
+    "@capacitor/android": "7.4.4",
+    "@capacitor/assets": "3.0.5",
+    "@capacitor/cli": "7.4.4",
+    "@capacitor/core": "7.4.4"
+  }
+}

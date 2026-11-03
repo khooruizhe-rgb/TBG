@@ -1,0 +1,85 @@
+name: Android APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'touhou_board_game_github_textures.html'
+      - 'touhou_uploaded_images/**'
+      - 'audio/**'
+      - 'assets/**'
+      - 'tools/build-android-web.mjs'
+      - 'tools/patch-android.mjs'
+      - 'capacitor.config.json'
+      - 'package.json'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-apk
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      APP_VERSION_CODE: ${{ github.run_number }}
+      APP_VERSION_NAME: 1.0.${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Capacitor
+        run: npm install --no-audit --no-fund
+
+      - name: Prepare Android project
+        run: |
+          node tools/build-android-web.mjs
+          npx cap add android
+          npx capacitor-assets generate --android
+          node tools/patch-android.mjs
+          npx cap sync android
+
+      - name: Build release APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Sign APK
+        run: |
+          BUILD_TOOLS="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          UNSIGNED=android/app/build/outputs/apk/release/app-release-unsigned.apk
+          "$BUILD_TOOLS/zipalign" -p -f 4 "$UNSIGNED" aligned.apk
+          "$BUILD_TOOLS/apksigner" sign \
+            --ks android-signing/tbg-release.jks --ks-key-alias tbg \
+            --ks-pass pass:tbg-boundary-of-fates --key-pass pass:tbg-boundary-of-fates \
+            --out TBG.apk aligned.apk
+          "$BUILD_TOOLS/apksigner" verify --print-certs TBG.apk
+          ls -la TBG.apk
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-v${{ env.APP_VERSION_NAME }}
+          name: Android ${{ env.APP_VERSION_NAME }}
+          target_commitish: ${{ github.sha }}
+          make_latest: true
+          files: TBG.apk
+          body: |
+            Boundary of Fates for Android, built from ${{ github.sha }}.
+            Download TBG.apk on your phone and open it to install.
+            Always-current link: https://github.com/${{ github.repository }}/releases/latest/download/TBG.apk
