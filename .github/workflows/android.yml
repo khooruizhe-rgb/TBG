@@ -29,13 +29,13 @@ jobs:
       APP_VERSION_CODE: ${{ github.run_number }}
       APP_VERSION_NAME: 1.0.${{ github.run_number }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 20
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
@@ -43,24 +43,30 @@ jobs:
       - uses: android-actions/setup-android@v3
 
       - name: Install Capacitor
-        run: npm install --no-audit --no-fund
+        run: npm install --no-audit --no-fund 2>&1 | tee -a build.log
 
       - name: Prepare Android project
         run: |
-          node tools/build-android-web.mjs
-          npx cap add android
-          npx capacitor-assets generate --android
-          node tools/patch-android.mjs
-          npx cap sync android
+          set -o pipefail
+          {
+            node tools/build-android-web.mjs &&
+            npx cap add android &&
+            npx capacitor-assets generate --android &&
+            node tools/patch-android.mjs &&
+            npx cap sync android
+          } 2>&1 | tee -a build.log
 
       - name: Build release APK
         working-directory: android
         run: |
+          set -o pipefail
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon --stacktrace
+          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee -a ../build.log
 
       - name: Sign APK
         run: |
+          set -o pipefail
+          exec > >(tee -a build.log) 2>&1
           BUILD_TOOLS="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
           UNSIGNED=android/app/build/outputs/apk/release/app-release-unsigned.apk
           "$BUILD_TOOLS/zipalign" -p -f 4 "$UNSIGNED" aligned.apk
@@ -83,3 +89,15 @@ jobs:
             Boundary of Fates for Android, built from ${{ github.sha }}.
             Download TBG.apk on your phone and open it to install.
             Always-current link: https://github.com/${{ github.repository }}/releases/latest/download/TBG.apk
+
+      - name: Report failure
+        if: failure()
+        run: |
+          # Surface the end of the log as annotations (readable without log access).
+          grep -n -E "FAILURE|What went wrong|error:|Error:|ERROR|Exception|failed" build.log | tail -n 40 > errors.txt || true
+          for file in errors.txt; do
+            body=$(sed -e 's/%/%25/g' -e 's/\r/%0D/g' "$file" | head -c 12000 | sed ':a;N;$!ba;s/\n/%0A/g')
+            echo "::error title=Build errors::$body"
+          done
+          body=$(tail -n 60 build.log | sed -e 's/%/%25/g' | head -c 12000 | sed ':a;N;$!ba;s/\n/%0A/g')
+          echo "::error title=Build log tail::$body"
