@@ -40,7 +40,12 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - uses: android-actions/setup-android@v3
+      - name: Check Android SDK
+        run: |
+          touch build.log
+          echo "ANDROID_HOME=$ANDROID_HOME" | tee -a build.log
+          ls "$ANDROID_HOME/build-tools" "$ANDROID_HOME/platforms" 2>&1 | tee -a build.log
+          java -version 2>&1 | tee -a build.log
 
       - name: Install Capacitor
         run: npm install --no-audit --no-fund 2>&1 | tee -a build.log
@@ -94,6 +99,8 @@ jobs:
         if: failure()
         run: |
           # Surface the end of the log as annotations (readable without log access).
+          touch build.log
+          echo "::error title=Failed job status::steps finished: ${{ toJSON(steps.*.outcome) }}"
           grep -n -E "FAILURE|What went wrong|error:|Error:|ERROR|Exception|failed" build.log | tail -n 40 > errors.txt || true
           for file in errors.txt; do
             body=$(sed -e 's/%/%25/g' -e 's/\r/%0D/g' "$file" | head -c 12000 | sed ':a;N;$!ba;s/\n/%0A/g')
